@@ -226,25 +226,76 @@ export default function HandHygieneAuditPage() {
       const { getSupabase } = await import('@/lib/supabase');
       const supabase = getSupabase();
 
+      const payload = {
+        observer,
+        unit,
+        profesi,
+        m1: momenData.m1,
+        m2: momenData.m2,
+        m3: momenData.m3,
+        m4: momenData.m4,
+        m5: momenData.m5,
+        patuh: stats.patuh,
+        peluang: stats.peluang,
+        persentase: stats.persentase,
+        start_time: startTime?.toISOString() || new Date().toISOString(),
+        end_time: end.toISOString()
+      };
+
+      // Modifikasi untuk menggunakan audit_sessions sesuai instruksi
+      const sessionPayload = {
+        indikator_id: 'audit_hand_hygiene',
+        nama_indikator: 'AUDIT HAND HYGIENE',
+        tanggal_waktu: payload.start_time,
+        observer: payload.observer || '',
+        unit: payload.unit || '',
+        profesi: payload.profesi || null,
+        jumlah_dinilai: payload.peluang || 0,
+        jumlah_patuh: payload.patuh || 0,
+        persentase: payload.persentase || 0,
+        status_kepatuhan: stats.status || 'Belum Dinilai',
+        temuan: '',
+        rekomendasi: '',
+        ttd_pj_ruangan: null,
+        ttd_ipcn: null,
+        dokumentasi: [],
+        data_indikator: momenData
+      };
+
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('audit_sessions')
+        .insert([sessionPayload])
+        .select('*')
+        .single();
+
+      if (sessionError) {
+        console.error("Kesalahan Supabase Simpan Session:", sessionError);
+        throw sessionError;
+      }
+
+      // Simpan details
+      const detailPayloads = Object.keys(momenData).map(key => ({
+        session_id: sessionData.id,
+        pertanyaan_id: key,
+        pertanyaan: moments.find(m => m.id === key)?.label || key,
+        jawaban: String(momenData[key])
+      })).filter(d => d.jawaban !== 'null');
+
+      if (detailPayloads.length > 0) {
+        const { error: detailError } = await supabase.from('audit_details').insert(detailPayloads);
+        if (detailError) {
+          console.warn("Kesalahan Supabase Simpan Details:", detailError);
+        }
+      }
+
+      // Fallback table
       const { error } = await supabase
         .from('audit_hand_hygiene')
-        .insert([{
-          observer,
-          unit,
-          profesi,
-          m1: momenData.m1,
-          m2: momenData.m2,
-          m3: momenData.m3,
-          m4: momenData.m4,
-          m5: momenData.m5,
-          patuh: stats.patuh,
-          peluang: stats.peluang,
-          persentase: stats.persentase,
-          start_time: startTime?.toISOString() || new Date().toISOString(),
-          end_time: end.toISOString()
-        }]);
+        .insert([payload]);
 
-      if (error) throw error;
+      if (error) {
+        console.warn("Kesalahan saat menyimpan fallback table:", error);
+      }
 
       setShowToast(true);
       setTimeout(() => {

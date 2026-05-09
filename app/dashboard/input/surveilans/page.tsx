@@ -105,18 +105,73 @@ export default function SurveilansFormPage() {
 
     setIsSubmitting(true);
     
-    const ttdPj = sigRef.current?.getPjSignature();
-    const ttdIpcn = sigRef.current?.getSupervisorSignature();
+    try {
+      const { getSupabase } = await import('@/lib/supabase');
+      const supabase = getSupabase();
+      
+      const ttdPj = sigRef.current?.getPjSignature();
+      const ttdIpcn = sigRef.current?.getSupervisorSignature();
 
-    // Simulating save operation
-    setTimeout(() => {
-      setIsSubmitting(false);
+      const sessionPayload = {
+        indikator_id: 'audit_surveilans_hais',
+        nama_indikator: 'SURVEILANS HAIS',
+        tanggal_waktu: new Date(date).toISOString(),
+        observer: petugas || '',
+        unit: kategori || '',
+        profesi: null,
+        jumlah_dinilai: totalPemasangan || 0,
+        jumlah_patuh: 0, // In surveilans, we track incidents, maybe not "compliance" in the same way
+        persentase: totalRate || 0,
+        status_kepatuhan: totalRate > 0 ? 'Terdapat HAIs' : 'Nihil HAIs',
+        temuan: '',
+        rekomendasi: '',
+        nama_pj_ruangan: pjName,
+        ttd_pj_ruangan: ttdPj || null,
+        ttd_ipcn: ttdIpcn || null,
+        dokumentasi: [],
+        data_indikator: { rows }
+      };
+
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('audit_sessions')
+        .insert([sessionPayload])
+        .select('*')
+        .single();
+
+      if (sessionError) {
+        console.error("Kesalahan Supabase Simpan Session:", sessionError);
+        throw sessionError;
+      }
+
+      // Simpan details (rows)
+      if (rows.length > 0) {
+        const detailPayloads = rows.map(row => ({
+          session_id: sessionData.id,
+          pertanyaan_id: row.rm,
+          pertanyaan: `${row.nama} (${row.tindakan})`,
+          jawaban: `Pemasangan: ${row.jmlPemasangan}, Insiden: ${row.jmlInsiden}`
+        }));
+
+        const { error: detailError } = await supabase.from('audit_details').insert(detailPayloads);
+        if (detailError) {
+          console.warn("Kesalahan Supabase Simpan Details:", detailError);
+        }
+      }
+
+      console.log("Penyimpanan surveilans berhasil!");
       setShowToast(true);
       setTimeout(() => {
         router.push('/dashboard/input');
       }, 1500);
-    }, 1500);
+    } catch (err: any) {
+      console.error("Gagal menyimpan surveilans:", err);
+      setError(`Gagal menyimpan data: ${err.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   return (
     <div className="max-w-6xl mx-auto pb-32 space-y-6 px-4 sm:px-6 mt-4">

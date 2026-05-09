@@ -146,21 +146,74 @@ export default function ImmunocompromisedPPIInputPage() {
         return acc;
       }, {} as any);
 
+      const payload = {
+        waktu: new Date(waktu).toISOString(),
+        ruangan: ruangan,
+        supervisor: selectedSupervisor,
+        checklist_json: checklistJson,
+        persentase: stats.persentase,
+        temuan: temuan.trim() || null,
+        rekomendasi: rekomendasi.trim() || null,
+        foto: uploadedImageUrls.length > 0 ? uploadedImageUrls : null,
+        nama_pj: pjName.trim(),
+        ttd_pj: ttdPj,
+        ttd_ipcn: ttdIpcn,
+      };
+
+      // Modifikasi untuk menggunakan audit_sessions sesuai instruksi
+      const sessionPayload = {
+        indikator_id: 'penempatan_pasien_immunocompromised',
+        nama_indikator: 'PENEMPATAN PASIEN IMMUNOCOMPROMISED',
+        tanggal_waktu: payload.waktu,
+        observer: payload.supervisor || '',
+        unit: payload.ruangan || '',
+        profesi: null,
+        jumlah_dinilai: stats.totalDinilai || 0,
+        jumlah_patuh: stats.totalPatuh || 0,
+        persentase: stats.persentase || 0,
+        status_kepatuhan: stats.statusText || 'Belum Dinilai',
+        temuan: payload.temuan || '',
+        rekomendasi: payload.rekomendasi || '',
+        nama_pj_ruangan: payload.nama_pj,
+        ttd_pj_ruangan: payload.ttd_pj || null,
+        ttd_ipcn: payload.ttd_ipcn || null,
+        dokumentasi: payload.foto || [],
+        data_indikator: checklistJson
+      };
+
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('audit_sessions')
+        .insert([sessionPayload])
+        .select('*')
+        .single();
+
+      if (sessionError) {
+        console.error("Kesalahan Supabase Simpan Session:", sessionError);
+        throw sessionError;
+      }
+
+      // Simpan details
+      const detailPayloads = Object.keys(checklistJson).map(key => ({
+        session_id: sessionData.id,
+        pertanyaan_id: key,
+        pertanyaan: checklist.find(c => c.key === key)?.label || key,
+        jawaban: String(checklistJson[key])
+      })).filter(d => d.jawaban !== 'null');
+
+      if (detailPayloads.length > 0) {
+        const { error: detailError } = await supabase.from('audit_details').insert(detailPayloads);
+        if (detailError) {
+          console.warn("Kesalahan Supabase Simpan Details:", detailError);
+        }
+      }
+
       const { error } = await supabase
         .from('penempatan_pasien_immunocompromised')
-        .insert([{
-          waktu: new Date(waktu).toISOString(),
-          ruangan: ruangan,
-          supervisor: selectedSupervisor,
-          checklist_json: checklistJson,
-          persentase: stats.persentase,
-          temuan: temuan.trim() || null,
-          rekomendasi: rekomendasi.trim() || null,
-          foto: uploadedImageUrls.length > 0 ? uploadedImageUrls : null,
-          nama_pj: pjName.trim(),
-          ttd_pj: ttdPj,
-          ttd_ipcn: ttdIpcn,
-        }]);
+        .insert([payload]);
+
+      if (error && error.code !== '42P01') {
+        console.warn("Kesalahan saat menyimpan fallback table:", error);
+      }
 
       if (error && error.code !== '42P01') throw error;
 

@@ -173,6 +173,46 @@ ALTER TABLE IF EXISTS "public"."audit_pengendalian_lingkungan" ENABLE ROW LEVEL 
 ALTER TABLE IF EXISTS "public"."audit_pengelolaan_limbah_medis" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS "public"."audit_pengelolaan_limbah_tajam" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS "public"."audit_penatalaksanaan_linen" ENABLE ROW LEVEL SECURITY;
+
+-- Audit Sessions Table
+CREATE TABLE IF NOT EXISTS public.audit_sessions (
+  id uuid default gen_random_uuid() primary key,
+  indikator_id text not null,
+  nama_indikator text not null,
+  tanggal_waktu timestamp with time zone not null,
+  observer text,
+  unit text,
+  profesi text,
+  jenis_tindakan text,
+  jumlah_dinilai int default 0,
+  jumlah_patuh int default 0,
+  persentase numeric default 0,
+  status_kepatuhan text,
+  temuan text,
+  rekomendasi text,
+  nama_pj_ruangan text,
+  ttd_pj_ruangan text, -- Base64 or URL
+  ttd_ipcn text,       -- Base64 or URL
+  dokumentasi jsonb default '[]'::jsonb,
+  data_indikator jsonb default '{}'::jsonb,
+  created_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+-- Audit Details Table (For checklist items, etc)
+CREATE TABLE IF NOT EXISTS public.audit_details (
+  id uuid default gen_random_uuid() primary key,
+  session_id uuid references public.audit_sessions(id) on delete cascade,
+  pertanyaan_id text,
+  pertanyaan text,
+  jawaban text,
+  section text,
+  profesi text,
+  momen text,
+  status text,
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamp with time zone default timezone('utc'::text, now())
+);
+
 ALTER TABLE IF EXISTS "public"."master_observers" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS "public"."audit_sessions" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS "public"."audit_details" ENABLE ROW LEVEL SECURITY;
