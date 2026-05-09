@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { LiveStatisticsCard } from '@/components/LiveStatisticsCard';
 import { useRouter } from 'next/navigation';
 import { 
@@ -195,9 +195,9 @@ export default function IBSAuditPage() {
       setStartTime(new Date());
       setData(initialData);
     });
-  }, []);
+  }, [fetchObservers]);
 
-  const fetchObservers = async () => {
+  const fetchObservers = useCallback(async () => {
     try {
       const supabase = getSupabase();
       const { data, error } = await supabase.from('master_observers').select('*').order('nama');
@@ -206,7 +206,7 @@ export default function IBSAuditPage() {
     } catch (err) {
       setObservers([{ id: '1', nama: 'IPCN_Adi Tresa Purnama' }]);
     }
-  };
+  }, []);
 
   const saveObserver = async () => {
     if (!newObserverName.trim()) return;
