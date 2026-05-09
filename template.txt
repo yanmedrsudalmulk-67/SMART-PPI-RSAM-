@@ -1,0 +1,357 @@
+'use client';
+
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { LiveStatisticsCard } from '@/components/LiveStatisticsCard';
+import { useRouter } from 'next/navigation';
+import { 
+  ArrowLeft, Save, CheckCircle2, Clock, User, Building2, Settings,
+  Camera, Upload, Signature, FileText, AlertTriangle, RefreshCw,
+  Trash2, Plus, X, Search, ShieldCheck, Activity, Edit2
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import Link from 'next/link';
+import DigitalSignatureSection, { DigitalSignatureRef } from '@/components/DigitalSignatureSection';
+import { getSupabase } from '@/lib/supabase';
+import { uploadImagesToSupabase } from '@/lib/upload';
+import { DocumentationUploader, DocImage } from '@/components/DocumentationUploader';
+import { useAppContext } from '@/components/providers';
+
+const staticUnits = [
+  'IGD', 'ICU', 'IBS', 'Rawat Jalan', 'Ranap Aisyah', 
+  'Ranap Fatimah', 'Ranap Khadijah', 'Ranap Usman', 
+  'Radiologi', 'Laboratorium', 'Pantry', 'Emergency Kebidanan'
+];
+
+const checklistItems = {{ITEMS}};
+
+type AuditStatus = 'ya' | 'tidak' | 'na' | null;
+type Observer = { id: string; nama: string };
+type Unit = { id: string; nama: string };
+
+export default function {{COMPONENT_NAME}}() {
+  const router = useRouter();
+  const { userRole } = useAppContext();
+  const isIPCN = userRole === 'IPCN' || userRole === 'Admin';
+  
+  const [startTime, setStartTime] = useState<Date | null>(null);
+  const [observer, setObserver] = useState('');
+  const [unit, setUnit] = useState('');
+  const [data, setData] = useState<Record<string, AuditStatus>>({});
+  const [temuan, setTemuan] = useState('');
+  const [rekomendasi, setRekomendasi] = useState('');
+  const [pjName, setPjName] = useState('');
+  const [images, setImages] = useState<DocImage[]>([]);
+  const [observers, setObservers] = useState<Observer[]>([]);
+  const [isObserverModalOpen, setIsObserverModalOpen] = useState(false);
+  const [newObserverName, setNewObserverName] = useState('');
+  const [editObserverId, setEditObserverId] = useState<string | null>(null);
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
+  const [newUnitName, setNewUnitName] = useState('');
+  const [editUnitId, setEditUnitId] = useState<string | null>(null);
+  const sigRef = useRef<DigitalSignatureRef>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+
+  const fetchUnits = useCallback(async () => {
+    try {
+      const supabase = getSupabase();
+      const { data, error } = await supabase.from('master_units').select('*').order('nama');
+      if (error) throw error;
+      if (data && data.length > 0) setUnits(data);
+      else setUnits(staticUnits.map((u, i) => ({ id: "static-" + i, nama: u })));
+    } catch (err) {
+      setUnits(staticUnits.map((u, i) => ({ id: "static-" + i, nama: u })));
+    }
+  }, []);
+
+  const fetchObservers = useCallback(async () => {
+    try {
+      const supabase = getSupabase();
+      const { data, error } = await supabase.from('master_observers').select('*').order('nama');
+      if (error) throw error;
+      let finalData = data || [];
+      if (!finalData.some(s => s.nama === 'IPCN_Adi Tresa Purnama')) {
+        finalData = [{ id: 'adi-static', nama: 'IPCN_Adi Tresa Purnama' }, ...finalData];
+      }
+      setObservers(finalData);
+      if (finalData.length > 0 && !observer) setObserver(finalData[0].nama);
+    } catch (err) { 
+      setObservers([{ id: '1', nama: 'IPCN_Adi Tresa Purnama' }]);
+      setObserver('IPCN_Adi Tresa Purnama');
+    }
+  }, [observer]);
+
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      setStartTime(new Date());
+      const initialData: Record<string, AuditStatus> = {};
+      checklistItems.forEach(item => { initialData[item.id] = null; });
+      setData(initialData);
+    });
+    fetchObservers();
+    fetchUnits();
+  }, [fetchObservers, fetchUnits]);
+
+  const saveUnit = async () => {
+    if (!newUnitName.trim()) return;
+    try {
+      const supabase = getSupabase();
+      if (editUnitId) {
+        if (!editUnitId.startsWith('static-')) {
+          await supabase.from('master_units').update({ nama: newUnitName }).eq('id', editUnitId);
+        }
+        setUnits(prev => prev.map(u => u.id === editUnitId ? { ...u, nama: newUnitName } : u).sort((a,b) => a.nama.localeCompare(b.nama)));
+      } else {
+        const { data, error } = await supabase.from('master_units').insert([{ nama: newUnitName }]).select();
+        if (!error && data && data.length > 0) setUnits(prev => [...prev, data[0]].sort((a,b) => a.nama.localeCompare(b.nama)));
+        else setUnits(prev => [...prev, { id: 'local-' + Date.now().toString(), nama: newUnitName }].sort((a,b) => a.nama.localeCompare(b.nama)));
+      }
+      setNewUnitName(''); setEditUnitId(null);
+    } catch (err) { console.error(err); }
+  };
+
+  const deleteUnit = async (id: string) => {
+    try {
+      const supabase = getSupabase();
+      if (!id.startsWith('static-') && !id.startsWith('local-')) await supabase.from('master_units').delete().eq('id', id);
+      setUnits(prev => prev.filter(u => u.id !== id));
+    } catch (err) { console.error(err); }
+  };
+
+  const saveObserver = async () => {
+    if (!newObserverName.trim()) return;
+    try {
+      const supabase = getSupabase();
+      if (editObserverId) {
+        if (!editObserverId.startsWith('adi-static') && !editObserverId.startsWith('local-')) {
+          await supabase.from('master_observers').update({ nama: newObserverName }).eq('id', editObserverId);
+        }
+        setObservers(prev => prev.map(o => o.id === editObserverId ? { ...o, nama: newObserverName } : o).sort((a,b) => a.nama.localeCompare(b.nama)));
+      } else {
+        const { data, error } = await supabase.from('master_observers').insert([{ nama: newObserverName }]).select();
+        if (!error && data) setObservers(prev => [...prev, data[0]].sort((a,b) => a.nama.localeCompare(b.nama)));
+      }
+      setNewObserverName(''); setEditObserverId(null);
+    } catch (err) { console.error(err); }
+  };
+
+  const deleteObserver = async (id: string) => {
+    try {
+      const supabase = getSupabase();
+      if (!id.startsWith('adi-static') && !id.startsWith('local-')) await supabase.from('master_observers').delete().eq('id', id);
+      setObservers(prev => prev.filter(o => o.id !== id));
+    } catch (err) { console.error(err); }
+  };
+
+  const toggleItem = (id: string, stat: AuditStatus) => { setData(prev => ({ ...prev, [id]: stat })); };
+
+  const stats = useMemo(() => {
+    let patuh = 0, dinilai = 0;
+    Object.values(data).forEach(val => {
+      if (val === 'ya') { patuh++; dinilai++; }
+      else if (val === 'tidak') { dinilai++; }
+    });
+    const persentase = dinilai > 0 ? Math.round((patuh / dinilai) * 100) : 0;
+    let status = 'Belum Dinilai';
+    if (dinilai > 0) {
+      if (persentase >= 85) status = 'Baik';
+      else if (persentase >= 70) status = 'Cukup';
+      else status = 'Perlu Perbaikan';
+    }
+    return { patuh, dinilai, persentase, status };
+  }, [data]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!observer || !unit) { alert('Harap pilih Observer dan Unit.'); return; }
+    if (checklistItems.some(item => data[item.id] === null)) { alert('Harap isi semua monitoring.'); return; }
+    setIsSubmitting(true);
+    try {
+      const supabase = getSupabase();
+      const ttd_pj = sigRef.current?.getPjSignature();
+      const ttd_ipcn = sigRef.current?.getSupervisorSignature();
+      const uploadedUrls = await uploadImagesToSupabase(supabase, images, 'dokumentasi', 'audit');
+      
+      const sessionPayload = {
+        indikator_id: '{{INDIKATOR_ID}}',
+        nama_indikator: '{{TITLE_UPPER}}',
+        tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
+        observer, unit, jumlah_dinilai: stats.dinilai, jumlah_patuh: stats.patuh,
+        persentase: stats.persentase, status_kepatuhan: stats.status,
+        temuan, rekomendasi, ttd_pj_ruangan: ttd_pj, ttd_ipcn: ttd_ipcn,
+        dokumentasi: uploadedUrls, data_indikator: { ...data, nama_pj_ruangan: pjName }
+      };
+
+      const { data: sessionData, error: sessionError } = await supabase.from('audit_sessions').insert([sessionPayload]).select().single();
+      if (sessionError) throw sessionError;
+
+      const detailPayloads = Object.keys(data).map(key => ({
+        session_id: sessionData.id, pertanyaan_id: key,
+        pertanyaan: checklistItems.find(i => i.id === key)?.label || key,
+        jawaban: String(data[key])
+      }));
+      if (detailPayloads.length > 0) await supabase.from('audit_details').insert(detailPayloads);
+
+      setShowToast(true);
+      setTimeout(() => { setShowToast(false); router.push('/dashboard/input/isolasi'); }, 2000);
+    } catch (err) { console.error(err); alert('Gagal menyimpan data.'); } finally { setIsSubmitting(false); }
+  };
+
+  const toLocalISO = (val: Date | null) => {
+    if (!val) return '';
+    const offset = val.getTimezoneOffset() * 60000;
+    return new Date(val.getTime() - offset).toISOString().slice(0, 16);
+  };
+
+  return (
+    <div className="space-y-8 max-w-4xl mx-auto pb-24 px-4 sm:px-6 mt-4 relative">
+      <AnimatePresence>
+        {showToast && (
+          <motion.div initial={{ opacity: 0, y: -20, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
+            className="fixed top-10 left-1/2 -translate-x-1/2 z-[100] bg-blue-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 font-bold uppercase tracking-widest text-xs border border-white/20 glow-blue shadow-blue-500/20">
+            <CheckCircle2 className="w-5 h-5 flex-shrink-0" /> Data Berhasil Disimpan
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="flex items-center gap-6 relative py-4 z-10 border-b border-white/5 bg-navy-dark/50 backdrop-blur-md rounded-b-[2rem]">
+        <Link href="/dashboard/input/isolasi" className="p-3 bg-white/5 rounded-2xl border border-white/10 text-slate-400 hover:text-white transition-all">
+          <ArrowLeft className="w-5 h-5" />
+        </Link>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-heading font-bold tracking-tight text-gradient text-white">{{TITLE}}</h1>
+          <p className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-blue-400 mt-1">{{SUBTITLE}}</p>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-8 text-white">
+        <div className="glass-card p-6 sm:p-8 rounded-[2rem] border-white/5 shadow-xl space-y-6">
+          <div className="grid sm:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2"><Clock className="w-3.5 h-3.5 text-blue-400" /> Waktu Monitoring</label>
+              <input type="datetime-local" value={toLocalISO(startTime)} onChange={(e) => setStartTime(new Date(e.target.value))}
+                className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 transition-all font-mono" />
+            </div>
+            <div className="space-y-3">
+              <label className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                <span className="flex items-center gap-2"><User className="w-3.5 h-3.5 text-blue-400" /> Observer</span>
+                {isIPCN && <button type="button" onClick={() => setIsObserverModalOpen(true)} className="text-[9px] text-blue-400 hover:text-blue-300 underline">Kelola</button>}
+              </label>
+              <select value={observer} onChange={(e) => setObserver(e.target.value)} className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 appearance-none">
+                <option value="" className="bg-slate-900">Pilih Observer</option>
+                {observers.map(o => <option key={o.id} value={o.nama} className="bg-slate-900">{o.nama}</option>)}
+              </select>
+            </div>
+            <div className="space-y-3 sm:col-span-2">
+              <label className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                <span className="flex items-center gap-2"><Building2 className="w-3.5 h-3.5 text-blue-400" /> Unit Kerja</span>
+                {isIPCN && <button type="button" onClick={() => setIsUnitModalOpen(true)} className="text-[9px] text-blue-400 hover:text-blue-300 underline">Kelola</button>}
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                {units.map(u => (
+                  <button key={u.id} type="button" onClick={() => setUnit(u.nama)}
+                    className={`py-2 px-3 rounded-xl text-[10px] font-bold transition-all border ${unit === u.nama ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10'}`}>
+                    {u.nama}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 px-2 flex items-center gap-2"><Settings className="w-4 h-4 text-blue-400" /> Indikator Audit</h3>
+          <div className="grid gap-4">
+            {checklistItems.map((item, idx) => (
+              <div key={item.id} className="glass-card p-5 sm:p-6 rounded-[2rem] border-white/5 hover:border-white/10 transition-all group shadow-xl">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                  <div className="flex items-start gap-4 flex-1">
+                    <span className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 font-bold text-xs">{idx + 1}</span>
+                    <p className="text-sm font-medium text-slate-200 leading-relaxed group-hover:text-white pt-1">{item.label}</p>
+                  </div>
+                  <div className="flex p-1 bg-white/5 rounded-2xl self-end sm:self-center shrink-0">
+                    {(['ya', 'tidak', 'na'] as const).map((stat) => (
+                      <button key={stat} type="button" onClick={() => toggleItem(item.id, stat)}
+                        className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${data[item.id] === stat ? (stat === 'ya' ? 'bg-emerald-600 text-white' : stat === 'tidak' ? 'bg-red-600 text-white' : 'bg-slate-600 text-white') : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}>
+                        {stat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <LiveStatisticsCard totalDinilai={stats.dinilai} totalPatuh={stats.patuh} totalTidakPatuh={stats.dinilai - stats.patuh} persentase={stats.persentase} statusText={stats.status} title="LIVE AUDIT RESULT" />
+
+        <div className="glass-card p-6 sm:p-8 rounded-[2rem] border-white/5 space-y-6">
+          <div className="space-y-4">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2"><FileText className="w-3.5 h-3.5 text-blue-400" /> Temuan / Masalah</label>
+            <textarea value={temuan} onChange={(e) => setTemuan(e.target.value)} placeholder="Tulis temuan lapangan..." 
+              className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-4 text-sm text-white outline-none min-h-[100px] resize-none" />
+          </div>
+          <div className="space-y-4">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2"><AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> Rekomendasi</label>
+            <textarea value={rekomendasi} onChange={(e) => setRekomendasi(e.target.value)} placeholder="Tulis saran perbaikan..." 
+              className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-4 text-sm text-white outline-none min-h-[100px] resize-none" />
+          </div>
+        </div>
+
+        <div className="glass-card p-6 sm:p-8 rounded-[2.5rem] border-white/5 flex flex-col items-center"><DocumentationUploader images={images} setImages={setImages} /></div>
+
+        <DigitalSignatureSection ref={sigRef} pjName={pjName} setPjName={setPjName} pjLabel="PJ RUANGAN" />
+
+        <div className="pt-4 pb-12">
+          <motion.button type="submit" disabled={isSubmitting} whileTap={{ scale: 0.98 }}
+            className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white text-base font-bold uppercase tracking-[0.2em] rounded-2xl transition-all border border-blue-400/30 group disabled:opacity-50 relative overflow-hidden shadow-lg shadow-blue-600/20">
+            {isSubmitting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <><Save className="w-5 h-5 group-hover:scale-110 transition-transform" /><span>Simpan Data Audit</span></>}
+          </motion.button>
+        </div>
+      </form>
+
+      <AnimatePresence>
+        {isObserverModalOpen && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsObserverModalOpen(false)} className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" />
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative w-full max-w-md bg-navy-dark border border-white/10 rounded-[2.5rem] p-8 shadow-2xl text-white">
+              <div className="flex justify-between items-center mb-6"><h3 className="text-lg font-bold text-white uppercase tracking-widest flex items-center gap-3"><User className="w-5 h-5 text-blue-400" /> Kelola Observer</h3><button type="button" onClick={() => setIsObserverModalOpen(false)} className="text-white hover:text-red-400"><X className="w-6 h-6" /></button></div>
+              <div className="flex gap-2 mb-6"><input type="text" value={newObserverName} onChange={(e) => setNewObserverName(e.target.value)} placeholder="Nama Observer..." className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white" /><button type="button" onClick={saveObserver} className="p-3 bg-blue-600 rounded-xl hover:bg-blue-500"><Plus className="w-5 h-5 text-white" /></button></div>
+              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar text-white">
+                {observers.map(o => (
+                  <div key={o.id} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5"><span className="text-sm text-slate-200">{o.nama}</span><div className="flex gap-1">
+                    <button type="button" onClick={() => { setEditObserverId(o.id); setNewObserverName(o.nama); }} className="p-2 hover:bg-blue-500/20 rounded-lg transition-colors"><Edit2 className="w-4 h-4 text-blue-400" /></button>
+                    <button type="button" onClick={() => deleteObserver(o.id)} className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"><Trash2 className="w-4 h-4 text-red-400" /></button>
+                  </div></div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isUnitModalOpen && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsUnitModalOpen(false)} className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" />
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative w-full max-w-md bg-navy-dark border border-white/10 rounded-[2.5rem] p-8 shadow-2xl text-white">
+              <div className="flex justify-between items-center mb-6"><h3 className="text-lg font-bold text-white uppercase tracking-widest flex items-center gap-3"><Building2 className="w-5 h-5 text-blue-400" /> Kelola Unit</h3><button type="button" onClick={() => setIsUnitModalOpen(false)} className="text-white hover:text-red-400"><X className="w-6 h-6" /></button></div>
+              <div className="flex gap-2 mb-6"><input type="text" value={newUnitName} onChange={(e) => setNewUnitName(e.target.value)} placeholder="Nama Unit..." className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white" /><button type="button" onClick={saveUnit} className="p-3 bg-purple-600 rounded-xl hover:bg-purple-500"><Plus className="w-5 h-5 text-white" /></button></div>
+              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar text-white">
+                {units.map(u => (
+                  <div key={u.id} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5"><span className="text-sm text-slate-200">{u.nama}</span><div className="flex gap-1">
+                    <button type="button" onClick={() => { setEditUnitId(u.id); setNewUnitName(u.nama); }} className="p-2 hover:bg-blue-500/20 rounded-lg transition-colors"><Edit2 className="w-4 h-4 text-blue-400" /></button>
+                    <button type="button" onClick={() => deleteUnit(u.id)} className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"><Trash2 className="w-4 h-4 text-red-400" /></button>
+                  </div></div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      
+    </div>
+  );
+}
