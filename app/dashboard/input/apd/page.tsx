@@ -68,6 +68,9 @@ export default function InputApdPage() {
   const [unit, setUnit] = useState('');
   const [profesi, setProfesi] = useState('');
   const [tindakan, setTindakan] = useState('');
+  const [pjName, setPjName] = useState('');
+  const [images, setImages] = useState<DocImage[]>([]);
+  const sigRef = useRef<DigitalSignatureRef>(null);
   
   // Observer Management
   const [observers, setObservers] = useState<Observer[]>([]);
@@ -221,6 +224,11 @@ export default function InputApdPage() {
       const { getSupabase } = await import('@/lib/supabase');
       const supabase = getSupabase();
 
+      const ttdPj = sigRef.current?.getPjSignature();
+      const ttdIpcn = sigRef.current?.getSupervisorSignature();
+
+      const uploadedUrls = await uploadImagesToSupabase(supabase, images, 'dokumentasi', 'audit');
+
       const payload = {
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
         observer,
@@ -237,7 +245,11 @@ export default function InputApdPage() {
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
-        status_kepatuhan: stats.status
+        status_kepatuhan: stats.status,
+        nama_pj_ruangan: pjName,
+        ttd_pj_ruangan: ttdPj,
+        ttd_ipcn: ttdIpcn,
+        dokumentasi: uploadedUrls
       };
 
       // Modifikasi untuk menggunakan audit_sessions sesuai instruksi
@@ -261,7 +273,7 @@ export default function InputApdPage() {
         nama_pj_ruangan: headerData.nama_pj_ruangan || null,
         ttd_pj_ruangan: headerData.ttd_pj_ruangan || null,
         ttd_ipcn: headerData.ttd_ipcn || null,
-        dokumentasi: [],
+        dokumentasi: headerData.dokumentasi || [],
         data_indikator: { masker, sarung_tangan, penutup_kepala, apron, goggle, sepatu_boot, gaun_pelindung }
       };
 
@@ -511,6 +523,19 @@ export default function InputApdPage() {
           statusText={stats.status}
           title="KEPATUHAN APD"
         />
+
+        <div className="space-y-6 mt-8">
+          <DocumentationUploader 
+            images={images}
+            setImages={setImages}
+          />
+
+          <DigitalSignatureSection 
+            ref={sigRef}
+            pjName={pjName}
+            setPjName={setPjName}
+          />
+        </div>
 
         <AnimatePresence>
           {stats.dinilai > 0 && stats.persentase < 100 && (

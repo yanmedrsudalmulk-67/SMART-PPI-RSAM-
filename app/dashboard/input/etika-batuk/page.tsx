@@ -95,8 +95,8 @@ export default function EtikaBatukPage() {
   const [editObserverId, setEditObserverId] = useState<string | null>(null);
   
   // Signatures
+  const sigRef = useRef<DigitalSignatureRef>(null);
 
-  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
@@ -244,6 +244,9 @@ export default function EtikaBatukPage() {
       // In a real app, images would go to Supabase Storage
 
       const uploadedUrls = await uploadImagesToSupabase(supabase, images, 'dokumentasi', 'audit');
+      const pjSignature = sigRef.current?.getPjSignature();
+      const ipcnSignature = sigRef.current?.getSupervisorSignature();
+
       const payload = {
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
         observer,
@@ -256,28 +259,28 @@ export default function EtikaBatukPage() {
         temuan,
         rekomendasi,
         nama_pj_ruangan: pjName,
-        ttd_pj_ruangan: ttd_pj,
-        ttd_ipcn: ttd_ipcn,
+        ttd_pj_ruangan: pjSignature,
+        ttd_ipcn: ipcnSignature,
         created_at: new Date().toISOString(),
         dokumentasi: uploadedUrls
       };
 
       
       // Modifikasi untuk menggunakan audit_sessions sesuai instruksi
-      const { data_indikator, checklist_json, ...headerData } = payload;
+      const { data_indikator, checklist_json, ...headerData } = payload as any;
       
       const sessionPayload = {
         indikator_id: 'audit_etika_batuk', // Menggunakan nama tabel sebagai indikator ID
         nama_indikator: 'AUDIT ETIKA BATUK',
         tanggal_waktu: headerData.tanggal_waktu || headerData.waktu || headerData.start_time || new Date().toISOString(),
-        observer: headerData.observer || (typeof observer !== 'undefined' ? observer : '') || (typeof selectedSupervisor !== 'undefined' ? selectedSupervisor : ''),
-        unit: headerData.unit || (typeof unit !== 'undefined' ? unit : (typeof ruangan !== 'undefined' ? ruangan : '')),
+        observer: headerData.observer || observer || '',
+        unit: headerData.unit || unit || '',
         profesi: headerData.profesi || null,
         jenis_tindakan: headerData.jenis_tindakan || null,
         jumlah_dinilai: headerData.jumlah_dinilai || (typeof stats !== 'undefined' ? stats?.dinilai : null) || 0,
         jumlah_patuh: headerData.jumlah_patuh || (typeof stats !== 'undefined' ? stats?.patuh : null) || 0,
         persentase: headerData.persentase || (typeof stats !== 'undefined' ? stats?.persentase : null) || 0,
-        status_kepatuhan: headerData.status_kepatuhan || (typeof stats !== 'undefined' ? (stats?.status || stats?.statusText) : null) || 'Belum Dinilai',
+        status_kepatuhan: headerData.status_kepatuhan || stats?.status || 'Belum Dinilai',
         temuan: headerData.temuan || '',
         rekomendasi: headerData.rekomendasi || '',
         nama_pj_ruangan: payload.nama_pj_ruangan,
@@ -325,6 +328,12 @@ export default function EtikaBatukPage() {
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
+        setTemuan('');
+        setRekomendasi('');
+        setImages([]);
+        if (sigRef.current) {
+          sigRef.current.clearAll();
+        }
         router.push('/dashboard/input/isolasi');
       }, 2000);
     } catch (err: any) {
@@ -577,6 +586,8 @@ export default function EtikaBatukPage() {
               setImages={setImages}
             />
           </div>
+
+          <DigitalSignatureSection ref={sigRef} pjName={pjName} setPjName={setPjName} pjLabel="PJ / KEPALA RUANGAN" supervisorLabel="AUDITOR / IPCLN" />
         </div>
 
         {/* BUTTON SIMPAN */}

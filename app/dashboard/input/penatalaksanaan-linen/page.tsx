@@ -222,7 +222,7 @@ export default function PenatalaksanaanLinenPage() {
 
       
       // Modifikasi untuk menggunakan audit_sessions sesuai instruksi
-      const { data_indikator, checklist_json, ...headerData } = payload;
+      const { data_indikator, checklist_json, ...headerData } = payload as any;
       
       const sessionPayload = {
         indikator_id: 'audit_penatalaksanaan_linen', // Menggunakan nama tabel sebagai indikator ID

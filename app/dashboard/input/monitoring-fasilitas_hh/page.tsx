@@ -231,20 +231,20 @@ export default function FasilitasHandHygienePage() {
 
       
       // Modifikasi untuk menggunakan audit_sessions sesuai instruksi
-      const { data_indikator, checklist_json, ...headerData } = payload;
+      const { data_indikator, checklist_json, ...headerData } = payload as any;
       
       const sessionPayload = {
         indikator_id: 'monitoring_fasilitas_hand_hygiene', // Menggunakan nama tabel sebagai indikator ID
         nama_indikator: 'MONITORING FASILITAS HAND HYGIENE',
         tanggal_waktu: headerData.tanggal_waktu || headerData.waktu || headerData.start_time || new Date().toISOString(),
-        observer: headerData.observer || (typeof observer !== 'undefined' ? observer : '') || (typeof selectedSupervisor !== 'undefined' ? selectedSupervisor : ''),
-        unit: headerData.unit || (typeof unit !== 'undefined' ? unit : (typeof ruangan !== 'undefined' ? ruangan : '')),
+        observer: headerData.observer || observer || '',
+        unit: headerData.unit || unit || '',
         profesi: headerData.profesi || null,
         jenis_tindakan: headerData.jenis_tindakan || null,
-        jumlah_dinilai: headerData.jumlah_dinilai || (typeof stats !== 'undefined' ? stats?.dinilai : null) || 0,
-        jumlah_patuh: headerData.jumlah_patuh || (typeof stats !== 'undefined' ? stats?.patuh : null) || 0,
-        persentase: headerData.persentase || (typeof stats !== 'undefined' ? stats?.persentase : null) || 0,
-        status_kepatuhan: headerData.status_kepatuhan || (typeof stats !== 'undefined' ? (stats?.status || stats?.statusText) : null) || 'Belum Dinilai',
+        jumlah_dinilai: headerData.jumlah_dinilai || stats.dinilai || 0,
+        jumlah_patuh: headerData.jumlah_patuh || stats.patuh || 0,
+        persentase: headerData.persentase || stats.persentase || 0,
+        status_kepatuhan: headerData.status_kepatuhan || stats.status || 'Belum Dinilai',
         temuan: headerData.temuan || '',
         rekomendasi: headerData.rekomendasi || '',
         nama_pj_ruangan: payload.nama_pj_ruangan,

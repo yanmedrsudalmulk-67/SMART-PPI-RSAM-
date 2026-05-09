@@ -301,7 +301,7 @@ export default function DekontaminasiAlatPage() {
 
       
       // Modifikasi untuk menggunakan audit_sessions sesuai instruksi
-      const { data_indikator, checklist_data, checklist_json, ...headerData } = payload;
+      const { data_indikator, checklist_data, checklist_json, ...headerData } = payload as any;
       
       const sessionPayload = {
         indikator_id: 'audit_dekontaminasi_alat', // Menggunakan nama tabel sebagai indikator ID
@@ -376,8 +376,7 @@ export default function DekontaminasiAlatPage() {
         setRekomendasi('');
         setImages([]);
         if (sigRef.current) {
-          sigRef.current.clearPj();
-          sigRef.current.clearSupervisor();
+          sigRef.current.clearAll();
         }
       }, 2000);
     } catch (err: any) {

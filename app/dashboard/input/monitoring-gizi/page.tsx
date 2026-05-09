@@ -289,20 +289,20 @@ export default function GiziInputPage() {
 
       
       // Modifikasi untuk menggunakan audit_sessions sesuai instruksi
-      const { data_indikator, checklist_json, ...headerData } = insertData;
+      const { data_indikator, checklist_json, ...headerData } = insertData as any;
       
       const sessionPayload = {
         indikator_id: 'audit_gizi_monitoring', // Menggunakan nama tabel sebagai indikator ID
         nama_indikator: 'AUDIT GIZI MONITORING',
         tanggal_waktu: headerData.tanggal_waktu || headerData.waktu || headerData.start_time || new Date().toISOString(),
-        observer: headerData.observer || (typeof observer !== 'undefined' ? observer : '') || (typeof selectedSupervisor !== 'undefined' ? selectedSupervisor : ''),
-        unit: headerData.unit || (typeof unit !== 'undefined' ? unit : (typeof ruangan !== 'undefined' ? ruangan : '')),
+        observer: headerData.observer || selectedSupervisor || '',
+        unit: headerData.unit || ruangan || '',
         profesi: headerData.profesi || null,
         jenis_tindakan: headerData.jenis_tindakan || null,
-        jumlah_dinilai: headerData.jumlah_dinilai || (typeof stats !== 'undefined' ? stats?.dinilai : null) || 0,
-        jumlah_patuh: headerData.jumlah_patuh || (typeof stats !== 'undefined' ? stats?.patuh : null) || 0,
-        persentase: headerData.persentase || (typeof stats !== 'undefined' ? stats?.persentase : null) || 0,
-        status_kepatuhan: headerData.status_kepatuhan || (typeof stats !== 'undefined' ? (stats?.status || stats?.statusText) : null) || 'Belum Dinilai',
+        jumlah_dinilai: headerData.jumlah_dinilai || stats.totalDinilai || 0,
+        jumlah_patuh: headerData.jumlah_patuh || stats.totalPatuh || 0,
+        persentase: headerData.persentase || stats.persentase || 0,
+        status_kepatuhan: headerData.status_kepatuhan || stats.statusText || 'Belum Dinilai',
         temuan: headerData.temuan || '',
         rekomendasi: headerData.rekomendasi || '',
         ttd_pj_ruangan: headerData.ttd_pj_ruangan || null,
