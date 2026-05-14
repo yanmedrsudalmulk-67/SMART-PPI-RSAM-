@@ -146,7 +146,7 @@ export default function HandHygieneReport({
         avg: Math.round(avgOverall)
       }
     };
-  }, [filteredData, filters.periode]);
+  }, [filteredData, filters.periode, filters.type]);
 
   const mapMomentAction = (val: string | null) => {
     if (val === 'hr') return <span className="flex justify-center"><CheckCircle2 className="w-4 h-4 text-emerald-500" /></span>;

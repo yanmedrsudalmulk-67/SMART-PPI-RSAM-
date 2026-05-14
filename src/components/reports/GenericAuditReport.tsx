@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import OfficialReportSheet from '@/components/reports/OfficialReportSheet';
 import { 
@@ -47,7 +47,7 @@ export default function GenericAuditReport({
   const [loading, setLoading] = useState(true);
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       let sessionQuery = supabase.from('audit_sessions').select('*').eq('indikator_id', tableName);
@@ -88,7 +88,7 @@ export default function GenericAuditReport({
     } finally {
       setLoading(false);
     }
-  };
+  }, [tableName, extraFilter, selectedRecordId]);
 
   useEffect(() => {
     fetchData();
@@ -97,7 +97,7 @@ export default function GenericAuditReport({
       .subscribe();
       
     return () => { supabase.removeChannel(chTarget); };
-  }, [tableName, extraFilter]);
+  }, [tableName, fetchData]);
 
   const { filteredRecords, summaryStats } = useMemo(() => {
     let filteredData = data;
