@@ -74,9 +74,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           const [slidesRes, stdRes, hhRes, apdRes, haisRes] = await Promise.all([
             supabase.from('dashboard_slider').select('*').order('sort_order', { ascending: true }),
             supabase.from('dashboard_standards').select('*'),
-            supabase.from('audit_hand_hygiene').select('id, start_time, unit, ruangan, persentase, created_at, m1, m2, m3, m4, m5').gte('start_time', startDate),
-            supabase.from('audit_apd').select('id, tanggal_waktu, jumlah_patuh, jumlah_dinilai, unit, ruangan, created_at, masker, sarung_tangan, penutup_kepala, apron, goggle, sepatu_boot, gaun_pelindung').gte('tanggal_waktu', startDate),
-            supabase.from('insiden_hais').select('id, tanggal_waktu, jenis, rate, unit, ruangan, created_at').gte('tanggal_waktu', startDate)
+            supabase.from('audit_hand_hygiene').select('*'),
+            supabase.from('audit_apd').select('*'),
+            supabase.from('insiden_hais').select('*')
           ]);
 
           let newSlides: any[] = [];
