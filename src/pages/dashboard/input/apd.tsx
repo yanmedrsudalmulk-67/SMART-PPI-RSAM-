@@ -1,0 +1,311 @@
+import { useState, useEffect, useMemo, ReactElement } from 'react';
+import { useRouter } from 'next/router';
+import { 
+  ArrowLeft, Save, CheckCircle2, Clock, User, Building2, Stethoscope, Activity, Settings, AlertCircle, RefreshCw, X, Edit2, Trash2, FileText
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import Link from 'next/link';
+import { useAppContext } from '@/components/Providers';
+import { supabase } from '@/lib/supabase';
+import DashboardLayout from '@/components/DashboardLayout';
+import { LiveStatisticsCard } from '@/components/LiveStatisticsCard';
+
+type Observer = { id: string; nama: string };
+
+import { EditableSelect } from '@/components/EditableSelect';
+
+const units = [
+  'IGD', 'ICU', 'IBS', 'Rawat Jalan', 'Ranap Aisyah', 
+  'Ranap Fatimah', 'Ranap Khadijah', 'Ranap Usman', 
+  'Radiologi', 'Laboratorium', 'Pantry', 'Emergency Kebidanan'
+];
+
+const professions = [
+  'Dokter Umum', 'Dokter Spesialis', 'Perawat', 'Bidan', 
+  'Analis Laboratorium', 'Radiografer', 'Pramusaji'
+];
+
+const apdItems = [
+  { id: 'masker', label: '1. Masker', key: 'masker' },
+  { id: 'sarung_tangan', label: '2. Sarung Tangan', key: 'sarung_tangan' },
+  { id: 'penutup_kepala', label: '3. Penutup Kepala', key: 'penutup_kepala' },
+  { id: 'apron', label: '4. Apron', key: 'apron' },
+  { id: 'goggle', label: '5. Kaca Mata / Goggle', key: 'goggle' },
+  { id: 'sepatu_boot', label: '6. Sepatu Boot', key: 'sepatu_boot' },
+  { id: 'gaun_pelindung', label: '7. Gaun / Baju Pelindung', key: 'gaun_pelindung' }
+] as const;
+
+type ApdStatus = 'ya' | 'tidak' | 'na' | null;
+
+export default function InputApdPage() {
+  const router = useRouter();
+  const { userRole } = useAppContext();
+  const isIPCN = userRole === 'IPCN' || userRole === 'Admin';
+  
+  const [startTime, setStartTime] = useState<Date | null>(null);
+  const [now, setNow] = useState<Date | null>(null);
+  
+  const [observer, setObserver] = useState('');
+  const [unit, setUnit] = useState('');
+  const [profesi, setProfesi] = useState('');
+  const [tindakan, setTindakan] = useState('');
+  
+  const [observers, setObservers] = useState<Observer[]>([]);
+  const [isObserverModalOpen, setIsObserverModalOpen] = useState(false);
+  const [newObserverName, setNewObserverName] = useState('');
+  const [editObserverId, setEditObserverId] = useState<string | null>(null);
+
+  const [apdData, setApdData] = useState<Record<string, ApdStatus>>({
+    masker: null, sarung_tangan: null, penutup_kepala: null, apron: null, goggle: null, sepatu_boot: null, gaun_pelindung: null
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+
+  useEffect(() => {
+    const d = new Date();
+    setStartTime(d);
+    setNow(d);
+    fetchObservers();
+    const timer = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const fetchObservers = async () => {
+    try {
+      const { data, error } = await supabase.from('master_observers').select('*').order('nama');
+      if (error) throw error;
+      
+      let finalData = data || [];
+      const hasAdi = finalData.some(s => s.nama === 'IPCN_Adi Tresa Purnama');
+      if (!hasAdi) {
+        finalData = [{ id: 'adi-static', nama: 'IPCN_Adi Tresa Purnama' }, ...finalData];
+      }
+      setObservers(finalData);
+      if (finalData.length > 0 && !observer) {
+        setObserver(finalData[0].nama);
+      }
+    } catch (err) {
+      setObservers([{ id: '1', nama: 'IPCN_Adi Tresa Purnama' }]);
+      setObserver('IPCN_Adi Tresa Purnama');
+    }
+  };
+
+  const saveObserver = async () => {
+    if (!newObserverName.trim()) return;
+    try {
+      if (editObserverId) {
+        if (!editObserverId.startsWith('local-') && editObserverId !== 'adi-static') {
+          await supabase.from('master_observers').update({ nama: newObserverName }).eq('id', editObserverId);
+        }
+        setObservers(prev => prev.map(o => o.id === editObserverId ? { ...o, nama: newObserverName } : o).sort((a,b) => a.nama.localeCompare(b.nama)));
+      } else {
+        const { data, error } = await supabase.from('master_observers').insert([{ nama: newObserverName }]).select();
+        if (!error && data && data.length > 0) {
+          setObservers(prev => [...prev, data[0]].sort((a,b) => a.nama.localeCompare(b.nama)));
+        } else {
+          setObservers(prev => [...prev, { id: 'local-' + Date.now().toString(), nama: newObserverName }].sort((a,b) => a.nama.localeCompare(b.nama)));
+        }
+      }
+      setNewObserverName('');
+      setEditObserverId(null);
+    } catch (err) {
+       console.error(err);
+    }
+  };
+
+  const handleError = (err: any) => {
+    console.error(err);
+    alert(`Error: ${err.message || 'Terjadi kesalahan sistem'}`);
+  };
+
+  const handleActionClick = (id: string, stat: ApdStatus) => {
+    setApdData(prev => ({ ...prev, [id]: stat }));
+  };
+
+  const stats = useMemo(() => {
+    let patuh = 0;
+    let dinilai = 0;
+    
+    Object.values(apdData).forEach(val => {
+      if (val === 'ya') { patuh++; dinilai++; }
+      else if (val === 'tidak') { dinilai++; }
+    });
+
+    const persentase = dinilai > 0 ? Math.round((patuh / dinilai) * 100) : 0;
+    let statusText = 'Belum Dinilai';
+    if (dinilai > 0) {
+      statusText = persentase === 100 ? 'Patuh' : 'Tidak Patuh';
+    }
+    return { patuh, dinilai, persentase, statusText };
+  }, [apdData]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    try {
+      const payload = {
+        tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
+        observer, unit, profesi, tindakan,
+        masker: apdData.masker,
+        sarung_tangan: apdData.sarung_tangan,
+        penutup_kepala: apdData.penutup_kepala,
+        apron: apdData.apron,
+        goggle: apdData.goggle,
+        sepatu_boot: apdData.sepatu_boot,
+        gaun_pelindung: apdData.gaun_pelindung,
+        jumlah_dinilai: stats.dinilai,
+        jumlah_patuh: stats.patuh,
+        persentase: stats.persentase,
+        status_kepatuhan: stats.statusText,
+      };
+
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('audit_sessions')
+        .insert([{
+          indikator_id: 'audit_apd', 
+          nama_indikator: 'AUDIT KEPATUHAN PENGGUNAAN APD',
+          tanggal_waktu: payload.tanggal_waktu,
+          observer, unit, profesi,
+          jenis_tindakan: tindakan,
+          jumlah_dinilai: stats.dinilai,
+          jumlah_patuh: stats.patuh,
+          persentase: stats.persentase,
+          status_kepatuhan: stats.statusText,
+          data_indikator: { 
+            masker: apdData.masker, 
+            sarung_tangan: apdData.sarung_tangan, 
+            penutup_kepala: apdData.penutup_kepala, 
+            apron: apdData.apron, 
+            goggle: apdData.goggle, 
+            sepatu_boot: apdData.sepatu_boot, 
+            gaun_pelindung: apdData.gaun_pelindung 
+          }
+        }])
+        .select('*')
+        .single();
+
+      if (sessionError) throw sessionError;
+
+      // Fallback old table
+      await supabase.from('audit_apd').insert([payload]);
+
+      setShowToast(true);
+      setTimeout(() => {
+        setShowToast(false);
+        router.push('/dashboard/input/isolasi');
+      }, 2000);
+    } catch (err: any) {
+      handleError(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto pb-32">
+      <AnimatePresence>
+        {showToast && (
+          <motion.div initial={{ opacity: 0, y: -50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -50 }}
+            className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-blue-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 font-bold uppercase tracking-widest text-xs border border-blue-400/30"
+          >
+            <CheckCircle2 className="w-5 h-5" />
+            Data Audit APD Tersimpan!
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="flex items-center gap-6 mb-8 py-6 border-b border-white/5">
+        <Link href="/dashboard/input/isolasi" className="p-3 bg-white/5 rounded-2xl border border-white/10 text-slate-400 hover:text-white transition-all">
+          <ArrowLeft className="w-5 h-5" />
+        </Link>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 via-blue-500 to-emerald-500 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all drop-shadow-sm dark:drop-shadow-[0_0_10px_rgba(59,130,246,0.4)] uppercase">Audit Kepatuhan Penggunaan APD</h1>
+          <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.1em] text-emerald-600 dark:text-blue-400 mt-1">Observasi penggunaan Alat Pelindung Diri petugas</p>
+        </div>
+      </div>
+
+      <div className="space-y-6">
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
+          <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
+            <Activity className="w-4 h-4 text-purple-400" /> Data Subjek
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <EditableSelect
+              label="Observer"
+              value={observer}
+              onChange={setObserver}
+              options={[]}
+              isIPCN={isIPCN}
+              table="master_observers"
+              placeholder="Pilih Observer..."
+            />
+            <EditableSelect
+              label="Unit"
+              value={unit}
+              onChange={setUnit}
+              options={units}
+              isIPCN={isIPCN}
+              storageKey="smartppi_units"
+              placeholder="Pilih Unit..."
+            />
+            <EditableSelect
+              label="Profesi"
+              value={profesi}
+              onChange={setProfesi}
+              options={professions}
+              isIPCN={isIPCN}
+              storageKey="smartppi_professions"
+              placeholder="Pilih Profesi..."
+            />
+          </div>
+        </div>
+
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
+          <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
+            <FileText className="w-4 h-4 text-amber-400" /> Tindakan
+          </h2>
+          <input type="text" value={tindakan} onChange={(e) => setTindakan(e.target.value)} placeholder="Contoh: Pemasangan infus, Operasi, dll" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none" />
+        </div>
+
+        <div className="space-y-4">
+          {apdItems.map((apd) => (
+            <div key={apd.id} className="bg-white/5 p-6 rounded-[24px] border border-white/5">
+              <h3 className="text-sm font-bold text-white mb-4">{apd.label}</h3>
+              <div className="grid grid-cols-3 gap-3">
+                {['ya', 'tidak', 'na'].map(choice => (
+                  <button key={choice} onClick={() => handleActionClick(apd.id, choice as any)}
+                    className={`py-3 px-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                      apdData[apd.id] === choice 
+                        ? (choice === 'ya' ? 'bg-blue-600/20 text-blue-400 border-blue-500/50' : choice === 'tidak' ? 'bg-red-600/20 text-red-400 border-red-500/50' : 'bg-slate-600/20 text-slate-300 border-slate-500/50')
+                        : 'bg-white/5 text-slate-400 border-transparent hover:bg-white/10'
+                    }`}
+                  >
+                    {choice.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <LiveStatisticsCard 
+          totalDinilai={stats.dinilai} totalPatuh={stats.patuh} totalTidakPatuh={stats.dinilai - stats.patuh}
+          persentase={stats.persentase} statusText={stats.statusText} title="KEPATUHAN PENGGUNAAN APD"
+        />
+
+        <button onClick={handleSubmit} disabled={isSubmitting || !observer || !unit || !profesi || !tindakan || stats.dinilai === 0}
+          className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg disabled:opacity-50"
+        >
+          {isSubmitting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+          <span>Simpan Data Audit</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+InputApdPage.getLayout = function getLayout(page: ReactElement) {
+  return <DashboardLayout>{page}</DashboardLayout>;
+};

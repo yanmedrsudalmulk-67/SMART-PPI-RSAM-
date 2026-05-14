@@ -1,48 +1,42 @@
 {
-  "name": "ai-studio-applet",
-  "version": "0.1.0",
+  "name": "smart-ppi",
   "private": true,
-  "engines": {
-    "node": ">=20.x"
-  },
+  "version": "0.1.0",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
-    "clean": "next clean"
+    "lint": "next lint"
   },
   "dependencies": {
-    "@google/genai": "^1.17.0",
-    "@hookform/resolvers": "^5.2.1",
-    "@supabase/supabase-js": "^2.103.3",
-    "autoprefixer": "^10.4.21",
-    "class-variance-authority": "^0.7.1",
+    "@supabase/supabase-js": "^2.49.8",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
-    "lucide-react": "^0.553.0",
-    "motion": "^12.23.24",
-    "next": "^15.4.9",
-    "postcss": "^8.5.6",
-    "react": "^19.2.1",
-    "react-dom": "^19.2.1",
+    "framer-motion": "^11.18.2",
+    "lucide-react": "^0.511.0",
+    "motion": "^12.38.0",
+    "next": "14.2.30",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-hook-form": "^7.54.2",
     "react-signature-canvas": "^1.1.0-alpha.2",
-    "recharts": "^3.8.1",
-    "tailwind-merge": "^3.3.1",
-    "trim-canvas": "^0.1.2"
+    "recharts": "^2.15.1",
+    "tailwind-merge": "^2.5.2",
+    "tailwindcss": "^3.4.19",
+    "tailwindcss-animate": "^1.0.7",
+    "zod": "^3.24.1",
+    "zustand": "^5.0.3"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "4.1.11",
-    "@tailwindcss/typography": "^0.5.19",
+    "@tailwindcss/postcss": "^4.0.0",
     "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "@types/react-signature-canvas": "^1.0.7",
-    "eslint": "9.39.1",
-    "eslint-config-next": "16.0.8",
-    "firebase-tools": "^15.0.0",
-    "tailwindcss": "4.1.11",
-    "tw-animate-css": "^1.4.0",
-    "typescript": "5.9.3"
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.1",
+    "@types/react-signature-canvas": "^1.0.5",
+    "autoprefixer": "^10.5.0",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "14.2.30",
+    "postcss": "^8.5.14",
+    "typescript": "^5.6.3"
   }
 }

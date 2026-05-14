@@ -173,47 +173,43 @@ ALTER TABLE IF EXISTS "public"."audit_pengendalian_lingkungan" ENABLE ROW LEVEL 
 ALTER TABLE IF EXISTS "public"."audit_pengelolaan_limbah_medis" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS "public"."audit_pengelolaan_limbah_tajam" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS "public"."audit_penatalaksanaan_linen" ENABLE ROW LEVEL SECURITY;
-
--- Audit Sessions Table
-CREATE TABLE IF NOT EXISTS public.audit_sessions (
-  id uuid default gen_random_uuid() primary key,
-  indikator_id text not null,
-  nama_indikator text not null,
-  tanggal_waktu timestamp with time zone not null,
-  observer text,
-  unit text,
-  profesi text,
-  jenis_tindakan text,
-  jumlah_dinilai int default 0,
-  jumlah_patuh int default 0,
-  persentase numeric default 0,
-  status_kepatuhan text,
-  temuan text,
-  rekomendasi text,
-  nama_pj_ruangan text,
-  ttd_pj_ruangan text, -- Base64 or URL
-  ttd_ipcn text,       -- Base64 or URL
-  dokumentasi jsonb default '[]'::jsonb,
-  data_indikator jsonb default '{}'::jsonb,
-  created_at timestamp with time zone default timezone('utc'::text, now())
-);
-
--- Audit Details Table (For checklist items, etc)
-CREATE TABLE IF NOT EXISTS public.audit_details (
-  id uuid default gen_random_uuid() primary key,
-  session_id uuid references public.audit_sessions(id) on delete cascade,
-  pertanyaan_id text,
-  pertanyaan text,
-  jawaban text,
-  section text,
-  profesi text,
-  momen text,
-  status text,
-  metadata jsonb default '{}'::jsonb,
-  created_at timestamp with time zone default timezone('utc'::text, now())
-);
-
 ALTER TABLE IF EXISTS "public"."master_observers" ENABLE ROW LEVEL SECURITY;
+
+-- 2.b Unified Audit Tables
+CREATE TABLE IF NOT EXISTS public.audit_sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    indikator_id TEXT,
+    nama_indikator TEXT,
+    kategori TEXT,
+    tanggal_waktu TIMESTAMPTZ,
+    observer TEXT,
+    unit TEXT,
+    profesi TEXT,
+    jenis_tindakan TEXT,
+    jumlah_dinilai INTEGER,
+    jumlah_patuh INTEGER,
+    persentase INTEGER,
+    status_kepatuhan TEXT,
+    temuan TEXT,
+    rekomendasi TEXT,
+    nama_pj TEXT,
+    nama_pj_ruangan TEXT,
+    ttd_pj TEXT,
+    ttd_pj_ruangan TEXT,
+    ttd_ipcn TEXT,
+    dokumentasi JSONB,
+    data_indikator JSONB
+);
+
+CREATE TABLE IF NOT EXISTS public.audit_details (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    session_id UUID REFERENCES audit_sessions(id) ON DELETE CASCADE,
+    pertanyaan_id TEXT,
+    pertanyaan TEXT,
+    jawaban TEXT
+);
+
 ALTER TABLE IF EXISTS "public"."audit_sessions" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS "public"."audit_details" ENABLE ROW LEVEL SECURITY;
 
@@ -246,6 +242,23 @@ SELECT name FROM unnest(ARRAY[
   'IPCLN_Rickha Ilnia'
 ]) AS name
 WHERE NOT EXISTS (SELECT 1 FROM public.master_observers LIMIT 1);
+
+-- Ensure audit_sessions has all required columns (fix for existing table)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='audit_sessions' AND column_name='nama_pj') THEN
+        ALTER TABLE public.audit_sessions ADD COLUMN nama_pj TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='audit_sessions' AND column_name='nama_pj_ruangan') THEN
+        ALTER TABLE public.audit_sessions ADD COLUMN nama_pj_ruangan TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='audit_sessions' AND column_name='ttd_pj') THEN
+        ALTER TABLE public.audit_sessions ADD COLUMN ttd_pj TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='audit_sessions' AND column_name='ttd_pj_ruangan') THEN
+        ALTER TABLE public.audit_sessions ADD COLUMN ttd_pj_ruangan TEXT;
+    END IF;
+END $$;
 
 -- 5. Refresh Schema Cache
 NOTIFY pgrst, 'reload schema';

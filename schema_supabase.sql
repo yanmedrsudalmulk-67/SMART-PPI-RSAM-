@@ -266,6 +266,63 @@ CREATE TABLE IF NOT EXISTS audit_ruang_tunggu (
     ttd_ipcn TEXT
 );
 
+-- 13.d Tabel Kamar Jenazah
+CREATE TABLE IF NOT EXISTS audit_kamar_jenazah (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    waktu TIMESTAMPTZ,
+    ruangan TEXT,
+    supervisor TEXT,
+    checklist_json JSONB,
+    persentase INTEGER,
+    status TEXT,
+    temuan TEXT,
+    rekomendasi TEXT,
+    dokumentasi JSONB,
+    nama_pj TEXT,
+    ttd_pj TEXT,
+    ttd_ipcn TEXT
+);
+
+-- 13.e Tabel Laboratorium
+CREATE TABLE IF NOT EXISTS audit_laboratorium (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    waktu TIMESTAMPTZ,
+    ruangan TEXT,
+    supervisor TEXT,
+    checklist_json JSONB,
+    persentase INTEGER,
+    status TEXT,
+    temuan TEXT,
+    rekomendasi TEXT,
+    dokumentasi JSONB,
+    nama_pj TEXT,
+    ttd_pj TEXT,
+    ttd_ipcn TEXT
+);
+
+-- 13.f Tabel Radiologi
+CREATE TABLE IF NOT EXISTS audit_radiologi (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    waktu TIMESTAMPTZ,
+    ruangan TEXT,
+    supervisor TEXT,
+    checklist_json JSONB,
+    persentase INTEGER,
+    status TEXT,
+    temuan TEXT,
+    rekomendasi TEXT,
+    dokumentasi JSONB,
+    nama_pj TEXT,
+    ttd_pj TEXT,
+    ttd_ipcn TEXT
+);
+
 -- 14. Tabel Monitoring Ruang Isolasi
 CREATE TABLE IF NOT EXISTS audit_monitoring_ppi (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -397,6 +454,9 @@ ALTER TABLE audit_penyuntikan_aman ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_perlindungan_petugas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_farmasi ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_ruangan_ibs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_kamar_jenazah ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_laboratorium ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_radiologi ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_monitoring_ppi ENABLE ROW LEVEL SECURITY;
 ALTER TABLE monitoring_fasilitas_apd ENABLE ROW LEVEL SECURITY;
 ALTER TABLE monitoring_fasilitas_hand_hygiene ENABLE ROW LEVEL SECURITY;
@@ -444,6 +504,9 @@ CREATE TABLE IF NOT EXISTS audit_sessions (
     status_kepatuhan TEXT,
     temuan TEXT,
     rekomendasi TEXT,
+    nama_pj TEXT,
+    nama_pj_ruangan TEXT,
+    ttd_pj TEXT,
     ttd_pj_ruangan TEXT,
     ttd_ipcn TEXT,
     dokumentasi JSONB,
@@ -460,6 +523,26 @@ CREATE TABLE IF NOT EXISTS audit_details (
 
 ALTER TABLE IF EXISTS audit_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS audit_details ENABLE ROW LEVEL SECURITY;
+
+-- Ensure audit_sessions has all required columns (fix for existing table)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='audit_sessions' AND column_name='nama_pj') THEN
+        ALTER TABLE public.audit_sessions ADD COLUMN nama_pj TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='audit_sessions' AND column_name='nama_pj_ruangan') THEN
+        ALTER TABLE public.audit_sessions ADD COLUMN nama_pj_ruangan TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='audit_sessions' AND column_name='ttd_pj') THEN
+        ALTER TABLE public.audit_sessions ADD COLUMN ttd_pj TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='audit_sessions' AND column_name='ttd_pj_ruangan') THEN
+        ALTER TABLE public.audit_sessions ADD COLUMN ttd_pj_ruangan TEXT;
+    END IF;
+END $$;
+
+-- Refresh Schema Cache
+NOTIFY pgrst, 'reload schema';
 
 
 -- =========================================================================
@@ -571,6 +654,30 @@ CREATE POLICY "Access for authenticated users" ON public.audit_ruangan_ibs
 
 DROP POLICY IF EXISTS "Public access for compatibility" ON public.audit_ruangan_ibs;
 CREATE POLICY "Public access for compatibility" ON public.audit_ruangan_ibs
+  FOR ALL TO anon USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Access for authenticated users" ON public.audit_kamar_jenazah;
+CREATE POLICY "Access for authenticated users" ON public.audit_kamar_jenazah
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public access for compatibility" ON public.audit_kamar_jenazah;
+CREATE POLICY "Public access for compatibility" ON public.audit_kamar_jenazah
+  FOR ALL TO anon USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Access for authenticated users" ON public.audit_laboratorium;
+CREATE POLICY "Access for authenticated users" ON public.audit_laboratorium
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public access for compatibility" ON public.audit_laboratorium;
+CREATE POLICY "Public access for compatibility" ON public.audit_laboratorium
+  FOR ALL TO anon USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Access for authenticated users" ON public.audit_radiologi;
+CREATE POLICY "Access for authenticated users" ON public.audit_radiologi
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public access for compatibility" ON public.audit_radiologi;
+CREATE POLICY "Public access for compatibility" ON public.audit_radiologi
   FOR ALL TO anon USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Access for authenticated users" ON public.audit_monitoring_ppi;
