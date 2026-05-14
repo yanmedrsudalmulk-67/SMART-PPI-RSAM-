@@ -68,12 +68,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       const loadGlobalData = async () => {
         setIsGlobalLoading(true);
         try {
+          const currentYear = new Date().getFullYear();
+          const startDate = new Date(currentYear - 1, 0, 1).toISOString(); // last year and current year
+          
           const [slidesRes, stdRes, hhRes, apdRes, haisRes] = await Promise.all([
             supabase.from('dashboard_slider').select('*').order('sort_order', { ascending: true }),
             supabase.from('dashboard_standards').select('*'),
-            supabase.from('audit_hand_hygiene').select('*'),
-            supabase.from('audit_apd').select('*'),
-            supabase.from('insiden_hais').select('*')
+            supabase.from('audit_hand_hygiene').select('id, start_time, unit, ruangan, persentase, created_at, m1, m2, m3, m4, m5').gte('start_time', startDate),
+            supabase.from('audit_apd').select('id, tanggal_waktu, jumlah_patuh, jumlah_dinilai, unit, ruangan, created_at, masker, sarung_tangan, penutup_kepala, apron, goggle, sepatu_boot, gaun_pelindung').gte('tanggal_waktu', startDate),
+            supabase.from('insiden_hais').select('id, tanggal_waktu, jenis, rate, unit, ruangan, created_at').gte('tanggal_waktu', startDate)
           ]);
 
           let newSlides: any[] = [];
@@ -85,10 +88,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             hais: haisRes.data || []
           };
 
-          const newStandards: any = {};
+          const newStandards: any = {
+            hh: { indikator: 'Kebersihan Tangan', nilai_standar: 85, operator: '>=' },
+            apd: { indikator: 'Kepatuhan Penggunaan APD', nilai_standar: 100, operator: '>=' },
+            phlebitis: { indikator: 'Phlebitis', nilai_standar: 1.5, operator: '<=' },
+            isk: { indikator: 'ISK', nilai_standar: 5, operator: '<=' },
+            ido: { indikator: 'IDO', nilai_standar: 2, operator: '<=' },
+            vap: { indikator: 'VAP', nilai_standar: 5, operator: '<=' }
+          };
           if (stdRes.data) {
             stdRes.data.forEach(s => {
-              newStandards[s.indikator.toLowerCase()] = s;
+              const key = s.indikator.toLowerCase();
+              newStandards[key] = s;
+              // Aliases for common typos or variations to match dashboardpage logic
+              if (key.includes('phle')) newStandards.phlebitis = s;
+              else if (key.includes('isk')) newStandards.isk = s;
+              else if (key.includes('ido')) newStandards.ido = s;
+              else if (key.includes('vap')) newStandards.vap = s;
             });
           }
 
@@ -279,7 +295,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Mobile Bottom Navigation */}
       {isMobile && (
-        <nav className={`fixed bottom-0 inset-x-0 backdrop-blur-2xl border-t flex justify-around items-center h-16 px-2 z-50 transition-all ${isLightMode ? 'bg-[#006B3F] border-white/10 shadow-[0_-10px_20px_rgba(0,0,0,0.1)]' : 'bg-[#0f172a]/80 border-white/5'}`}>
+        <nav className={`fixed bottom-0 inset-x-0 backdrop-blur-2xl border-t flex justify-around items-center h-16 px-2 z-50 transition-all ${isLightMode ? 'bg-[#006B3F] border-slate-100/20' : 'bg-[#0f172a]/80 border-white/5'}`}>
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -289,7 +305,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${
                   isActive 
                     ? isLightMode ? 'text-white' : 'text-blue-400' 
-                    : isLightMode ? 'text-white/70 hover:text-white' : 'text-slate-500 hover:text-slate-300'
+                    : isLightMode ? 'text-white/60 hover:text-white' : 'text-slate-500 hover:text-slate-300'
                 }`}
               >
                 <div className={isActive ? 'animate-float' : ''}>

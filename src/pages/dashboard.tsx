@@ -65,14 +65,69 @@ const DEFAULT_STANDARDS: Record<string, Standard> = {
   vap: { indikator: 'VAP', nilai_standar: 5, operator: '<=' }
 };
 
+// --- Standalone Components & Helpers for Performance ---
+const HeroSlider = ({ slides, isLoading }: { slides: Slide[], isLoading: boolean }) => {
+  const [idx, setIdx] = useState(0);
+  const visibleSlides = useMemo(() => slides.filter(s => s.active), [slides]);
+  
+  useEffect(() => {
+    if(visibleSlides.length <= 1) return;
+    const timer = setInterval(() => {
+       setIdx(p => (p + 1) % visibleSlides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [visibleSlides.length]);
+
+  if (isLoading) return (
+    <div className="relative w-full h-[300px] md:h-[400px] rounded-[32px] overflow-hidden bg-slate-100 dark:bg-[#0B1120] flex items-center justify-center">
+       <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+  if(visibleSlides.length === 0) return null;
+
+  return (
+    <div className="relative w-full h-[300px] md:h-[400px] rounded-[32px] overflow-hidden bg-slate-100 dark:bg-[#0b1120]">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={idx}
+          className="absolute inset-0"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.8 }}
+        >
+          <Image src={visibleSlides[idx].image_url} alt="Slide" fill priority className="object-cover" referrerPolicy="no-referrer" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+          <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12 z-10">
+            <h2 className="text-xl md:text-4xl font-black mb-3 text-white drop-shadow-md">{visibleSlides[idx].title}</h2>
+            <p className="text-sm md:text-xl font-bold opacity-100 max-w-2xl text-white drop-shadow-md">{visibleSlides[idx].subtitle}</p>
+          </div>
+        </motion.div>
+      </AnimatePresence>
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+         {visibleSlides.map((_, i) => (
+           <button key={i} onClick={() => setIdx(i)} className={`w-2 h-2 rounded-full transition-all ${idx === i ? 'bg-white w-6' : 'bg-white/40'}`} />
+         ))}
+      </div>
+    </div>
+  );
+};
+
+const getStatusColor = (val: number, std: Standard) => {
+  if(!std) return 'text-slate-400 dark:text-slate-500';
+  const pass = std.operator === '>=' ? val >= std.nilai_standar : val <= std.nilai_standar;
+  if (pass) return 'text-emerald-600 dark:text-emerald-400';
+  return 'text-red-600 dark:text-red-400';
+};
+
 export default function DashboardPage() {
   const { userRole } = useAppContext();
   
-  const { dashboardData, setDashboardData, isDashboardLoaded } = useDashboardStore();
+  const { dashboardData, setDashboardData, isDashboardLoaded, isGlobalLoading } = useDashboardStore();
 
-  const [slides, setSlides] = useState<Slide[]>(isDashboardLoaded && dashboardData?.slides ? dashboardData.slides : DEFAULT_SLIDES);
-  const [isSlidesLoading, setIsSlidesLoading] = useState(!isDashboardLoaded);
-  const [standards, setStandards] = useState(isDashboardLoaded && dashboardData?.standards ? dashboardData.standards : DEFAULT_STANDARDS);
+  const [slides, setSlides] = useState<Slide[]>(DEFAULT_SLIDES);
+  const [isSlidesLoading, setIsSlidesLoading] = useState(true);
+  const [standards, setStandards] = useState<Record<string, Standard>>(DEFAULT_STANDARDS);
 
   const [filterPeriodType, setFilterPeriodType] = useState<'bulanan'|'triwulan'|'semester'|'tahunan'>('bulanan');
   const [filterMonth, setFilterMonth] = useState<number>(new Date().getMonth());
@@ -84,88 +139,78 @@ export default function DashboardPage() {
   const [chartMode, setChartMode] = useState<'bar'|'line'>('bar');
   const [selectedUnit, setSelectedUnit] = useState<string>('all');
 
-  const [isSettingModalOpen, setIsSettingModalOpen] = useState(false);
+  const [rawData, setRawData] = useState<any>({ hh: [], apd: [], hais: [] });
+  const [isDataLoading, setIsDataLoading] = useState(true);
 
-  const [rawData, setRawData] = useState<any>(isDashboardLoaded && dashboardData?.rawData ? dashboardData.rawData : { hh: [], apd: [], hais: [] });
-  const [isDataLoading, setIsDataLoading] = useState(!isDashboardLoaded);
+  // Synchronize state with store when it changes
+  useEffect(() => {
+    if (isDashboardLoaded && dashboardData) {
+      setSlides(dashboardData.slides || DEFAULT_SLIDES);
+      setStandards(dashboardData.standards || DEFAULT_STANDARDS);
+      setRawData(dashboardData.rawData || { hh: [], apd: [], hais: [] });
+      setIsSlidesLoading(false);
+      setIsDataLoading(false);
+    }
+  }, [isDashboardLoaded, dashboardData]);
 
   useEffect(() => {
+    // If not loaded yet, fetch will be handled by Layout
+    // But we still need to subscribe to changes for immediate local updates
     let mounted = true;
-    const loadData = async () => {
-      // If data is already loaded globally, we can skip the initial heavy fetch on mount
-      // and let the real-time listeners handle updates later.
-      // However, it's safer to fetch once more just in case.
-      
+    const fetchFresh = async () => {
       try {
+        const currentYear = new Date().getFullYear();
+        const startDate = new Date(currentYear - 1, 0, 1).toISOString();
+
         const [slidesRes, stdRes, hhRes, apdRes, haisRes] = await Promise.all([
           supabase.from('dashboard_slider').select('*').order('sort_order', { ascending: true }),
           supabase.from('dashboard_standards').select('*'),
-          supabase.from('audit_hand_hygiene').select('*'),
-          supabase.from('audit_apd').select('*'),
-          supabase.from('insiden_hais').select('*')
+          supabase.from('audit_hand_hygiene').select('id, start_time, unit, ruangan, persentase, created_at').gte('start_time', startDate),
+          supabase.from('audit_apd').select('id, tanggal_waktu, jumlah_patuh, jumlah_dinilai, unit, ruangan, created_at, masker, sarung_tangan, penutup_kepala, apron, goggle, sepatu_boot, gaun_pelindung').gte('tanggal_waktu', startDate),
+          supabase.from('insiden_hais').select('id, tanggal_waktu, jenis, rate, unit, ruangan, created_at').gte('tanggal_waktu', startDate)
         ]);
 
         if (!mounted) return;
 
-        let newSlides = DEFAULT_SLIDES;
-        let newStandards = { ...DEFAULT_STANDARDS };
-
-        if (slidesRes.data && slidesRes.data.length > 0) newSlides = slidesRes.data;
-        
-        if (stdRes.data && stdRes.data.length > 0) {
-           stdRes.data.forEach(s => {
-             const key = s.indikator.toLowerCase();
-             if (newStandards[key]) newStandards[key] = s;
-             else if (key.includes('phle')) newStandards.phlebitis = s;
-             else if (key.includes('isk')) newStandards.isk = s;
-             else if (key.includes('ido')) newStandards.ido = s;
-             else if (key.includes('vap')) newStandards.vap = s;
-           });
-        }
-
-        const newRawData = {
-          hh: hhRes.data || [],
-          apd: apdRes.data || [],
-          hais: haisRes.data || []
+        const newRawData = { hh: hhRes.data || [], apd: apdRes.data || [], hais: haisRes.data || [] };
+        const newSlides = (slidesRes.data && slidesRes.data.length > 0) ? slidesRes.data : DEFAULT_SLIDES;
+        const newStandards: any = {
+          hh: { indikator: 'Kebersihan Tangan', nilai_standar: 85, operator: '>=' },
+          apd: { indikator: 'Kepatuhan Penggunaan APD', nilai_standar: 100, operator: '>=' },
+          phlebitis: { indikator: 'Phlebitis', nilai_standar: 1.5, operator: '<=' },
+          isk: { indikator: 'ISK', nilai_standar: 5, operator: '<=' },
+          ido: { indikator: 'IDO', nilai_standar: 2, operator: '<=' },
+          vap: { indikator: 'VAP', nilai_standar: 5, operator: '<=' }
         };
-        
-        setSlides(newSlides);
-        setStandards(newStandards);
-        setRawData(newRawData);
-        setIsSlidesLoading(false);
-        setIsDataLoading(false);
-        
-        setDashboardData({
-          slides: newSlides,
-          standards: newStandards,
-          rawData: newRawData
-        });
-
-      } catch (e) {
-        console.error("Dashboard error", e);
-        if (mounted) {
-          setIsSlidesLoading(false);
-          setIsDataLoading(false);
+        if (stdRes.data) {
+          stdRes.data.forEach(s => {
+            const key = s.indikator.toLowerCase();
+            if (newStandards[key]) newStandards[key] = s;
+            else if (key.includes('phle')) newStandards.phlebitis = s;
+            else if (key.includes('isk')) newStandards.isk = s;
+            else if (key.includes('ido')) newStandards.ido = s;
+            else if (key.includes('vap')) newStandards.vap = s;
+          });
         }
+
+        setDashboardData({ slides: newSlides, standards: newStandards, rawData: newRawData });
+      } catch (e) {
+        console.error("Manual refresh error", e);
       }
     };
 
-    // If data isn't loaded yet, fetch it. If it is, we still fetch once to be fresh.
-    loadData();
-
-    const hhChannel = supabase.channel('hh_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'audit_hand_hygiene' }, () => loadData()).subscribe();
-    const apdChannel = supabase.channel('apd_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'audit_apd' }, () => loadData()).subscribe();
-    const haisChannel = supabase.channel('hais_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'insiden_hais' }, () => loadData()).subscribe();
-    const stdChannel = supabase.channel('std_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'dashboard_standards' }, () => loadData()).subscribe();
+    const channels = [
+      supabase.channel('hh_ch').on('postgres_changes', { event: '*', schema: 'public', table: 'audit_hand_hygiene' }, () => fetchFresh()).subscribe(),
+      supabase.channel('apd_ch').on('postgres_changes', { event: '*', schema: 'public', table: 'audit_apd' }, () => fetchFresh()).subscribe(),
+      supabase.channel('hais_ch').on('postgres_changes', { event: '*', schema: 'public', table: 'insiden_hais' }, () => fetchFresh()).subscribe(),
+      supabase.channel('std_ch').on('postgres_changes', { event: '*', schema: 'public', table: 'dashboard_standards' }, () => fetchFresh()).subscribe()
+    ];
 
     return () => { 
       mounted = false; 
-      supabase.removeChannel(hhChannel);
-      supabase.removeChannel(apdChannel);
-      supabase.removeChannel(haisChannel);
-      supabase.removeChannel(stdChannel);
+      channels.forEach(ch => supabase.removeChannel(ch));
     };
-  }, [setDashboardData]); // Stable dependency
+  }, [setDashboardData]);
 
     const { units, stats, chartDataList } = useMemo(() => {
       const isDateMatch = (dateStr: string) => {
@@ -302,53 +347,6 @@ export default function DashboardPage() {
       return { units: unitsList, stats: computedStats, chartDataList: finalChartData };
     }, [rawData, selectedUnit, filterPeriodType, filterMonth, filterQuarter, filterSemester, filterYear]);
 
-  const HeroSlider = () => {
-    const [idx, setIdx] = useState(0);
-    const visibleSlides = slides.filter(s => s.active);
-    
-    useEffect(() => {
-      if(visibleSlides.length <= 1) return;
-      const timer = setInterval(() => {
-         setIdx(p => (p + 1) % visibleSlides.length);
-      }, 5000);
-      return () => clearInterval(timer);
-    }, [visibleSlides.length]);
-
-    if (isSlidesLoading) return (
-      <div className="relative w-full h-[300px] md:h-[400px] rounded-[32px] overflow-hidden bg-slate-100 dark:bg-[#0B1120] flex items-center justify-center">
-         <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-    if(visibleSlides.length === 0) return null;
-
-    return (
-      <div className="relative w-full h-[300px] md:h-[400px] rounded-[32px] overflow-hidden bg-slate-100 dark:bg-[#0b1120]">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={idx}
-            className="absolute inset-0"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <Image src={visibleSlides[idx].image_url} alt="Slide" fill priority className="object-cover" referrerPolicy="no-referrer" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-            <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12 z-10">
-              <h2 className="text-xl md:text-4xl font-black mb-3 text-white drop-shadow-md">{visibleSlides[idx].title}</h2>
-              <p className="text-sm md:text-xl font-bold opacity-100 max-w-2xl text-white drop-shadow-md">{visibleSlides[idx].subtitle}</p>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-           {visibleSlides.map((_, i) => (
-             <button key={i} onClick={() => setIdx(i)} className={`w-2 h-2 rounded-full transition-all ${idx === i ? 'bg-white w-6' : 'bg-white/40'}`} />
-           ))}
-        </div>
-      </div>
-    );
-  };
-
   const getStatusColor = (val: number, std: Standard) => {
      if(!std) return 'text-slate-400 dark:text-slate-500';
      const pass = std.operator === '>=' ? val >= std.nilai_standar : val <= std.nilai_standar;
@@ -362,12 +360,14 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all uppercase">Dashboard SMART PPI</h1>
           <div className="mt-1">
-            <p className="text-slate-900 dark:text-slate-400 text-base sm:text-lg font-normal leading-tight">Pencegahan Dan Pengendalian Infeksi di UOBK RSUD Al-Mulk Kota Sukabumi</p>
+            <p className="text-slate-900 dark:text-slate-400 text-[13px] sm:text-lg font-normal leading-tight max-w-[280px] sm:max-w-none">
+              Pencegahan Dan Pengendalian Infeksi di UOBK RSUD Al-Mulk Kota Sukabumi
+            </p>
           </div>
         </div>
       </div>
 
-      <HeroSlider />
+      <HeroSlider slides={slides} isLoading={isSlidesLoading} />
       
       {/* Global Period Filter - Control Center Style */}
       <section className="relative group">
