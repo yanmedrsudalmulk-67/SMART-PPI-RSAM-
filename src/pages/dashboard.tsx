@@ -113,8 +113,8 @@ const HeroSlider = ({ slides, isLoading }: { slides: Slide[], isLoading: boolean
   );
 };
 
-const getStatusColor = (val: number, std: Standard) => {
-  if(!std) return 'text-slate-400 dark:text-slate-500';
+const getStatusColor = (val: number, std: Standard | undefined) => {
+  if(!std || typeof std.nilai_standar === 'undefined') return 'text-slate-400 dark:text-slate-500';
   const pass = std.operator === '>=' ? val >= std.nilai_standar : val <= std.nilai_standar;
   if (pass) return 'text-emerald-600 dark:text-emerald-400';
   return 'text-red-600 dark:text-red-400';
@@ -347,8 +347,8 @@ export default function DashboardPage() {
       return { units: unitsList, stats: computedStats, chartDataList: finalChartData };
     }, [rawData, selectedUnit, filterPeriodType, filterMonth, filterQuarter, filterSemester, filterYear]);
 
-  const getStatusColor = (val: number, std: Standard) => {
-     if(!std) return 'text-slate-400 dark:text-slate-500';
+  const getStatusColor = (val: number, std: Standard | undefined) => {
+     if(!std || typeof std.nilai_standar === 'undefined') return 'text-slate-400 dark:text-slate-500';
      const pass = std.operator === '>=' ? val >= std.nilai_standar : val <= std.nilai_standar;
      if (pass) return 'text-emerald-600 dark:text-emerald-400';
      return 'text-red-600 dark:text-red-400';
@@ -360,7 +360,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all uppercase">Dashboard SMART PPI</h1>
           <div className="mt-1">
-            <p className="text-slate-900 dark:text-slate-400 text-[13px] sm:text-lg font-normal leading-tight max-w-[280px] sm:max-w-none">
+            <p className="text-slate-900 dark:text-slate-400 text-[20px] font-normal leading-tight max-w-[280px] sm:max-w-none">
               Pencegahan Dan Pengendalian Infeksi di UOBK RSUD Al-Mulk Kota Sukabumi
             </p>
           </div>
@@ -471,9 +471,9 @@ export default function DashboardPage() {
           <div className="mt-8 pt-6 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
             <span className="text-[15px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">Capaian</span>
             <div className="flex flex-col items-end">
-              <span className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 mb-1">Standard: {standards.hh.nilai_standar}%</span>
-              <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full ${stats.hh >= standards.hh.nilai_standar ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-600'}`}>
-                {stats.hh >= standards.hh.nilai_standar ? 'Tercapai' : 'Di Bawah Standar'}
+              <span className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 mb-1">Standard: {standards?.hh?.nilai_standar || 85}%</span>
+              <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full ${stats.hh >= (standards?.hh?.nilai_standar || 85) ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-600'}`}>
+                {stats.hh >= (standards?.hh?.nilai_standar || 85) ? 'Tercapai' : 'Di Bawah Standar'}
               </span>
             </div>
           </div>
@@ -501,9 +501,9 @@ export default function DashboardPage() {
           <div className="mt-8 pt-6 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
             <span className="text-[15px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">Capaian</span>
             <div className="flex flex-col items-end">
-              <span className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 mb-1">Standard: {standards.apd.nilai_standar}%</span>
-              <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full ${stats.apd >= standards.apd.nilai_standar ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-600'}`}>
-                {stats.apd >= standards.apd.nilai_standar ? 'Tercapai' : 'Di Bawah Standar'}
+              <span className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 mb-1">Standard: {standards?.apd?.nilai_standar || 100}%</span>
+              <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full ${stats.apd >= (standards?.apd?.nilai_standar || 100) ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-600'}`}>
+                {stats.apd >= (standards?.apd?.nilai_standar || 100) ? 'Tercapai' : 'Di Bawah Standar'}
               </span>
             </div>
           </div>

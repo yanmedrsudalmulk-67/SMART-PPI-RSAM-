@@ -16,11 +16,9 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isDark, setIsDark] = useState(true);
 
-  useState(() => {
-    if (typeof window !== 'undefined') {
-      setIsDark(document.documentElement.classList.contains('dark'));
-    }
-  });
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains('dark'));
+  }, []);
 
   useEffect(() => {
     const observer = new MutationObserver((mutations) => {
