@@ -99,8 +99,8 @@ const HeroSlider = ({ slides, isLoading }: { slides: Slide[], isLoading: boolean
           <Image src={visibleSlides[idx].image_url} alt="Slide" fill priority className="object-cover" referrerPolicy="no-referrer" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
           <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12 z-10">
-            <h2 className="text-xl md:text-4xl font-black mb-3 text-white drop-shadow-md">{visibleSlides[idx].title}</h2>
-            <p className="text-sm md:text-xl font-bold opacity-100 max-w-2xl text-white drop-shadow-md">{visibleSlides[idx].subtitle}</p>
+            <h2 className="text-[10px] font-black mb-3 text-white drop-shadow-md">{visibleSlides[idx].title}</h2>
+            <p className="text-[10px] font-bold opacity-100 max-w-2xl text-white drop-shadow-md">{visibleSlides[idx].subtitle}</p>
           </div>
         </motion.div>
       </AnimatePresence>
@@ -458,7 +458,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all uppercase">Dashboard SMART PPI</h1>
           <div className="mt-1">
-            <p className="text-slate-900 dark:text-slate-400 text-[18px] font-normal leading-tight max-w-[280px] sm:max-w-none">
+            <p className="text-slate-900 dark:text-slate-400 text-[14px] font-normal leading-tight max-w-[280px] sm:max-w-none">
               Pencegahan Dan Pengendalian Infeksi di UOBK RSUD Al-Mulk Kota Sukabumi
             </p>
           </div>
