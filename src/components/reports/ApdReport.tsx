@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine, Cell
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine, Cell, ComposedChart, Line
 } from '@/components/ChartComponents';
 import { format, parseISO } from 'date-fns';
 import { useAppContext } from '@/components/Providers';
@@ -14,11 +14,21 @@ import { useAppContext } from '@/components/Providers';
 export default function ApdReport({ 
   filters 
 }: { 
-  filters: { searchQuery: string, periode: string } 
+  filters: { searchQuery: string, periode: string, type?: string } 
 }) {
   const { hospitalLogoUrl } = useAppContext();
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [chartType, setChartType] = useState<'line' | 'bar'>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('apd_report_chart_type') as 'line' | 'bar') || 'line';
+    }
+    return 'line';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('apd_report_chart_type', chartType);
+  }, [chartType]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -66,35 +76,80 @@ export default function ApdReport({
       }
       
       if (filters.periode) {
-        if (!item.tanggal_waktu) return false;
-        if (new Date(item.tanggal_waktu) < new Date(filters.periode)) return false;
+        const itemDateStr = item.tanggal_waktu;
+        if (!itemDateStr) return false;
+        const itemDate = new Date(itemDateStr);
+        const filterDate = new Date(filters.periode);
+        
+        if (filters.type === 'Bulanan') {
+          return itemDate.getMonth() === filterDate.getMonth() && 
+                 itemDate.getFullYear() === filterDate.getFullYear();
+        }
+        
+        if (itemDate < filterDate) return false;
       }
 
       return true;
     });
   }, [data, filters]);
 
-  const { summaryStats, unitStats } = useMemo(() => {
+  const { summaryStats, unitStats, trendData } = useMemo(() => {
     if (filteredData.length === 0) return { 
       summaryStats: { avg: 0, count: 0, patuh: 0, dinilai: 0, tidakPatuh: 0 },
-      unitStats: []
+      unitStats: [], trendData: []
     };
 
     let totalPatuh = 0;
     let totalDinilai = 0;
     let tidakPatuh = 0;
     const statsByUnit: Record<string, { totalDinilai: number, totalPatuh: number }> = {};
+    const periodMap = new Map<string, any[]>();
+
+    const getGroupKey = (dStr: string) => {
+        if(!dStr) return "Unknown";
+        const date = new Date(dStr);
+        const y = date.getFullYear();
+        const m = date.getMonth();
+        return `${["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Ags","Sep","Okt","Nov","Des"][m]} ${y}`;
+    };
+    
+    // Pre-fill months based on filter
+    const filterDate = filters.periode ? new Date(filters.periode) : new Date();
+    const fYear = filterDate.getFullYear();
+    let startMonth = 0;
+    let endMonth = 11;
+
+    if (filters.type === 'Bulanan') {
+        startMonth = filterDate.getMonth();
+        endMonth = filterDate.getMonth();
+    } else if (filters.type === 'Triwulan') {
+        startMonth = Math.floor(filterDate.getMonth() / 3) * 3;
+        endMonth = startMonth + 2;
+    } else if (filters.type === 'Semester') {
+        startMonth = Math.floor(filterDate.getMonth() / 6) * 6;
+        endMonth = startMonth + 5;
+    }
+
+    for (let i = startMonth; i <= endMonth; i++) {
+        const k = `${["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Ags","Sep","Okt","Nov","Des"][i]} ${fYear}`;
+        periodMap.set(k, []);
+    }
 
     filteredData.forEach(item => {
       totalPatuh += (item.jumlah_patuh || 0);
       totalDinilai += (item.jumlah_dinilai || 0);
-      if ((item.persentase || 0) < 85) tidakPatuh++;
+      if ((item.persentase || 0) < 100) tidakPatuh++; // threshold 100 for APD
       
       if (item.unit) {
         const unit = item.unit.trim();
         if (!statsByUnit[unit]) statsByUnit[unit] = { totalDinilai: 0, totalPatuh: 0 };
         statsByUnit[unit].totalDinilai += (item.jumlah_dinilai || 0);
         statsByUnit[unit].totalPatuh += (item.jumlah_patuh || 0);
+      }
+
+      const key = getGroupKey(item.tanggal_waktu || '');
+      if(periodMap.has(key)) {
+        periodMap.get(key)!.push(item);
       }
     });
 
@@ -103,14 +158,19 @@ export default function ApdReport({
       persentase: stats.totalDinilai > 0 ? Math.round((stats.totalPatuh / stats.totalDinilai) * 100) : 0
     })).sort((a, b) => b.persentase - a.persentase);
 
+    const trend = Array.from(periodMap.entries()).map(([k, recs]) => {
+       const avg = recs.length > 0 ? recs.reduce((sum, r) => sum + (r.persentase || 0), 0) / recs.length : 0;
+       return { name: k, val: Math.round(avg) };
+    });
+
     return {
       summaryStats: { 
         avg: totalDinilai > 0 ? Math.round((totalPatuh / totalDinilai) * 100) : 0, 
         count: filteredData.length, patuh: totalPatuh, dinilai: totalDinilai, tidakPatuh 
       },
-      unitStats: unit
+      unitStats: unit, trendData: trend
     };
-  }, [filteredData]);
+  }, [filteredData, filters.type, filters.periode]);
 
   const mapApdAction = (val: string | null) => {
     if (!val) return <span className="flex justify-center text-slate-300 dark:text-slate-700">-</span>;
@@ -118,6 +178,53 @@ export default function ApdReport({
     if (lower === 'ya' || lower === 'sesuai') return <span className="flex justify-center"><CheckCircle2 className="w-4 h-4 text-emerald-500" /></span>;
     if (lower === 'tidak' || lower === 'tidak sesuai') return <span className="flex justify-center"><X className="w-4 h-4 text-rose-500" /></span>;
     return <span className="flex justify-center text-slate-300 dark:text-slate-700">-</span>;
+  };
+
+  const STANDARD_PPI = 100;
+
+  const getBarColor = (val: number) => {
+     if (val >= STANDARD_PPI) return '#10b981';
+     if (val >= STANDARD_PPI * 0.8) return '#f59e0b';
+     return '#f43f5e';
+  };
+
+  const renderTooltipContent = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white/90 dark:bg-[#0f172a]/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-xl">
+          <p className="text-sm font-black text-slate-800 dark:text-slate-100 mb-2">{label}</p>
+          <div className="space-y-1.5">
+             {payload.map((entry: any, index: number) => {
+                 const pass = entry.value >= STANDARD_PPI;
+                 const status = pass ? 'Tercapai' : (entry.value >= STANDARD_PPI * 0.8 ? 'Mendekati' : 'Belum Tercapai');
+                 const color = getBarColor(entry.value);
+                 return (
+                 <div key={index} className="flex justify-between gap-4 text-xs font-bold items-center">
+                    <span style={{ color: color }}>Capaian APD:</span>
+                    <span className="text-slate-700 dark:text-slate-300">
+                        {entry.value}%
+                        <span className="ml-2 text-[10px] bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded" style={{ color }}>{status}</span>
+                    </span>
+                 </div>
+             )})}
+          </div>
+          <div className="mt-3 pt-2 border-t border-slate-200 dark:border-slate-800 text-[10px] text-slate-500 font-medium">
+             Standar PPI Kepatuhan APD: &gt;= {STANDARD_PPI}%
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const generateAutoInsight = () => {
+    if (trendData.length < 2) return "Data belum cukup untuk menghasilkan analisis tren.";
+    const current = trendData[trendData.length - 1];
+    const prev = trendData[trendData.length - 2];
+    const diff = current.val - prev.val;
+    if (diff > 0) return `Capaian meningkat ${(diff).toFixed(1)}% dibanding periode sebelumnya.`;
+    if (diff < 0) return `Terjadi penurunan ${Math.abs(diff).toFixed(1)}% dibanding periode sebelumnya. Evaluasi kembali kepatuhan.`;
+    return "Trend kepatuhan APD stabil.";
   };
 
   if (loading) return (
@@ -185,6 +292,58 @@ export default function ApdReport({
       </div>
 
       {/* Chart */}
+      <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-xl pt-6 sm:pt-8 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-sm">
+        <div className="flex px-6 sm:px-8 justify-between items-center mb-8">
+           <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-3">
+             <BarChart2 className="w-5 h-5 text-emerald-500" /> Analitik Tren Kepatuhan
+           </h3>
+           <div className="flex gap-2 bg-slate-100 dark:bg-white/5 p-1 rounded-xl">
+             <button onClick={() => setChartType('line')} className={`px-4 py-2 text-[10px] sm:text-xs font-bold rounded-lg transition-all ${chartType === 'line' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}>Run Chart</button>
+             <button onClick={() => setChartType('bar')} className={`px-4 py-2 text-[10px] sm:text-xs font-bold rounded-lg transition-all ${chartType === 'bar' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}>Bar Chart</button>
+           </div>
+        </div>
+        <div className="h-[300px] w-full px-8">
+          <ResponsiveContainer width="100%" height="100%">
+             {chartType === 'line' ? (
+               <ComposedChart data={trendData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                 <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} dy={10} />
+                 <YAxis tick={{ fontSize: 11, fill: '#64748b' }} domain={[0, 100]} axisLine={false} tickLine={false} dx={-10} />
+                 <RechartsTooltip content={renderTooltipContent} cursor={{ fill: 'rgba(255,255,255,0.02)' }}/>
+                 <Line type="monotone" dataKey="val" stroke="#10b981" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                 <ReferenceLine y={STANDARD_PPI} stroke="#06b6d4" strokeDasharray="5 5" label={{ position: 'top', value: `Standar ${STANDARD_PPI}%`, fill: '#06b6d4', fontSize: 10 }} />
+               </ComposedChart>
+             ) : (
+               <ComposedChart data={trendData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                 <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} dy={10} />
+                 <YAxis tick={{ fontSize: 11, fill: '#64748b' }} domain={[0, 100]} axisLine={false} tickLine={false} dx={-10} />
+                 <RechartsTooltip content={renderTooltipContent} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
+                 <Bar dataKey="val" radius={[6, 6, 0, 0]}>
+                    {trendData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={getBarColor(entry.val)} />
+                    ))}
+                 </Bar>
+                 <ReferenceLine y={STANDARD_PPI} stroke="#06b6d4" strokeDasharray="5 5" label={{ position: 'top', value: `Standar ${STANDARD_PPI}%`, fill: '#06b6d4', fontSize: 10 }} />
+               </ComposedChart>
+             )}
+          </ResponsiveContainer>
+        </div>
+
+        {/* Auto Insight Card */}
+        <div className="px-8 pb-8 pt-6">
+            <div className="flex items-start gap-4 p-4 rounded-2xl bg-blue-50 dark:bg-[#1e293b]/50 border border-blue-100 dark:border-white/5">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-xl text-blue-600 dark:text-blue-400">
+                    <TrendingUp className="w-5 h-5" />
+                </div>
+                <div>
+                   <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">Analisis Otomatis</h4>
+                   <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{generateAutoInsight()}</p>
+                </div>
+            </div>
+         </div>
+      </div>
+
       <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-xl p-6 sm:p-8 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-sm">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-3">
           <BarChart2 className="w-5 h-5 text-blue-500" /> Kepatuhan per Unit
@@ -195,13 +354,13 @@ export default function ApdReport({
               <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#64748b" strokeOpacity={0.1} />
               <XAxis type="number" domain={[0, 100]} hide />
               <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 'bold' }} axisLine={false} tickLine={false} />
-              <RechartsTooltip contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }} cursor={{ fill: '#64748b', opacity: 0.1 }} />
+              <RechartsTooltip cursor={{ fill: '#64748b', opacity: 0.1 }} />
               <Bar dataKey="persentase" radius={[0, 6, 6, 0]} barSize={24}>
                 {unitStats.map((entry: any, index: number) => (
-                  <Cell key={`cell-${index}`} fill={entry.persentase >= 85 ? '#10b981' : entry.persentase >= 70 ? '#f59e0b' : '#ef4444'} />
+                  <Cell key={`cell-${index}`} fill={getBarColor(entry.persentase)} />
                 ))}
               </Bar>
-              <ReferenceLine x={85} stroke="#ef4444" strokeDasharray="3 3" />
+              <ReferenceLine x={STANDARD_PPI} stroke="#06b6d4" strokeDasharray="3 3" />
             </BarChart>
           </ResponsiveContainer>
         </div>

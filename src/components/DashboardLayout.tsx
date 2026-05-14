@@ -25,6 +25,7 @@ import { supabase } from '@/lib/supabase';
 const NavItem = memo(({ item, isActive, isLightMode }: { item: any, isActive: boolean, isLightMode?: boolean }) => (
   <Link 
     href={item.href}
+    prefetch={false}
     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all group ${
       isActive 
         ? isLightMode
@@ -196,6 +197,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </div>
               <Link 
                 href="/login"
+                prefetch={false}
                 onClick={() => setUserRole('IPCN')}
                 className={`flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all group ${isLightMode ? 'text-green-300 hover:text-red-300' : 'text-slate-500 hover:text-red-400'}`}
               >
@@ -302,6 +304,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Link 
                 key={item.name} 
                 href={item.href}
+                prefetch={false}
                 className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${
                   isActive 
                     ? isLightMode ? 'text-white' : 'text-blue-400' 

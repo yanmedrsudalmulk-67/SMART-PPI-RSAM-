@@ -18,10 +18,10 @@ import {
 const COLORS = ['#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6'];
 
 export default function AnalyticsPage() {
-  const { dashboardData } = useDashboardStore();
+  const { dashboardData, isDashboardLoaded } = useDashboardStore();
 
   const { unitCompliance, haisTypeData, riskTable } = useMemo(() => {
-    if (!dashboardData || !dashboardData.rawData) return { unitCompliance: [], haisTypeData: [], riskTable: [] };
+    if (!isDashboardLoaded || !dashboardData || !dashboardData.rawData) return { unitCompliance: [], haisTypeData: [], riskTable: [] };
     const { hh, apd, hais } = dashboardData.rawData;
 
     // Unit Compliance
@@ -92,7 +92,16 @@ export default function AnalyticsPage() {
     }).sort((a, b) => b.riskScore - a.riskScore);
 
     return { unitCompliance: cmp, haisTypeData: htd.length ? htd : [{ name: 'Belum Ada Data', value: 1 }], riskTable: rt };
-  }, [dashboardData]);
+  }, [dashboardData, isDashboardLoaded]);
+
+  if (!isDashboardLoaded) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 text-slate-500">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm font-medium">Memuat analitik data...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-20">

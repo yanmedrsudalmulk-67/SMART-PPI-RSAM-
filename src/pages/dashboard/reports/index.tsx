@@ -145,6 +145,8 @@ export default function ReportsPage() {
   const [periode, setPeriode] = useState('Bulanan');
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedQuarter, setSelectedQuarter] = useState(Math.floor(new Date().getMonth() / 3));
+  const [selectedSemester, setSelectedSemester] = useState(Math.floor(new Date().getMonth() / 6));
   const [kategori, setKategori] = useState('Kewaspadaan Isolasi');
   const [subKategori, setSubKategori] = useState('Standar');
   const [selectedIndicator, setSelectedIndicator] = useState<string | null>(null);
@@ -154,21 +156,20 @@ export default function ReportsPage() {
 
   const startDateISO = useMemo(() => {
     if (periode === 'Bulanan') {
-      // Start of the selected month
       return new Date(selectedYear, selectedMonth, 1).toISOString();
     }
-    
-    const now = new Date();
-    let m = now.getMonth();
-    let y = now.getFullYear();
-    const d = now.getDate();
-    switch (periode) {
-      case 'Triwulan': m -= 3; break;
-      case 'Semester': m -= 6; break;
-      case 'Tahunan': m -= 12; break;
+    if (periode === 'Triwulan') {
+      return new Date(selectedYear, selectedQuarter * 3, 1).toISOString();
     }
-    return new Date(y, m, d).toISOString();
-  }, [periode, selectedMonth, selectedYear]);
+    if (periode === 'Semester') {
+      return new Date(selectedYear, selectedSemester * 6, 1).toISOString();
+    }
+    if (periode === 'Tahunan') {
+      return new Date(selectedYear, 0, 1).toISOString();
+    }
+    
+    return new Date().toISOString();
+  }, [periode, selectedMonth, selectedYear, selectedQuarter, selectedSemester]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -274,17 +275,49 @@ export default function ReportsPage() {
                            <option key={m} value={i} className="bg-white dark:bg-slate-900">{m}</option>
                          ))}
                        </select>
+                     </>
+                   )}
+
+                   {periode === 'Triwulan' && (
+                     <>
+                       <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
                        <select 
-                         value={selectedYear} 
-                         onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                         value={selectedQuarter} 
+                         onChange={(e) => setSelectedQuarter(parseInt(e.target.value))}
                          className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
                        >
-                         {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => (
-                           <option key={y} value={y} className="bg-white dark:bg-slate-900">{y}</option>
+                         {["Triwulan 1", "Triwulan 2", "Triwulan 3", "Triwulan 4"].map((q, i) => (
+                           <option key={q} value={i} className="bg-white dark:bg-slate-900">{q}</option>
                          ))}
                        </select>
                      </>
                    )}
+
+                   {periode === 'Semester' && (
+                     <>
+                       <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
+                       <select 
+                         value={selectedSemester} 
+                         onChange={(e) => setSelectedSemester(parseInt(e.target.value))}
+                         className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
+                       >
+                         {["Semester 1", "Semester 2"].map((s, i) => (
+                           <option key={s} value={i} className="bg-white dark:bg-slate-900">{s}</option>
+                         ))}
+                       </select>
+                     </>
+                   )}
+
+                   <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
+                   <select 
+                     value={selectedYear} 
+                     onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                     className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
+                   >
+                     {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => (
+                       <option key={y} value={y} className="bg-white dark:bg-slate-900">{y}</option>
+                     ))}
+                   </select>
                 </div>
               </div>
             </div>
@@ -412,13 +445,13 @@ export default function ReportsPage() {
               {selectedIndicator === 'audit_hand_hygiene' ? (
                  <HandHygieneReport filters={{ searchQuery: '', periode: startDateISO, type: periode }} />
               ) : selectedIndicator === 'audit_apd' ? (
-                 <ApdReport filters={{ searchQuery: '', periode: startDateISO }} />
+                 <ApdReport filters={{ searchQuery: '', periode: startDateISO, type: periode }} />
               ) : (
                  <GenericAuditReport 
                     tableName={selectedIndicator}
                     indicatorItems={genericAuditConfigs[selectedIndicator]?.items || []}
                     title={selectedData?.title || 'Laporan'}
-                    filters={{ searchQuery: '', periode: startDateISO }}
+                    filters={{ searchQuery: '', periode: startDateISO, type: periode }}
                   />
               )}
             </div>

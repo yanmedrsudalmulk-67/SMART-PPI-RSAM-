@@ -5,7 +5,7 @@ import {
   TrendingUp, Activity, BarChart2, TrendingDown, Target, Calendar, CheckSquare, Search, FileText
 } from 'lucide-react';
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Cell
 } from '@/components/ChartComponents';
 import { format, parseISO } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
@@ -41,11 +41,12 @@ export default function GenericAuditReport({
   indicatorItems: {id: string, label: string, key: string, isNegative?: boolean}[],
   title: string,
   extraFilter?: Record<string, string>,
-  filters?: { periode?: string; unitFilter?: string; searchQuery?: string }
+  filters?: { periode?: string; unitFilter?: string; searchQuery?: string; type?: string }
 }) {
   const [data, setData] = useState<GenericAuditData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
+  const [chartType, setChartType] = useState<'line' | 'bar'>('line');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -99,7 +100,7 @@ export default function GenericAuditReport({
     return () => { supabase.removeChannel(chTarget); };
   }, [tableName, fetchData]);
 
-  const { filteredRecords, summaryStats } = useMemo(() => {
+  const { filteredRecords, summaryStats, trendData } = useMemo(() => {
     let filteredData = data;
     if (filters) {
       filteredData = data.filter(item => {
@@ -118,10 +119,47 @@ export default function GenericAuditReport({
       });
     }
 
-    if (filteredData.length === 0) return { filteredRecords: [], summaryStats: { avg: 0, count: 0, high: 0, low: 0 } };
+    if (filteredData.length === 0) return { filteredRecords: [], summaryStats: { avg: 0, count: 0, high: 0, low: 0 }, trendData: [] };
 
     const allPerc = filteredData.map(r => r.persentase);
     const avg = allPerc.reduce((a,b)=>a+b,0) / allPerc.length;
+
+    // Trend Data Logic
+    const periodMap = new Map<string, any[]>();
+    const filterDate = filters?.periode ? new Date(filters.periode) : new Date();
+    const fYear = filterDate.getFullYear();
+    let startMonth = 0;
+    let endMonth = 11;
+    const type = filters?.type || 'Tahunan';
+
+    if (type === 'Bulanan') {
+        startMonth = filterDate.getMonth();
+        endMonth = filterDate.getMonth();
+    } else if (type === 'Triwulan') {
+        startMonth = Math.floor(filterDate.getMonth() / 3) * 3;
+        endMonth = startMonth + 2;
+    } else if (type === 'Semester') {
+        startMonth = Math.floor(filterDate.getMonth() / 6) * 6;
+        endMonth = startMonth + 5;
+    }
+
+    for (let i = startMonth; i <= endMonth; i++) {
+        const k = `${["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Ags","Sep","Okt","Nov","Des"][i]} ${fYear}`;
+        periodMap.set(k, []);
+    }
+
+    filteredData.forEach(row => {
+      const date = new Date(row.waktu);
+      const k = `${["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Ags","Sep","Okt","Nov","Des"][date.getMonth()]} ${date.getFullYear()}`;
+      if(periodMap.has(k)) {
+        periodMap.get(k)!.push(row);
+      }
+    });
+
+    const trend = Array.from(periodMap.entries()).map(([k, recs]) => {
+       const a = recs.length > 0 ? recs.reduce((sum, r) => sum + (r.persentase || 0), 0) / recs.length : 0;
+       return { name: k, val: Math.round(a) };
+    });
 
     return { 
       filteredRecords: filteredData,
@@ -130,9 +168,10 @@ export default function GenericAuditReport({
         count: filteredData.length,
         high: Math.max(...allPerc),
         low: Math.min(...allPerc)
-      }
+      },
+      trendData: trend
     };
-  }, [data, filters]);
+  }, [data, filters, filters?.periode, filters?.type]);
 
   const selectedRecord = filteredRecords.find(r => r.id === selectedRecordId) || filteredRecords[0];
 
@@ -202,6 +241,78 @@ export default function GenericAuditReport({
               </div>
             </div>
          </div>
+      </div>
+      
+      {/* Trend Analysis */}
+      <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-xl pt-6 sm:pt-8 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-sm mb-6">
+        <div className="flex px-6 sm:px-8 justify-between items-center mb-8">
+           <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-3">
+             <BarChart2 className="w-5 h-5 text-emerald-500" /> Analitik Tren Capaian
+           </h3>
+           <div className="flex gap-2 bg-slate-100 dark:bg-white/5 p-1 rounded-xl">
+             <button onClick={() => setChartType('line')} className={`px-4 py-2 text-[10px] sm:text-xs font-bold rounded-lg transition-all ${chartType === 'line' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}>Run Chart</button>
+             <button onClick={() => setChartType('bar')} className={`px-4 py-2 text-[10px] sm:text-xs font-bold rounded-lg transition-all ${chartType === 'bar' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}>Bar Chart</button>
+           </div>
+        </div>
+        <div className="h-[300px] w-full px-8">
+          <ResponsiveContainer width="100%" height="100%">
+             {chartType === 'line' ? (
+                <AreaChart data={trendData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} dy={10} />
+                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} domain={[0, 100]} axisLine={false} tickLine={false} dx={-10} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                    itemStyle={{ color: '#fff' }}
+                  />
+                  <Area type="monotone" dataKey="val" name="Capaian (%)" stroke="#3b82f6" fillOpacity={1} fill="url(#colorVal)" strokeWidth={3} />
+                </AreaChart>
+             ) : (
+                <BarChart data={trendData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} dy={10} />
+                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} domain={[0, 100]} axisLine={false} tickLine={false} dx={-10} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                    itemStyle={{ color: '#fff' }}
+                  />
+                  <Bar dataKey="val" name="Capaian (%)" radius={[6, 6, 0, 0]}>
+                    {(trendData || []).map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={entry.val >= 85 ? '#10b981' : (entry.val >= 70 ? '#f59e0b' : '#f43f5e')} />
+                    ))}
+                  </Bar>
+                </BarChart>
+             )}
+          </ResponsiveContainer>
+        </div>
+        
+        {/* Insight */}
+        {trendData.length >= 1 && (
+           <div className="px-8 pb-8 pt-6">
+              <div className="flex items-start gap-4 p-4 rounded-2xl bg-blue-50 dark:bg-[#1e293b]/50 border border-blue-100 dark:border-white/5">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-xl text-blue-600 dark:text-blue-400">
+                      <TrendingUp className="w-5 h-5" />
+                  </div>
+                  <div>
+                     <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">Analisis Otomatis</h4>
+                     <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                        {trendData.length > 1 
+                          ? `Capaian terakhir berada di angka ${trendData[trendData.length-1].val}% . ${
+                              trendData[trendData.length-1].val >= 85 ? 'Kinerja sangat baik dan memenuhi standar.' : 'Perlu evaluasi untuk mencapai target standar PPI.'
+                            }`
+                          : 'Data pembanding belum tersedia untuk analisis tren.'
+                        }
+                     </p>
+                  </div>
+              </div>
+           </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

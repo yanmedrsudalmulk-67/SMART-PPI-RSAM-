@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, ReactElement } from 'react';
 import dynamic from 'next/dynamic';
 import { 
-  AlertCircle, Shield, Droplets, BarChart2, LineChart, Settings, ChevronLeft, ChevronRight, TrendingUp, Activity
+  AlertCircle, Shield, Droplets, BarChart2, LineChart, Settings, ChevronLeft, ChevronRight, TrendingUp, Activity, Calendar
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Image from 'next/image';
@@ -11,7 +11,7 @@ import { supabase } from '@/lib/supabase';
 import { useDashboardStore } from '@/hooks/useDashboardStore';
 
 import { 
-  ResponsiveContainer, ComposedChart, AreaChart, Bar, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine
+  ResponsiveContainer, ComposedChart, AreaChart, Bar, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine, Cell
 } from '@/components/ChartComponents';
 
 // --- Types ---
@@ -125,11 +125,7 @@ export default function DashboardPage() {
   
   const { dashboardData, setDashboardData, isDashboardLoaded, isGlobalLoading } = useDashboardStore();
 
-  const [slides, setSlides] = useState<Slide[]>(DEFAULT_SLIDES);
-  const [isSlidesLoading, setIsSlidesLoading] = useState(true);
-  const [standards, setStandards] = useState<Record<string, Standard>>(DEFAULT_STANDARDS);
-
-  const [filterPeriodType, setFilterPeriodType] = useState<'bulanan'|'triwulan'|'semester'|'tahunan'>('bulanan');
+  const [filterPeriodType, setFilterPeriodType] = useState<'bulanan'|'triwulan'|'semester'|'tahunan'>('tahunan');
   const [filterMonth, setFilterMonth] = useState<number>(new Date().getMonth());
   const [filterQuarter, setFilterQuarter] = useState<number>(Math.floor(new Date().getMonth() / 3));
   const [filterSemester, setFilterSemester] = useState<number>(Math.floor(new Date().getMonth() / 6));
@@ -139,19 +135,11 @@ export default function DashboardPage() {
   const [chartMode, setChartMode] = useState<'bar'|'line'>('bar');
   const [selectedUnit, setSelectedUnit] = useState<string>('all');
 
-  const [rawData, setRawData] = useState<any>({ hh: [], apd: [], hais: [] });
-  const [isDataLoading, setIsDataLoading] = useState(true);
-
-  // Synchronize state with store when it changes
-  useEffect(() => {
-    if (isDashboardLoaded && dashboardData) {
-      setSlides(dashboardData.slides || DEFAULT_SLIDES);
-      setStandards(dashboardData.standards || DEFAULT_STANDARDS);
-      setRawData(dashboardData.rawData || { hh: [], apd: [], hais: [] });
-      setIsSlidesLoading(false);
-      setIsDataLoading(false);
-    }
-  }, [isDashboardLoaded, dashboardData]);
+  const slides = (isDashboardLoaded && dashboardData?.slides) ? dashboardData.slides : DEFAULT_SLIDES;
+  const standards = (isDashboardLoaded && dashboardData?.standards) ? dashboardData.standards : DEFAULT_STANDARDS;
+  const rawData = useMemo(() => (isDashboardLoaded && dashboardData?.rawData) ? dashboardData.rawData : { hh: [], apd: [], hais: [] }, [isDashboardLoaded, dashboardData?.rawData]);
+  const isDataLoading = !isDashboardLoaded;
+  const isSlidesLoading = !isDashboardLoaded;
 
   useEffect(() => {
     // If not loaded yet, fetch will be handled by Layout
@@ -234,20 +222,40 @@ export default function DashboardPage() {
       });
       const unitsList = ['all', ...Array.from(unitSet).sort()];
 
-      // Helper for grouping
-      const getGroupKey = (dateStr: string, pType: string) => {
+      // Helper for grouping - always Monthly breakdown for x-axis
+      const getGroupKey = (dateStr: string) => {
         if(!dateStr) return "Unknown";
         const date = new Date(dateStr);
         if (isNaN(date.getTime())) return "Unknown";
         const m = date.getMonth();
         const y = date.getFullYear();
-        if (pType === "bulanan") return `${["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"][m]} ${y}`;
-        if (pType === "triwulan") return `TW${Math.floor(m / 3) + 1} ${y}`;
-        if (pType === "semester") return `SM${Math.floor(m / 6) + 1} ${y}`;
-        return `${y}`;
+        return `${["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"][m]} ${y}`;
       };
 
       const grouped: Record<string, any> = {};
+      
+      // Pre-fill months to ensure they show up in the chart even with no data
+      const fillMonths = () => {
+          let startMonth = 0;
+          let endMonth = 11;
+          if (filterPeriodType === 'bulanan') {
+              startMonth = filterMonth;
+              endMonth = filterMonth;
+          } else if (filterPeriodType === 'triwulan') {
+              startMonth = filterQuarter * 3;
+              endMonth = startMonth + 2;
+          } else if (filterPeriodType === 'semester') {
+              startMonth = filterSemester * 6;
+              endMonth = startMonth + 5;
+          }
+          
+          for (let i = startMonth; i <= endMonth; i++) {
+              const k = `${["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"][i]} ${filterYear}`;
+              grouped[k] = { hhSum: 0, hhCount: 0, apdPatuh: 0, apdDin: 0, hPhle: 0, hIsk: 0, hIdo: 0, hVap: 0 };
+          }
+      };
+      fillMonths();
+
       let totalHhPercSum = 0;
       let hhRecordCount = 0;
       let tApdPatuh = 0;
@@ -258,19 +266,20 @@ export default function DashboardPage() {
       const unitMatch = (d: any) => selectedUnit === 'all' || d.unit === selectedUnit || d.ruangan === selectedUnit;
 
       hhData.filter(unitMatch).forEach((d: any) => {
-         const k = getGroupKey(d.start_time || d.created_at, filterPeriodType);
-         if(!grouped[k]) grouped[k] = { hhSum: 0, hhCount: 0, apdPatuh: 0, apdDin: 0, hPhle: 0, hIsk: 0, hIdo: 0, hVap: 0 };
+         const k = getGroupKey(d.start_time || d.created_at);
+         if(grouped[k]) {
+           const p = Number(d.persentase) || 0;
+           grouped[k].hhSum += p;
+           grouped[k].hhCount++;
+         }
          
-         const p = Number(d.persentase) || 0;
-         grouped[k].hhSum += p;
-         grouped[k].hhCount++;
-         totalHhPercSum += p;
+         const pTotal = Number(d.persentase) || 0;
+         totalHhPercSum += pTotal;
          hhRecordCount++;
       });
 
       apdData.filter(unitMatch).forEach((d: any) => {
-         const k = getGroupKey(d.tanggal_waktu || d.created_at, filterPeriodType);
-         if(!grouped[k]) grouped[k] = { hhSum: 0, hhCount: 0, apdPatuh: 0, apdDin: 0, hPhle: 0, hIsk: 0, hIdo: 0, hVap: 0 };
+         const k = getGroupKey(d.tanggal_waktu || d.created_at);
          
          // Recalculate APD to match report logic if necessary
          let p = Number(d.jumlah_patuh) || 0;
@@ -292,21 +301,31 @@ export default function DashboardPage() {
            n = cDinilai;
          }
 
-         grouped[k].apdPatuh += p;
-         grouped[k].apdDin += n;
+         if(grouped[k]) {
+           grouped[k].apdPatuh += p;
+           grouped[k].apdDin += n;
+         }
+
          tApdPatuh += p;
          tApdDinilai += n;
       });
 
       haisData.filter(unitMatch).forEach((d: any) => {
-         const k = getGroupKey(d.tanggal_waktu || d.created_at, filterPeriodType);
-         if(!grouped[k]) grouped[k] = { hhSum: 0, hhCount: 0, apdPatuh: 0, apdDin: 0, hPhle: 0, hIsk: 0, hIdo: 0, hVap: 0 };
+         const k = getGroupKey(d.tanggal_waktu || d.created_at);
          const r = parseFloat(d.rate) || 0;
          const type = String(d.jenis).toLowerCase();
-         if(type.includes('ph')) { grouped[k].hPhle += r; tHais.phlebitis += r; tHaisCounts.phlebitis++; }
-         else if(type.includes('isk')) { grouped[k].hIsk += r; tHais.isk += r; tHaisCounts.isk++; }
-         else if(type.includes('ido')) { grouped[k].hIdo += r; tHais.ido += r; tHaisCounts.ido++; }
-         else if(type.includes('vap')) { grouped[k].hVap += r; tHais.vap += r; tHaisCounts.vap++; }
+
+         if(grouped[k]) {
+           if(type.includes('ph')) grouped[k].hPhle += r;
+           else if(type.includes('isk')) grouped[k].hIsk += r;
+           else if(type.includes('ido')) grouped[k].hIdo += r;
+           else if(type.includes('vap')) grouped[k].hVap += r;
+         }
+
+         if(type.includes('ph')) { tHais.phlebitis += r; tHaisCounts.phlebitis++; }
+         else if(type.includes('isk')) { tHais.isk += r; tHaisCounts.isk++; }
+         else if(type.includes('ido')) { tHais.ido += r; tHaisCounts.ido++; }
+         else if(type.includes('vap')) { tHais.vap += r; tHaisCounts.vap++; }
       });
 
       // Simple string sort
@@ -354,13 +373,92 @@ export default function DashboardPage() {
      return 'text-red-600 dark:text-red-400';
   };
 
+  const getBarColor = (val: number, stdKey?: string) => {
+     const std = stdKey ? standards[stdKey] : Object.values(standards)[0];
+     if (!std || typeof std.nilai_standar === 'undefined') return '#64748b';
+     const target = std.nilai_standar;
+     const operator = std.operator;
+
+     if (operator === '>=') {
+       if (val >= target) return '#10b981';
+       if (val >= target * 0.8) return '#f59e0b';
+       return '#f43f5e';
+     } else {
+       if (val <= target) return '#10b981';
+       if (val <= target * 1.5) return '#f59e0b';
+       return '#f43f5e';
+     }
+  };
+
+  const renderTooltipContent = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white/90 dark:bg-[#0f172a]/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-xl">
+          <p className="text-sm font-black text-slate-800 dark:text-slate-100 mb-2">{label}</p>
+          <div className="space-y-1.5">
+             {payload.map((entry: any, index: number) => {
+                 let status = '';
+                 let color = entry.color || entry.fill;
+                 const stdKey = activeTab === 'hais' ? entry.dataKey : activeTab;
+                 const std = standards[stdKey];
+                 if (std) {
+                     const isHais = activeTab === 'hais';
+                     const pass = std.operator === '>=' ? entry.value >= std.nilai_standar : entry.value <= std.nilai_standar;
+                     if (isHais) {
+                        status = pass ? 'Tercapai' : 'Belum Tercapai';
+                        color = pass ? '#10b981' : '#f43f5e';
+                     } else {
+                        status = entry.value >= std.nilai_standar ? 'Tercapai' : (entry.value >= std.nilai_standar * 0.8 ? 'Mendekati' : 'Belum Tercapai');
+                        color = entry.value >= std.nilai_standar ? '#10b981' : (entry.value >= std.nilai_standar * 0.8 ? '#f59e0b' : '#f43f5e');
+                     }
+                 }
+                 return (
+                 <div key={index} className="flex justify-between gap-4 text-xs font-bold items-center">
+                    <span style={{ color: color }}>{entry.name}:</span>
+                    <span className="text-slate-700 dark:text-slate-300">
+                        {entry.value} {activeTab === 'hais' ? '‰' : '%'} 
+                        {std && <span className="ml-2 text-[10px] bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded" style={{ color }}>{status}</span>}
+                    </span>
+                 </div>
+             )})}
+          </div>
+          {activeTab !== 'hais' && standards[activeTab] && (
+            <div className="mt-3 pt-2 border-t border-slate-200 dark:border-slate-800 text-[10px] text-slate-500 font-medium">
+              Standar PPI {standards[activeTab].indikator}: {standards[activeTab].operator} {standards[activeTab].nilai_standar}%
+            </div>
+          )}
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const generateAutoInsight = () => {
+    if (chartDataList.length < 2) return "Data belum cukup untuk menghasilkan analisis tren.";
+    const current = chartDataList[chartDataList.length - 1];
+    const prev = chartDataList[chartDataList.length - 2];
+    
+    if (activeTab === 'hh') {
+       const diff = current.hh - prev.hh;
+       if (diff > 0) return `Capaian meningkat ${(diff).toFixed(1)}% dibanding sebelumnya. Terus pertahankan kepatuhan.`;
+       if (diff < 0) return `Terjadi penurunan ${Math.abs(diff).toFixed(1)}% dibanding sebelumnya. Evaluasi kembali kepatuhan ruang perawatan.`;
+       return "Trend kepatuhan stabil, pertahankan performa.";
+    } else if (activeTab === 'apd') {
+       const diff = current.apd - prev.apd;
+       if (diff > 0) return `Capaian meningkat ${(diff).toFixed(1)}% dibanding sebelumnya.`;
+       if (diff < 0) return `Terjadi penurunan ${Math.abs(diff).toFixed(1)}% dibanding sebelumnya.`;
+       return "Trend penggunaan APD stabil.";
+    }
+    return "Analisis tren HAIs perlu dievaluasi lebih lanjut pada detail observasi.";
+  };
+
   return (
     <div className="space-y-8 pb-10">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all uppercase">Dashboard SMART PPI</h1>
           <div className="mt-1">
-            <p className="text-slate-900 dark:text-slate-400 text-[20px] font-normal leading-tight max-w-[280px] sm:max-w-none">
+            <p className="text-slate-900 dark:text-slate-400 text-[19px] font-normal leading-tight max-w-[280px] sm:max-w-none">
               Pencegahan Dan Pengendalian Infeksi di UOBK RSUD Al-Mulk Kota Sukabumi
             </p>
           </div>
@@ -561,10 +659,80 @@ export default function DashboardPage() {
                ))}
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3 items-center">
+               <div className="flex bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 items-center px-3 py-1 gap-2">
+                 <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                 <select 
+                   value={filterPeriodType} 
+                   onChange={(e) => setFilterPeriodType(e.target.value as any)}
+                   className="bg-transparent border-none outline-none text-[10px] font-black uppercase text-blue-600 dark:text-blue-400 cursor-pointer"
+                 >
+                   {['bulanan', 'triwulan', 'semester', 'tahunan'].map(p => (
+                     <option key={p} value={p} className="bg-white dark:bg-slate-900">{p.toUpperCase()}</option>
+                   ))}
+                 </select>
+                 
+                 {filterPeriodType === 'bulanan' && (
+                   <>
+                     <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
+                     <select 
+                       value={filterMonth} 
+                       onChange={(e) => setFilterMonth(parseInt(e.target.value))}
+                       className="bg-transparent border-none outline-none text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
+                     >
+                       {["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"].map((m, i) => (
+                         <option key={m} value={i} className="bg-white dark:bg-slate-900">{m}</option>
+                       ))}
+                     </select>
+                   </>
+                 )}
+
+                 {filterPeriodType === 'triwulan' && (
+                    <>
+                      <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
+                      <select 
+                        value={filterQuarter} 
+                        onChange={(e) => setFilterQuarter(parseInt(e.target.value))}
+                        className="bg-transparent border-none outline-none text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
+                      >
+                        {["Triwulan 1", "Triwulan 2", "Triwulan 3", "Triwulan 4"].map((q, i) => (
+                          <option key={q} value={i} className="bg-white dark:bg-slate-900">{q}</option>
+                        ))}
+                      </select>
+                    </>
+                 )}
+
+                 {filterPeriodType === 'semester' && (
+                    <>
+                      <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
+                      <select 
+                        value={filterSemester} 
+                        onChange={(e) => setFilterSemester(parseInt(e.target.value))}
+                        className="bg-transparent border-none outline-none text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
+                      >
+                        {["Semester 1", "Semester 2"].map((s, i) => (
+                          <option key={s} value={i} className="bg-white dark:bg-slate-900">{s}</option>
+                        ))}
+                      </select>
+                    </>
+                 )}
+
+                 <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
+                 <select 
+                   value={filterYear} 
+                   onChange={(e) => setFilterYear(parseInt(e.target.value))}
+                   className="bg-transparent border-none outline-none text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
+                 >
+                   {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => (
+                     <option key={y} value={y} className="bg-white dark:bg-slate-900">{y}</option>
+                   ))}
+                 </select>
+               </div>
+
                <select value={selectedUnit} onChange={(e) => setSelectedUnit(e.target.value)} className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg px-3 py-2 outline-none">
                  {units.map(u => <option key={u} value={u} className="bg-white dark:bg-slate-900">{u.toUpperCase()}</option>)}
                </select>
+
                <div className="flex bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
                  <button onClick={() => setChartMode('bar')} className={`p-2 transition-colors ${chartMode === 'bar' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 dark:text-slate-500'}`}><BarChart2 className="w-4 h-4" /></button>
                  <button onClick={() => setChartMode('line')} className={`p-2 transition-colors ${chartMode === 'line' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 dark:text-slate-500'}`}><LineChart className="w-4 h-4" /></button>
@@ -573,59 +741,113 @@ export default function DashboardPage() {
          </div>
 
          <div className="p-8 h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-               {isDataLoading ? (
-                 <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-500">
-                   <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                   <p className="text-sm font-medium">Memuat data monitoring...</p>
-                 </div>
-               ) : chartDataList.length > 0 ? (
-                 chartMode === 'bar' ? (
-                   <ComposedChart data={chartDataList}>
-                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                     <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} dy={10} />
-                     <YAxis tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                     <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px' }} />
-                     <Legend />
-                     {activeTab === 'hais' ? (
-                       <>
-                         <Bar dataKey="phlebitis" name="Phlebitis (‰)" fill="#f43f5e" radius={[4,4,0,0]} stackId="a" />
-                         <Bar dataKey="isk" name="ISK (‰)" fill="#3b82f6" radius={[4,4,0,0]} stackId="a" />
-                         <Bar dataKey="ido" name="IDO (‰)" fill="#10b981" radius={[4,4,0,0]} stackId="a" />
-                         <Bar dataKey="vap" name="VAP (‰)" fill="#f59e0b" radius={[4,4,0,0]} stackId="a" />
-                       </>
-                     ) : activeTab === 'hh' ? (
-                       <Bar dataKey="hh" name="Capaian HH (%)" fill="#3b82f6" radius={[8,8,0,0]} />
-                     ) : (
-                       <Bar dataKey="apd" name="Capaian APD (%)" fill="#10b981" radius={[8,8,0,0]} />
-                     )}
-                     {/* <Line type="monotone" dataKey={() => standards[activeTab]?.nilai_standar || 0} stroke="#f43f5e" strokeDasharray="5 5" name="Target" dot={false} /> */}
-                   </ComposedChart>
-                 ) : (
-                   <AreaChart data={chartDataList}>
-                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                     <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} dy={10} />
-                     <YAxis tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                     <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px' }} />
-                     <Legend />
-                     {activeTab === 'hais' ? (
-                       <>
-                         <Area type="monotone" dataKey="phlebitis" name="Phlebitis" stroke="#f43f5e" fill="#f43f5e" fillOpacity={0.1} />
-                         <Area type="monotone" dataKey="isk" name="ISK" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.1} />
-                         <Area type="monotone" dataKey="ido" name="IDO" stroke="#10b981" fill="#10b981" fillOpacity={0.1} />
-                         <Area type="monotone" dataKey="vap" name="VAP" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.1} />
-                       </>
-                     ) : activeTab === 'hh' ? (
-                       <Area type="monotone" dataKey="hh" name="Capaian HH" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.1} />
-                     ) : (
-                       <Area type="monotone" dataKey="apd" name="Capaian APD" stroke="#10b981" fill="#10b981" fillOpacity={0.1} />
-                     )}
-                   </AreaChart>
-                 )
-               ) : (
-                   <div className="flex items-center justify-center h-full text-slate-500">No data available</div>
-               )}
-            </ResponsiveContainer>
+            {isDataLoading ? (
+              <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-500">
+                <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm font-medium">Memuat data monitoring...</p>
+              </div>
+            ) : chartDataList.length > 0 ? (
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={chartMode}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.3 }}
+                  className="w-full h-full"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    {chartMode === 'bar' ? (
+                      <ComposedChart data={chartDataList} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                        <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} dy={10} />
+                        <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                        <Tooltip content={renderTooltipContent} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
+                        <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                        
+                        {standards[activeTab] && activeTab !== 'hais' && (
+                           <ReferenceLine 
+                              y={standards[activeTab]?.nilai_standar} 
+                              stroke="#06b6d4" 
+                              strokeDasharray="5 5" 
+                              label={{ position: 'top', value: `Standar ${standards[activeTab]?.nilai_standar}%`, fill: '#06b6d4', fontSize: 10 }}
+                           />
+                        )}
+
+                        {activeTab === 'hais' ? (
+                          <>
+                            <Bar dataKey="phlebitis" name="Phlebitis (‰)" fill="#f43f5e" radius={[4,4,0,0]} stackId="a" />
+                            <Bar dataKey="isk" name="ISK (‰)" fill="#3b82f6" radius={[4,4,0,0]} stackId="a" />
+                            <Bar dataKey="ido" name="IDO (‰)" fill="#10b981" radius={[4,4,0,0]} stackId="a" />
+                            <Bar dataKey="vap" name="VAP (‰)" fill="#f59e0b" radius={[4,4,0,0]} stackId="a" />
+                          </>
+                        ) : activeTab === 'hh' ? (
+                          <Bar dataKey="hh" name="Capaian HH (%)" radius={[8,8,0,0]}>
+                              {chartDataList.map((entry: any, index: number) => (
+                                 <Cell key={`cell-${index}`} fill={getBarColor(entry.hh, 'hh')} />
+                              ))}
+                          </Bar>
+                        ) : (
+                          <Bar dataKey="apd" name="Capaian APD (%)" radius={[8,8,0,0]}>
+                              {chartDataList.map((entry: any, index: number) => (
+                                 <Cell key={`cell-${index}`} fill={getBarColor(entry.apd, 'apd')} />
+                              ))}
+                          </Bar>
+                        )}
+                      </ComposedChart>
+                    ) : (
+                      <ComposedChart data={chartDataList} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                        <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} dy={10} />
+                        <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                        <Tooltip content={renderTooltipContent} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
+                        <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                        
+                        {standards[activeTab] && activeTab !== 'hais' && (
+                           <ReferenceLine 
+                              y={standards[activeTab]?.nilai_standar} 
+                              stroke="#06b6d4" 
+                              strokeDasharray="5 5" 
+                              label={{ position: 'top', value: `Standar ${standards[activeTab]?.nilai_standar}%`, fill: '#06b6d4', fontSize: 10 }}
+                           />
+                        )}
+
+                        {activeTab === 'hais' ? (
+                          <>
+                            <Line type="monotone" dataKey="phlebitis" name="Phlebitis" stroke="#f43f5e" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                            <Line type="monotone" dataKey="isk" name="ISK" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                            <Line type="monotone" dataKey="ido" name="IDO" stroke="#10b981" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                            <Line type="monotone" dataKey="vap" name="VAP" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                          </>
+                        ) : activeTab === 'hh' ? (
+                          <Line type="monotone" dataKey="hh" name="Capaian HH (%)" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                        ) : (
+                          <Line type="monotone" dataKey="apd" name="Capaian APD (%)" stroke="#10b981" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                        )}
+                      </ComposedChart>
+                    )}
+                  </ResponsiveContainer>
+                </motion.div>
+              </AnimatePresence>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-500">
+                <TrendingUp className="w-12 h-12 opacity-20" />
+                <p className="text-sm font-medium">Tidak ada data untuk periode ini.</p>
+              </div>
+            )}
+         </div>
+
+         {/* Auto Insight Card */}
+         <div className="px-8 pb-8 pt-2">
+            <div className="flex items-start gap-4 p-4 rounded-2xl bg-blue-50 dark:bg-[#1e293b]/50 border border-blue-100 dark:border-white/5">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-xl text-blue-600 dark:text-blue-400">
+                    <TrendingUp className="w-5 h-5" />
+                </div>
+                <div>
+                   <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">Analisis Otomatis</h4>
+                   <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{generateAutoInsight()}</p>
+                </div>
+            </div>
          </div>
       </div>
     </div>
