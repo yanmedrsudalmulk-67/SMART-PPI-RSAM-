@@ -250,7 +250,7 @@ export default function HandHygieneReport({
         const date = new Date(dStr);
         const y = date.getFullYear();
         const m = date.getMonth();
-        return `${["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Ags","Sep","Okt","Nov","Des"][m]} ${y}`;
+        return `${["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Ags","Sep","Okt","Nov","Des"][m]}`;
     };
 
     const periodMap = new Map<string, any[]>();

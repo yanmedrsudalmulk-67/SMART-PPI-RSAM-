@@ -134,12 +134,21 @@ export default function AnalyticsPage() {
                 <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} width={60} />
                 <Tooltip 
                   cursor={{ fill: 'rgba(59,130,246,0.05)' }}
-                  contentStyle={{ backgroundColor: 'var(--tw-backdrop-bg, white)', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  contentStyle={{ backgroundColor: 'white', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   itemStyle={{ fontSize: '10px' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
-                <Bar dataKey="hh" name="Kebersihan Tangan (%)" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={8} />
-                <Bar dataKey="apd" name="APD (%)" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={8} />
+                <ReferenceLine x={85} stroke="#3b82f6" strokeDasharray="3 3" label={{ position: 'top', value: 'Standar HH', fill: '#3b82f6', fontSize: 8 }} />
+                <Bar dataKey="hh" name="Kebersihan Tangan (%)" radius={[0, 4, 4, 0]} barSize={8}>
+                  {unitCompliance.map((entry, index) => (
+                    <Cell key={`cell-hh-${index}`} fill={entry.hh >= 85 ? '#22c55e' : (entry.hh >= 75 ? '#f59e0b' : '#ef4444')} />
+                  ))}
+                </Bar>
+                <Bar dataKey="apd" name="APD (%)" radius={[0, 4, 4, 0]} barSize={8}>
+                  {unitCompliance.map((entry, index) => (
+                    <Cell key={`cell-apd-${index}`} fill={entry.apd >= 100 ? '#22c55e' : (entry.apd >= 90 ? '#f59e0b' : '#ef4444')} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
