@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '@/lib/supabase';
 import { 
   BarChart2, User, ChevronDown, CheckCircle2, ShieldCheck, Activity, Users, 
@@ -10,6 +11,120 @@ import {
 } from '@/components/ChartComponents';
 import { format, parseISO } from 'date-fns';
 import { useAppContext } from '@/components/Providers';
+
+
+const ProfessionFilter = ({ 
+  selectedProfessions, 
+  setSelectedProfessions, 
+  allProfessions 
+}: { 
+  selectedProfessions: string[], 
+  setSelectedProfessions: React.Dispatch<React.SetStateAction<string[]>>,
+  allProfessions: string[]
+}) => {
+  const [open, setOpen] = useState(false);
+  
+  return (
+    <>
+      <button 
+        onClick={() => setOpen(true)}
+        className="flex items-center gap-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg px-3 py-2 outline-none w-48 justify-between hover:border-blue-500/50 transition-colors"
+      >
+        <span className="truncate">{selectedProfessions.length > 0 ? `${selectedProfessions.length} Profesi dipilih` : 'Semua Profesi'}</span>
+        <ChevronDown className="w-4 h-4 flex-shrink-0" />
+      </button>
+
+      {createPortal(
+        <AnimatePresence>
+          {open && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm" 
+                onClick={() => setOpen(false)} 
+              />
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                className="relative w-full max-w-sm bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/10 rounded-[2.5rem] shadow-2xl p-6 max-h-[80vh] flex flex-col"
+              >
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                      <h3 className="text-lg font-black text-slate-900 dark:text-white">Filter Profesi</h3>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Pilih profesi untuk dianalisis</p>
+                    </div>
+                    <button 
+                      onClick={() => setOpen(false)} 
+                      className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 hover:text-slate-700 dark:hover:text-white transition-colors"
+                    >
+                      <X className="w-5 h-5"/>
+                    </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto pr-2 space-y-1 custom-scrollbar">
+                  <label className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-white/5 rounded-2xl cursor-pointer transition-colors group">
+                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${selectedProfessions.length === 0 ? 'bg-blue-500 border-blue-500' : 'border-slate-300 dark:border-white/20'}`}>
+                      {selectedProfessions.length === 0 && <Check className="w-3 h-3 text-white stroke-[4]" />}
+                    </div>
+                    <input 
+                      type="checkbox" 
+                      className="hidden" 
+                      checked={selectedProfessions.length === 0} 
+                      onChange={() => setSelectedProfessions([])} 
+                    />
+                    <span className="text-sm font-bold text-slate-700 dark:text-white group-hover:text-blue-500 transition-colors">Semua Profesi</span>
+                  </label>
+
+                  <div className="h-px bg-slate-200 dark:bg-white/10 my-3 ml-3" />
+
+                  {allProfessions.length === 0 && (
+                    <div className="p-8 text-center text-slate-400 font-medium text-xs">
+                      Tidak ada data profesi ditemukan
+                    </div>
+                  )}
+
+                  {allProfessions.map(prof => {
+                    const isSelected = selectedProfessions.includes(prof);
+                    return (
+                      <label key={prof} className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-white/5 rounded-2xl cursor-pointer transition-colors group">
+                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-slate-300 dark:border-white/20'}`}>
+                          {isSelected && <Check className="w-3 h-3 text-white stroke-[4]" />}
+                        </div>
+                        <input 
+                          type="checkbox" 
+                          className="hidden"
+                          checked={isSelected} 
+                          onChange={() => {
+                            setSelectedProfessions(prev => prev.includes(prof) ? prev.filter(p => p !== prof) : [...prev, prof]);
+                          }} 
+                        />
+                        <span className="text-sm font-bold text-slate-700 dark:text-white uppercase group-hover:text-blue-500 transition-colors">{prof}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-slate-100 dark:border-white/5">
+                  <button 
+                    onClick={() => setOpen(false)}
+                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-500/20 active:scale-[0.98]"
+                  >
+                    Selesai
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+    </>
+  );
+};
 
 export default function HandHygieneReport({ 
   filters 
@@ -32,34 +147,6 @@ export default function HandHygieneReport({
   const [selectedProfessions, setSelectedProfessions] = useState<string[]>([]);
   const [professionsOpen, setProfessionsOpen] = useState(false);
 
-  // New filter components
-  const ProfessionFilter = () => (
-    <div className="relative">
-      <button 
-        onClick={() => setProfessionsOpen(!professionsOpen)}
-        className="flex items-center gap-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg px-3 py-2 outline-none w-48 justify-between"
-      >
-        <span>{selectedProfessions.length > 0 ? `${selectedProfessions.length} Profesi dipilih` : 'Semua Profesi'}</span>
-        <ChevronDown className="w-4 h-4" />
-      </button>
-      {professionsOpen && (
-        <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl z-20 p-2 max-h-60 overflow-y-auto">
-          <label className="flex items-center gap-2 p-2 hover:bg-slate-50 dark:hover:bg-white/5 rounded cursor-pointer">
-            <input type="checkbox" checked={selectedProfessions.length === 0} onChange={() => setSelectedProfessions([])} />
-            <span className="text-xs font-bold">Semua Profesi</span>
-          </label>
-          {allProfessions.map(prof => (
-            <label key={prof} className="flex items-center gap-2 p-2 hover:bg-slate-50 dark:hover:bg-white/5 rounded cursor-pointer">
-              <input type="checkbox" checked={selectedProfessions.includes(prof)} onChange={() => {
-                setSelectedProfessions(prev => prev.includes(prof) ? prev.filter(p => p !== prof) : [...prev, prof]);
-              }} />
-              <span className="text-xs font-bold uppercase">{prof}</span>
-            </label>
-          ))}
-        </div>
-      )}
-    </div>
-  );
 
   const M1M5Info = () => {
     const items = [
@@ -201,8 +288,22 @@ export default function HandHygieneReport({
     });
 
     const trend = Array.from(periodMap.entries()).map(([k, recs]) => {
-       const avg = recs.length > 0 ? recs.reduce((sum, r) => sum + (r.persentase || 0), 0) / recs.length : 0;
-       return { name: k, val: Math.round(avg) };
+       const group: any = { name: k };
+       const profMap = new Map<string, { sum: number, count: number }>();
+       
+       recs.forEach(r => {
+           const p = (r.profesi || 'LAINNYA').trim().toUpperCase();
+           if (!profMap.has(p)) profMap.set(p, { sum: 0, count: 0 });
+           const entry = profMap.get(p)!;
+           entry.sum += (r.persentase || 0);
+           entry.count++;
+       });
+       
+       profMap.forEach((data, prof) => {
+           group[prof] = Math.round(data.sum / data.count);
+       });
+       
+       return group;
     });
 
     const mStats = { m1: {p:0, t:0}, m2: {p:0, t:0}, m3: {p:0, t:0}, m4: {p:0, t:0}, m5: {p:0, t:0} };
@@ -252,13 +353,23 @@ export default function HandHygieneReport({
     return { patuh, tidakPatuh };
   };
 
+  const PROFESSION_COLORS: { [key: string]: string } = {
+    'DOKTER': '#3b82f6', // blue
+    'PERAWAT': '#10b981', // green
+    'BIDAN': '#8b5cf6', // purple
+    'FARMASI': '#f97316', // orange
+    'ANALIS': '#06b6d4', // cyan
+    'LAINNYA': '#64748b' // slate
+  };
+
   const STANDARD_PPI = 85;
 
-  const getBarColor = (val: number) => {
-     if (val >= STANDARD_PPI) return '#10b981';
-     if (val >= STANDARD_PPI * 0.8) return '#f59e0b';
-     return '#f43f5e';
-  };
+  const getProfessionColor = (prof: string) => PROFESSION_COLORS[prof] || '#64748b';
+
+  const chartProfessions = useMemo(() => {
+    if (selectedProfessions.length > 0) return selectedProfessions.map(p => p.toUpperCase());
+    return allProfessions;
+  }, [selectedProfessions, allProfessions]);
 
   const renderTooltipContent = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -267,21 +378,14 @@ export default function HandHygieneReport({
           <p className="text-sm font-black text-slate-800 dark:text-slate-100 mb-2">{label}</p>
           <div className="space-y-1.5">
              {payload.map((entry: any, index: number) => {
-                 const pass = entry.value >= STANDARD_PPI;
-                 const status = pass ? 'Tercapai' : (entry.value >= STANDARD_PPI * 0.8 ? 'Mendekati' : 'Belum Tercapai');
-                 const color = getBarColor(entry.value);
                  return (
                  <div key={index} className="flex justify-between gap-4 text-xs font-bold items-center">
-                    <span style={{ color: color }}>Capaian HH:</span>
+                    <span style={{ color: entry.stroke || entry.fill }}>{entry.name}:</span>
                     <span className="text-slate-700 dark:text-slate-300">
                         {entry.value}%
-                        <span className="ml-2 text-[10px] bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded" style={{ color }}>{status}</span>
                     </span>
                  </div>
              )})}
-          </div>
-          <div className="mt-3 pt-2 border-t border-slate-200 dark:border-slate-800 text-[10px] text-slate-500 font-medium">
-             Standar PPI Kepatuhan HH: &gt;= {STANDARD_PPI}%
           </div>
         </div>
       );
@@ -290,13 +394,7 @@ export default function HandHygieneReport({
   };
 
   const generateAutoInsight = () => {
-    if (trendData.length < 2) return "Data belum cukup untuk menghasilkan analisis tren.";
-    const current = trendData[trendData.length - 1];
-    const prev = trendData[trendData.length - 2];
-    const diff = current.val - prev.val;
-    if (diff > 0) return `Capaian meningkat ${(diff).toFixed(1)}% dibanding periode sebelumnya.`;
-    if (diff < 0) return `Terjadi penurunan ${Math.abs(diff).toFixed(1)}% dibanding periode sebelumnya. Evaluasi kembali kepatuhan.`;
-    return "Trend kepatuhan stabil.";
+    return "Analisis tren disajikan per profesi.";
   };
 
   if (loading) return (
@@ -311,7 +409,11 @@ export default function HandHygieneReport({
       
       {/* Filter Bar */}
       <div className="flex gap-4 p-4 bg-white/80 dark:bg-white/5 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-white/10 overflow-x-auto">
-        <ProfessionFilter />
+        <ProfessionFilter 
+           selectedProfessions={selectedProfessions}
+           setSelectedProfessions={setSelectedProfessions}
+           allProfessions={allProfessions}
+        />
       </div>
       
       {/* Overview Cards */}
@@ -481,7 +583,9 @@ export default function HandHygieneReport({
                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} dy={10} />
                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} domain={[0, 100]} axisLine={false} tickLine={false} dx={-10} />
                  <Tooltip content={renderTooltipContent} cursor={{ fill: 'rgba(255,255,255,0.02)' }}/>
-                 <Line type="monotone" dataKey="val" stroke="#10b981" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                 {chartProfessions.map(prof => (
+                   <Line key={prof} type="monotone" dataKey={prof} stroke={getProfessionColor(prof)} strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                 ))}
                  <ReferenceLine y={STANDARD_PPI} stroke="#06b6d4" strokeDasharray="5 5" label={{ position: 'top', value: `Standar ${STANDARD_PPI}%`, fill: '#06b6d4', fontSize: 10 }} />
                </ComposedChart>
              ) : (
@@ -490,11 +594,9 @@ export default function HandHygieneReport({
                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} dy={10} />
                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} domain={[0, 100]} axisLine={false} tickLine={false} dx={-10} />
                  <Tooltip content={renderTooltipContent} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
-                 <Bar dataKey="val" radius={[6, 6, 0, 0]}>
-                    {trendData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={getBarColor(entry.val)} />
-                    ))}
-                 </Bar>
+                 {chartProfessions.map(prof => (
+                   <Bar key={prof} dataKey={prof} fill={getProfessionColor(prof)} radius={[4, 4, 0, 0]} />
+                 ))}
                  <ReferenceLine y={STANDARD_PPI} stroke="#06b6d4" strokeDasharray="5 5" label={{ position: 'top', value: `Standar ${STANDARD_PPI}%`, fill: '#06b6d4', fontSize: 10 }} />
                </ComposedChart>
              )}
