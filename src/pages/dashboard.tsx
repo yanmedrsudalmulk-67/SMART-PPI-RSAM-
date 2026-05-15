@@ -229,7 +229,7 @@ export default function DashboardPage() {
         if (isNaN(date.getTime())) return "Unknown";
         const m = date.getMonth();
         const y = date.getFullYear();
-        return `${["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"][m]} ${y}`;
+        return `${["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"][m]}`;
       };
 
       const grouped: Record<string, any> = {};
@@ -250,7 +250,7 @@ export default function DashboardPage() {
           }
           
           for (let i = startMonth; i <= endMonth; i++) {
-              const k = `${["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"][i]} ${filterYear}`;
+              const k = `${["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"][i]}`;
               grouped[k] = { hhSum: 0, hhCount: 0, apdPatuh: 0, apdDin: 0, hPhle: 0, hIsk: 0, hIdo: 0, hVap: 0 };
           }
       };
@@ -332,9 +332,8 @@ export default function DashboardPage() {
       const sortedKeys = Object.keys(grouped).sort((a,b) => {
         const getVal = (s:string) => { 
           const p = s.split(' '); 
-          const year = parseInt(p[p.length-1]);
           const monthIdx = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"].indexOf(p[0]);
-          return (isNaN(year) ? 0 : year * 100) + (monthIdx === -1 ? 0 : monthIdx);
+          return monthIdx === -1 ? 0 : monthIdx;
         }
         return getVal(a) - getVal(b);
       }); 
@@ -439,17 +438,53 @@ export default function DashboardPage() {
     const prev = chartDataList[chartDataList.length - 2];
     
     if (activeTab === 'hh') {
+       const std = standards['hh']?.nilai_standar || 85;
+       const isCurrentMeets = current.hh >= std;
        const diff = current.hh - prev.hh;
-       if (diff > 0) return `Capaian meningkat ${(diff).toFixed(1)}% dibanding sebelumnya. Terus pertahankan kepatuhan.`;
-       if (diff < 0) return `Terjadi penurunan ${Math.abs(diff).toFixed(1)}% dibanding sebelumnya. Evaluasi kembali kepatuhan ruang perawatan.`;
-       return "Trend kepatuhan stabil, pertahankan performa.";
+       let text = `Capaian bulan ini (${current.hh}%) `;
+       if (isCurrentMeets) text += `sudah memenuhi standar PPI (${std}%). `;
+       else text += `masih dibawah standar PPI (${std}%). `;
+       
+       if (diff > 0) text += `Terjadi peningkatan ${(diff).toFixed(1)}% dibanding sebelumnya.`;
+       else if (diff < 0) text += `Terjadi penurunan ${Math.abs(diff).toFixed(1)}% dibanding sebelumnya.`;
+       else text += `Trend kepatuhan stabil.`;
+       
+       return text;
     } else if (activeTab === 'apd') {
+       const std = standards['apd']?.nilai_standar || 100;
+       const isCurrentMeets = current.apd >= std;
        const diff = current.apd - prev.apd;
-       if (diff > 0) return `Capaian meningkat ${(diff).toFixed(1)}% dibanding sebelumnya.`;
-       if (diff < 0) return `Terjadi penurunan ${Math.abs(diff).toFixed(1)}% dibanding sebelumnya.`;
-       return "Trend penggunaan APD stabil.";
+       let text = `Kepatuhan APD bulan ini (${current.apd}%) `;
+       if (isCurrentMeets) text += `sudah memenuhi standar (${std}%). `;
+       else text += `masih dibawah standar PPI (${std}%). `;
+       
+       if (diff > 0) text += `Terjadi peningkatan ${(diff).toFixed(1)}% dibanding sebelumnya.`;
+       else if (diff < 0) text += `Terjadi penurunan ${Math.abs(diff).toFixed(1)}% dibanding sebelumnya.`;
+       else text += `Trend kepatuhan stabil.`;
+       
+       return text;
     }
     return "Analisis tren HAIs perlu dievaluasi lebih lanjut pada detail observasi.";
+  };
+
+  const renderCustomLegend = (props: any) => {
+    const { payload } = props;
+    return (
+      <div className="flex flex-wrap items-center justify-center gap-4 pt-6 text-xs font-bold text-slate-600 dark:text-slate-400">
+        {payload.map((entry: any, index: number) => (
+          <div key={`item-${index}`} className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-[3px]" style={{ backgroundColor: entry.color }} />
+            <span>{entry.value}</span>
+          </div>
+        ))}
+        {activeTab !== 'hais' && standards[activeTab] && (
+          <div className="flex items-center gap-2 px-2 py-1 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 shadow-sm">
+            <div className="w-4 border-t-2 border-dashed border-[#06b6d4] drop-shadow-[0_0_2px_rgba(6,182,212,0.8)]" />
+            <span className="text-[#06b6d4]">Standar PPI ({standards[activeTab].nilai_standar}%)</span>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -458,7 +493,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all uppercase">Dashboard SMART PPI</h1>
           <div className="mt-1">
-            <p className="text-slate-900 dark:text-slate-400 text-[15px] font-normal leading-tight max-w-[280px] sm:max-w-none">
+            <p className="text-slate-900 dark:text-slate-400 font-normal leading-tight max-w-[280px] sm:max-w-none text-[15px] sm:text-[15px] xl:text-[15px]" style={{ fontSize: '15px' }}>
               Pencegahan Dan Pengendalian Infeksi di UOBK RSUD Al-Mulk Kota Sukabumi
             </p>
           </div>
@@ -758,12 +793,12 @@ export default function DashboardPage() {
                 >
                   <ResponsiveContainer width="100%" height="100%">
                     {chartMode === 'bar' ? (
-                      <ComposedChart data={chartDataList} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                      <ComposedChart data={chartDataList} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
                         <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} dy={10} />
-                        <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fontSize: 11, fill: '#64748b' }} domain={activeTab !== 'hais' ? [0, 100] : ['auto', 'auto']} axisLine={false} tickLine={false} dx={-10} />
                         <Tooltip content={renderTooltipContent} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
-                        <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                        <Legend content={renderCustomLegend} />
                         
                         {standards[activeTab] && activeTab !== 'hais' && (
                            <ReferenceLine 
@@ -796,12 +831,12 @@ export default function DashboardPage() {
                         )}
                       </ComposedChart>
                     ) : (
-                      <ComposedChart data={chartDataList} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                      <ComposedChart data={chartDataList} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
                         <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} dy={10} />
-                        <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fontSize: 11, fill: '#64748b' }} domain={activeTab !== 'hais' ? [0, 100] : ['auto', 'auto']} axisLine={false} tickLine={false} dx={-10} />
                         <Tooltip content={renderTooltipContent} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
-                        <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                        <Legend content={renderCustomLegend} />
                         
                         {standards[activeTab] && activeTab !== 'hais' && (
                            <ReferenceLine 

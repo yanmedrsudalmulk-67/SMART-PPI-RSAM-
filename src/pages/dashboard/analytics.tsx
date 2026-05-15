@@ -12,7 +12,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import { useDashboardStore } from '@/hooks/useDashboardStore';
 
 import { 
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell 
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ReferenceLine 
 } from '@/components/ChartComponents';
 
 const COLORS = ['#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6'];

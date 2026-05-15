@@ -23,6 +23,11 @@ const ProfessionFilter = ({
   allProfessions: string[]
 }) => {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   return (
     <>
@@ -34,7 +39,7 @@ const ProfessionFilter = ({
         <ChevronDown className="w-4 h-4 flex-shrink-0" />
       </button>
 
-      {createPortal(
+      {mounted && createPortal(
         <AnimatePresence>
           {open && (
             <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
@@ -273,7 +278,7 @@ export default function HandHygieneReport({
     }
 
     for (let i = startMonth; i <= endMonth; i++) {
-        const k = `${["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Ags","Sep","Okt","Nov","Des"][i]} ${fYear}`;
+        const k = `${["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Ags","Sep","Okt","Nov","Des"][i]}`;
         periodMap.set(k, []);
     }
 
