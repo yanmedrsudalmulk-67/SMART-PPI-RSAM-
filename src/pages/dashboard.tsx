@@ -458,7 +458,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all uppercase">Dashboard SMART PPI</h1>
           <div className="mt-1">
-            <p className="text-slate-900 dark:text-slate-400 text-[14px] font-normal leading-tight max-w-[280px] sm:max-w-none">
+            <p className="text-slate-900 dark:text-slate-400 text-[15px] font-normal leading-tight max-w-[280px] sm:max-w-none">
               Pencegahan Dan Pengendalian Infeksi di UOBK RSUD Al-Mulk Kota Sukabumi
             </p>
           </div>

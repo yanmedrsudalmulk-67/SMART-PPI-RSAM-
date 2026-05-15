@@ -32,6 +32,71 @@ export default function HandHygieneReport({
   const [selectedProfessions, setSelectedProfessions] = useState<string[]>([]);
   const [professionsOpen, setProfessionsOpen] = useState(false);
 
+  // New filter components
+  const ProfessionFilter = () => (
+    <div className="relative">
+      <button 
+        onClick={() => setProfessionsOpen(!professionsOpen)}
+        className="flex items-center gap-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg px-3 py-2 outline-none w-48 justify-between"
+      >
+        <span>{selectedProfessions.length > 0 ? `${selectedProfessions.length} Profesi dipilih` : 'Semua Profesi'}</span>
+        <ChevronDown className="w-4 h-4" />
+      </button>
+      {professionsOpen && (
+        <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl z-20 p-2 max-h-60 overflow-y-auto">
+          <label className="flex items-center gap-2 p-2 hover:bg-slate-50 dark:hover:bg-white/5 rounded cursor-pointer">
+            <input type="checkbox" checked={selectedProfessions.length === 0} onChange={() => setSelectedProfessions([])} />
+            <span className="text-xs font-bold">Semua Profesi</span>
+          </label>
+          {allProfessions.map(prof => (
+            <label key={prof} className="flex items-center gap-2 p-2 hover:bg-slate-50 dark:hover:bg-white/5 rounded cursor-pointer">
+              <input type="checkbox" checked={selectedProfessions.includes(prof)} onChange={() => {
+                setSelectedProfessions(prev => prev.includes(prof) ? prev.filter(p => p !== prof) : [...prev, prof]);
+              }} />
+              <span className="text-xs font-bold uppercase">{prof}</span>
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const M1M5Info = () => {
+    const items = [
+      { id: 'M1', label: 'Sebelum kontak dengan pasien' },
+      { id: 'M2', label: 'Sebelum tindakan aseptik' },
+      { id: 'M3', label: 'Setelah terkena cairan tubuh pasien' },
+      { id: 'M4', label: 'Setelah kontak dengan pasien' },
+      { id: 'M5', label: 'Setelah kontak dengan lingkungan pasien' },
+    ];
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        {items.map(m => (
+          <div key={m.id} className="p-4 bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm hover:border-emerald-500/50 transition-colors">
+            <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black text-sm mb-2">{m.id}</div>
+            <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{m.label}</p>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const AuditLegend = () => (
+    <div className="flex flex-wrap gap-2 p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10">
+      {[
+        { icon: <Check className="w-3 h-3 text-emerald-500" />, label: 'Handrub', color: 'text-emerald-500' },
+        { icon: <Check className="w-3 h-3 text-blue-500" />, label: 'Handwash', color: 'text-blue-500' },
+        { icon: <X className="w-3 h-3 text-rose-500" />, label: 'Tidak Patuh', color: 'text-rose-500' },
+        { icon: <span className="text-slate-400">-</span>, label: 'N/A', color: 'text-slate-400' },
+      ].map((l, i) => (
+        <div key={i} className="flex items-center gap-1.5 px-3 py-1 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-white/5">
+          {l.icon}
+          <span className={`text-[10px] font-bold ${l.color}`}>{l.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -244,6 +309,11 @@ export default function HandHygieneReport({
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-500">
       
+      {/* Filter Bar */}
+      <div className="flex gap-4 p-4 bg-white/80 dark:bg-white/5 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-white/10 overflow-x-auto">
+        <ProfessionFilter />
+      </div>
+      
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
          <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl rounded-[2rem] p-6 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden group">
@@ -367,6 +437,9 @@ export default function HandHygieneReport({
           </table>
         </div>
       </div>
+
+      <M1M5Info />
+      <AuditLegend />
 
       {/* Recaps Percentage Per Moment (Circular Progress) */}
       <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-[2rem] p-6 shadow-sm">
