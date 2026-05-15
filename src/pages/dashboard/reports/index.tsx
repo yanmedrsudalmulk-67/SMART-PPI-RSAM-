@@ -415,7 +415,7 @@ export default function ReportsPage() {
                    <ArrowLeft className="w-5 h-5" />
                  </button>
                  <div>
-                   <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase leading-none">
+                   <h1 className="text-xl sm:text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase leading-none">
                      {selectedData?.title}
                    </h1>
                    <div className="flex items-center gap-2 mt-2 font-medium text-[11px] text-slate-500 uppercase tracking-widest">

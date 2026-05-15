@@ -464,7 +464,7 @@ export default function HandHygieneReport({
                <img src={hospitalLogoUrl} alt="Logo RS" className="w-20 h-20 object-contain" />
              )}
              <div className="text-center md:text-left">
-               <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Laporan Audit Kebersihan Tangan</h2>
+               <h2 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase tracking-tight">Laporan Audit Kebersihan Tangan</h2>
                <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300 uppercase">UOBK RSUD AL-MULK KOTA SUKABUMI</h3>
                <p className="text-slate-500 dark:text-slate-400 font-medium mt-1 uppercase">
                  Periode: {filters.periode ? (
