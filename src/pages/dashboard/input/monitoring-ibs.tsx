@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo, useRef, ReactElement } from 'react';
 import { useRouter } from 'next/router';
-import { 
+import {   
   Activity, ArrowLeft, Save, CheckCircle2, Settings, Trash2, X, ChevronDown, ChevronUp
-} from 'lucide-react';
+, RefreshCw , User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
@@ -221,91 +221,69 @@ export default function MonitoringIBSPage() {
           <div className="space-y-3 pt-2">
             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex justify-between items-center">
               Supervisor
-              <button type="button" onClick={() => setIsObserverModalOpen(true)} className="p-1.5 hover:bg-white/10 rounded-lg text-blue-400 transition-colors"><Settings className="w-3 h-3" /></button>
+              <button type="button" onClick={() => setIsObserverModalOpen(true)} className="text-blue-400 hover:text-blue-300 font-bold uppercase tracking-widest flex items-center gap-1"><User className="w-3 h-3" /> Tambah / Kelola</button>
             </label>
-            <select value={observer} onChange={(e) => setObserver(e.target.value)} required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 transition-colors">
-              <option value="" className="bg-slate-900">Pilih Supervisor...</option>
-              {observers.map(o => <option key={o.id} value={o.nama} className="bg-slate-900">{o.nama}</option>)}
-            </select>
+            <div className="relative">
+              <select value={observer} onChange={(e) => setObserver(e.target.value)} className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white appearance-none outline-none focus:border-blue-500/50">
+                <option value="">Pilih Supervisor...</option>
+                {observers.map(o => <option key={o.id} value={o.nama}>{o.nama}</option>)}
+              </select>
+            </div>
           </div>
         </div>
 
-        <div className="bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-[2rem] border border-white/5 space-y-4 shadow-sm">
-          <button 
-            type="button" 
-            onClick={() => setIsChecklistOpen(!isChecklistOpen)}
-            className="w-full flex items-center justify-between text-xs font-bold uppercase tracking-widest text-blue-400 border-b border-white/5 pb-4 group"
-          >
-            <span>Ceklist Audit Ruangan IBS</span>
-            {isChecklistOpen ? <ChevronUp className="w-4 h-4 group-hover:text-blue-300" /> : <ChevronDown className="w-4 h-4 group-hover:text-blue-300" />}
-          </button>
-          
-          <AnimatePresence>
-            {isChecklistOpen && (
-              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="space-y-6 overflow-hidden pt-2">
-                {Object.entries(sections).map(([sectionName, items]) => (
-                  <div key={sectionName} className="space-y-4">
-                    <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider">{sectionName}</h3>
-                    {items.map((item, idx) => (
-                      <div key={item.id} className="p-5 rounded-2xl bg-white/5 border border-white/5 flex flex-col gap-4 hover:border-blue-500/20 transition-colors">
-                        <p className="text-sm font-medium text-slate-300 leading-relaxed">
-                          <span className="text-blue-400 font-bold mr-2">{idx + 1}.</span>{item.label}
-                        </p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="grid grid-cols-3 gap-3 bg-black/20 p-1.5 rounded-xl border border-white/5 h-fit">
-                            {['ya', 'tidak', 'na'].map(choice => (
-                              <button key={choice} type="button" onClick={() => toggleItem(item.id, choice as any)}
-                                className={`py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
-                                  data[item.id] === choice 
-                                    ? (choice === 'ya' ? 'bg-blue-600/90 text-white shadow-lg shadow-blue-900/20' : choice === 'tidak' ? 'bg-red-600/90 text-white shadow-lg shadow-red-900/20' : 'bg-slate-600/90 text-white shadow-lg shadow-slate-900/20')
-                                    : 'text-slate-400 hover:bg-white/10 hover:text-white'
-                                }`}
-                              >
-                                {choice}
-                              </button>
-                            ))}
-                          </div>
-                          <div>
-                            <input 
-                              type="text" 
-                              value={notes[item.id] || ''} 
-                              onChange={(e) => handleNoteChange(item.id, e.target.value)} 
-                              placeholder="Keterangan (Opsional)" 
-                              className="w-full h-full min-h-[44px] bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-blue-500/50 transition-colors"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">📋 Indikator Kepatuhan</h2>
+          <div className="space-y-4">
+            {checklistItems.map(item => (
+              <div key={item.id} className="bg-white/5 p-6 rounded-[24px] border border-white/5">
+                <h3 className="text-sm font-bold text-white mb-4">{item.label}</h3>
+                <div className="grid grid-cols-3 gap-3">
+                  {['ya', 'tidak', 'na'].map(choice => (
+                    <button type="button" key={choice} onClick={() => toggleItem(item.id, choice as any)}
+                      className={`py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                        data[item.id] === choice ? 'bg-blue-600 text-white border-blue-500' : 'bg-white/5 text-slate-400 border-transparent hover:bg-white/10'
+                      }`}
+                    >
+                      {choice === 'na' ? 'N/A' : choice}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <LiveStatisticsCard totalDinilai={stats.dinilai} totalPatuh={stats.patuh} totalTidakPatuh={stats.dinilai - stats.patuh} persentase={stats.persentase} statusText={stats.status} title="PERSENTASE KEPATUHAN" />
+        <LiveStatisticsCard 
+          totalDinilai={stats.dinilai} totalPatuh={stats.patuh} totalTidakPatuh={stats.dinilai - stats.patuh}
+          persentase={stats.persentase} statusText={stats.status}
+        />
 
-        <div className="bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-[2rem] border border-white/5 space-y-6 text-white shadow-sm">
-          <div className="space-y-3">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Temuan</label>
-            <textarea value={temuan} onChange={(e) => setTemuan(e.target.value)} placeholder="Contoh: Tissue towel habis, Tekanan positif tidak terbaca, Limbah tajam penuh..." className="w-full h-32 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white outline-none resize-none focus:border-blue-500/50 transition-colors" />
-          </div>
-          <div className="space-y-3">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Rekomendasi</label>
-            <textarea value={rekomendasi} onChange={(e) => setRekomendasi(e.target.value)} placeholder="Contoh: Kalibrasi HVAC IBS, Tambah stok APD, Ganti safety box penuh..." className="w-full h-32 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white outline-none resize-none focus:border-blue-500/50 transition-colors" />
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+                <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">📝 Temuan Audit</h2>
+                <textarea value={temuan} onChange={e => setTemuan(e.target.value)} placeholder="Tuliskan temuan audit..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600"/>
+            </div>
+            <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+                <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">💡 Rekomendasi</h2>
+                <textarea value={rekomendasi} onChange={e => setRekomendasi(e.target.value)} placeholder="Tuliskan rekomendasi tindak lanjut..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600"/>
+            </div>
         </div>
 
         <div className="bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
           <DocumentationUploader images={images} setImages={setImages} />
         </div>
 
-        <DigitalSignatureSection ref={sigRef} pjName={pjName} setPjName={setPjName} pjLabel="PJ Ruangan IBS" />
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">✍️ TANDA TANGAN DIGITAL</h2>
+            <DigitalSignatureSection ref={sigRef} pjName={pjName} setPjName={setPjName} pjLabel="PJ RUANGAN" />
+        </div>
 
-        <button type="submit" disabled={isSubmitting} className="w-full flex justify-center items-center gap-3 py-4 mt-6 bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white font-bold uppercase tracking-widest rounded-xl transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] disabled:opacity-50">
-          {isSubmitting ? <Activity className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-          <span>Simpan Data</span>
+        <button type="submit" disabled={isSubmitting || !observer || stats.dinilai === 0}
+          className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg disabled:opacity-50"
+        >
+          {isSubmitting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+          <span>Simpan Data Audit</span>
         </button>
       </form>
 
@@ -341,6 +319,6 @@ export default function MonitoringIBSPage() {
   );
 }
 
-MonitoringIBSPage.getLayout = function getLayout(page: ReactElement) {
+MonitoringIBSPage.getLayout = function getLayout(page: React.ReactElement) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };

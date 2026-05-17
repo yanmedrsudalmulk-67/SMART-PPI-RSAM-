@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 import DashboardLayout from '@/components/DashboardLayout';
 import { LiveStatisticsCard } from '@/components/LiveStatisticsCard';
 import DigitalSignatureSection, { DigitalSignatureRef } from '@/components/DigitalSignatureSection';
+import { DocumentationUploader, DocImage } from '@/components/DocumentationUploader';
 import { EditableSelect } from '@/components/EditableSelect';
 
 const units = [
@@ -44,11 +45,10 @@ export default function InputPengelolaanLimbahMedisPage() {
   const [unit, setUnit] = useState('');
   const [temuan, setTemuan] = useState('');
   const [rekomendasi, setRekomendasi] = useState('');
-  const [images, setImages] = useState<File[]>([]);
+  const [images, setImages] = useState<DocImage[]>([]);
   const [pjName, setPjName] = useState('');
   
-  const sigRef = useRef<DigitalSignatureRef>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const signatureRef = useRef<DigitalSignatureRef>(null);
 
   const [auditData, setAuditData] = useState<Record<string, AuditStatus>>({
     item_1: null, item_2: null, item_3: null, item_4: null, item_5: null,
@@ -66,15 +66,6 @@ export default function InputPengelolaanLimbahMedisPage() {
     setAuditData(prev => ({ ...prev, [id]: stat }));
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setImages(prev => [...prev, ...Array.from(e.target.files!)]);
-    }
-  };
-
-  const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
-  };
 
   const formatDateForInput = (date: Date | null) => {
     if (!date) return '';
@@ -144,16 +135,21 @@ export default function InputPengelolaanLimbahMedisPage() {
     setIsSubmitting(true);
     
     try {
-      const ttd_pj = sigRef.current?.getPjSignature();
-      const ttd_ipcn = sigRef.current?.getSupervisorSignature();
+      const pjSig = signatureRef.current?.getPjSignature();
+      const ipcnSig = signatureRef.current?.getSupervisorSignature();
+
+      const uploadedImages: string[] = [];
+      for (const img of images || []) {
+        uploadedImages.push(img.url); 
+      }
 
       const payload = {
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
         observer, unit,
         temuan, rekomendasi,
         nama_pj_ruangan: pjName.trim(),
-        ttd_pj_ruangan: ttd_pj,
-        ttd_ipcn: ttd_ipcn,
+        tanda_tangan_pj: pjSig,
+        tanda_tangan_ipcn: ipcnSig,
         ...auditData,
       };
 
@@ -170,11 +166,11 @@ export default function InputPengelolaanLimbahMedisPage() {
           jumlah_patuh: stats.patuh,
           persentase: stats.persentase,
           status_kepatuhan: stats.statusText,
-          data_indikator: auditData,
+          data_indikator: { ...auditData, temuan, rekomendasi, dokumentasi: uploadedImages, tanda_tangan_pj: pjSig, tanda_tangan_ipcn: ipcnSig, nama_pj_ruangan: pjName.trim() },
           temuan, rekomendasi,
           nama_pj_ruangan: pjName.trim(),
-          ttd_pj_ruangan: ttd_pj,
-          ttd_ipcn: ttd_ipcn
+          ttd_pj_ruangan: pjSig,
+          ttd_ipcn: ipcnSig
         }])
         .select('id')
         .single();
@@ -183,7 +179,7 @@ export default function InputPengelolaanLimbahMedisPage() {
 
       // 3. Upload Images
       for(let i=0; i<images.length; i++) {
-        await supabase.storage.from('audit_images').upload(`images/${sessionData.id}_${i}.jpg`, images[i]);
+        await supabase.storage.from('audit_images').upload(`images/${sessionData.id}_${i}.jpg`, images[i].file);
       }
 
       setShowToast(true);
@@ -226,7 +222,7 @@ export default function InputPengelolaanLimbahMedisPage() {
         </div>
       </div>
 
-      <div className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {/* Waktu Observasi */}
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
             <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -311,76 +307,63 @@ export default function InputPengelolaanLimbahMedisPage() {
                 
                     <div className="flex p-1.5 bg-white/5 rounded-2xl border border-white/5 w-fit self-end md:self-center">
                     {['ya', 'tidak', 'na'].map(choice => (
-                        <button key={choice} onClick={() => handleActionClick(item.id, choice as any)}
-                        className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${
-                            auditData[item.id] === choice 
-                            ? (choice === 'ya' ? 'bg-emerald-600 text-white shadow-lg transform scale-105' : choice === 'tidak' ? 'bg-red-600 text-white shadow-lg transform scale-105' : 'bg-slate-600 text-white shadow-lg transform scale-105')
-                            : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
-                        }`}
+                        <button key={choice} type="button" onClick={() => handleActionClick(item.id, choice as any)}
+                            className={`px-6 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                                auditData[item.id] === choice ? 'bg-blue-600 text-white border-blue-500' : 'bg-transparent text-slate-400 border-transparent hover:bg-white/10'
+                            }`}
                         >
-                        {choice}
+                            {choice === 'na' ? 'N/A' : choice}
                         </button>
                     ))}
                     </div>
                 </div>
                 </div>
             ))}
-            </div>
+          </div>
         </div>
 
         <LiveStatisticsCard 
-          totalDinilai={stats.dinilai} totalPatuh={stats.patuh} totalTidakPatuh={stats.dinilai - stats.patuh}
-          persentase={stats.persentase} statusText={stats.statusText} title="KEPATUHAN PENGELOLAAN LIMBAH MEDIS"
+          totalDinilai={stats.dinilai || 0} 
+          totalPatuh={stats.patuh || 0} 
+          totalTidakPatuh={(stats.dinilai || 0) - (stats.patuh || 0)}
+          persentase={stats.persentase || 0} 
+          statusText={stats.statusText || 'Belum Dinilai'}
         />
 
-        {/* Temuan & Rekomendasi */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
-                <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">📝 TEMUAN</h2>
-                <textarea value={temuan} onChange={e => setTemuan(e.target.value)} placeholder="Tuliskan temuan audit limbah medis...&#13;&#10;Contoh:&#13;&#10;Tempat sampah tanpa pedal kaki&#13;&#10;Kantong kuning kosong&#13;&#10;Sampah melebihi 3/4 penuh" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none"/>
-            </div>
-            <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
-                <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">💡 REKOMENDASI</h2>
-                <textarea value={rekomendasi} onChange={e => setRekomendasi(e.target.value)} placeholder="Tuliskan rekomendasi tindak lanjut...&#13;&#10;Contoh:&#13;&#10;Tambahkan tempat sampah pedal kaki&#13;&#10;Ganti kantong limbah infeksius&#13;&#10;Edukasi petugas tentang spill kit" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none"/>
-            </div>
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 space-y-6">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">Section Audit Tambahan</h2>
+          
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Temuan Audit</label>
+            <textarea value={temuan} onChange={(e) => setTemuan(e.target.value)} placeholder="Tuliskan temuan audit..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none min-h-[100px]" />
+          </div>
+
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Rekomendasi</label>
+            <textarea value={rekomendasi} onChange={(e) => setRekomendasi(e.target.value)} placeholder="Rekomendasi tindakan..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none min-h-[100px]" />
+          </div>
+          
+          <DocumentationUploader images={images} setImages={setImages} />
+          
+          <DigitalSignatureSection 
+            ref={signatureRef} 
+            pjName={pjName} 
+            setPjName={setPjName} 
+            pjLabel="PJ RUANGAN"
+          />
         </div>
 
-        {/* Dokumentasi */}
-        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
-            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">📷 DOKUMENTASI</h2>
-            <div className="flex flex-wrap gap-4">
-                {images.map((img, i) => (
-                    <div key={i} className="relative w-24 h-24 rounded-xl overflow-hidden border border-white/10">
-                        <img src={URL.createObjectURL(img)} alt="img" className="w-full h-full object-cover"/>
-                        <button onClick={() => removeImage(i)} className="absolute top-1 right-1 bg-red-500/80 p-1 rounded-full"><X size={12}/></button>
-                    </div>
-                ))}
-                <button onClick={() => fileInputRef.current?.click()} className="w-24 h-24 rounded-xl border border-dashed border-white/20 flex flex-col items-center justify-center text-slate-500 hover:text-white hover:border-blue-500 transition-all">
-                    <Upload size={24}/>
-                    <span className="text-[10px] mt-1">Upload</span>
-                </button>
-                <input type="file" ref={fileInputRef} hidden multiple accept="image/*" onChange={handleImageChange}/>
-            </div>
-        </div>
-
-        {/* Tanda Tangan */}
-        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
-            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">✍️ TANDA TANGAN DIGITAL</h2>
-            <DigitalSignatureSection ref={sigRef} pjName={pjName} setPjName={setPjName} pjLabel="PJ RUANGAN" />
-        </div>
-
-        <button onClick={handleSubmit} disabled={isSubmitting || !observer || !unit || stats.dinilai === 0}
-          className="w-full flex justify-center items-center gap-4 py-6 bg-gradient-to-br from-blue-500 to-indigo-800 text-white font-black uppercase tracking-[0.2em] rounded-xl transition-all shadow-[0_10px_25px_-5px_rgba(37,99,235,0.3)] hover:shadow-lg disabled:opacity-50 hover:scale-[1.01]"
+        <button type="submit" disabled={isSubmitting}
+          className="w-full flex justify-center items-center gap-4 py-5 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98] disabled:opacity-50"
         >
-          {isSubmitting ? <RefreshCw className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
-          <span>Simpan Data</span>
+          {isSubmitting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+          <span>Simpan Data Audit</span>
         </button>
-      </div>
+      </form>
     </div>
   );
-}
+}  
 
-InputPengelolaanLimbahMedisPage.getLayout = function getLayout(page: ReactElement) {
+InputPengelolaanLimbahMedisPage.getLayout = function getLayout(page: React.ReactElement) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };
-

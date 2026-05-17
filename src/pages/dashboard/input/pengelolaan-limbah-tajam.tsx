@@ -11,6 +11,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import { LiveStatisticsCard } from '@/components/LiveStatisticsCard';
 import DigitalSignatureSection, { DigitalSignatureRef } from '@/components/DigitalSignatureSection';
 import { EditableSelect } from '@/components/EditableSelect';
+import { DocumentationUploader, DocImage } from '@/components/DocumentationUploader';
 
 const units = [
   'IGD', 'ICU', 'IBS', 'Rawat Jalan', 'Ranap Aisyah', 
@@ -46,10 +47,9 @@ export default function InputPengelolaanLimbahTajamPage() {
   
   const [observer, setObserver] = useState('');
   const [unit, setUnit] = useState('');
-  const [profesi, setProfesi] = useState('');
   const [temuan, setTemuan] = useState('');
   const [rekomendasi, setRekomendasi] = useState('');
-  const [images, setImages] = useState<File[]>([]);
+  const [images, setImages] = useState<DocImage[]>([]);
   const [pjName, setPjName] = useState('');
   
   const sigRef = useRef<DigitalSignatureRef>(null);
@@ -67,6 +67,50 @@ export default function InputPengelolaanLimbahTajamPage() {
     setStartTime(new Date());
   }, []);
 
+  const formatDateForInput = (date: Date | null) => {
+    if (!date) return '';
+    try {
+      const d = new Date(date);
+      return d.toISOString().split('T')[0];
+    } catch (e) {
+      return '';
+    }
+  };
+
+  const formatTimeForInput = (date: Date | null) => {
+    if (!date) return '';
+    try {
+      const d = new Date(date);
+      const hours = d.getHours().toString().padStart(2, '0');
+      const mins = d.getMinutes().toString().padStart(2, '0');
+      return `${hours}:${mins}`;
+    } catch (e) {
+      return '';
+    }
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const [year, month, day] = e.target.value.split('-').map(Number);
+    if (!year) return;
+    
+    if (startTime) {
+      const newD = new Date(startTime);
+      newD.setFullYear(year, month - 1, day);
+      setStartTime(newD);
+    } else {
+        const newD = new Date();
+        newD.setFullYear(year, month - 1, day);
+        setStartTime(newD);
+    }
+  };
+
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const [hours, mins] = e.target.value.split(':').map(Number);
+    const newD = startTime ? new Date(startTime) : new Date();
+    newD.setHours(hours, mins);
+    setStartTime(newD);
+  };
+
   const handleError = (err: any) => {
     console.error(err);
     alert(`Error: ${err.message || 'Terjadi kesalahan sistem'}`);
@@ -74,12 +118,6 @@ export default function InputPengelolaanLimbahTajamPage() {
 
   const handleActionClick = (id: string, stat: AuditStatus) => {
     setAuditData(prev => ({ ...prev, [id]: stat }));
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setImages(prev => [...prev, ...Array.from(e.target.files!)]);
-    }
   };
 
   const removeImage = (index: number) => {
@@ -115,7 +153,7 @@ export default function InputPengelolaanLimbahTajamPage() {
 
       const payload = {
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
-        observer, unit, profesi,
+        observer, unit,
         temuan, rekomendasi,
         ...auditData,
         jumlah_dinilai: stats.dinilai,
@@ -133,7 +171,7 @@ export default function InputPengelolaanLimbahTajamPage() {
           indikator_id: 'pengelolaan_limbah_tajam', 
           nama_indikator: 'PENGELOLAAN LIMBAH TAJAM',
           tanggal_waktu: payload.tanggal_waktu,
-          observer, unit, profesi,
+          observer, unit,
           jenis_tindakan: 'Pengelolaan Limbah Tajam Audit',
           jumlah_dinilai: stats.dinilai,
           jumlah_patuh: stats.patuh,
@@ -151,7 +189,7 @@ export default function InputPengelolaanLimbahTajamPage() {
       if (sessionError) throw sessionError;
 
       for (let i = 0; i < images.length; i++) {
-        await supabase.storage.from('audit_images').upload(`images/${sessionData.id}_${i}.jpg`, images[i]);
+        await supabase.storage.from('audit_images').upload(`images/${sessionData.id}_${i}.jpg`, images[i].file);
       }
 
       setShowToast(true);
@@ -195,11 +233,48 @@ export default function InputPengelolaanLimbahTajamPage() {
       </div>
 
       <div className="space-y-6">
+        {/* Waktu Observasi */}
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
+            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
+                 <Clock className="w-4 h-4 text-emerald-400" /> Waktu Input
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                 <div className="relative group overflow-hidden bg-white/5 p-6 rounded-[24px] border border-white/5 hover:border-blue-500/30 transition-all duration-500 shadow-inner">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-transparent rounded-bl-full pointer-events-none" />
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4 block">Tanggal Audit</label>
+                  <div className="relative flex items-center">
+                    <input 
+                      type="date" 
+                      value={formatDateForInput(startTime)}
+                      onChange={handleDateChange}
+                      className="w-full bg-transparent text-xl font-bold text-white outline-none cursor-pointer [appearance:none] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:left-0 [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:top-0 [&::-webkit-calendar-picker-indicator]:bottom-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer" 
+                    />
+                  </div>
+                </div>
+
+                <div className="relative group overflow-hidden bg-white/5 p-6 rounded-[24px] border border-white/5 hover:border-blue-500/30 transition-all duration-500 shadow-inner border-l-4 border-l-blue-500/30">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-transparent rounded-bl-full pointer-events-none" />
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 mb-4 block flex items-center justify-between">
+                    Jam Input
+                    <span className="text-[8px] opacity-50 animate-pulse italic text-slate-400">Scroll untuk pilih</span>
+                  </label>
+                  <div className="relative flex items-center">
+                    <input 
+                      type="time" 
+                      value={formatTimeForInput(startTime)}
+                      onChange={handleTimeChange}
+                      className="w-full bg-transparent text-xl font-bold text-white outline-none cursor-pointer [appearance:none] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:left-0 [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:top-0 [&::-webkit-calendar-picker-indicator]:bottom-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer" 
+                    />
+                  </div>
+                </div>
+            </div>
+        </div>
+
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
             <Activity className="w-4 h-4 text-purple-400" /> Data Subjek
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <EditableSelect
               label="Observer / Verifikator"
               value={observer}
@@ -217,15 +292,6 @@ export default function InputPengelolaanLimbahTajamPage() {
               isIPCN={isIPCN}
               storageKey="smartppi_units"
               placeholder="Pilih Unit..."
-            />
-            <EditableSelect
-              label="Profesi / Sasaran"
-              value={profesi}
-              onChange={setProfesi}
-              options={professions}
-              isIPCN={isIPCN}
-              storageKey="smartppi_profesi"
-              placeholder="Pilih Profesi..."
             />
           </div>
         </div>
@@ -271,67 +337,33 @@ export default function InputPengelolaanLimbahTajamPage() {
           persentase={stats.persentase} statusText={stats.statusText} title="KEPATUHAN PENGELOLAAN LIMBAH TAJAM"
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-                <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">📝 TEMUAN</h2>
-                <textarea value={temuan} onChange={e => setTemuan(e.target.value)} placeholder="Tuliskan temuan audit limbah tajam...&#10;Contoh:&#10;Safety box hampir penuh&#10;Safety box tidak tersedia di troli&#10;Jarum masih direcap dua tangan" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none"/>
-            </div>
-            <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-                <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">💡 REKOMENDASI</h2>
-                <textarea value={rekomendasi} onChange={e => setRekomendasi(e.target.value)} placeholder="Tuliskan rekomendasi tindak lanjut...&#10;Contoh:&#10;Segera ganti safety box yang penuh&#10;Tempatkan safety box di area tindakan&#10;Edukasi teknik one hand scoop" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none"/>
-            </div>
-        </div>
-
-        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">📷 DOKUMENTASI</h2>
-            <div className="flex flex-wrap gap-4">
-                {images.map((img, i) => (
-                    <div key={i} className="relative w-24 h-24 rounded-xl overflow-hidden border border-white/10 shadow-sm">
-                        <img src={URL.createObjectURL(img)} alt="img" className="w-full h-full object-cover"/>
-                        <button onClick={() => removeImage(i)} className="absolute top-1 right-1 bg-red-500/80 p-1 rounded-full text-white backdrop-blur-md hover:bg-red-500 transition-colors"><X size={12}/></button>
-                    </div>
-                ))}
-                <button onClick={() => fileInputRef.current?.click()} className="w-24 h-24 rounded-[1.25rem] border-2 border-dashed border-white/20 flex flex-col items-center justify-center text-slate-500 hover:text-blue-400 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all cursor-pointer">
-                    <Upload size={24}/>
-                    <span className="text-[10px] mt-2 font-bold uppercase tracking-widest">Upload</span>
-                </button>
-                <input type="file" ref={fileInputRef} hidden multiple accept="image/*" onChange={handleImageChange}/>
-            </div>
-        </div>
-
-        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">✍️ TANDA TANGAN DIGITAL</h2>
-            <DigitalSignatureSection ref={sigRef} pjName={pjName} setPjName={setPjName} pjLabel="PJ RUANGAN" />
-        </div>
-
-        <motion.button 
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.99 }}
-          onClick={handleSubmit} 
-          disabled={isSubmitting || !observer || !unit || !profesi || stats.dinilai === 0}
-          className={`w-full group relative overflow-hidden py-6 rounded-[1.5rem] flex items-center justify-center gap-4 transition-all duration-500 disabled:opacity-30 disabled:cursor-not-allowed ${
-            isSubmitting 
-              ? 'bg-blue-600/50 cursor-wait' 
-              : 'bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-800 shadow-[0_20px_40px_-15px_rgba(37,99,235,0.4)] hover:shadow-[0_25px_50px_-12px_rgba(37,99,235,0.6)]'
-          }`}
-        >
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.2),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <div className="relative flex items-center gap-4">
-            <div className="relative">
-              {isSubmitting ? (
-                <RefreshCw className="w-6 h-6 text-white animate-spin" />
-              ) : (
-                <>
-                  <Save className="w-6 h-6 text-white group-hover:scale-110 transition-transform duration-300" />
-                  <div className="absolute inset-0 bg-white/40 blur-lg rounded-full animate-pulse" />
-                </>
-              )}
-            </div>
-            <span className="text-xs font-black uppercase tracking-[0.3em] text-white drop-shadow-md">
-              {isSubmitting ? 'Memproses...' : 'Simpan Data Audit'}
-            </span>
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 space-y-6">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">Section Audit Tambahan</h2>
+          
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Temuan Audit</label>
+            <textarea value={temuan} onChange={(e) => setTemuan(e.target.value)} placeholder="Tuliskan temuan audit..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none min-h-[100px]" />
           </div>
-        </motion.button>
+
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Rekomendasi</label>
+            <textarea value={rekomendasi} onChange={(e) => setRekomendasi(e.target.value)} placeholder="Rekomendasi tindakan..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none min-h-[100px]" />
+          </div>
+          
+          <DigitalSignatureSection 
+            ref={sigRef} 
+            pjName={pjName} 
+            setPjName={setPjName} 
+            pjLabel="PJ RUANGAN"
+          />
+        </div>
+
+        <button onClick={handleSubmit} disabled={isSubmitting || !observer || !unit || stats.dinilai === 0}
+          className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg disabled:opacity-50"
+        >
+          {isSubmitting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+          <span>Simpan Data Audit</span>
+        </button>
       </div>
     </div>
   );

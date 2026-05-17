@@ -90,14 +90,14 @@ export default function RadiologiReport({ filters }: { filters?: any }) {
       if (row.status === 'Baik') baikCount++;
       if (row.temuan && row.temuan.trim() !== '') findingsList.push(row.temuan);
 
-      const items = genericAuditConfigs.monitoring_radiologi.items;
+      const items = (genericAuditConfigs.monitoring_radiologi?.items || []);
       items.forEach((item: any) => {
          const val = row.checklist_json?.[item.key];
          if (val === 'ya') {
-            subsectionMap[item.section].patuh++;
-            subsectionMap[item.section].total++;
+            subsectionMap[item.section || ''].patuh++;
+            subsectionMap[item.section || ''].total++;
          } else if (val === 'tidak') {
-            subsectionMap[item.section].total++;
+            subsectionMap[item.section || ''].total++;
          }
       });
     });
@@ -271,17 +271,17 @@ export default function RadiologiReport({ filters }: { filters?: any }) {
                         {
                             id: 'a',
                             title: 'A. KONTROL LINGKUNGAN',
-                            items: (genericAuditConfigs.monitoring_radiologi.items || []).filter(i => i.section === 'A. KONTROL LINGKUNGAN').map(i => ({ id: i.key, label: i.label }))
+                            items: ((genericAuditConfigs.monitoring_radiologi?.items || []) || []).filter(i => i.section === 'A. KONTROL LINGKUNGAN').map(i => ({ id: i.key, label: i.label }))
                         },
                         {
                             id: 'b',
                             title: 'B. MANAJEMEN LIMBAH',
-                            items: (genericAuditConfigs.monitoring_radiologi.items || []).filter(i => i.section === 'B. MANAJEMEN LIMBAH').map(i => ({ id: i.key, label: i.label }))
+                            items: ((genericAuditConfigs.monitoring_radiologi?.items || []) || []).filter(i => i.section === 'B. MANAJEMEN LIMBAH').map(i => ({ id: i.key, label: i.label }))
                         },
                         {
                             id: 'c',
                             title: 'C. PRAKTIK KONTROL INFEKSI',
-                            items: (genericAuditConfigs.monitoring_radiologi.items || []).filter(i => i.section === 'C. PRAKTIK KONTROL INFEKSI').map(i => ({ id: i.key, label: i.label }))
+                            items: ((genericAuditConfigs.monitoring_radiologi?.items || []) || []).filter(i => i.section === 'C. PRAKTIK KONTROL INFEKSI').map(i => ({ id: i.key, label: i.label }))
                         }
                       ]}
                       title="LAPORAN AUDIT RADIOLOGI"

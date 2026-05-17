@@ -165,8 +165,55 @@ CREATE TABLE IF NOT EXISTS public.audit_penatalaksanaan_linen (
   created_at timestamp with time zone default timezone('utc'::text, now())
 );
 
--- 3. Matikan RLS agar publik bisa input data tanpa login (Sesuai Kebutuhan Aplikasi)
-ALTER TABLE IF EXISTS "public"."audit_hand_hygiene" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE IF NOT EXISTS public.monitoring_fasilitas_apd (
+  id uuid default gen_random_uuid() primary key,
+  tanggal_waktu timestamp with time zone,
+  observer text,
+  unit text,
+  profesi text,
+  data_indikator jsonb,
+  jumlah_dinilai int,
+  jumlah_patuh int,
+  persentase int,
+  created_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+CREATE TABLE IF NOT EXISTS public.dashboard_slider (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text not null,
+  subtitle text,
+  image_url text not null,
+  active boolean default true,
+  sort_order integer default 0,
+  created_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+CREATE TABLE IF NOT EXISTS public.dashboard_standards (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  indikator text not null unique,
+  nilai_standar numeric not null,
+  operator text default '>=',
+  created_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+ALTER TABLE public.monitoring_fasilitas_apd ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.dashboard_slider ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.dashboard_standards ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public access" ON public.monitoring_fasilitas_apd;
+CREATE POLICY "Public access" ON public.monitoring_fasilitas_apd FOR ALL TO public USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public for slider" ON public.dashboard_slider;
+CREATE POLICY "Public for slider" ON public.dashboard_slider FOR ALL TO public USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public for standards" ON public.dashboard_standards;
+CREATE POLICY "Public for standards" ON public.dashboard_standards FOR ALL TO public USING (true) WITH CHECK (true);
+
+-- Insert default slide if empty
+INSERT INTO public.dashboard_slider (title, subtitle, image_url, active, sort_order)
+SELECT 'SMART PPI Terpadu', 'Pusat Pemantauan dan Pengendalian Infeksi UOBK RSUD AL-MULK. Mencegah lebih baik daripada mengobati.', 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=1600', true, 1
+WHERE NOT EXISTS (SELECT 1 FROM public.dashboard_slider);
+
 ALTER TABLE IF EXISTS "public"."audit_apd" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS "public"."audit_dekontaminasi_alat" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS "public"."audit_pengendalian_lingkungan" ENABLE ROW LEVEL SECURITY;

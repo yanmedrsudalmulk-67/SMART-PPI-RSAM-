@@ -215,10 +215,10 @@ export default function InputEtikaBatukPage() {
         </div>
 
         <button onClick={handleSubmit} disabled={isSubmitting || !observer || !unit || selectedMateri.length === 0 || selectedSasaran.length === 0}
-          className="w-full flex justify-center items-center gap-3 py-4 mt-6 bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white font-bold uppercase tracking-widest rounded-xl transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] disabled:opacity-50 group active:scale-[0.98]"
+          className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg disabled:opacity-50"
         >
-          {isSubmitting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5 group-hover:scale-110 transition-transform" />}
-          <span>Simpan Data</span>
+          {isSubmitting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+          <span>Simpan Data Audit</span>
         </button>
       </div>
     </div>

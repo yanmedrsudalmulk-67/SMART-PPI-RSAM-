@@ -22,24 +22,31 @@ import { ClockWidget } from '@/components/ClockWidget';
 import { useDashboardStore } from '@/hooks/useDashboardStore';
 import { supabase } from '@/lib/supabase';
 
-const NavItem = memo(({ item, isActive, isLightMode }: { item: any, isActive: boolean, isLightMode?: boolean }) => (
+const NavItem = memo(({ item, isActive, isLightMode, onClick }: { item: any, isActive: boolean, isLightMode?: boolean, onClick?: () => void }) => (
   <Link 
     href={item.href}
     prefetch={false}
-    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all group ${
+    onClick={onClick}
+    className={`relative flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-300 ease-out group overflow-hidden ${
       isActive 
         ? isLightMode
-          ? 'bg-white/20 text-white border border-white/30'
-          : 'bg-blue-600/10 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)]' 
+          ? 'text-white'
+          : 'bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 text-emerald-400 shadow-[0_4px_20px_rgba(16,185,129,0.15)]' 
         : isLightMode
-          ? 'text-white/70 hover:bg-white/10 hover:text-white'
-          : 'text-slate-400 hover:bg-white/5 hover:text-white'
-    }`}
+          ? 'text-white/70 hover:bg-white/10 hover:text-white hover:shadow-sm'
+          : 'text-slate-400 hover:bg-white/5 hover:text-emerald-300'
+    } hover:scale-[1.02]`}
   >
-    <div className={isActive ? 'animate-float' : ''}>
-      <item.icon className={`w-5 h-5 transition-transform group-hover:scale-110 ${isActive ? (isLightMode ? 'text-white' : 'text-blue-400') : ''}`} />
+    {isActive && (
+      <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-r-full ${isLightMode ? 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.5)]' : 'bg-gradient-to-b from-emerald-400 to-cyan-500 shadow-[0_0_8px_rgba(52,211,153,0.5)]'}`} />
+    )}
+    <div className={`relative z-10 flex items-center justify-center w-8 h-8 rounded-lg transition-transform duration-300 ${isActive ? 'scale-110 animate-float' : 'group-hover:scale-110'}`}>
+      <item.icon className={`w-5 h-5 ${isActive ? (isLightMode ? 'text-white' : 'text-emerald-400') : ''}`} strokeWidth={isActive ? 2.5 : 2} />
     </div>
-    <span className="text-sm font-semibold">{item.name}</span>
+    <span className={`text-[13px] font-bold tracking-wide relative z-10 ${isActive ? '' : 'font-semibold'}`}>{item.name}</span>
+    
+    {/* Soft glow on hover */}
+    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-r from-white/0 via-white/5 to-white/0" />
   </Link>
 ));
 
@@ -72,21 +79,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           const currentYear = new Date().getFullYear();
           const startDate = new Date(currentYear - 1, 0, 1).toISOString(); // last year and current year
           
-          const [slidesRes, stdRes, hhRes, apdRes, haisRes] = await Promise.all([
+          const [slidesRes, stdRes, hhRes, apdRes, haisRes, fapdRes, linenRes] = await Promise.all([
             supabase.from('dashboard_slider').select('*').order('sort_order', { ascending: true }),
             supabase.from('dashboard_standards').select('*'),
             supabase.from('audit_hand_hygiene').select('*'),
             supabase.from('audit_apd').select('*'),
-            supabase.from('insiden_hais').select('*')
+            supabase.from('insiden_hais').select('*'),
+            supabase.from('monitoring_fasilitas_apd').select('*'),
+            supabase.from('audit_penatalaksanaan_linen').select('*')
           ]);
 
           let newSlides: any[] = [];
-          if (slidesRes.data) newSlides = slidesRes.data;
+          if (slidesRes.data && slidesRes.data.length > 0) {
+            newSlides = slidesRes.data;
+          } else {
+            // Fallback to DEFAULT_SLIDES if table is empty or doesn't exist
+            newSlides = []; 
+          }
 
           const newRawData = {
             hh: hhRes.data || [],
             apd: apdRes.data || [],
-            hais: haisRes.data || []
+            hais: haisRes.data || [],
+            fasilitas_apd: fapdRes.data || [],
+            linen: linenRes.data || []
           };
 
           const newStandards: any = {
@@ -95,7 +111,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             phlebitis: { indikator: 'Phlebitis', nilai_standar: 1.5, operator: '<=' },
             isk: { indikator: 'ISK', nilai_standar: 5, operator: '<=' },
             ido: { indikator: 'IDO', nilai_standar: 2, operator: '<=' },
-            vap: { indikator: 'VAP', nilai_standar: 5, operator: '<=' }
+            vap: { indikator: 'VAP', nilai_standar: 5, operator: '<=' },
+            fasilitas_apd: { indikator: 'Fasilitas APD', nilai_standar: 100, operator: '>=' },
+            linen: { indikator: 'Penatalaksanaan Linen', nilai_standar: 100, operator: '>=' }
           };
           if (stdRes.data) {
             stdRes.data.forEach(s => {
@@ -106,6 +124,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               else if (key.includes('isk')) newStandards.isk = s;
               else if (key.includes('ido')) newStandards.ido = s;
               else if (key.includes('vap')) newStandards.vap = s;
+              else if (key.includes('fasilitas') || key.includes('fapd')) newStandards.fasilitas_apd = s;
+              else if (key.includes('linen')) newStandards.linen = s;
               else newStandards[key] = s;
             });
           }
@@ -117,6 +137,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           });
         } catch (e) {
           console.error("Global load error", e);
+        } finally {
           setIsGlobalLoading(false);
         }
       };
@@ -162,25 +183,40 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className={`min-h-screen flex ${isLightMode ? 'bg-white text-slate-900' : 'bg-[#0a0f1c] text-slate-200'}`}>
-      {/* Desktop Sidebar */}
+      {/* Desktop & Mobile Sidebar Drawer */}
       <AnimatePresence mode="wait">
-        {!isMobile && isSidebarOpen && (
-          <motion.aside 
-            initial={false}
-            animate={{ width: 260, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            className={`backdrop-blur-xl border-r flex flex-col fixed inset-y-0 left-0 z-20 shadow-2xl overflow-hidden ${isLightMode ? 'bg-[#006B3F] border-white/10 shadow-emerald-900/10' : 'bg-[#0f172a]/50 border-white/5'}`}
-          >
-            <div className={`h-16 flex items-center px-6 border-b shrink-0 ${isLightMode ? 'border-white/10' : 'border-white/5'}`}>
-              <AppLogo className={`w-8 h-8 mr-3 ${isLightMode ? 'text-[#38C968]' : 'text-white'}`} iconClassName={`w-5 h-5 ${isLightMode ? 'text-white' : 'text-white'}`} />
-              <span className={`font-heading font-bold text-xl tracking-widest transition-all ${isLightMode ? 'text-white' : 'text-[#3b82f6] drop-shadow-[0_0_25px_rgba(59,130,246,0.5)]'}`}>
-                SMART PPI
-              </span>
+        {isSidebarOpen && (
+          <>
+            {isMobile && (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsSidebarOpen(false)}
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity"
+              />
+            )}
+            <motion.aside 
+              initial={false}
+              animate={{ width: 280, opacity: 1, x: 0 }}
+              exit={{ width: isMobile ? 280 : 0, opacity: 0, x: isMobile ? -280 : 0 }}
+              className={`backdrop-blur-2xl border-r flex flex-col fixed inset-y-4 left-4 z-50 rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.1)] overflow-hidden transition-colors duration-500 ${isLightMode ? 'bg-emerald-600 text-white border-emerald-500' : 'bg-[#0a0f1c]/80 border-white/5 shadow-black/50'}`}
+            >
+            <div className={`h-24 flex items-center px-6 border-b shrink-0 ${isLightMode ? 'border-white/20' : 'border-white/5'}`}>
+              <AppLogo className={`w-12 h-12 mr-4 ${isLightMode ? 'text-white' : 'text-emerald-400'}`} iconClassName={`w-6 h-6 ${isLightMode ? 'text-emerald-600' : 'text-[#0a0f1c]'}`} />
+              <div className="flex flex-col">
+                <span className={`font-heading font-black text-xl tracking-tight transition-all ${isLightMode ? 'text-white' : 'text-white drop-shadow-[0_0_15px_rgba(52,211,153,0.3)]'}`}>
+                  SMART PPI
+                </span>
+                <span className={`text-[8px] sm:text-[9px] font-semibold uppercase tracking-wider mt-0.5 leading-tight ${isLightMode ? 'text-white/80' : 'text-slate-400'}`}>
+                  Sistem Monitoring, Audit dan Supervisi Terintegrasi
+                </span>
+              </div>
             </div>
             
-            <div className="flex-1 overflow-y-auto py-6 px-4 space-y-2">
-              <div className="mb-8 px-2">
-                <p className={`text-[10px] font-bold uppercase tracking-[0.2em] mb-1 ${isLightMode ? 'text-green-400' : 'text-slate-500'}`}>Menu Utama</p>
+            <div className="flex-1 overflow-y-auto py-8 px-5 space-y-2 scrollbar-hide">
+              <div className="mb-6 px-1">
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${isLightMode ? 'text-white/80' : 'text-slate-500'}`}>Menu Utama</p>
               </div>
               {navItems.map((item) => (
                 <NavItem 
@@ -188,44 +224,39 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   item={item} 
                   isActive={pathname === item.href} 
                   isLightMode={isLightMode}
+                  onClick={() => { if (isMobile) setIsSidebarOpen(false); }}
                 />
               ))}
             </div>            
-            <div className={`p-6 border-t shrink-0 flex items-center justify-between ${isLightMode ? 'border-white/10' : 'border-white/5'}`}>
-              <div className="flex items-center gap-2 opacity-50">
-                <AppLogo className="w-5 h-5 text-white" iconClassName="w-3 h-3 text-white" />
-                <span className={`text-[8px] font-bold uppercase tracking-widest ${isLightMode ? 'text-green-400' : 'text-slate-500'}`}>SMART PPI v1.0</span>
-              </div>
+            <div className="p-4 mt-auto shrink-0">
               <Link 
                 href="/login"
                 prefetch={false}
-                onClick={() => {
-                  setUserRole('');
-                }}
-                className={`flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all group w-full ${isLightMode ? 'text-green-300 hover:text-red-300' : 'text-slate-500 hover:text-red-400'}`}
+                onClick={() => setUserRole('')}
+                className={`flex items-center justify-center gap-2 w-full p-3.5 rounded-xl font-bold text-sm tracking-wide transition-all group ${isLightMode ? 'bg-white/10 hover:bg-white/20 text-white border border-white/20' : 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20'}`}
+                title="Keluar"
               >
-                <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+                <LogOut className={`w-5 h-5 transition-transform group-hover:-translate-x-1 ${isLightMode ? 'text-white' : ''}`} strokeWidth={2.5} />
                 <span>Keluar</span>
               </Link>
             </div>
           </motion.aside>
+          </>
         )}
       </AnimatePresence>
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col min-w-0 ${!isMobile && isSidebarOpen ? 'ml-[260px]' : ''}`}>
+      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-500 ${!isMobile && isSidebarOpen ? 'ml-[312px]' : ''}`}>
         {/* Top Header */}
-        <header className={`min-h-[56px] sm:h-16 py-2 sm:py-0 backdrop-blur-xl border-b flex items-center justify-between px-3 sm:px-6 sticky top-0 z-10 ${isLightMode ? 'bg-white/80 border-slate-200' : 'bg-[#0a0f1c]/50 border-white/5'}`}>
+        <header className={`min-h-[56px] sm:h-20 py-2 sm:py-0 backdrop-blur-xl border-b flex items-center justify-between px-4 sm:px-8 sticky top-0 z-10 transition-colors duration-500 ${isLightMode ? 'bg-white/80 border-slate-100 shadow-sm' : 'bg-[#0a0f1c]/80 border-white/5 shadow-md'}`}>
           <div className="flex items-center gap-2 sm:gap-4">
-            {!isMobile && (
-              <button 
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className={`p-2 rounded-xl transition-colors ${isLightMode ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'}`}
-                title="Toggle Sidebar"
-              >
-                <Menu className="w-5 h-5" />
-              </button>
-            )}
+            <button 
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className={`p-2 rounded-xl transition-colors hidden sm:block ${isLightMode ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'}`}
+              title="Toggle Sidebar"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
             
             {/* Clock Widget */}
             <ClockWidget isLightMode={isLightMode} />
@@ -235,7 +266,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div className="flex items-center gap-2 sm:hidden px-1">
                 <div className="w-9 h-9 md:w-10 md:h-10 flex-shrink-0 bg-white/5 border border-white/10 rounded-[10px] flex items-center justify-center overflow-hidden relative">
                   {hospitalLogoUrl ? (
-                    <Image src={hospitalLogoUrl} alt="Logo RS" fill priority className="object-contain p-1" referrerPolicy="no-referrer" />
+                    <Image src={hospitalLogoUrl} alt="Logo RS" fill sizes="40px" priority className="object-contain p-1" referrerPolicy="no-referrer" />
                   ) : (
                     <ShieldCheck className="w-5 h-5 md:w-6 md:h-6 text-blue-400" />
                   )}
@@ -290,7 +321,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 sm:pb-8 relative">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative">
           <div className="fixed top-[20%] right-[10%] w-[30%] h-[30%] bg-gradient-to-r from-blue-400 to-purple-500/5 blur-[100px] rounded-full -z-10 pointer-events-none" />
           <div className="fixed bottom-[10%] left-[10%] w-[30%] h-[30%] bg-purple-500/5 blur-[100px] rounded-full -z-10 pointer-events-none" />
           
@@ -300,7 +331,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Mobile Bottom Navigation */}
       {isMobile && (
-        <nav className={`fixed bottom-0 inset-x-0 backdrop-blur-2xl border-t flex justify-around items-center h-16 px-2 z-50 transition-all ${isLightMode ? 'bg-[#006B3F] border-slate-100/20' : 'bg-[#0f172a]/80 border-white/5'}`}>
+        <nav className={`fixed bottom-0 inset-x-0 backdrop-blur-2xl border-t flex justify-around items-center h-16 px-2 z-40 transition-all ${isLightMode ? 'bg-emerald-600 border-emerald-500' : 'bg-[#0a0f1c]/90 border-white/10'}`}>
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -310,12 +341,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 prefetch={false}
                 className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${
                   isActive 
-                    ? isLightMode ? 'text-white' : 'text-blue-400' 
-                    : isLightMode ? 'text-white/60 hover:text-white' : 'text-slate-500 hover:text-slate-300'
+                    ? isLightMode ? 'text-white' : 'text-emerald-400' 
+                    : isLightMode ? 'text-white/70 hover:text-white' : 'text-slate-500 hover:text-slate-300'
                 }`}
               >
-                <div className={isActive ? 'animate-float' : ''}>
-                  <item.icon className={`w-5 h-5 ${isActive ? (isLightMode ? '' : 'drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]') : ''}`} />
+                <div className={`relative transition-transform duration-300 ${isActive ? 'scale-110 animate-float' : ''}`}>
+                  <item.icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} />
                 </div>
                 <span className="text-[9px] font-bold uppercase tracking-wider">{item.name}</span>
               </Link>

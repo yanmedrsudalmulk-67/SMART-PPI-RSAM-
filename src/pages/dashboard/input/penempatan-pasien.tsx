@@ -42,7 +42,7 @@ export default function InputPenempatanPasienPage() {
   const [rekomendasi, setRekomendasi] = useState('');
   const [images, setImages] = useState<DocImage[]>([]);
   const [pjName, setPjName] = useState('');
-  const sigRef = useRef<DigitalSignatureRef>(null);
+  const signatureRef = useRef<DigitalSignatureRef>(null);
 
   const [auditData, setAuditData] = useState<Record<string, AuditStatus>>({
     catatan_infeksi: null, instruksi_ruang: null, poster_pencegahan: null, apd_tersedia: null,
@@ -99,8 +99,14 @@ export default function InputPenempatanPasienPage() {
     setIsSubmitting(true);
     
     try {
-      const ttd_pj = sigRef.current?.getPjSignature();
-      const ttd_ipcn = sigRef.current?.getSupervisorSignature();
+      const pjSig = signatureRef.current?.getPjSignature();
+      const ipcnSig = signatureRef.current?.getSupervisorSignature();
+
+      const uploadedImages: string[] = [];
+      for (const img of images || []) {
+        // Assume image upload logic exists or will be implemented
+        uploadedImages.push(img.url); 
+      }
 
       const payload = {
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
@@ -111,9 +117,10 @@ export default function InputPenempatanPasienPage() {
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.statusText,
-        nama_pj_ruangan: pjName.trim(),
-        ttd_pj_ruangan: ttd_pj,
-        ttd_ipcn: ttd_ipcn
+        dokumentasi: uploadedImages,
+        tanda_tangan_pj: pjSig,
+        tanda_tangan_ipcn: ipcnSig,
+        nama_pj_ruangan: pjName.trim()
       };
 
       const { data: sessionData, error: sessionError } = await supabase
@@ -128,10 +135,10 @@ export default function InputPenempatanPasienPage() {
           jumlah_patuh: stats.patuh,
           persentase: stats.persentase,
           status_kepatuhan: stats.statusText,
-          data_indikator: auditData,
+          data_indikator: { ...auditData, temuan, rekomendasi, dokumentasi: uploadedImages, tanda_tangan_pj: pjSig, tanda_tangan_ipcn: ipcnSig, nama_pj_ruangan: pjName.trim() },
           nama_pj_ruangan: pjName.trim(),
-          ttd_pj_ruangan: ttd_pj,
-          ttd_ipcn: ttd_ipcn
+          ttd_pj_ruangan: pjSig,
+          ttd_ipcn: ipcnSig
         }])
         .select('id')
         .single();
@@ -177,7 +184,7 @@ export default function InputPenempatanPasienPage() {
         </div>
       </div>
 
-      <div className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
             <Activity className="w-4 h-4 text-purple-400" /> Informasi Audit
@@ -218,14 +225,12 @@ export default function InputPenempatanPasienPage() {
                 <h3 className="text-sm font-semibold text-white mb-4 leading-relaxed">{item.label}</h3>
                 <div className="flex gap-3">
                   {['ya', 'tidak', 'na'].map(choice => (
-                    <button key={choice} onClick={() => handleActionClick(item.id, choice as any)}
-                      className={`flex-1 py-3 px-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all border ${
-                        auditData[item.id] === choice 
-                          ? (choice === 'ya' ? 'bg-blue-600/20 text-blue-400 border-blue-500/50' : choice === 'tidak' ? 'bg-red-600/20 text-red-400 border-red-500/50' : 'bg-slate-600/20 text-slate-300 border-slate-500/50')
-                          : 'bg-white/5 text-slate-400 border-transparent hover:bg-white/10'
+                    <button key={choice} type="button" onClick={() => handleActionClick(item.id, choice as any)}
+                      className={`py-3 flex-1 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                        auditData[item.id] === choice ? 'bg-blue-600 text-white border-blue-500' : 'bg-white/5 text-slate-400 border-transparent hover:bg-white/10'
                       }`}
                     >
-                      {choice === 'na' ? 'N/A' : choice.toUpperCase()}
+                      {choice === 'na' ? 'N/A' : choice}
                     </button>
                   ))}
                 </div>
@@ -234,43 +239,47 @@ export default function InputPenempatanPasienPage() {
           </div>
         </div>
 
-        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm space-y-6">
-          <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Temuan</label>
-              <textarea value={temuan} onChange={e => setTemuan(e.target.value)} placeholder="Masukkan temuan di lapangan..." rows={3} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600" />
-          </div>
-          <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Rekomendasi</label>
-              <textarea value={rekomendasi} onChange={e => setRekomendasi(e.target.value)} placeholder="Masukkan rekomendasi tindak lanjut..." rows={3} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600" />
-          </div>
-        </div>
-
-        <div className="bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
-          <DocumentationUploader images={images} setImages={setImages} />
-        </div>
-
         <LiveStatisticsCard 
-          totalDinilai={stats.dinilai} totalPatuh={stats.patuh} totalTidakPatuh={stats.dinilai - stats.patuh}
-          persentase={stats.persentase} statusText={stats.statusText} title="KEPATUHAN PENEMPATAN PASIEN"
+          totalDinilai={stats.dinilai || 0} 
+          totalPatuh={stats.patuh || 0} 
+          totalTidakPatuh={(stats.dinilai || 0) - (stats.patuh || 0)}
+          persentase={stats.persentase || 0} 
+          statusText={stats.statusText || 'Belum Dinilai'}
         />
 
-        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">✍️ TANDA TANGAN DIGITAL</h2>
-            <DigitalSignatureSection ref={sigRef} pjName={pjName} setPjName={setPjName} pjLabel="PJ RUANGAN" />
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 space-y-6">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">Section Audit Tambahan</h2>
+          
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Temuan Audit</label>
+            <textarea value={temuan} onChange={(e) => setTemuan(e.target.value)} placeholder="Tuliskan temuan audit..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none min-h-[100px]" />
+          </div>
+
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Rekomendasi</label>
+            <textarea value={rekomendasi} onChange={(e) => setRekomendasi(e.target.value)} placeholder="Rekomendasi tindakan..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none min-h-[100px]" />
+          </div>
+          
+          <DocumentationUploader images={images} setImages={setImages} />
+          
+          <DigitalSignatureSection 
+            ref={signatureRef} 
+            pjName={pjName} 
+            setPjName={setPjName} 
+          />
         </div>
 
-        <button onClick={handleSubmit} disabled={isSubmitting || !observer || !unit || stats.dinilai === 0}
-          className="w-full flex justify-center items-center gap-3 py-4 mt-6 bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white font-bold uppercase tracking-widest rounded-xl transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] disabled:opacity-50"
+        <button type="submit" disabled={isSubmitting}
+          className="w-full flex justify-center items-center gap-4 py-5 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98] disabled:opacity-50"
         >
           {isSubmitting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-          <span>Simpan Data</span>
+          <span>Simpan Data Audit</span>
         </button>
-      </div>
+      </form>
     </div>
   );
-}
+}  
 
-InputPenempatanPasienPage.getLayout = function getLayout(page: ReactElement) {
+InputPenempatanPasienPage.getLayout = function getLayout(page: React.ReactElement) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };
-

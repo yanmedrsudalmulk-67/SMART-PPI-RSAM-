@@ -276,19 +276,17 @@ export default function InputApdPage() {
               <div className="grid grid-cols-3 gap-3">
                 {['ya', 'tidak', 'na'].map(choice => (
                   <button key={choice} onClick={() => handleActionClick(apd.id, choice as any)}
-                    className={`py-3 px-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                      apdData[apd.id] === choice 
-                        ? (choice === 'ya' ? 'bg-blue-600/20 text-blue-400 border-blue-500/50' : choice === 'tidak' ? 'bg-red-600/20 text-red-400 border-red-500/50' : 'bg-slate-600/20 text-slate-300 border-slate-500/50')
-                        : 'bg-white/5 text-slate-400 border-transparent hover:bg-white/10'
-                    }`}
-                  >
-                    {choice.toUpperCase()}
-                  </button>
-                ))}
+                      className={`py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                        apdData[apd.id] === choice ? 'bg-blue-600 text-white border-blue-500' : 'bg-white/5 text-slate-400 border-transparent hover:bg-white/10'
+                      }`}
+                    >
+                      {choice === 'na' ? 'N/A' : choice}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
         <LiveStatisticsCard 
           totalDinilai={stats.dinilai} totalPatuh={stats.patuh} totalTidakPatuh={stats.dinilai - stats.patuh}
@@ -306,6 +304,6 @@ export default function InputApdPage() {
   );
 }
 
-InputApdPage.getLayout = function getLayout(page: ReactElement) {
+InputApdPage.getLayout = function getLayout(page) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };

@@ -13,7 +13,7 @@ export function AppLogo({ className = "w-10 h-10", iconClassName = "w-6 h-6" }: 
   if (appLogoUrl) {
     return (
       <div className={`relative flex items-center justify-center overflow-hidden rounded-2xl ${className}`}>
-        <Image src={appLogoUrl} alt="App Logo" fill priority className="object-contain" referrerPolicy="no-referrer" />
+        <Image src={appLogoUrl} alt="App Logo" fill sizes="40px" priority className="object-contain" referrerPolicy="no-referrer" />
       </div>
     );
   }

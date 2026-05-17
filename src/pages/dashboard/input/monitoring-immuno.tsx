@@ -314,34 +314,12 @@ export default function InputMonitoringImmunoPage() {
             <DigitalSignatureSection ref={sigRef} pjName={pjName} setPjName={setPjName} pjLabel="PJ RUANGAN" />
         </div>
 
-        <motion.button 
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.99 }}
-          onClick={handleSubmit} 
-          disabled={isSubmitting || !observer || stats.dinilai === 0}
-          className={`w-full group relative overflow-hidden py-6 rounded-[1.5rem] flex items-center justify-center gap-4 transition-all duration-500 disabled:opacity-30 disabled:cursor-not-allowed ${
-            isSubmitting 
-              ? 'bg-blue-600/50 cursor-wait' 
-              : 'bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-800 shadow-[0_20px_40px_-15px_rgba(37,99,235,0.4)] hover:shadow-[0_25px_50px_-12px_rgba(37,99,235,0.6)]'
-          }`}
+        <button onClick={handleSubmit} disabled={isSubmitting || !observer || stats.dinilai === 0}
+          className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg disabled:opacity-50"
         >
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.2),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <div className="relative flex items-center gap-4">
-            <div className="relative">
-              {isSubmitting ? (
-                <RefreshCw className="w-6 h-6 text-white animate-spin" />
-              ) : (
-                <>
-                  <Save className="w-6 h-6 text-white group-hover:scale-110 transition-transform duration-300" />
-                  <div className="absolute inset-0 bg-white/40 blur-lg rounded-full animate-pulse" />
-                </>
-              )}
-            </div>
-            <span className="text-xs font-black uppercase tracking-[0.3em] text-white drop-shadow-md">
-              {isSubmitting ? 'Memproses...' : 'Simpan Data'}
-            </span>
-          </div>
-        </motion.button>
+          {isSubmitting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+          <span>Simpan Data Audit</span>
+        </button>
       </div>
     </div>
   );

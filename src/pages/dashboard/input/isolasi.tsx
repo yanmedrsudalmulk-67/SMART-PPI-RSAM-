@@ -70,28 +70,31 @@ export default function IsolasiInputPage() {
         </div>
       </div>
 
-      <div className="flex p-1 bg-white/5 rounded-xl mb-6 border border-white/5">
-        <button onClick={() => setActiveTab('standar')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all ${
-            activeTab === 'standar' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-white/5'
-          }`}
-        >
-          <ShieldCheck className="w-4 h-4" /> Standar
-        </button>
-        <button onClick={() => setActiveTab('transmisi')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all ${
-            activeTab === 'transmisi' ? 'bg-purple-600 text-white shadow-lg' : 'text-slate-400 hover:bg-white/5'
-          }`}
-        >
-          <ShieldAlert className="w-4 h-4" /> Transmisi
-        </button>
-        <button onClick={() => setActiveTab('monitoring')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all ${
-            activeTab === 'monitoring' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:bg-white/5'
-          }`}
-        >
-          <Activity className="w-4 h-4" /> Monitoring
-        </button>
+      <div className="relative flex p-1.5 bg-slate-900/60 backdrop-blur-xl rounded-full mb-8 border border-white/10 shadow-inner">
+        <motion.div 
+          className="absolute top-1.5 bottom-1.5 rounded-full bg-gradient-to-r from-blue-600 to-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.5)]"
+          initial={false}
+          animate={{
+            x: activeTab === 'standar' ? '0%' : activeTab === 'transmisi' ? '100%' : '200%',
+            width: 'calc(33.33% - 4px)'
+          }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        />
+        {[
+          { id: 'standar', label: 'Standar', icon: ShieldCheck },
+          { id: 'transmisi', label: 'Transmisi', icon: ShieldAlert },
+          { id: 'monitoring', label: 'Monitoring', icon: Activity }
+        ].map((tab) => (
+          <button 
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-bold uppercase tracking-widest rounded-full transition-colors relative z-10 ${
+              activeTab === tab.id ? 'text-white' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <tab.icon className="w-4 h-4" /> {tab.label}
+          </button>
+        ))}
       </div>
 
       <AnimatePresence>

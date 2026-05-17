@@ -9,9 +9,9 @@ import { useAppContext } from '@/components/Providers';
 import { supabase } from '@/lib/supabase';
 import DashboardLayout from '@/components/DashboardLayout';
 import { LiveStatisticsCard } from '@/components/LiveStatisticsCard';
-import { EditableSelect } from '@/components/EditableSelect';
-import DigitalSignatureSection, { DigitalSignatureRef } from '@/components/DigitalSignatureSection';
 import { DocumentationUploader, DocImage } from '@/components/DocumentationUploader';
+import DigitalSignatureSection, { DigitalSignatureRef } from '@/components/DigitalSignatureSection';
+import { EditableSelect } from '@/components/EditableSelect';
 
 const units = [
   'IGD', 'ICU', 'IBS', 'Rawat Jalan', 'Ranap Aisyah', 
@@ -38,13 +38,12 @@ export default function LinenAuditPage() {
   
   const [observer, setObserver] = useState('');
   const [unit, setUnit] = useState('');
-  
   const [temuan, setTemuan] = useState('');
   const [rekomendasi, setRekomendasi] = useState('');
   
   const [images, setImages] = useState<DocImage[]>([]);
   const [pjName, setPjName] = useState('');
-  const sigRef = useRef<DigitalSignatureRef>(null);
+  const signatureRef = useRef<DigitalSignatureRef>(null);
   
   const [auditData, setAuditData] = useState<Record<string, AuditStatus>>({
     c1: null, c2: null, c3: null, c4: null, c5: null
@@ -54,22 +53,56 @@ export default function LinenAuditPage() {
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
-    const d = new Date();
-    setStartTime(d);
+    setStartTime(new Date());
   }, []);
+
+  const formatDateForInput = (date: Date | null) => {
+    if (!date) return '';
+    try {
+      const d = new Date(date);
+      return d.toISOString().split('T')[0];
+    } catch (e) {
+      return '';
+    }
+  };
+
+  const formatTimeForInput = (date: Date | null) => {
+    if (!date) return '';
+    try {
+      const d = new Date(date);
+      const hours = d.getHours().toString().padStart(2, '0');
+      const mins = d.getMinutes().toString().padStart(2, '0');
+      return `${hours}:${mins}`;
+    } catch (e) {
+      return '';
+    }
+  };
 
   const handleSelection = (cid: string, val: AuditStatus) => {
     setAuditData(prev => ({ ...prev, [cid]: val }));
   };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    if (val) {
-      setStartTime(new Date(val));
+    const [year, month, day] = e.target.value.split('-').map(Number);
+    if (!year) return;
+    
+    if (startTime) {
+      const newD = new Date(startTime);
+      newD.setFullYear(year, month - 1, day);
+      setStartTime(newD);
+    } else {
+        const newD = new Date();
+        newD.setFullYear(year, month - 1, day);
+        setStartTime(newD);
     }
   };
 
-  const formattedDate = startTime ? new Date(startTime.getTime() - startTime.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '';
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const [hours, mins] = e.target.value.split(':').map(Number);
+    const newD = startTime ? new Date(startTime) : new Date();
+    newD.setHours(hours, mins);
+    setStartTime(newD);
+  };
 
   const stats = useMemo(() => {
     let patuh = 0;
@@ -103,8 +136,13 @@ export default function LinenAuditPage() {
     setIsSubmitting(true);
     
     try {
-      const ttd_pj = sigRef.current?.getPjSignature();
-      const ttd_ipcn = sigRef.current?.getSupervisorSignature();
+      const pjSig = signatureRef.current?.getPjSignature();
+      const ipcnSig = signatureRef.current?.getSupervisorSignature();
+
+      const uploadedImages: string[] = [];
+      for (const img of images || []) {
+        uploadedImages.push(img.url); 
+      }
 
       const payload = {
         indikator_id: 'penatalaksanaan_linen', 
@@ -117,11 +155,11 @@ export default function LinenAuditPage() {
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.statusText,
-        data_indikator: auditData,
+        data_indikator: { ...auditData, temuan, rekomendasi, dokumentasi: uploadedImages, tanda_tangan_pj: pjSig, tanda_tangan_ipcn: ipcnSig, nama_pj_ruangan: pjName.trim() },
         temuan, rekomendasi,
         nama_pj_ruangan: pjName.trim(),
-        ttd_pj_ruangan: ttd_pj,
-        ttd_ipcn: ttd_ipcn
+        tanda_tangan_pj: pjSig,
+        tanda_tangan_ipcn: ipcnSig
       };
 
       const { data: sessionData, error } = await supabase.from('audit_sessions').insert([payload]).select('id').single();
@@ -167,18 +205,49 @@ export default function LinenAuditPage() {
         </div>
       </div>
 
-      <div className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
+            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
+                 <Clock className="w-4 h-4 text-emerald-400" /> Waktu Input
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                 <div className="relative group overflow-hidden bg-white/5 p-6 rounded-[24px] border border-white/5 hover:border-blue-500/30 transition-all duration-500 shadow-inner">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-transparent rounded-bl-full pointer-events-none" />
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4 block">Tanggal Audit</label>
+                  <div className="relative flex items-center">
+                    <input 
+                      type="date" 
+                      value={formatDateForInput(startTime)}
+                      onChange={handleDateChange}
+                      className="w-full bg-transparent text-xl font-bold text-white outline-none cursor-pointer [appearance:none] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:left-0 [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:top-0 [&::-webkit-calendar-picker-indicator]:bottom-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer" 
+                    />
+                  </div>
+                </div>
+
+                <div className="relative group overflow-hidden bg-white/5 p-6 rounded-[24px] border border-white/5 hover:border-blue-500/30 transition-all duration-500 shadow-inner border-l-4 border-l-blue-500/30">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-transparent rounded-bl-full pointer-events-none" />
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 mb-4 block flex items-center justify-between">
+                    Jam Input
+                    <span className="text-[8px] opacity-50 animate-pulse italic text-slate-400">Scroll untuk pilih</span>
+                  </label>
+                  <div className="relative flex items-center">
+                    <input 
+                      type="time" 
+                      value={formatTimeForInput(startTime)}
+                      onChange={handleTimeChange}
+                      className="w-full bg-transparent text-xl font-bold text-white outline-none cursor-pointer [appearance:none] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:left-0 [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:top-0 [&::-webkit-calendar-picker-indicator]:bottom-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer" 
+                    />
+                  </div>
+                </div>
+            </div>
+        </div>
+
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
-            <Activity className="w-4 h-4 text-purple-400" /> Informasi Audit
+            <Activity className="w-4 h-4 text-purple-400" /> Data Subjek
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Waktu Audit</label>
-              <input type="datetime-local" value={formattedDate} onChange={handleDateChange} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 transition-colors" />
-            </div>
-            <div>
-              <EditableSelect 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <EditableSelect 
                 label="Observer / Verifikator" 
                 value={observer} 
                 onChange={setObserver} 
@@ -186,15 +255,16 @@ export default function LinenAuditPage() {
                 isIPCN={isIPCN} 
                 table="master_observers"
                 storageKey="local_obs"
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Unit Kerja / Ruangan</label>
-              <select value={unit} onChange={(e) => setUnit(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 transition-colors">
-                <option value="" className="bg-slate-900">Pilih Unit...</option>
-                {units.map(u => <option key={u} value={u} className="bg-slate-900">{u}</option>)}
-              </select>
-            </div>
+            />
+            <EditableSelect 
+                label="Unit Kerja / Ruangan"
+                value={unit} 
+                onChange={setUnit} 
+                options={units} 
+                isIPCN={isIPCN} 
+                storageKey="smartppi_units"
+                placeholder="Pilih Unit..."
+            />
           </div>
         </div>
 
@@ -216,14 +286,12 @@ export default function LinenAuditPage() {
                 </div>
                 <div className="flex gap-3 pl-12">
                   {['ya', 'tidak', 'na'].map(choice => (
-                    <button key={choice} onClick={() => handleSelection(item.id, choice as any)}
-                      className={`flex-1 py-3 px-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all border ${
-                        auditData[item.id] === choice 
-                          ? (choice === 'ya' ? 'bg-blue-600/20 text-blue-400 border-blue-500/50' : choice === 'tidak' ? 'bg-red-600/20 text-red-400 border-red-500/50' : 'bg-slate-600/20 text-slate-300 border-slate-500/50')
-                          : 'bg-white/5 text-slate-400 border-transparent hover:bg-white/10'
+                    <button key={choice} type="button" onClick={() => handleSelection(item.id, choice as any)}
+                      className={`py-3 flex-1 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                        auditData[item.id] === choice ? 'bg-blue-600 text-white border-blue-500' : 'bg-white/5 text-slate-400 border-transparent hover:bg-white/10'
                       }`}
                     >
-                      {choice === 'na' ? 'N/A' : choice.toUpperCase()}
+                      {choice === 'na' ? 'N/A' : choice}
                     </button>
                   ))}
                 </div>
@@ -233,46 +301,47 @@ export default function LinenAuditPage() {
         </div>
 
         <LiveStatisticsCard 
-          totalDinilai={stats.totalEvaluasi} 
-          totalPatuh={stats.patuh} 
-          totalTidakPatuh={stats.totalEvaluasi - stats.patuh}
-          persentase={stats.persentase} 
-          statusText={stats.statusText} 
-          title="KEPATUHAN PENATALAKSANAAN LINEN"
+          totalDinilai={stats.totalEvaluasi || 0} 
+          totalPatuh={stats.patuh || 0} 
+          totalTidakPatuh={(stats.totalEvaluasi || 0) - (stats.patuh || 0)}
+          persentase={stats.persentase || 0} 
+          statusText={stats.statusText || 'Belum Dinilai'}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-                <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">📝 TEMUAN</h2>
-                <textarea value={temuan} onChange={e => setTemuan(e.target.value)} placeholder="Tuliskan temuan audit linen...&#10;Contoh:&#10;Linen bersih disimpan terbuka&#10;Tidak tersedia kantong kuning&#10;Petugas tanpa APD" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors"/>
-            </div>
-            <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-                <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">💡 REKOMENDASI</h2>
-                <textarea value={rekomendasi} onChange={e => setRekomendasi(e.target.value)} placeholder="Tuliskan rekomendasi tindak lanjut...&#10;Contoh:&#10;Sediakan lemari tertutup untuk linen bersih&#10;Lengkapi troli linen tertutup&#10;Sosialisasi penggunaan APD petugas linen" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors"/>
-            </div>
-        </div>
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 space-y-6">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">Section Audit Tambahan</h2>
+          
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Temuan Audit</label>
+            <textarea value={temuan} onChange={(e) => setTemuan(e.target.value)} placeholder="Tuliskan temuan audit..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none min-h-[100px]" />
+          </div>
 
-        <div className="bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Rekomendasi</label>
+            <textarea value={rekomendasi} onChange={(e) => setRekomendasi(e.target.value)} placeholder="Rekomendasi tindakan..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none min-h-[100px]" />
+          </div>
+          
           <DocumentationUploader images={images} setImages={setImages} />
+          
+          <DigitalSignatureSection 
+            ref={signatureRef} 
+            pjName={pjName} 
+            setPjName={setPjName} 
+            pjLabel="PJ RUANGAN"
+          />
         </div>
 
-        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">✍️ TANDA TANGAN DIGITAL</h2>
-            <DigitalSignatureSection ref={sigRef} pjName={pjName} setPjName={setPjName} pjLabel="PJ RUANGAN" />
-        </div>
-
-        <button onClick={handleSubmit} disabled={isSubmitting || !observer || !unit || stats.totalEvaluasi === 0}
-          className="w-full flex justify-center items-center gap-3 py-4 mt-6 bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white font-bold uppercase tracking-widest rounded-xl transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] disabled:opacity-50 group active:scale-[0.98]"
+        <button type="submit" disabled={isSubmitting}
+          className="w-full flex justify-center items-center gap-4 py-5 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98] disabled:opacity-50"
         >
-          {isSubmitting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5 group-hover:scale-110 transition-transform" />}
-          <span>Simpan Data</span>
+          {isSubmitting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+          <span>Simpan Data Audit</span>
         </button>
-      </div>
+      </form>
     </div>
   );
 }
 
-LinenAuditPage.getLayout = function getLayout(page: ReactElement) {
+LinenAuditPage.getLayout = function getLayout(page: React.ReactElement) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };
-

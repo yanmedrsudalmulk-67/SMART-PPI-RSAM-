@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/router';
-import { 
+import {   
   Activity, ArrowLeft, Save, CheckCircle2, Settings, Trash2, X, Plus, Image as ImageIcon
-} from 'lucide-react';
+, RefreshCw  , User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
@@ -76,7 +76,7 @@ export default function RadiologiInputPage() {
   
   const [waktu, setWaktu] = useState<Date | null>(null);
   const [ruangan, setRuangan] = useState('Radiologi');
-  const [supervisor, setSupervisor] = useState('');
+  const [observer, setObserver] = useState('');
   const [data, setData] = useState<Record<string, AuditStatus>>({});
   const [temuan, setTemuan] = useState('');
   const [rekomendasi, setRekomendasi] = useState('');
@@ -105,15 +105,15 @@ export default function RadiologiInputPage() {
       if (data && data.length > 0) {
           setObservers(data);
           const defaultObs = data.find(o => o.nama.includes('Adi Tresa Purnama')) || data[0];
-          setSupervisor(defaultObs.nama);
+          setObserver(defaultObs.nama);
       } else {
           setObservers([{ id: '1', nama: 'IPCN_Adi Tresa Purnama' }]);
-          setSupervisor('IPCN_Adi Tresa Purnama');
+          setObserver('IPCN_Adi Tresa Purnama');
       }
     } catch (err) {
       const defaultObs = { id: '1', nama: 'IPCN_Adi Tresa Purnama' };
       setObservers([defaultObs]);
-      setSupervisor(defaultObs.nama);
+      setObserver(defaultObs.nama);
     }
   };
 
@@ -141,11 +141,11 @@ export default function RadiologiInputPage() {
   };
 
   const deleteObserver = async (id: string) => {
-    if (!confirm('Hapus supervisor ini?')) return;
+    if (!confirm('Hapus observer ini?')) return;
     try {
       if (!id.startsWith('local-')) await supabase.from('master_observers').delete().eq('id', id);
       setObservers(prev => prev.filter(o => o.id !== id));
-      if (supervisor === (observers.find(o => o.id === id)?.nama)) setSupervisor('');
+      if (observer === (observers.find(o => o.id === id)?.nama)) setObserver('');
     } catch (err) {
       console.error(err);
     }
@@ -170,7 +170,7 @@ export default function RadiologiInputPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!supervisor) { alert('Harap pilih Supervisor!'); return; }
+    if (!observer) { alert('Harap pilih Supervisor!'); return; }
     if (Object.values(data).some(v => v === null)) { alert('Harap lengkapi semua checklist!'); return; }
 
     setIsSubmitting(true);
@@ -182,7 +182,7 @@ export default function RadiologiInputPage() {
       const payload = {
         waktu: waktu?.toISOString() || new Date().toISOString(),
         ruangan,
-        supervisor,
+        supervisor: observer,
         checklist_json: data,
         persentase: stats.persentase,
         status: stats.status,
@@ -203,7 +203,7 @@ export default function RadiologiInputPage() {
         indikator_id: 'monitoring_radiologi',
         nama_indikator: 'MONITORING RADIOLOGI',
         tanggal_waktu: payload.waktu,
-        observer: supervisor,
+        observer: observer,
         unit: ruangan,
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
@@ -292,38 +292,36 @@ export default function RadiologiInputPage() {
               <div className="space-y-3 sm:col-span-2 md:col-span-1">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex justify-between items-center">
                   Supervisor
-                  <button type="button" onClick={() => setIsObserverModalOpen(true)} className="p-1.5 bg-slate-100 dark:bg-white/5 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"><Settings className="w-3 h-3" /></button>
-                </label>
-                <select value={supervisor} onChange={(e) => setSupervisor(e.target.value)} required className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-white outline-none">
-                  <option value="" className="text-slate-500">Pilih Supervisor...</option>
-                  {observers.map(o => <option key={o.id} value={o.nama} className="dark:bg-slate-900">{o.nama}</option>)}
-                </select>
-              </div>
+                  <button type="button" onClick={() => setIsObserverModalOpen(true)} className="text-blue-400 hover:text-blue-300 font-bold uppercase tracking-widest flex items-center gap-1"><User className="w-3 h-3" /> Tambah / Kelola</button>
+            </label>
+            <div className="relative">
+              <select value={observer} onChange={(e) => setObserver(e.target.value)} className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white appearance-none outline-none focus:border-blue-500/50">
+                <option value="">Pilih Supervisor...</option>
+                {observers.map(o => <option key={o.id} value={o.nama}>{o.nama}</option>)}
+              </select>
             </div>
           </div>
+        </div>
+        </div>
 
-          <div className="bg-white dark:bg-[#111827] shadow-sm p-6 lg:p-8 rounded-[2rem] border border-slate-200 dark:border-white/5 space-y-8">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 border-b border-slate-200 dark:border-white/5 pb-4">2. CEKLIST RADIOLOGI</h2>
-            
-            {checklistItems.map((sec, sIdx) => (
-              <div key={sIdx} className="space-y-4">
-                <h3 className="text-[11px] font-black uppercase tracking-wider text-slate-500 bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-white/5">{sec.section}</h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  {sec.items.map((item, idx) => (
-                    <div key={item.id} className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/5 flex flex-col justify-between gap-4 transition-all hover:border-blue-500/30">
-                      <p className="text-sm font-medium text-slate-700 dark:text-slate-300 leading-relaxed">
-                        {item.label}
-                      </p>
-                      <div className="flex bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl shrink-0 w-full border border-slate-200 dark:border-white/5">
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">📋 Indikator Kepatuhan</h2>
+          <div className="space-y-8">
+            {checklistItems.map(section => (
+              <div key={section.section} className="space-y-4">
+                <h2 className="text-xs font-black uppercase tracking-[0.2em] text-blue-400/80 mb-4 px-2">{section.section}</h2>
+                <div className="grid gap-4">
+                  {section.items.map(item => (
+                    <div key={item.id} className="bg-white/5 p-6 rounded-[24px] border border-white/5 group hover:border-blue-500/30 transition-all duration-300">
+                      <h3 className="text-sm font-bold text-white mb-4 group-hover:text-blue-400 transition-colors">{item.label}</h3>
+                      <div className="grid grid-cols-3 gap-3">
                         {['ya', 'tidak', 'na'].map(choice => (
-                          <button key={choice} type="button" onClick={() => toggleItem(item.id, choice as any)}
-                            className={`flex-1 py-2.5 rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-widest transition-all ${
-                              data[item.id] === choice 
-                                ? (choice === 'ya' ? 'bg-emerald-500 text-white shadow-md' : choice === 'tidak' ? 'bg-rose-500 text-white shadow-md' : 'bg-slate-500 text-white shadow-md')
-                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/5'
+                          <button type="button" key={choice} onClick={() => toggleItem(item.id, choice as any)}
+                            className={`py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                              data[item.id] === choice ? 'bg-blue-600 text-white border-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.3)]' : 'bg-white/5 text-slate-400 border-transparent hover:bg-white/10'
                             }`}
                           >
-                            {choice === 'ya' ? 'Ya' : choice === 'tidak' ? 'Tidak' : 'N/A'}
+                            {choice === 'na' ? 'N/A' : choice}
                           </button>
                         ))}
                       </div>
@@ -335,60 +333,60 @@ export default function RadiologiInputPage() {
           </div>
         </div>
 
-        <div className="xl:col-span-4 space-y-6 sticky top-24">
-          <LiveStatisticsCard totalDinilai={stats.dinilai} totalPatuh={stats.patuh} totalTidakPatuh={stats.dinilai - stats.patuh} persentase={stats.persentase} statusText={stats.status} title="3. PERSENTASE KEPATUHAN" />
+        <LiveStatisticsCard 
+          totalDinilai={stats.dinilai} totalPatuh={stats.patuh} totalTidakPatuh={stats.dinilai - stats.patuh}
+          persentase={stats.persentase} statusText={stats.status}
+        />
 
-          <div className="bg-white dark:bg-[#111827] shadow-sm p-6 lg:p-8 rounded-[2rem] border border-slate-200 dark:border-white/5 space-y-6">
-            <div className="space-y-3">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">4. TEMUAN</label>
-              <textarea value={temuan} onChange={(e) => setTemuan(e.target.value)} placeholder="Contoh:&#10;Handrub kosong&#10;Tidak ada spill kit&#10;Lead apron belum dibersihkan" className="w-full h-24 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm text-slate-800 dark:text-white outline-none resize-none focus:border-blue-500" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+                <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">📝 Temuan Audit</h2>
+                <textarea value={temuan} onChange={e => setTemuan(e.target.value)} placeholder="Tuliskan temuan audit..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600"/>
             </div>
-            <div className="space-y-3">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">5. REKOMENDASI</label>
-              <textarea value={rekomendasi} onChange={(e) => setRekomendasi(e.target.value)} placeholder="Contoh:&#10;Lengkapi spill kit&#10;Jadwalkan disinfeksi rutin&#10;Ganti handrub baru" className="w-full h-24 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm text-slate-800 dark:text-white outline-none resize-none focus:border-blue-500" />
+            <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+                <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">💡 Rekomendasi</h2>
+                <textarea value={rekomendasi} onChange={e => setRekomendasi(e.target.value)} placeholder="Tuliskan rekomendasi tindak lanjut..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600"/>
             </div>
-          </div>
-
-          <div className="bg-white dark:bg-[#111827] shadow-sm p-6 lg:p-8 rounded-[2rem] border border-slate-200 dark:border-white/5">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 border-b border-slate-200 dark:border-white/5 pb-4 mb-6">6. DOKUMENTASI FOTO</h2>
-            <DocumentationUploader images={images} setImages={setImages} />
-          </div>
-
-          <div className="bg-white dark:bg-[#111827] shadow-sm p-6 lg:p-8 rounded-[2rem] border border-slate-200 dark:border-white/5">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 border-b border-slate-200 dark:border-white/5 pb-4 mb-6">7. TANDA TANGAN DIGITAL</h2>
-            <DigitalSignatureSection ref={sigRef} pjName={pjName} setPjName={setPjName} pjLabel="PJ RUANGAN" />
-          </div>
-
-          <div className="pb-10 pt-4 z-50 sticky bottom-4">
-            <button type="submit" disabled={isSubmitting} className="w-full group relative flex justify-center items-center gap-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-black uppercase tracking-widest rounded-2xl py-5 transition-all shadow-[0_15px_30px_-10px_rgba(59,130,246,0.6)] hover:shadow-[0_20px_40px_-10px_rgba(59,130,246,0.8)] hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
-              {isSubmitting ? <Activity className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6 group-hover:scale-110 transition-transform" />}
-              <span className="text-sm">Simpan Audit Radiologi</span>
-            </button>
-          </div>
         </div>
+
+        <div className="bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
+          <DocumentationUploader images={images} setImages={setImages} />
+        </div>
+
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">✍️ TANDA TANGAN DIGITAL</h2>
+            <DigitalSignatureSection ref={sigRef} pjName={pjName} setPjName={setPjName} pjLabel="PJ RUANGAN" />
+        </div>
+
+        <button type="submit" disabled={isSubmitting || !observer || stats.dinilai === 0}
+          className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg disabled:opacity-50"
+        >
+          {isSubmitting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+          <span>Simpan Data Audit</span>
+        </button>
+      </div>
       </form>
 
-      {/* MODAL SUPERVISOR */}
       <AnimatePresence>
         {isObserverModalOpen && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsObserverModalOpen(false)} className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" />
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-[2rem] p-8 overflow-hidden shadow-2xl">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsObserverModalOpen(false)} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-md bg-slate-900 border border-white/10 rounded-[2rem] p-8 overflow-hidden">
                <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-slate-800 dark:text-white uppercase tracking-widest flex items-center gap-3">Kelola Supervisor</h3>
-                <button onClick={() => setIsObserverModalOpen(false)} className="p-2 text-slate-500 hover:text-slate-800 dark:hover:text-white bg-slate-100 dark:bg-white/5 rounded-xl transition-colors"><X className="w-5 h-5" /></button>
+                <h3 className="text-lg font-bold text-white uppercase tracking-widest flex items-center gap-3">Kelola Supervisor</h3>
+                <button type="button" onClick={() => setIsObserverModalOpen(false)} className="p-2 text-slate-500 hover:text-white"><X className="w-5 h-5" /></button>
               </div>
-              <div className="flex gap-2 mb-6">
-                <input type="text" value={newObserverName} onChange={(e) => setNewObserverName(e.target.value)} placeholder="Nama Supervisor..." className="flex-1 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none text-slate-800 dark:text-white focus:border-blue-500" />
-                <button onClick={saveObserver} className="px-5 py-3 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase hover:bg-blue-500">{editObserverId ? 'OK' : '+'}</button>
+              <div className="flex gap-2 mb-6 text-white">
+                <input type="text" value={newObserverName} onChange={(e) => setNewObserverName(e.target.value)} placeholder="Nama Supervisor..." className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none" />
+                <button type="button" onClick={saveObserver} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase hover:bg-blue-500">{editObserverId ? 'OK' : '+'}</button>
               </div>
-              <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2">
+              <div className="max-h-[300px] overflow-y-auto space-y-2">
                 {observers.map(o => (
-                  <div key={o.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl">
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{o.nama}</span>
-                    <div className="flex gap-1 bg-white dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-white/5">
-                      <button onClick={() => { setNewObserverName(o.nama); setEditObserverId(o.id); }} className="p-1.5 text-slate-400 hover:text-blue-500"><Settings className="w-3.5 h-3.5" /></button>
-                      <button onClick={() => deleteObserver(o.id)} className="p-1.5 text-slate-400 hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                  <div key={o.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-xl">
+                    <span className="text-sm font-medium text-slate-300">{o.nama}</span>
+                    <div className="flex gap-1">
+                      <button type="button" onClick={() => { setNewObserverName(o.nama); setEditObserverId(o.id); }} className="p-2 text-slate-500 hover:text-blue-400"><Settings className="w-4 h-4" /></button>
+                      <button type="button" onClick={() => deleteObserver(o.id)} className="p-2 text-slate-500 hover:text-red-400"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </div>
                 ))}

@@ -1,15 +1,13 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { Activity, ArrowLeft, Plus, Trash2, Save, AlertCircle, Info, CheckCircle2, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import DashboardLayout from '@/components/DashboardLayout';
-import { DigitalSignatureRef } from '@/components/DigitalSignatureSection';
-
-// Dynamic import for Signature Section
+import dynamic from 'next/dynamic';
 const DigitalSignatureSection = dynamic(() => import('@/components/DigitalSignatureSection'), { ssr: false });
+import { DigitalSignatureRef } from '@/components/DigitalSignatureSection';
 
 const categories = [
   'Ranap Dewasa', 'Ranap Bedah', 'Ranap Anak', 'Ranap Kebidanan', 'ICU'
@@ -218,39 +216,25 @@ export default function SurveilansFormPage() {
                       <input type="number" min="0" value={row.jmlInsiden} onChange={(e) => updateRow(row.id, 'jmlInsiden', e.target.value === '' ? '' : parseInt(e.target.value))} className="w-full px-3 py-2 bg-white/5 border border-white/10 text-white rounded-lg text-sm outline-none" />
                     </td>
                     <td className="py-3 px-2 text-center">
-                      <button type="button" onClick={() => removeRow(row.id)} disabled={rows.length === 1} className="p-2 text-slate-500 hover:text-red-400 disabled:opacity-30"><Trash2 className="w-5 h-5 mx-auto" /></button>
+                      <button type="button" onClick={() => removeRow(row.id)} disabled={rows.length === 1} className="w-8 h-8 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed mx-auto">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          
-          <button type="button" onClick={addRow} className="mt-4 flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed border-white/10 text-slate-500 font-medium rounded-xl hover:bg-white/5 hover:text-white transition-all text-sm">
-            <Plus className="w-4 h-4" /> Tambah Baris Pasien
+          <button type="button" onClick={addRow} className="w-full mt-4 py-3 bg-white/5 hover:bg-white/10 text-blue-400 font-bold text-xs uppercase tracking-widest rounded-xl transition-all border border-blue-500/20 hover:border-blue-500/40 border-dashed">
+            + Tambah Baris Pasien
           </button>
         </div>
 
-        <div className="bg-slate-900 border border-white/10 rounded-[2rem] p-6 grid grid-cols-1 sm:grid-cols-3 gap-6 relative overflow-hidden">
-          <div className="flex flex-col items-center pt-2 sm:pt-0">
-            <p className="text-blue-400 font-bold text-[10px] uppercase tracking-widest mb-1">Total Pemasangan</p>
-            <p className="text-3xl font-black text-white">{totalPemasangan}</p>
-          </div>
-          <div className="flex flex-col items-center pt-4 sm:pt-0 border-t sm:border-t-0 sm:border-l border-white/10">
-            <p className="text-red-400 font-bold text-[10px] uppercase tracking-widest mb-1">Total Insiden</p>
-            <p className="text-3xl font-black text-white">{totalInsiden}</p>
-          </div>
-          <div className="flex flex-col items-center pt-4 sm:pt-0 border-t sm:border-t-0 sm:border-l border-white/10">
-            <p className="text-emerald-400 font-bold text-[10px] uppercase tracking-widest mb-1">Insiden Rate (‰)</p>
-            <p className="text-3xl font-black text-white">{totalRate.toFixed(2)}</p>
-          </div>
-        </div>
-
-        <DigitalSignatureSection ref={sigRef} pjName={pjName} setPjName={setPjName} />
-
-        <button type="submit" disabled={isSubmitting} className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg">
+        <button type="submit" disabled={isSubmitting}
+          className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg disabled:opacity-50"
+        >
           {isSubmitting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-          <span>Simpan Data Surveilans</span>
+          <span>Simpan Data Audit</span>
         </button>
       </form>
 

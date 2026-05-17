@@ -300,13 +300,11 @@ export default function BundlesInputForm() {
               <div className="grid grid-cols-3 gap-3">
                 {['ya', 'tidak', 'na'].map(choice => (
                   <button key={choice} type="button" onClick={() => setChecklist(prev => ({ ...prev, [idx]: choice as any }))}
-                    className={`py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all border ${
-                      checklist[idx] === choice 
-                        ? (choice === 'ya' ? 'bg-blue-600 text-white' : choice === 'tidak' ? 'bg-red-600 text-white' : 'bg-slate-700 text-white')
-                        : 'bg-white/5 text-slate-500 border-transparent hover:bg-white/10'
+                    className={`py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                      checklist[idx] === choice ? 'bg-blue-600 text-white border-blue-500' : 'bg-white/5 text-slate-400 border-transparent hover:bg-white/10'
                     }`}
                   >
-                    {choice}
+                    {choice === 'na' ? 'N/A' : choice}
                   </button>
                 ))}
               </div>
@@ -314,15 +312,9 @@ export default function BundlesInputForm() {
           ))}
         </div>
 
-        <LiveStatisticsCard totalDinilai={validCount} totalPatuh={yesCount} totalTidakPatuh={validCount - yesCount} persentase={compliance} statusText={compliance >= 85 ? 'Patuh' : 'Perlu Perbaikan'} title="HASIL BUNDLES" />
-
-        <div className="bg-white/5 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white/5">
-          <DocumentationUploader images={images} setImages={setImages} />
-        </div>
-
-        <DigitalSignatureSection ref={sigRef} pjName={pjName} setPjName={setPjName} />
-
-        <button type="submit" disabled={isSubmitting} className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg disabled:opacity-50">
+        <button type="submit" disabled={isSubmitting || !observer || !unit || stats.validCount === 0}
+          className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg disabled:opacity-50"
+        >
           {isSubmitting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
           <span>Simpan Data Bundles</span>
         </button>

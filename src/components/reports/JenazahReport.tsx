@@ -89,14 +89,14 @@ export default function JenazahReport({ filters }: { filters?: any }) {
       if (row.status === 'Baik') baikCount++;
       if (row.temuan && row.temuan.trim() !== '') findingsList.push(row.temuan);
 
-      const items = genericAuditConfigs.monitoring_jenazah.items;
+      const items = genericAuditConfigs.monitoring_jenazah?.items || [];
       items.forEach(item => {
          const val = row.checklist_json?.[item.key];
          if (val === 'Yes') {
-            subsectionMap[item.section].patuh++;
-            subsectionMap[item.section].total++;
+            subsectionMap[item.section || ''].patuh++;
+            subsectionMap[item.section || ''].total++;
          } else if (val === 'No') {
-            subsectionMap[item.section].total++;
+            subsectionMap[item.section || ''].total++;
          }
       });
     });
@@ -270,12 +270,12 @@ export default function JenazahReport({ filters }: { filters?: any }) {
                         {
                             id: 'a',
                             title: 'KEBERSIHAN RUANGAN DAN PERALATAN',
-                            items: genericAuditConfigs.monitoring_jenazah.items.filter(i => i.section === 'KEBERSIHAN RUANGAN DAN PERALATAN').map(i => ({ id: i.key, label: i.label }))
+                            items: (genericAuditConfigs.monitoring_jenazah?.items || []).filter(i => i.section === 'KEBERSIHAN RUANGAN DAN PERALATAN').map(i => ({ id: i.key, label: i.label }))
                         },
                         {
                             id: 'b',
                             title: 'FASILITAS',
-                            items: genericAuditConfigs.monitoring_jenazah.items.filter(i => i.section === 'FASILITAS').map(i => ({ id: i.key, label: i.label }))
+                            items: (genericAuditConfigs.monitoring_jenazah?.items || []).filter(i => i.section === 'FASILITAS').map(i => ({ id: i.key, label: i.label }))
                         }
                       ]}
                       title="LAPORAN AUDIT KAMAR JENAZAH"

@@ -93,14 +93,14 @@ export default function LaboratoriumReport({ filters }: { filters?: any }) {
       if (row.status === 'Baik') baikCount++;
       if (row.temuan && row.temuan.trim() !== '') findingsList.push(row.temuan);
 
-      const items = genericAuditConfigs.monitoring_laboratorium.items;
+      const items = (genericAuditConfigs.monitoring_laboratorium?.items || []);
       items.forEach(item => {
          const val = row.checklist_json?.[item.key];
          if (val === 'ya') {
-            subsectionMap[item.section].patuh++;
-            subsectionMap[item.section].total++;
+            subsectionMap[item.section || ''].patuh++;
+            subsectionMap[item.section || ''].total++;
          } else if (val === 'tidak') {
-            subsectionMap[item.section].total++;
+            subsectionMap[item.section || ''].total++;
          }
       });
     });
@@ -274,32 +274,32 @@ export default function LaboratoriumReport({ filters }: { filters?: any }) {
                         {
                             id: 'a',
                             title: 'A. PERSONAL',
-                            items: genericAuditConfigs.monitoring_laboratorium.items.filter(i => i.section === 'A. PERSONAL').map(i => ({ id: i.key, label: i.label }))
+                            items: (genericAuditConfigs.monitoring_laboratorium?.items || []).filter(i => i.section === 'A. PERSONAL').map(i => ({ id: i.key, label: i.label }))
                         },
                         {
                             id: 'b',
                             title: 'B. FASILITAS',
-                            items: genericAuditConfigs.monitoring_laboratorium.items.filter(i => i.section === 'B. FASILITAS').map(i => ({ id: i.key, label: i.label }))
+                            items: (genericAuditConfigs.monitoring_laboratorium?.items || []).filter(i => i.section === 'B. FASILITAS').map(i => ({ id: i.key, label: i.label }))
                         },
                         {
                             id: 'c',
                             title: 'C. PROSES PENGELOLAAN LIMBAH CAIR (INFEKSIUS)',
-                            items: genericAuditConfigs.monitoring_laboratorium.items.filter(i => i.section === 'C. PROSES PENGELOLAAN LIMBAH CAIR (INFEKSIUS)').map(i => ({ id: i.key, label: i.label }))
+                            items: (genericAuditConfigs.monitoring_laboratorium?.items || []).filter(i => i.section === 'C. PROSES PENGELOLAAN LIMBAH CAIR (INFEKSIUS)').map(i => ({ id: i.key, label: i.label }))
                         },
                         {
                             id: 'd',
                             title: 'D. PROSES PEMBUANGAN DARAH DAN KOMPONEN DARAH',
-                            items: genericAuditConfigs.monitoring_laboratorium.items.filter(i => i.section === 'D. PROSES PEMBUANGAN DARAH DAN KOMPONEN DARAH').map(i => ({ id: i.key, label: i.label }))
+                            items: (genericAuditConfigs.monitoring_laboratorium?.items || []).filter(i => i.section === 'D. PROSES PEMBUANGAN DARAH DAN KOMPONEN DARAH').map(i => ({ id: i.key, label: i.label }))
                         },
                         {
                             id: 'e',
                             title: 'E. PROSES PENGELOLAAN LIMBAH BENDA TAJAM',
-                            items: genericAuditConfigs.monitoring_laboratorium.items.filter(i => i.section === 'E. PROSES PENGELOLAAN LIMBAH BENDA TAJAM').map(i => ({ id: i.key, label: i.label }))
+                            items: (genericAuditConfigs.monitoring_laboratorium?.items || []).filter(i => i.section === 'E. PROSES PENGELOLAAN LIMBAH BENDA TAJAM').map(i => ({ id: i.key, label: i.label }))
                         },
                         {
                             id: 'f',
                             title: 'F. PROSES PENGELOLAAN LIMBAH PADAT',
-                            items: genericAuditConfigs.monitoring_laboratorium.items.filter(i => i.section === 'F. PROSES PENGELOLAAN LIMBAH PADAT').map(i => ({ id: i.key, label: i.label }))
+                            items: (genericAuditConfigs.monitoring_laboratorium?.items || []).filter(i => i.section === 'F. PROSES PENGELOLAAN LIMBAH PADAT').map(i => ({ id: i.key, label: i.label }))
                         }
                       ]}
                       title="LAPORAN AUDIT LABORATORIUM"

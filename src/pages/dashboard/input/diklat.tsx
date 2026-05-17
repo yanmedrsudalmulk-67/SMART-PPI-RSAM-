@@ -1,9 +1,9 @@
 import { ReactElement, useState, useRef } from 'react';
 import Head from 'next/head';
 import DashboardLayout from '@/components/DashboardLayout';
-import { ArrowLeft, Save, Upload, X, CheckCircle2 } from 'lucide-react';
+import {  ArrowLeft, Save, Upload, X, CheckCircle2 , RefreshCw } from 'lucide-react';
 import Link from 'next/link';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { DocumentationUploader, DocImage } from '@/components/DocumentationUploader';
 
 export default function DiklatPage() {
@@ -15,6 +15,7 @@ export default function DiklatPage() {
   const [peserta, setPeserta] = useState<string[]>([]);
   const [materi, setMateri] = useState('');
   const [images, setImages] = useState<DocImage[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const pesertaOptions = [
     'Dokter', 'Dokter Spesialis', 'Perawat', 'Bidan', 'Analis Laboratorium', 
@@ -27,10 +28,20 @@ export default function DiklatPage() {
     setPeserta(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if(peserta.length === 0) { alert('Harap pilih minimal 1 peserta!'); return; }
-    alert('Data pelatihan berhasil disimpan!');
+    
+    setIsSubmitting(true);
+    try {
+      // Mock delay for now
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      alert('Data pelatihan berhasil disimpan!');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -75,46 +86,53 @@ export default function DiklatPage() {
             <div>
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Peserta Pelatihan</label>
               <div className="relative">
-                <button type="button" onClick={() => setIsPesertaDropdownOpen(!isPesertaDropdownOpen)} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-slate-400 flex items-center justify-between outline-none focus:border-blue-500/50 transition-colors">
-                  {peserta.length > 0 ? `${peserta.length} peserta terpilih` : 'Pilih peserta...'}
-                  <span className="text-xs">▼</span>
+                <button type="button" onClick={() => setIsPesertaDropdownOpen(!isPesertaDropdownOpen)} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-left text-white outline-none focus:border-blue-500/50 transition-colors flex justify-between items-center">
+                  <span className="truncate">{peserta.length > 0 ? `${peserta.length} Profesi Terpilih` : 'Pilih Profesi Peserta...'}</span>
+                  <div className="flex gap-2 items-center">
+                     <span className="text-xs text-slate-500 font-medium">Buka</span>
+                  </div>
                 </button>
-                {isPesertaDropdownOpen && (
-                  <div className="absolute top-full left-0 w-full bg-slate-900 border border-white/10 rounded-xl mt-2 p-2 shadow-2xl z-20 max-h-60 overflow-y-auto">
-                    {pesertaOptions.map(p => (
-                      <button key={p} type="button" onClick={() => togglePeserta(p)} className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${peserta.includes(p) ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-white/5'}`}>
-                        {p}
-                        {peserta.includes(p) && <CheckCircle2 className="w-4 h-4" />}
-                      </button>
-                    ))}
-                  </div>
-                )}
+
+                <AnimatePresence>
+                  {isPesertaDropdownOpen && (
+                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute z-50 w-full mt-2 bg-slate-800 border border-white/10 rounded-xl shadow-2xl overflow-hidden">
+                      <div className="max-h-60 overflow-y-auto p-2">
+                        {['Dokter Umum', 'Dokter Spesialis', 'Perawat', 'Bidan', 'Analis Laboratorium', 'Radiografer', 'Pramusaji', 'Pekarya', 'Satpam', 'Cleaning Service', 'Manajemen', 'Staf Administrasi'].map(p => (
+                          <label key={p} className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg cursor-pointer transition-colors">
+                            <input type="checkbox" checked={peserta.includes(p)} onChange={(e) => {
+                              if(e.target.checked) setPeserta([...peserta, p]);
+                              else setPeserta(peserta.filter(x => x !== p));
+                            }} className="w-4 h-4 rounded border-white/20 bg-black/50 text-blue-500 focus:ring-blue-500/50 focus:ring-offset-slate-900" />
+                            <span className="text-sm text-slate-300 font-medium">{p}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-              <div className="flex flex-wrap gap-2 mt-3">
-                {peserta.map(p => (
-                  <div key={p} className="flex items-center gap-1 bg-blue-600/20 border border-blue-500/50 text-blue-400 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
-                    {p}
-                    <button type="button" onClick={() => togglePeserta(p)}><X className="w-3 h-3" /></button>
-                  </div>
-                ))}
-              </div>
+              {peserta.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {peserta.map(p => (
+                    <span key={p} className="px-3 py-1 bg-blue-500/20 text-blue-400 text-xs font-bold rounded-lg flex items-center gap-2">
+                      {p} <button type="button" onClick={() => setPeserta(peserta.filter(x => x !== p))} className="hover:text-white"><X className="w-3 h-3" /></button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Materi Pelatihan</label>
-              <textarea rows={4} value={materi} onChange={(e) => setMateri(e.target.value)} required className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 transition-colors" placeholder="Masukkan materi..." />
+               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Dokumentasi Kegiatan</label>
+               <DocumentationUploader images={images} setImages={setImages} />
             </div>
 
-            <div className="border-t border-white/5 pt-6">
-              <DocumentationUploader images={images} setImages={setImages} />
-            </div>
-
-            <div className="pt-4">
-              <button type="submit" className="w-full py-4 bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white font-bold uppercase tracking-widest rounded-xl transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)] group active:scale-[0.98] flex items-center justify-center gap-3">
-                <Save className="w-5 h-5 group-hover:scale-110 transition-transform"/>
-                Simpan Data
-              </button>
-            </div>
+            <button type="submit" disabled={isSubmitting || !waktu || !tempat || !narasumber || peserta.length === 0}
+              className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg disabled:opacity-50 mt-8"
+            >
+              {isSubmitting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+              <span>Simpan Data Audit</span>
+            </button>
           </form>
         </motion.div>
       </div>

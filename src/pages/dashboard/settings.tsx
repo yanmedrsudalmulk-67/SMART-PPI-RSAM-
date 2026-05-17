@@ -4,6 +4,7 @@ import { Upload, Trash2, ShieldCheck, Save, Loader2, Hospital, CheckCircle2, Edi
 import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
 import DashboardLayout from '@/components/DashboardLayout';
+import { useDashboardStore } from '@/hooks/useDashboardStore';
 
 interface Slide {
   id: string;
@@ -26,6 +27,7 @@ const DEFAULT_SLIDES: Slide[] = [
 ];
 
 function SliderSettings() {
+  const { dashboardData, setDashboardData } = useDashboardStore();
   const [slides, setSlides] = useState<Slide[]>([]);
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -111,7 +113,14 @@ function SliderSettings() {
        if (error) throw error;
 
        const { data: updatedData } = await supabase.from('dashboard_slider').select('*').order('sort_order', { ascending: true });
-       if (updatedData) setSlides(updatedData);
+       if (updatedData) {
+         setSlides(updatedData);
+         // Update global store
+         setDashboardData({
+           ...dashboardData,
+           slides: updatedData
+         });
+       }
 
        localStorage.setItem('spp_slides', JSON.stringify(slides));
        setMsg({ text: 'Berhasil menyimpan pengaturan slider!', type: 'success' });
@@ -137,7 +146,7 @@ function SliderSettings() {
                 onChange={e => { if(e.target.files?.[0]) handleImageChange(idx, e.target.files[0]); }}
               />
               <div className="w-full md:w-40 h-28 bg-slate-200 dark:bg-black rounded-xl overflow-hidden relative">
-                <Image src={s.image_url} alt="Slide Preview" fill className="object-cover" referrerPolicy="no-referrer" />
+                <img src={s.image_url} alt="Slide Preview" className="absolute inset-0 w-full h-full object-cover" referrerPolicy="no-referrer" />
                 <div onClick={() => fileInputRefs.current[s.id]?.click()} className="absolute flex cursor-pointer inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity items-center justify-center backdrop-blur-sm">
                    <div className="text-white text-[10px] font-bold uppercase tracking-wider flex items-center gap-2">
                      <Edit3 className="w-4 h-4" /> Ubah Gambar
@@ -268,7 +277,7 @@ export default function SettingsPage() {
         <div className="flex flex-col sm:flex-row items-center gap-8 text-slate-700 dark:text-white">
           <div className="relative w-32 h-32 rounded-3xl border-2 border-dashed border-slate-200 dark:border-white/10 flex items-center justify-center bg-slate-50 dark:bg-white/5 overflow-hidden shrink-0 shadow-inner group hover:border-blue-500 transition-all">
             {appLogoUrl ? (
-              <Image src={appLogoUrl} alt="Logo" fill className="object-contain p-4" referrerPolicy="no-referrer" />
+              <Image src={appLogoUrl} alt="Logo" fill sizes="128px" className="object-contain p-4" referrerPolicy="no-referrer" />
             ) : (
               <ShieldCheck className="w-12 h-12 text-slate-400 dark:text-slate-600 group-hover:text-blue-500 transition-colors" />
             )}
@@ -305,7 +314,7 @@ export default function SettingsPage() {
         <div className="flex flex-col sm:flex-row items-center gap-8 text-slate-700 dark:text-white">
           <div className="relative w-32 h-32 rounded-3xl border-2 border-dashed border-slate-200 dark:border-white/10 flex items-center justify-center bg-slate-50 dark:bg-white/5 overflow-hidden shrink-0 shadow-inner group hover:border-blue-500 transition-all">
             {hospitalLogoUrl ? (
-              <Image src={hospitalLogoUrl} alt="Logo" fill className="object-contain p-4" referrerPolicy="no-referrer" />
+              <Image src={hospitalLogoUrl} alt="Logo" fill sizes="128px" className="object-contain p-4" referrerPolicy="no-referrer" />
             ) : (
               <Hospital className="w-12 h-12 text-slate-400 dark:text-slate-600 group-hover:text-blue-500 transition-colors" />
             )}

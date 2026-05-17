@@ -149,7 +149,7 @@ export default function InputPerlindunganPetugasPage() {
         </div>
       </div>
 
-      <div className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
             <Activity className="w-4 h-4 text-purple-400" /> Informasi Audit
@@ -190,14 +190,12 @@ export default function InputPerlindunganPetugasPage() {
                 <h3 className="text-sm font-semibold text-white mb-4 leading-relaxed">{item.label}</h3>
                 <div className="flex gap-3">
                   {['ya', 'tidak', 'na'].map(choice => (
-                    <button key={choice} onClick={() => handleActionClick(item.id, choice as any)}
-                      className={`flex-1 py-3 px-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all border ${
-                        auditData[item.id] === choice 
-                          ? (choice === 'ya' ? 'bg-blue-600/20 text-blue-400 border-blue-500/50' : choice === 'tidak' ? 'bg-red-600/20 text-red-400 border-red-500/50' : 'bg-slate-600/20 text-slate-300 border-slate-500/50')
-                          : 'bg-white/5 text-slate-400 border-transparent hover:bg-white/10'
+                    <button key={choice} type="button" onClick={() => handleActionClick(item.id, choice as any)}
+                      className={`py-3 flex-1 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                        auditData[item.id] === choice ? 'bg-blue-600 text-white border-blue-500' : 'bg-white/5 text-slate-400 border-transparent hover:bg-white/10'
                       }`}
                     >
-                      {choice === 'na' ? 'N/A' : choice.toUpperCase()}
+                      {choice === 'na' ? 'N/A' : choice}
                     </button>
                   ))}
                 </div>
@@ -207,21 +205,24 @@ export default function InputPerlindunganPetugasPage() {
         </div>
 
         <LiveStatisticsCard 
-          totalDinilai={stats.dinilai} totalPatuh={stats.patuh} totalTidakPatuh={stats.dinilai - stats.patuh}
-          persentase={stats.persentase} statusText={stats.statusText} title="KEPATUHAN PERLINDUNGAN KESEHATAN PETUGAS"
+          totalDinilai={stats.dinilai || 0} 
+          totalPatuh={stats.patuh || 0} 
+          totalTidakPatuh={(stats.dinilai || 0) - (stats.patuh || 0)}
+          persentase={stats.persentase || 0} 
+          statusText={stats.statusText || 'Belum Dinilai'}
         />
 
-        <button onClick={handleSubmit} disabled={isSubmitting || !observer || !unit || stats.dinilai === 0}
-          className="w-full flex justify-center items-center gap-3 py-4 mt-6 bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white font-bold uppercase tracking-widest rounded-xl transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] disabled:opacity-50"
+        <button type="submit" disabled={isSubmitting}
+          className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg disabled:opacity-50"
         >
           {isSubmitting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-          <span>Simpan Data</span>
+          <span>Simpan Data Audit</span>
         </button>
-      </div>
+      </form>
     </div>
   );
-}
+}  
 
-InputPerlindunganPetugasPage.getLayout = function getLayout(page: ReactElement) {
+InputPerlindunganPetugasPage.getLayout = function getLayout(page: React.ReactElement) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };

@@ -46,7 +46,12 @@ export function DocumentationUploader({ images, setImages }: DocumentationUpload
     const files = e.target.files;
     if (!files) return;
     const newImages: DocImage[] = [];
+    const MAX_SIZE = 3 * 1024 * 1024; // 3MB
     for (let i = 0; i < files.length; i++) {
+        if (files[i].size > MAX_SIZE) {
+          alert('Ukuran gambar terlalu besar (' + (files[i].size / 1024 / 1024).toFixed(1) + ' MB). Maksimal upload 3 MB.');
+          continue;
+        }
         const compressed = await compressImage(files[i]);
         newImages.push({ url: URL.createObjectURL(compressed), file: compressed });
     }

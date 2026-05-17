@@ -300,7 +300,7 @@ export default function GenericAuditReport({
                 <div className="flex items-center gap-4 md:gap-5 w-full justify-center md:justify-start">
                    <div className="w-16 h-16 md:w-20 md:h-20 bg-white flex items-center justify-center p-1 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden shrink-0">
                      {hospitalLogoUrl ? (
-                       <Image src={hospitalLogoUrl} alt="Logo RS" fill className="object-contain" referrerPolicy="no-referrer" />
+                       <Image src={hospitalLogoUrl} alt="Logo RS" fill sizes="80px" className="object-contain" referrerPolicy="no-referrer" />
                      ) : (
                        <ShieldCheck className="w-8 h-8 md:w-10 md:h-10 text-slate-800" />
                      )}
@@ -500,7 +500,7 @@ export default function GenericAuditReport({
                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                    {selectedRecord.foto.map((f, i) => (
                      <div key={i} onClick={() => setZoomedImage(f)} className="relative aspect-video rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-white/10 print:border-slate-300 cursor-zoom-in group">
-                       <Image src={f} alt={`Dokumentasi ${i+1}`} fill className="object-cover group-hover:scale-105 transition-transform duration-500 print:transform-none" referrerPolicy="no-referrer" />
+                       <Image src={f} alt={`Dokumentasi ${i+1}`} fill sizes="25vw" className="object-cover group-hover:scale-105 transition-transform duration-500 print:transform-none" referrerPolicy="no-referrer" />
                      </div>
                    ))}
                  </div>
@@ -513,7 +513,7 @@ export default function GenericAuditReport({
                   <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-500 print:text-black mb-4">PJ Ruangan / Auditee</p>
                   <div className="relative w-32 md:w-40 h-20 md:h-24 mb-4 flex items-center justify-center">
                     {selectedRecord.tanda_tangan_1 ? (
-                      <Image src={selectedRecord.tanda_tangan_1} alt="TTD PJ" fill className="object-contain filter dark:invert print:filter-none" referrerPolicy="no-referrer" />
+                      <Image src={selectedRecord.tanda_tangan_1} alt="TTD PJ" fill sizes="200px" className="object-contain filter dark:invert print:filter-none" referrerPolicy="no-referrer" />
                     ) : (
                       <div className="w-full h-full border-b border-dashed border-slate-300 dark:border-white/20 print:border-slate-300 mx-4" />
                     )}
@@ -527,7 +527,7 @@ export default function GenericAuditReport({
                   <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-500 print:text-black mb-4">IPCN / Auditor</p>
                   <div className="relative w-32 md:w-40 h-20 md:h-24 mb-4 flex items-center justify-center">
                     {selectedRecord.tanda_tangan_2 ? (
-                      <Image src={selectedRecord.tanda_tangan_2} alt="TTD IPCN" fill className="object-contain filter dark:invert print:filter-none" referrerPolicy="no-referrer" />
+                      <Image src={selectedRecord.tanda_tangan_2} alt="TTD IPCN" fill sizes="200px" className="object-contain filter dark:invert print:filter-none" referrerPolicy="no-referrer" />
                     ) : (
                       <div className="w-full h-full border-b border-dashed border-slate-300 dark:border-white/20 print:border-slate-300 mx-4" />
                     )}

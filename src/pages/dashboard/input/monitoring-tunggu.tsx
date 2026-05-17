@@ -1,98 +1,140 @@
 import { useState, useEffect, useMemo, useRef, ReactElement } from 'react';
 import { useRouter } from 'next/router';
 import { 
-  Activity, ArrowLeft, Save, CheckCircle2, Settings, Trash2, X
+  ArrowLeft, Save, CheckCircle2, Activity, RefreshCw, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import { uploadImagesToSupabase } from '@/lib/upload';
-import { DocumentationUploader, DocImage } from '@/components/DocumentationUploader';
-import { useAppContext } from '@/components/Providers';
 import DashboardLayout from '@/components/DashboardLayout';
 import { LiveStatisticsCard } from '@/components/LiveStatisticsCard';
 import DigitalSignatureSection, { DigitalSignatureRef } from '@/components/DigitalSignatureSection';
-import { genericAuditConfigs } from '@/lib/audit-configs';
+import { EditableSelect } from '@/components/EditableSelect';
+import { useAppContext } from '@/components/Providers';
+import { DocumentationUploader, DocImage } from '@/components/DocumentationUploader';
 
-const checklistItems = genericAuditConfigs.monitoring_tunggu?.items || [];
-const tableName = genericAuditConfigs.monitoring_tunggu?.tableName || 'audit_ruang_tunggu';
+const checklistGroups = [
+  {
+    title: 'A. Kebersihan Lingkungan',
+    items: [
+      { id: 'kl_1', label: 'Lantai bersih, kering, dan tidak licin' },
+      { id: 'kl_2', label: 'Kursi ruang tunggu bersih dan tertata rapi' },
+      { id: 'kl_3', label: 'Meja / counter tampak bersih' },
+      { id: 'kl_4', label: 'Tidak ada debu pada permukaan furnitur' },
+      { id: 'kl_5', label: 'Dinding dan plafon bersih, tidak berjamur' },
+      { id: 'kl_6', label: 'Kaca / jendela bersih' },
+      { id: 'kl_7', label: 'Tempat sampah tersedia dan tertutup' },
+      { id: 'kl_8', label: 'Tempat sampah tidak melebihi 3/4 penuh' }
+    ]
+  },
+  {
+    title: 'B. Fasilitas Kebersihan Tangan',
+    items: [
+      { id: 'fkt_1', label: 'Tersedia handrub di area ruang tunggu' },
+      { id: 'fkt_2', label: 'Handrub dalam kondisi terisi dan berfungsi baik' },
+      { id: 'fkt_3', label: 'Tersedia wastafel cuci tangan (jika ada)' },
+      { id: 'fkt_4', label: 'Sabun cuci tangan tersedia' },
+      { id: 'fkt_5', label: 'Tissue / hand dryer tersedia' },
+      { id: 'fkt_6', label: 'Poster 6 langkah cuci tangan tersedia' },
+      { id: 'fkt_7', label: 'Poster 5 momen hand hygiene tersedia (jika area klinis berdekatan)' }
+    ]
+  },
+  {
+    title: 'C. Ventilasi dan Kenyamanan',
+    items: [
+      { id: 'vk_1', label: 'Ventilasi ruangan baik' },
+      { id: 'vk_2', label: 'AC / kipas dalam kondisi bersih' },
+      { id: 'vk_3', label: 'Sirkulasi udara baik' },
+      { id: 'vk_4', label: 'Ruangan tidak berbau tidak sedap' },
+      { id: 'vk_5', label: 'Pencahayaan cukup' }
+    ]
+  },
+  {
+    title: 'D. Edukasi dan Etika Batuk',
+    items: [
+      { id: 'eeb_1', label: 'Poster etika batuk tersedia' },
+      { id: 'eeb_2', label: 'Poster penggunaan masker tersedia' },
+      { id: 'eeb_3', label: 'Tersedia masker cadangan bagi pengunjung bergejala' },
+      { id: 'eeb_4', label: 'Pengunjung berbatuk diarahkan memakai masker' },
+      { id: 'eeb_5', label: 'Tersedia tissue untuk etika batuk' }
+    ]
+  },
+  {
+    title: 'E. Pengendalian Kepadatan',
+    items: [
+      { id: 'pk_1', label: 'Kursi memiliki jarak memadai antar pengunjung' },
+      { id: 'pk_2', label: 'Tidak terjadi penumpukan berlebihan' },
+      { id: 'pk_3', label: 'Jalur antrean tertata' },
+      { id: 'pk_4', label: 'Area prioritas lansia/disabilitas tersedia' }
+    ]
+  },
+  {
+    title: 'F. Kepatuhan Petugas Area Ruang Tunggu',
+    items: [
+      { id: 'kp_1', label: 'Petugas memakai identitas kerja' },
+      { id: 'kp_2', label: 'Petugas menjaga kebersihan tangan' },
+      { id: 'kp_3', label: 'Petugas memakai masker bila diperlukan' },
+      { id: 'kp_4', label: 'Petugas memberikan edukasi bila ada pasien bergejala infeksi' }
+    ]
+  }
+];
 
 type AuditStatus = 'ya' | 'tidak' | 'na' | null;
-type Observer = { id: string; nama: string };
 
-export default function MonitoringTungguPage() {
+export default function InputMonitoringRuangTungguPage() {
   const router = useRouter();
   const { userRole } = useAppContext();
+  const isIPCN = userRole === 'ipcn' || userRole === 'admin';
   
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [observer, setObserver] = useState('');
+  
   const [data, setData] = useState<Record<string, AuditStatus>>({});
+  const [keterangan, setKeterangan] = useState<Record<string, string>>({});
+  
   const [temuan, setTemuan] = useState('');
   const [rekomendasi, setRekomendasi] = useState('');
-  const [pjName, setPjName] = useState('');
   const [images, setImages] = useState<DocImage[]>([]);
-  const [observers, setObservers] = useState<Observer[]>([]);
-  const [isObserverModalOpen, setIsObserverModalOpen] = useState(false);
-  const [newObserverName, setNewObserverName] = useState('');
-  const [editObserverId, setEditObserverId] = useState<string | null>(null);
+  const [pjName, setPjName] = useState('');
+  
   const sigRef = useRef<DigitalSignatureRef>(null);
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+    'A. Kebersihan Lingkungan': true,
+    'B. Fasilitas Kebersihan Tangan': true,
+    'C. Ventilasi dan Kenyamanan': false,
+    'D. Edukasi dan Etika Batuk': false,
+    'E. Pengendalian Kepadatan': false,
+    'F. Kepatuhan Petugas Area Ruang Tunggu': false,
+  });
 
   useEffect(() => {
-    fetchObservers();
-    const initialData: Record<string, AuditStatus> = {};
-    checklistItems.forEach(item => initialData[item.id] = null);
     setStartTime(new Date());
+    const initialData: Record<string, AuditStatus> = {};
+    const initialKet: Record<string, string> = {};
+    checklistGroups.forEach(group => {
+      group.items.forEach(item => {
+        initialData[item.id] = null;
+        initialKet[item.id] = '';
+      });
+    });
     setData(initialData);
+    setKeterangan(initialKet);
   }, []);
 
-  const fetchObservers = async () => {
-    try {
-      const { data, error } = await supabase.from('master_observers').select('*').order('nama');
-      if (error) throw error;
-      if (data) setObservers(data);
-    } catch (err) {
-      setObservers([{ id: '1', nama: 'IPCN_Adi Tresa Purnama' }]);
-    }
+  const toggleGroup = (title: string) => {
+    setExpandedGroups(prev => ({ ...prev, [title]: !prev[title] }));
   };
 
-  const saveObserver = async () => {
-    if (!newObserverName.trim()) return;
-    try {
-      if (editObserverId) {
-        if (!editObserverId.startsWith('local-')) {
-          await supabase.from('master_observers').update({ nama: newObserverName }).eq('id', editObserverId);
-        }
-        setObservers(prev => prev.map(o => o.id === editObserverId ? { ...o, nama: newObserverName } : o).sort((a,b) => a.nama.localeCompare(b.nama)));
-      } else {
-        const { data, error } = await supabase.from('master_observers').insert([{ nama: newObserverName }]).select();
-        if (!error && data && data.length > 0) {
-          setObservers(prev => [...prev, data[0]].sort((a,b) => a.nama.localeCompare(b.nama)));
-        } else {
-          setObservers(prev => [...prev, { id: 'local-' + Date.now().toString(), nama: newObserverName }].sort((a,b) => a.nama.localeCompare(b.nama)));
-        }
-      }
-      setNewObserverName('');
-      setEditObserverId(null);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const deleteObserver = async (id: string) => {
-    if (!confirm('Hapus observer ini?')) return;
-    try {
-      if (!id.startsWith('local-')) await supabase.from('master_observers').delete().eq('id', id);
-      setObservers(prev => prev.filter(o => o.id !== id));
-      if (observer === (observers.find(o => o.id === id)?.nama)) setObserver('');
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const toggleItem = (id: string, stat: AuditStatus) => {
+  const handleActionClick = (id: string, stat: AuditStatus) => {
     setData(prev => ({ ...prev, [id]: stat }));
+  };
+
+  const handleKeteranganChange = (id: string, val: string) => {
+    setKeterangan(prev => ({ ...prev, [id]: val }));
   };
 
   const stats = useMemo(() => {
@@ -103,51 +145,68 @@ export default function MonitoringTungguPage() {
       else if (val === 'tidak') { dinilai++; }
     });
     const persentase = dinilai > 0 ? Math.round((patuh / dinilai) * 100) : 0;
-    let status = 'Belum Dinilai';
-    if (dinilai > 0) status = persentase >= 80 ? 'Patuh' : persentase >= 60 ? 'Cukup' : 'Tidak Patuh';
-    return { patuh, dinilai, persentase, status };
+    let statusText = 'Belum Dinilai';
+    if (dinilai > 0) {
+      if (persentase >= 85) statusText = 'Baik';
+      else if (persentase >= 70) statusText = 'Cukup';
+      else statusText = 'Perlu Tindak Lanjut';
+    }
+    return { patuh, dinilai, persentase, statusText };
   }, [data]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!observer) { alert('Harap pilih Supervisor!'); return; }
-    if (Object.values(data).some(v => v === null)) { alert('Harap isi semua checklist!'); return; }
+    if (!observer) return alert('Pilih Supervisor terlebih dahulu');
 
     setIsSubmitting(true);
     try {
       const ttd_pj = sigRef.current?.getPjSignature();
       const ttd_ipcn = sigRef.current?.getSupervisorSignature();
-      const uploadedUrls = await uploadImagesToSupabase(supabase, images, 'logos', 'audit');
 
-      const sessionPayload = {
-        indikator_id: 'monitoring_tunggu',
-        nama_indikator: 'MONITORING RUANG TUNGGU',
-        tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
-        observer,
-        jumlah_dinilai: stats.dinilai,
-        jumlah_patuh: stats.patuh,
+      const payload = {
+        waktu: startTime?.toISOString() || new Date().toISOString(),
+        ruangan: 'Ruang Tunggu',
+        supervisor: observer,
+        checklist_json: {
+            data
+        },
+        keterangan_json: {
+            data: keterangan
+        },
         persentase: stats.persentase,
-        status_kepatuhan: stats.status,
-        temuan, rekomendasi,
-        nama_pj_ruangan: pjName.trim(),
-        ttd_pj_ruangan: ttd_pj,
-        ttd_ipcn: ttd_ipcn,
-        dokumentasi: uploadedUrls,
-        data_indikator: data
+        status: stats.statusText,
+        temuan,
+        rekomendasi,
+        nama_pj: pjName.trim(),
+        ttd_pj: ttd_pj,
+        ttd_ipcn: ttd_ipcn
       };
 
-      const { data: sessionData, error: sessionError } = await supabase.from('audit_sessions').insert([sessionPayload]).select('*').single();
-      if (sessionError) throw sessionError;
-
-      const detailPayloads = Object.keys(data).map(key => ({
-        session_id: sessionData.id,
-        pertanyaan_id: key,
-        pertanyaan: checklistItems.find(i => i.id === key)?.label || key,
-        jawaban: String(data[key])
-      }));
-      await supabase.from('audit_details').insert(detailPayloads);
-
-      await supabase.from(tableName || 'audit_tunggu').insert([{ ...sessionPayload, created_at: new Date().toISOString() }]);
+      const { data: sessionData, error } = await supabase.from('audit_ruang_tunggu').insert([payload]).select('id').single();
+      if (error) {
+          console.error("Error direct insert", error);
+          const fallbackPayload = {
+            indikator_id: 'monitoring_ruang_tunggu',
+            nama_indikator: 'MONITORING RUANG TUNGGU',
+            tanggal_waktu: payload.waktu,
+            observer: payload.supervisor,
+            unit: payload.ruangan,
+            jumlah_dinilai: stats.dinilai,
+            jumlah_patuh: stats.patuh,
+            persentase: stats.persentase,
+            status_kepatuhan: stats.statusText,
+            temuan, rekomendasi,
+            nama_pj_ruangan: pjName.trim(),
+            ttd_pj_ruangan: ttd_pj,
+            ttd_ipcn: ttd_ipcn,
+            data_indikator: payload.checklist_json
+          };
+          const { data: fallbackData, error: fbError } = await supabase.from('audit_sessions').insert([fallbackPayload]).select('id').single();
+          if (fbError) throw fbError;
+          await uploadAssets(fallbackData.id, true);
+      } else {
+          await uploadAssets(sessionData.id, false);
+      }
 
       setShowToast(true);
       setTimeout(() => {
@@ -156,136 +215,182 @@ export default function MonitoringTungguPage() {
       }, 2000);
     } catch (err: any) {
       console.error(err);
-      alert(`Gagal menyimpan: ${err.message}`);
+      alert(`Error: ${err.message || 'Gagal menyimpan data'}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const uploadAssets = async (id: string, isFallback: boolean) => {
+      const prefix = isFallback ? 'ruang_tunggu_' : 'tunggu_';
+      for (let i = 0; i < images.length; i++) {
+        await supabase.storage.from('audit_images').upload(`images/${prefix}${id}_${i}.jpg`, images[i].file);
+      }
+  };
+
   return (
-    <div className="max-w-3xl mx-auto pb-32">
-       <AnimatePresence>
+    <div className="max-w-4xl mx-auto pb-32">
+      <AnimatePresence>
         {showToast && (
           <motion.div initial={{ opacity: 0, y: -50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -50 }}
-            className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-blue-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 font-bold uppercase tracking-widest text-xs border border-white/20"
+            className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-emerald-500 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 font-bold uppercase tracking-widest text-xs border border-emerald-400"
           >
-            <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-            Data Monitoring Berhasil Disimpan
+            <CheckCircle2 className="w-5 h-5" />
+            Data Audit Ruang Tunggu berhasil disimpan
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="flex items-center gap-6 py-6 border-b border-white/5">
-        <Link href="/dashboard/input/isolasi" className="p-3 bg-white/5 rounded-2xl border border-white/10 text-slate-400 hover:text-white transition-all">
+      <div className="flex items-center gap-6 mb-8 py-6 border-b border-white/5">
+        <Link href="/dashboard/input/isolasi" className="p-3 bg-white/5 rounded-2xl border border-white/10 text-slate-400 hover:text-white transition-all shadow-lg hover:shadow-blue-500/10">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 via-blue-500 to-emerald-500 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all drop-shadow-sm dark:drop-shadow-[0_0_10px_rgba(59,130,246,0.4)] uppercase">Monitoring Ruang Tunggu</h1>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400 mt-1">Audit kebersihan dan fasilitas di ruang tunggu</p>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-400 bg-[length:200%_auto] animate-gradient uppercase drop-shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+            Input Audit Ruang Tunggu
+          </h1>
+          <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.3em] text-blue-500/80 mt-2 flex items-center gap-2">
+            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+            Audit kepatuhan Pencegahan dan Pengendalian Infeksi area Ruang Tunggu
+          </p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-8">
-        <div className="bg-white/5 backdrop-blur-xl p-8 rounded-[2rem] border border-white/5 space-y-6">
-          <div className="grid sm:grid-cols-2 gap-6">
+      <div className="space-y-6">
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+          <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
+            <Activity className="w-4 h-4 text-purple-400" /> Informasi Umum
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Waktu Monitoring</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">🕒 Waktu Audit</label>
               <input type="datetime-local" value={startTime ? new Date(startTime.getTime() - startTime.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''} onChange={(e) => setStartTime(new Date(e.target.value))} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 [color-scheme:dark]" />
             </div>
             <div className="space-y-3">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex justify-between items-center">
-                Supervisor
-                <button type="button" onClick={() => setIsObserverModalOpen(true)} className="p-1.5 bg-white/5 rounded-lg text-blue-400"><Settings className="w-3 h-3" /></button>
-              </label>
-              <select value={observer} onChange={(e) => setObserver(e.target.value)} required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none">
-                <option value="" className="bg-slate-900">Pilih Supervisor...</option>
-                {observers.map(o => <option key={o.id} value={o.nama} className="bg-slate-900">{o.nama}</option>)}
-              </select>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">📍 Ruangan</label>
+              <input type="text" readOnly value="Ruang Tunggu" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none cursor-not-allowed text-slate-400" />
+            </div>
+            <div className="md:col-span-2">
+              <EditableSelect
+                label="👤 Supervisor"
+                value={observer}
+                onChange={setObserver}
+                options={['IPCN_Adi Tresa Purnama']}
+                isIPCN={isIPCN}
+                table="master_observers"
+                storageKey="local_obs"
+                placeholder="Pilih Supervisor..."
+              />
             </div>
           </div>
         </div>
 
-        <div className="bg-white/5 backdrop-blur-xl p-8 rounded-[2rem] border border-white/5 space-y-4">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-blue-400 border-b border-white/5 pb-4">Checklist TPS</h2>
-          {checklistItems.map((item, idx) => (
-            <div key={item.id} className="p-5 rounded-2xl bg-white/5 border border-white/5 flex flex-col gap-4">
-              <p className="text-sm font-medium text-slate-300">
-                <span className="text-blue-400 font-bold mr-2">{idx + 1}.</span>{item.label}
-              </p>
-              <div className="grid grid-cols-3 gap-3">
-                {['ya', 'tidak', 'na'].map(choice => (
-                  <button key={choice} type="button" onClick={() => toggleItem(item.id, choice as any)}
-                    className={`py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all border ${
-                      data[item.id] === choice 
-                        ? (choice === 'ya' ? 'bg-blue-600 text-white border-blue-500' : choice === 'tidak' ? 'bg-red-600 text-white border-red-500' : 'bg-slate-700 text-white border-slate-600')
-                        : 'bg-white/5 text-slate-500 border-transparent hover:bg-white/10'
-                    }`}
-                  >
-                    {choice}
-                  </button>
-                ))}
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+          <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
+            📋 Ceklist PPI Ruang Tunggu
+          </h2>
+          <div className="space-y-6">
+            {checklistGroups.map((group) => (
+              <div key={group.title} className="bg-slate-900/50 border border-white/5 rounded-2xl overflow-hidden">
+                <button 
+                  type="button" 
+                  onClick={() => toggleGroup(group.title)}
+                  className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-white/5 transition-colors"
+                >
+                  <span className="text-sm font-bold text-white uppercase tracking-widest">{group.title}</span>
+                  {expandedGroups[group.title] ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+                </button>
+                <AnimatePresence>
+                  {expandedGroups[group.title] && (
+                    <motion.div 
+                      initial={{ height: 0, opacity: 0 }} 
+                      animate={{ height: 'auto', opacity: 1 }} 
+                      exit={{ height: 0, opacity: 0 }}
+                      className="border-t border-white/5"
+                    >
+                      <div className="p-4 space-y-4">
+                        {group.items.map((item, idx) => (
+                          <div key={item.id} className="bg-white/5 p-5 rounded-[1.5rem] border border-white/5 flex flex-col gap-4">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                              <div className="flex gap-4 relative z-10 w-full md:w-auto">
+                                  <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border bg-white/5 border-white/10 text-slate-400">
+                                    <span className="text-xs font-black">{idx + 1}</span>
+                                  </div>
+                                  <div className="mt-1 flex-1">
+                                    <h3 className="text-sm font-bold text-white leading-relaxed">{item.label}</h3>
+                                  </div>
+                              </div>
+                              
+                              <div className="flex p-1.5 bg-slate-900 rounded-2xl border border-white/5 w-full md:w-fit shrink-0 relative z-10">
+                                  {['ya', 'tidak', 'na'].map(choice => (
+                                      <button key={choice} onClick={() => handleActionClick(item.id, choice as any)} type="button"
+                                      className={`flex-1 md:flex-none px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${
+                                          data[item.id] === choice 
+                                          ? (choice === 'ya' ? 'bg-emerald-600 text-white shadow-lg' : choice === 'tidak' ? 'bg-red-600 text-white shadow-lg' : 'bg-slate-600 text-white shadow-lg')
+                                          : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                                      }`}
+                                      >
+                                      {choice === 'na' ? 'N/A' : choice}
+                                      </button>
+                                  ))}
+                              </div>
+                            </div>
+                            <div className="w-full">
+                                <input 
+                                    type="text" 
+                                    value={keterangan[item.id] || ''} 
+                                    onChange={(e) => handleKeteranganChange(item.id, e.target.value)} 
+                                    placeholder="Keterangan opsional..." 
+                                    className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600" 
+                                />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
+            ))}
+          </div>
+        </div>
+
+        <LiveStatisticsCard 
+          totalDinilai={stats.dinilai} totalPatuh={stats.patuh} totalTidakPatuh={stats.dinilai - stats.patuh} 
+          persentase={stats.persentase} statusText={stats.statusText} title="KEPATUHAN RUANG TUNGGU"
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+                <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">📝 Temuan Audit</h2>
+                <textarea value={temuan} onChange={e => setTemuan(e.target.value)} placeholder="Tuliskan temuan audit...&#10;Contoh:&#10;Handrub kosong&#10;Kursi berdebu&#10;Tempat sampah penuh" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600"/>
             </div>
-          ))}
+            <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+                <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">💡 Rekomendasi</h2>
+                <textarea value={rekomendasi} onChange={e => setRekomendasi(e.target.value)} placeholder="Tuliskan rekomendasi tindak lanjut...&#10;Contoh:&#10;Isi ulang handrub setiap shift&#10;Tambah poster etika batuk&#10;Jadwalkan pembersihan tiap 2 jam" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600"/>
+            </div>
         </div>
 
-        <LiveStatisticsCard totalDinilai={stats.dinilai} totalPatuh={stats.patuh} totalTidakPatuh={stats.dinilai - stats.patuh} persentase={stats.persentase} statusText={stats.status} title="HASIL OBSERVASI" />
-
-        <div className="bg-white/5 backdrop-blur-xl p-8 rounded-[2rem] border border-white/5 space-y-6 text-white">
-          <div className="space-y-3">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Temuan Monitoring</label>
-            <textarea value={temuan} onChange={(e) => setTemuan(e.target.value)} placeholder="Tuliskan temuan..." className="w-full h-32 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white outline-none resize-none" />
-          </div>
-          <div className="space-y-3">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Rekomendasi</label>
-            <textarea value={rekomendasi} onChange={(e) => setRekomendasi(e.target.value)} placeholder="Tuliskan rekomendasi..." className="w-full h-32 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white outline-none resize-none" />
-          </div>
-        </div>
-
-        <div className="bg-white/5 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white/5">
+        <div className="bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
           <DocumentationUploader images={images} setImages={setImages} />
         </div>
 
-        <DigitalSignatureSection ref={sigRef} pjName={pjName} setPjName={setPjName} pjLabel="PJ TPS" />
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">✍️ TANDA TANGAN DIGITAL</h2>
+            <DigitalSignatureSection ref={sigRef} pjName={pjName} setPjName={setPjName} pjLabel="PJ RUANGAN" />
+        </div>
 
-        <button type="submit" disabled={isSubmitting} className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-blue-900/20 disabled:opacity-50">
-          {isSubmitting ? <Activity className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-          <span>Simpan Data Monitoring</span>
+        <button onClick={handleSubmit} disabled={isSubmitting || !observer || stats.dinilai === 0}
+          className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg disabled:opacity-50"
+        >
+          {isSubmitting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+          <span>Simpan Data Audit</span>
         </button>
-      </form>
-
-      <AnimatePresence>
-        {isObserverModalOpen && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsObserverModalOpen(false)} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-md bg-slate-900 border border-white/10 rounded-[2rem] p-8 overflow-hidden">
-               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-white uppercase tracking-widest flex items-center gap-3">Kelola Supervisor</h3>
-                <button onClick={() => setIsObserverModalOpen(false)} className="p-2 text-slate-500 hover:text-white"><X className="w-5 h-5" /></button>
-              </div>
-              <div className="flex gap-2 mb-6 text-white">
-                <input type="text" value={newObserverName} onChange={(e) => setNewObserverName(e.target.value)} placeholder="Nama Supervisor..." className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none" />
-                <button onClick={saveObserver} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase hover:bg-blue-500">{editObserverId ? 'OK' : '+'}</button>
-              </div>
-              <div className="max-h-[300px] overflow-y-auto space-y-2">
-                {observers.map(o => (
-                  <div key={o.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-xl">
-                    <span className="text-sm font-medium text-slate-300">{o.nama}</span>
-                    <div className="flex gap-1">
-                      <button onClick={() => { setNewObserverName(o.nama); setEditObserverId(o.id); }} className="p-2 text-slate-500 hover:text-blue-400"><Settings className="w-4 h-4" /></button>
-                      <button onClick={() => deleteObserver(o.id)} className="p-2 text-slate-500 hover:text-red-400"><Trash2 className="w-4 h-4" /></button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      </div>
     </div>
   );
 }
 
-MonitoringTungguPage.getLayout = function getLayout(page: ReactElement) {
+InputMonitoringRuangTungguPage.getLayout = function getLayout(page: ReactElement) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };

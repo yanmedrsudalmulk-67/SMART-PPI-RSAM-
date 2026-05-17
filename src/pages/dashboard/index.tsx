@@ -1,7 +1,11 @@
 import { useState, useEffect, useMemo, ReactElement } from 'react';
 import dynamic from 'next/dynamic';
+import 'swiper/css';
+import 'swiper/css/pagination';
+import 'swiper/css/navigation';
+import 'swiper/css/effect-fade';
 import { 
-  AlertCircle, Shield, Droplets, BarChart2, LineChart, Settings, ChevronLeft, ChevronRight, TrendingUp, Activity, Calendar
+  AlertCircle, Shield, Droplets, BarChart2, LineChart, Settings, ChevronLeft, ChevronRight, TrendingUp, Activity, Calendar, ImageOff
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Image from 'next/image';
@@ -9,6 +13,9 @@ import { useAppContext } from '@/components/Providers';
 import DashboardLayout from '@/components/DashboardLayout';
 import { supabase } from '@/lib/supabase';
 import { useDashboardStore } from '@/hooks/useDashboardStore';
+
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Pagination, Navigation, EffectFade } from 'swiper/modules';
 
 import { 
   ResponsiveContainer, ComposedChart, AreaChart, Bar, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine, Cell
@@ -68,49 +75,108 @@ const DEFAULT_STANDARDS: Record<string, Standard> = {
 };
 
 // --- Standalone Components & Helpers for Performance ---
-const HeroSlider = ({ slides, isLoading }: { slides: Slide[], isLoading: boolean }) => {
-  const [idx, setIdx] = useState(0);
-  const visibleSlides = useMemo(() => slides.filter(s => s.active), [slides]);
-  
-  useEffect(() => {
-    if(visibleSlides.length <= 1) return;
-    const timer = setInterval(() => {
-       setIdx(p => (p + 1) % visibleSlides.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [visibleSlides.length]);
+const SliderImage = ({ slide, setImageErrors }: { slide: any, setImageErrors: any }) => {
+  return (
+    <img 
+      src={slide.image_url} 
+      alt={slide.title} 
+      className={`absolute inset-0 w-full h-full object-cover transition-all duration-[10000ms] ease-linear transform scale-100 group-[.swiper-slide-active]:scale-110`} 
+      referrerPolicy="no-referrer"
+      onError={(e) => {
+        console.error("Slider image error", slide.image_url);
+        setImageErrors((prev: any) => ({ ...prev, [slide.id]: true }));
+      }}
+    />
+  );
+};
 
+const HeroSlider = ({ slides, isLoading }: { slides: Slide[], isLoading: boolean }) => {
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+
+  const visibleSlides = useMemo(() => {
+    const active = slides.filter(s => s.active);
+    return active.length > 0 ? active : DEFAULT_SLIDES;
+  }, [slides]);
+  
   if (isLoading) return (
-    <div className="relative w-full h-[300px] md:h-[400px] rounded-[32px] overflow-hidden bg-slate-100 dark:bg-[#0B1120] flex items-center justify-center">
-       <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+    <div className="relative w-full h-[220px] sm:h-[320px] md:h-[420px] rounded-[24px] overflow-hidden bg-slate-100 dark:bg-slate-900 flex items-center justify-center border border-slate-200 dark:border-white/5 animate-pulse shadow-sm">
+      <div className="flex flex-col items-center gap-4">
+        <Shield className="w-12 h-12 text-slate-300 dark:text-slate-700" />
+        <div className="h-2 w-24 bg-slate-200 dark:bg-slate-800 rounded-full" />
+      </div>
     </div>
   );
-  if(visibleSlides.length === 0) return null;
 
   return (
-    <div className="relative w-full h-[300px] md:h-[400px] rounded-[32px] overflow-hidden bg-slate-100 dark:bg-[#0b1120]">
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={idx}
-          className="absolute inset-0"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          <Image src={visibleSlides[idx].image_url} alt="Slide" fill priority className="object-cover" referrerPolicy="no-referrer" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-          <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12 z-10">
-            <h2 className="text-[10px] font-black mb-3 text-white drop-shadow-md">{visibleSlides[idx].title}</h2>
-            <p className="text-[10px] font-bold opacity-100 max-w-2xl text-white drop-shadow-md">{visibleSlides[idx].subtitle}</p>
-          </div>
-        </motion.div>
-      </AnimatePresence>
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-         {visibleSlides.map((_, i) => (
-           <button key={i} onClick={() => setIdx(i)} className={`w-2 h-2 rounded-full transition-all ${idx === i ? 'bg-white w-6' : 'bg-white/40'}`} />
-         ))}
-      </div>
+    <div className="w-full relative group rounded-[24px] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-slate-200/50 dark:border-white/10 dark:shadow-blue-900/20 mb-8 mt-4">
+      <Swiper
+        key={visibleSlides.map(s => s.id).join(',')}
+        modules={[Autoplay, Pagination, Navigation, EffectFade]}
+        effect="fade"
+        fadeEffect={{ crossFade: true }}
+        spaceBetween={0}
+        slidesPerView={1}
+        loop={visibleSlides.length > 1}
+        navigation={{
+          prevEl: '.slider-prev',
+          nextEl: '.slider-next',
+        }}
+        autoplay={{ delay: 5000, disableOnInteraction: false }}
+        pagination={{
+            clickable: true,
+            dynamicBullets: true,
+        }}
+        className="w-full h-[220px] sm:h-[320px] md:h-[420px] bg-slate-900"
+      >
+        {visibleSlides.map((slide, i) => (
+          <SwiperSlide key={slide.id || i} className="overflow-hidden">
+            <div className="relative w-full h-full bg-slate-800 dark:bg-slate-900 overflow-hidden">
+                {slide.image_url && !imageErrors[slide.id] ? (
+                  <SliderImage slide={slide} setImageErrors={setImageErrors} />
+                ) : (
+                  <div className="absolute inset-0 bg-slate-100 dark:bg-slate-800 flex flex-col items-center justify-center gap-3">
+                    <ImageOff className="w-12 h-12 text-slate-400 dark:text-slate-600 mb-2" />
+                    <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">Image not available</span>
+                  </div>
+                )}
+                
+            </div>
+          </SwiperSlide>
+        ))}
+      </Swiper>
+      
+      {/* Custom Navigation Buttons */}
+      <button className="slider-prev absolute left-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/30 backdrop-blur-md text-white border border-white/20 transition-all opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 shadow-lg cursor-pointer">
+        <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
+      </button>
+      <button className="slider-next absolute right-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/30 backdrop-blur-md text-white border border-white/20 transition-all opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 shadow-lg cursor-pointer">
+        <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
+      </button>
+
+      {/* Custom Styles for Swiper dots to make them Premium */}
+      <style jsx global>{`
+        .swiper-pagination-bullet {
+          width: 8px !important;
+          height: 8px !important;
+          background: white !important;
+          opacity: 0.5 !important;
+          transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1) !important;
+          border-radius: 4px !important;
+          backdrop-filter: blur(4px) !important;
+        }
+        .swiper-pagination-bullet-active {
+          width: 36px !important;
+          opacity: 1 !important;
+          background: #34d399 !important; /* emerald-400 */
+          box-shadow: 0 0 15px rgba(52, 211, 153, 0.6) !important;
+        }
+        .swiper-effect-fade .swiper-slide {
+          pointer-events: none;
+        }
+        .swiper-effect-fade .swiper-slide-active {
+          pointer-events: auto;
+        }
+      `}</style>
     </div>
   );
 };
@@ -137,7 +203,7 @@ export default function DashboardPage() {
   const [chartMode, setChartMode] = useState<'bar'|'line'>('bar');
   const [selectedUnit, setSelectedUnit] = useState<string>('all');
 
-  const slides = (isDashboardLoaded && dashboardData?.slides) ? dashboardData.slides : DEFAULT_SLIDES;
+  const slides = (isDashboardLoaded && dashboardData?.slides && dashboardData.slides.length > 0) ? dashboardData.slides : DEFAULT_SLIDES;
   const standards = (isDashboardLoaded && dashboardData?.standards) ? dashboardData.standards : DEFAULT_STANDARDS;
   const rawData = useMemo(() => (isDashboardLoaded && dashboardData?.rawData) ? dashboardData.rawData : { hh: [], apd: [], hais: [], fapd: [], linen: [] }, [isDashboardLoaded, dashboardData?.rawData]);
   const isDataLoading = !isDashboardLoaded;
@@ -149,9 +215,6 @@ export default function DashboardPage() {
     let mounted = true;
     const fetchFresh = async () => {
       try {
-        const currentYear = new Date().getFullYear();
-        const startDate = new Date(currentYear - 1, 0, 1).toISOString();
-
         const [slidesRes, stdRes, hhRes, apdRes, haisRes, fapdRes, linenRes] = await Promise.all([
           supabase.from('dashboard_slider').select('*').order('sort_order', { ascending: true }),
           supabase.from('dashboard_standards').select('*'),
@@ -171,14 +234,21 @@ export default function DashboardPage() {
           fasilitas_apd: fapdRes.data || [],
           linen: linenRes.data || []
         };
-        const newSlides = (slidesRes.data && slidesRes.data.length > 0) ? slidesRes.data : DEFAULT_SLIDES;
+        
+        // Ensure slides fallback to DEFAULT_SLIDES if table is empty
+        const newSlides = (slidesRes.data && slidesRes.data.length > 0) 
+          ? slidesRes.data 
+          : DEFAULT_SLIDES;
+
         const newStandards: any = {
           hh: { indikator: 'Kebersihan Tangan', nilai_standar: 85, operator: '>=' },
           apd: { indikator: 'Kepatuhan Penggunaan APD', nilai_standar: 100, operator: '>=' },
           phlebitis: { indikator: 'Phlebitis', nilai_standar: 1.5, operator: '<=' },
           isk: { indikator: 'ISK', nilai_standar: 5, operator: '<=' },
           ido: { indikator: 'IDO', nilai_standar: 2, operator: '<=' },
-          vap: { indikator: 'VAP', nilai_standar: 5, operator: '<=' }
+          vap: { indikator: 'VAP', nilai_standar: 5, operator: '<=' },
+          fasilitas_apd: { indikator: 'Fasilitas APD', nilai_standar: 100, operator: '>=' },
+          linen: { indikator: 'Penatalaksanaan Linen', nilai_standar: 100, operator: '>=' }
         };
         if (stdRes.data) {
           stdRes.data.forEach(s => {
@@ -189,6 +259,8 @@ export default function DashboardPage() {
             else if (key.includes('isk')) newStandards.isk = s;
             else if (key.includes('ido')) newStandards.ido = s;
             else if (key.includes('vap')) newStandards.vap = s;
+            else if (key.includes('fasilitas') || key.includes('fapd')) newStandards.fasilitas_apd = s;
+            else if (key.includes('linen')) newStandards.linen = s;
             else if (newStandards[key]) newStandards[key] = s;
           });
         }
@@ -198,6 +270,8 @@ export default function DashboardPage() {
         console.error("Manual refresh error", e);
       }
     };
+
+    fetchFresh();
 
     const channels = [
       supabase.channel('hh_ch').on('postgres_changes', { event: '*', schema: 'public', table: 'audit_hand_hygiene' }, () => fetchFresh()).subscribe(),
@@ -559,17 +633,17 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 pb-10">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 dark:border-white/10 pb-6 mb-2">
         <div>
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all uppercase">Dashboard SMART PPI</h1>
           <div className="mt-1">
             <p className="text-slate-900 dark:text-slate-400 font-normal leading-tight max-w-[280px] sm:max-w-none text-[15px] sm:text-[15px] xl:text-[15px]" style={{ fontSize: '15px' }}>
-              Pencegahan Dan Pengendalian Infeksi di UOBK RSUD Al-Mulk Kota Sukabumi
+              Pencegahan Dan Pengendalian Infeksi <br className="sm:hidden" /> di UOBK RSUD Al-Mulk Kota Sukabumi
             </p>
           </div>
         </div>
       </div>
-
+      
       <HeroSlider slides={slides} isLoading={isSlidesLoading} />
       
       {/* Global Period Filter - Control Center Style */}
@@ -651,7 +725,7 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-3 gap-6">
         {/* HH Card */}
         <div 
           className="group relative bg-white dark:bg-[#111827] p-8 rounded-[32px] border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-500"
@@ -747,66 +821,6 @@ export default function DashboardPage() {
               </div>
            </div>
         </div>
-
-        {/* Fasilitas APD Card */}
-        <div 
-          className="group relative bg-white dark:bg-[#111827] p-8 rounded-[32px] border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-500"
-        >
-          <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none">
-            <Shield className="w-16 h-16 text-purple-600" />
-          </div>
-          <div className="flex items-center gap-4 mb-8">
-            <div className="w-12 h-12 rounded-2xl bg-purple-500/10 dark:bg-purple-600/20 flex items-center justify-center text-purple-600 dark:text-purple-400">
-              <Shield className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 leading-none mb-1">Indikator Mutu</h3>
-              <p className="text-[16px] font-bold text-slate-700 dark:text-slate-300">Fasilitas APD</p>
-            </div>
-          </div>
-          <div className="flex items-baseline gap-3 mb-4">
-            <span className={`text-5xl font-black tracking-tighter ${getStatusColor(stats.fasilitas_apd, standards.fasilitas_apd)}`}>{stats.fasilitas_apd}%</span>
-          </div>
-          <div className="mt-8 pt-6 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
-            <span className="text-[12px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest">Capaian</span>
-            <div className="flex flex-col items-end">
-              <span className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 mb-1">Std: {standards?.fasilitas_apd?.nilai_standar || 100}%</span>
-              <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${stats.fasilitas_apd >= (standards?.fasilitas_apd?.nilai_standar || 100) ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-600'}`}>
-                {stats.fasilitas_apd >= (standards?.fasilitas_apd?.nilai_standar || 100) ? 'Tercapai' : 'Kurang'}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Linen Card */}
-        <div 
-          className="group relative bg-white dark:bg-[#111827] p-8 rounded-[32px] border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-xl hover:shadow-orange-500/10 transition-all duration-500"
-        >
-          <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none">
-            <Shield className="w-16 h-16 text-orange-600" />
-          </div>
-          <div className="flex items-center gap-4 mb-8">
-            <div className="w-12 h-12 rounded-2xl bg-orange-500/10 dark:bg-orange-600/20 flex items-center justify-center text-orange-600 dark:text-orange-400">
-              <Shield className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 leading-none mb-1">Indikator Mutu</h3>
-              <p className="text-[16px] font-bold text-slate-700 dark:text-slate-300">Audit Linen</p>
-            </div>
-          </div>
-          <div className="flex items-baseline gap-3 mb-4">
-            <span className={`text-5xl font-black tracking-tighter ${getStatusColor(stats.linen, standards.linen)}`}>{stats.linen}%</span>
-          </div>
-          <div className="mt-8 pt-6 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
-            <span className="text-[12px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-widest">Capaian</span>
-            <div className="flex flex-col items-end">
-              <span className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 mb-1">Std: {standards?.linen?.nilai_standar || 100}%</span>
-              <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${stats.linen >= (standards?.linen?.nilai_standar || 100) ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-600'}`}>
-                {stats.linen >= (standards?.linen?.nilai_standar || 100) ? 'Tercapai' : 'Kurang'}
-              </span>
-            </div>
-          </div>
-        </div>
       </div>
 
       <div className="bg-white dark:bg-[#111827] rounded-[32px] border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm dark:shadow-none transition-all mt-8">
@@ -814,9 +828,7 @@ export default function DashboardPage() {
             <div className="flex flex-wrap gap-2">
                {[ { id: 'hh', label: 'KEBERSIHAN TANGAN', icon: Droplets, c: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500/10 dark:bg-white/10' }, 
                   { id: 'apd', label: 'KEPATUHAN APD', icon: Shield, c: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10 dark:bg-white/10' },
-                  { id: 'hais', label: 'INSIDEN HAIS', icon: AlertCircle, c: 'text-red-600 dark:text-red-400', bg: 'bg-red-500/10 dark:bg-white/10' },
-                  { id: 'fasilitas_apd', label: 'FASILITAS APD', icon: Shield, c: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-500/10 dark:bg-white/10' },
-                  { id: 'linen', label: 'LINEN', icon: Shield, c: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-500/10 dark:bg-white/10' }
+                  { id: 'hais', label: 'INSIDEN HAIS', icon: AlertCircle, c: 'text-red-600 dark:text-red-400', bg: 'bg-red-500/10 dark:bg-white/10' }
                ].map(t => (
                   <button key={t.id} onClick={() => setActiveTab(t.id as any)}
                      className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${activeTab === t.id ? `${t.bg} ${t.c}` : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}

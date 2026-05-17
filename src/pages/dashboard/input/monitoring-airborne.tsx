@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo, useRef, ReactElement } from 'react';
 import { useRouter } from 'next/router';
-import { 
+import {   
   Activity, ArrowLeft, Save, CheckCircle2, Settings, Trash2, X, Wind, ChevronDown, ChevronUp
-} from 'lucide-react';
+, RefreshCw , User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
@@ -227,75 +227,69 @@ export default function MonitoringAirbornePage() {
           <div className="space-y-3 pt-2">
             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex justify-between items-center">
               Supervisor
-              <button type="button" onClick={() => setIsObserverModalOpen(true)} className="p-1.5 hover:bg-white/10 rounded-lg text-blue-400 transition-colors"><Settings className="w-3 h-3" /></button>
+              <button type="button" onClick={() => setIsObserverModalOpen(true)} className="text-blue-400 hover:text-blue-300 font-bold uppercase tracking-widest flex items-center gap-1"><User className="w-3 h-3" /> Tambah / Kelola</button>
             </label>
-            <select value={observer} onChange={(e) => setObserver(e.target.value)} required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 transition-colors">
-              <option value="" className="bg-slate-900">Pilih Supervisor...</option>
-              {observers.map(o => <option key={o.id} value={o.nama} className="bg-slate-900">{o.nama}</option>)}
-            </select>
+            <div className="relative">
+              <select value={observer} onChange={(e) => setObserver(e.target.value)} className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white appearance-none outline-none focus:border-blue-500/50">
+                <option value="">Pilih Supervisor...</option>
+                {observers.map(o => <option key={o.id} value={o.nama}>{o.nama}</option>)}
+              </select>
+            </div>
           </div>
         </div>
 
-        <div className="bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-[2rem] border border-white/5 space-y-4 shadow-sm">
-          <button 
-            type="button" 
-            onClick={() => setIsChecklistOpen(!isChecklistOpen)}
-            className="w-full flex items-center justify-between text-xs font-bold uppercase tracking-widest text-blue-400 border-b border-white/5 pb-4 group"
-          >
-            <span>Ceklist Penempatan Pasien Airbone</span>
-            {isChecklistOpen ? <ChevronUp className="w-4 h-4 group-hover:text-blue-300" /> : <ChevronDown className="w-4 h-4 group-hover:text-blue-300" />}
-          </button>
-          
-          <AnimatePresence>
-            {isChecklistOpen && (
-              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="space-y-4 overflow-hidden pt-2">
-                {checklistItems.map((item, idx) => (
-                  <div key={item.id} className="p-5 rounded-2xl bg-white/5 border border-white/5 flex flex-col gap-4 hover:border-blue-500/20 transition-colors">
-                    <p className="text-sm font-medium text-slate-300 leading-relaxed">
-                      <span className="text-blue-400 font-bold mr-2">{idx + 1}.</span>{item.label}
-                    </p>
-                    <div className="grid grid-cols-3 gap-3 bg-black/20 p-1.5 rounded-xl border border-white/5">
-                      {['ya', 'tidak', 'na'].map(choice => (
-                        <button key={choice} type="button" onClick={() => toggleItem(item.id, choice as any)}
-                          className={`py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
-                            data[item.id] === choice 
-                              ? (choice === 'ya' ? 'bg-blue-600/90 text-white shadow-lg shadow-blue-900/20' : choice === 'tidak' ? 'bg-red-600/90 text-white shadow-lg shadow-red-900/20' : 'bg-slate-600/90 text-white shadow-lg shadow-slate-900/20')
-                              : 'text-slate-400 hover:bg-white/10 hover:text-white'
-                          }`}
-                        >
-                          {choice}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">📋 Indikator Kepatuhan</h2>
+          <div className="space-y-4">
+            {checklistItems.map(item => (
+              <div key={item.id} className="bg-white/5 p-6 rounded-[24px] border border-white/5">
+                <h3 className="text-sm font-bold text-white mb-4">{item.label}</h3>
+                <div className="grid grid-cols-3 gap-3">
+                  {['ya', 'tidak', 'na'].map(choice => (
+                    <button type="button" key={choice} onClick={() => toggleItem(item.id, choice as any)}
+                      className={`py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                        data[item.id] === choice ? 'bg-blue-600 text-white border-blue-500' : 'bg-white/5 text-slate-400 border-transparent hover:bg-white/10'
+                      }`}
+                    >
+                      {choice === 'na' ? 'N/A' : choice}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <LiveStatisticsCard totalDinilai={stats.dinilai} totalPatuh={stats.patuh} totalTidakPatuh={stats.dinilai - stats.patuh} persentase={stats.persentase} statusText={stats.status} title="PERSENTASE KEPATUHAN" />
+        <LiveStatisticsCard 
+          totalDinilai={stats.dinilai} totalPatuh={stats.patuh} totalTidakPatuh={stats.dinilai - stats.patuh}
+          persentase={stats.persentase} statusText={stats.status}
+        />
 
-        <div className="bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-[2rem] border border-white/5 space-y-6 text-white shadow-sm">
-          <div className="space-y-3">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Temuan Monitoring</label>
-            <textarea value={temuan} onChange={(e) => setTemuan(e.target.value)} placeholder="Contoh: Pasien keluar ruangan tanpa masker, Jendela tertutup permanen, Fasilitas cuci tangan tidak tersedia..." className="w-full h-32 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white outline-none resize-none focus:border-blue-500/50 transition-colors" />
-          </div>
-          <div className="space-y-3">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Rekomendasi</label>
-            <textarea value={rekomendasi} onChange={(e) => setRekomendasi(e.target.value)} placeholder="Contoh: Edukasi ulang pasien dan keluarga, Pastikan masker selalu tersedia, Optimalkan ventilasi ruangan..." className="w-full h-32 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white outline-none resize-none focus:border-blue-500/50 transition-colors" />
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+                <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">📝 Temuan Audit</h2>
+                <textarea value={temuan} onChange={e => setTemuan(e.target.value)} placeholder="Tuliskan temuan audit..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600"/>
+            </div>
+            <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+                <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">💡 Rekomendasi</h2>
+                <textarea value={rekomendasi} onChange={e => setRekomendasi(e.target.value)} placeholder="Tuliskan rekomendasi tindak lanjut..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600"/>
+            </div>
         </div>
 
         <div className="bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
           <DocumentationUploader images={images} setImages={setImages} />
         </div>
 
-        <DigitalSignatureSection ref={sigRef} pjName={pjName} setPjName={setPjName} pjLabel="PJ Ruang Isolasi" />
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">✍️ TANDA TANGAN DIGITAL</h2>
+            <DigitalSignatureSection ref={sigRef} pjName={pjName} setPjName={setPjName} pjLabel="PJ RUANGAN" />
+        </div>
 
-        <button type="submit" disabled={isSubmitting} className="w-full flex justify-center items-center gap-3 py-4 mt-6 bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white font-bold uppercase tracking-widest rounded-xl transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] disabled:opacity-50">
-          {isSubmitting ? <Activity className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-          <span>Simpan Data</span>
+        <button type="submit" disabled={isSubmitting || !observer || stats.dinilai === 0}
+          className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg disabled:opacity-50"
+        >
+          {isSubmitting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+          <span>Simpan Data Audit</span>
         </button>
       </form>
 
@@ -306,11 +300,11 @@ export default function MonitoringAirbornePage() {
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-md bg-slate-900 border border-white/10 rounded-[2rem] p-8 overflow-hidden">
                <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-bold text-white uppercase tracking-widest flex items-center gap-3">Kelola Supervisor</h3>
-                <button onClick={() => setIsObserverModalOpen(false)} className="p-2 text-slate-500 hover:text-white"><X className="w-5 h-5" /></button>
+                <button type="button" onClick={() => setIsObserverModalOpen(false)} className="p-2 text-slate-500 hover:text-white"><X className="w-5 h-5" /></button>
               </div>
               <div className="flex gap-2 mb-6 text-white">
                 <input type="text" value={newObserverName} onChange={(e) => setNewObserverName(e.target.value)} placeholder="Nama Supervisor..." className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none" />
-                <button onClick={saveObserver} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase hover:bg-blue-500">{editObserverId ? 'OK' : '+'}</button>
+                <button type="button" onClick={saveObserver} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase hover:bg-blue-500">{editObserverId ? 'OK' : '+'}</button>
               </div>
               <div className="max-h-[300px] overflow-y-auto space-y-2">
                 {observers.map(o => (
@@ -331,6 +325,6 @@ export default function MonitoringAirbornePage() {
   );
 }
 
-MonitoringAirbornePage.getLayout = function getLayout(page: ReactElement) {
+MonitoringAirbornePage.getLayout = function getLayout(page: React.ReactElement) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };

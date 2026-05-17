@@ -46,7 +46,7 @@ export async function saveAuditData(params: {
   }
 
   // 2. Simpan details
-  const details = [];
+  const details: any[] = [];
   for (const [key, val] of Object.entries(data_indikator)) {
     if (val !== null && val !== undefined) {
       let label = key;

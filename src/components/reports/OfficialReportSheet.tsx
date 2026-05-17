@@ -85,7 +85,7 @@ export default function OfficialReportSheet({
           <div className="flex items-center gap-5 w-full justify-center text-center">
              <div className="w-20 h-20 bg-white flex items-center justify-center p-1 border-2 border-slate-300 relative">
                {hospitalLogoUrl ? (
-                 <Image src={hospitalLogoUrl} alt="Logo RS" fill className="object-contain" referrerPolicy="no-referrer" />
+                 <Image src={hospitalLogoUrl} alt="Logo RS" fill sizes="80px" className="object-contain" referrerPolicy="no-referrer" />
                ) : (
                  <ShieldCheck className="w-12 h-12 text-black" />
                )}
@@ -176,7 +176,7 @@ export default function OfficialReportSheet({
            <div className="grid grid-cols-4 gap-4">
              {images.map((url, i) => (
                <div key={i} onClick={() => setZoomedImage(url)} className="relative aspect-video border border-slate-300 cursor-zoom-in">
-                 <Image src={url} alt="Dokumentasi" fill className="object-cover" referrerPolicy="no-referrer" />
+                 <Image src={url} alt="Dokumentasi" fill sizes="25vw" className="object-cover" referrerPolicy="no-referrer" />
                </div>
              ))}
            </div>
@@ -187,7 +187,7 @@ export default function OfficialReportSheet({
         <div className="text-center space-y-4">
           <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">PJ Ruangan / Auditee</p>
           <div className="h-20 relative w-full flex justify-center items-center">
-            {data.ttd_pj && <Image src={data.ttd_pj} fill className="object-contain" alt="TTD PJ" referrerPolicy="no-referrer" />}
+            {data.ttd_pj && <Image src={data.ttd_pj} fill sizes="200px" className="object-contain" alt="TTD PJ" referrerPolicy="no-referrer" />}
           </div>
           <div className="pt-2 border-t border-slate-300 w-full">
             <p className="font-bold text-xs uppercase tracking-wider text-black">( ............................... )</p>
@@ -196,7 +196,7 @@ export default function OfficialReportSheet({
         <div className="text-center space-y-4">
           <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">Auditor / IPCN</p>
           <div className="h-20 relative w-full flex justify-center items-center">
-            {data.ttd_ipcn && <Image src={data.ttd_ipcn} fill className="object-contain" alt="TTD IPCN" referrerPolicy="no-referrer" />}
+            {data.ttd_ipcn && <Image src={data.ttd_ipcn} fill sizes="200px" className="object-contain" alt="TTD IPCN" referrerPolicy="no-referrer" />}
           </div>
           <div className="pt-2 border-t border-slate-300 w-full">
             <p className="font-bold text-xs uppercase tracking-wider text-black">{inspector || '( ............................... )'}</p>

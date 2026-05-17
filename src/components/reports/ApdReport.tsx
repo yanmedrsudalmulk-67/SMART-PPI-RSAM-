@@ -244,7 +244,7 @@ export default function ApdReport({
          <div className="flex items-center gap-5 w-full justify-center text-center">
             <div className="w-20 h-20 bg-white flex items-center justify-center p-1 border-2 border-slate-300 relative">
               {hospitalLogoUrl ? (
-                <Image src={hospitalLogoUrl} alt="Logo RS" fill className="object-contain" referrerPolicy="no-referrer" />
+                <Image src={hospitalLogoUrl} alt="Logo RS" fill sizes="80px" className="object-contain" referrerPolicy="no-referrer" />
               ) : (
                 <ShieldCheck className="w-12 h-12 text-black" />
               )}
