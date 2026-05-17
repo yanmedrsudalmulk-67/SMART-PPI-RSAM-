@@ -15,8 +15,10 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [isDark, setIsDark] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     setIsDark(document.documentElement.classList.contains('dark'));
   }, []);
 
@@ -57,6 +59,8 @@ export default function LoginPage() {
       }
     }, 100);
   };
+
+  if (!mounted) return null;
 
   return (
     <div className={`min-h-screen transition-colors duration-700 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden font-sans ${isDark ? 'bg-[#0a0f1c]' : 'bg-white'}`}>

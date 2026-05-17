@@ -292,7 +292,8 @@ export default function WelcomePage() {
             className="z-30 relative"
           >
             <Link 
-              href="/login" 
+              href="/login"
+              prefetch={false}
               className={`group relative inline-flex items-center justify-center px-14 py-5 font-bold text-white text-lg rounded-full shadow-lg hover:-translate-y-1 transition-all ${isDark ? 'bg-blue-600 hover:bg-blue-500' : 'bg-blue-600 hover:bg-blue-500'}`}
             >
               <span className="relative z-10 flex items-center gap-3 tracking-wider">

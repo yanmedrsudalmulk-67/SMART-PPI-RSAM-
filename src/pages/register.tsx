@@ -149,7 +149,7 @@ export default function RegisterPage() {
             
             <div className="mt-6 text-center text-[10px] font-bold uppercase tracking-widest">
               <span className="text-slate-600">Sudah punya akun? </span>
-              <Link href="/login" className="text-blue-400 hover:text-purple-300 transition-colors">
+              <Link href="/login" prefetch={false} className="text-blue-400 hover:text-purple-300 transition-colors">
                 Login di sini
               </Link>
             </div>

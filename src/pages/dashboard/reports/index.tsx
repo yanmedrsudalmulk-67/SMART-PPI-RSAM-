@@ -1,4 +1,3 @@
-import dynamic from 'next/dynamic';
 import { useState, useMemo, useEffect, ReactElement } from 'react';
 import { 
   FileText, Download, Calendar, Filter, FileSpreadsheet, Search, ArrowLeft, 
@@ -11,15 +10,9 @@ import { useAppContext } from '@/components/Providers';
 import DashboardLayout from '@/components/DashboardLayout';
 import { genericAuditConfigs } from '@/lib/audit-configs';
 
-const GenericAuditReport = dynamic(() => import('@/components/reports/GenericAuditReport'), {
-  loading: () => <div className="h-96 flex items-center justify-center animate-pulse bg-white/5 rounded-3xl text-slate-500">Memuat Laporan...</div>
-});
-const HandHygieneReport = dynamic(() => import('@/components/reports/HandHygieneReport'), {
-  loading: () => <div className="h-96 flex items-center justify-center animate-pulse bg-white/5 rounded-3xl text-slate-500">Memuat Laporan HH...</div>
-});
-const ApdReport = dynamic(() => import('@/components/reports/ApdReport'), {
-  loading: () => <div className="h-96 flex items-center justify-center animate-pulse bg-white/5 rounded-3xl text-slate-500">Memuat Laporan APD...</div>
-});
+import GenericAuditReport from '@/components/reports/GenericAuditReport';
+import HandHygieneReport from '@/components/reports/HandHygieneReport';
+import ApdReport from '@/components/reports/ApdReport';
 
 const INDICATORS_MAP: Record<string, { cat: string, subcat?: string, title: string, id: string, icon: any }> = {
   // Kewaspadaan Isolasi - Standar
@@ -45,6 +38,7 @@ const INDICATORS_MAP: Record<string, { cat: string, subcat?: string, title: stri
   'monitoring_ppi_ruang_isolasi': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Ruang Isolasi', id: 'monitoring_ppi_ruang_isolasi', icon: Users },
   'monitoring_immuno': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Immunocompromised', id: 'monitoring_immuno', icon: ShieldAlert },
   'monitoring_fasilitas_hand_hygiene': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Fasilitas Hand Hygiene', id: 'monitoring_fasilitas_hand_hygiene', icon: Activity },
+  'monitoring_fasilitas_apd': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Fasilitas APD', id: 'monitoring_fasilitas_apd', icon: ShieldCheck },
   'monitoring_farmasi': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Farmasi', id: 'monitoring_farmasi', icon: Building2 },
   'monitoring_ibs': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Ruangan IBS', id: 'monitoring_ibs', icon: Building2 },
   'monitoring_cssd': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'CSSD', id: 'monitoring_cssd', icon: Building2 },

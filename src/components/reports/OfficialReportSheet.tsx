@@ -69,6 +69,14 @@ export default function OfficialReportSheet({
     return undefined;
   };
 
+  const getKeterangan = (itemId: string) => {
+    const val = checklist[itemId];
+    if (val && typeof val === 'object' && 'keterangan' in val && typeof val.keterangan === 'string') {
+      return val.keterangan;
+    }
+    return '';
+  };
+
   const images = Array.isArray(data.foto) ? data.foto : (typeof data.foto === 'string' ? [data.foto] : []);
 
   return (
@@ -117,12 +125,14 @@ export default function OfficialReportSheet({
               <th className="px-4 py-3 w-16 text-center border-r border-slate-300">YA</th>
               <th className="px-4 py-3 w-16 text-center border-r border-slate-300">TDK</th>
               <th className="px-4 py-3 w-16 text-center border-r border-slate-300">N/A</th>
+              <th className="px-4 py-3 border-r border-slate-300 text-center">KETERANGAN</th>
             </tr>
           </thead>
           <tbody>
             {categories.map((cat) => (
               cat.items.map((item, itemIdx) => {
                 const status = getStatus(item.id);
+                const keterangan = getKeterangan(item.id);
                 return (
                   <tr key={item.id} className="border-b border-slate-300 text-black">
                     <td className="px-4 py-3 text-center border-r border-slate-300">{itemIdx + 1}</td>
@@ -130,6 +140,7 @@ export default function OfficialReportSheet({
                     <td className="px-4 py-3 text-center border-r border-slate-300">{status === 'ya' && '✓'}</td>
                     <td className="px-4 py-3 text-center border-r border-slate-300">{status === 'tidak' && '✓'}</td>
                     <td className="px-4 py-3 text-center border-r border-slate-300">{status === 'na' && '✓'}</td>
+                    <td className="px-4 py-3 text-xs border-r border-slate-300">{keterangan}</td>
                   </tr>
                 );
               })

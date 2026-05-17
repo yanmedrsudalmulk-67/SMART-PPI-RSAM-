@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo, ReactElement } from 'react';
+import { useState, useEffect, useMemo, ReactElement, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { 
-  ArrowLeft, Save, CheckCircle2, Activity, RefreshCw, FileText
+  ArrowLeft, Save, CheckCircle2, Activity, RefreshCw, Clock, Camera, Upload, Trash2, X, ClipboardCheck, Info, ShieldCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
@@ -9,8 +9,8 @@ import { useAppContext } from '@/components/Providers';
 import { supabase } from '@/lib/supabase';
 import DashboardLayout from '@/components/DashboardLayout';
 import { LiveStatisticsCard } from '@/components/LiveStatisticsCard';
-
-type Observer = { id: string; nama: string };
+import DigitalSignatureSection, { DigitalSignatureRef } from '@/components/DigitalSignatureSection';
+import { EditableSelect } from '@/components/EditableSelect';
 
 const units = [
   'IGD', 'ICU', 'IBS', 'Rawat Jalan', 'Ranap Aisyah', 
@@ -20,7 +20,8 @@ const units = [
 
 const professions = [
   'Dokter Umum', 'Dokter Spesialis', 'Perawat', 'Bidan', 
-  'Analis Laboratorium', 'Radiografer', 'Pramusaji'
+  'Analis Laboratorium', 'Radiografer', 'Pramusaji',
+  'Pasien', 'Pengunjung / Keluarga'
 ];
 
 const auditItems = [
@@ -39,15 +40,20 @@ type AuditStatus = 'ya' | 'tidak' | 'na' | null;
 export default function InputDekontaminasiAlatPage() {
   const router = useRouter();
   const { userRole } = useAppContext();
+  const isIPCN = userRole === 'IPCN' || userRole === 'Admin';
   
   const [startTime, setStartTime] = useState<Date | null>(null);
   
   const [observer, setObserver] = useState('');
   const [unit, setUnit] = useState('');
   const [profesi, setProfesi] = useState('');
-  const [keterangan, setKeterangan] = useState('');
+  const [temuan, setTemuan] = useState('');
+  const [rekomendasi, setRekomendasi] = useState('');
+  const [images, setImages] = useState<File[]>([]);
+  const [pjName, setPjName] = useState('');
   
-  const [observers, setObservers] = useState<Observer[]>([]);
+  const sigRef = useRef<DigitalSignatureRef>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [auditData, setAuditData] = useState<Record<string, AuditStatus>>({
     peralatan_tersedia: null, peralatan_berkarat: null, sterilisasi_tersentral: null, alat_reused: null, 
@@ -58,30 +64,8 @@ export default function InputDekontaminasiAlatPage() {
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
-    const d = new Date();
-    setStartTime(d);
-    fetchObservers();
+    setStartTime(new Date());
   }, []);
-
-  const fetchObservers = async () => {
-    try {
-      const { data, error } = await supabase.from('master_observers').select('*').order('nama');
-      if (error) throw error;
-      
-      let finalData = data || [];
-      const hasAdi = finalData.some(s => s.nama === 'IPCN_Adi Tresa Purnama');
-      if (!hasAdi) {
-        finalData = [{ id: 'adi-static', nama: 'IPCN_Adi Tresa Purnama' }, ...finalData];
-      }
-      setObservers(finalData);
-      if (finalData.length > 0 && !observer) {
-        setObserver(finalData[0].nama);
-      }
-    } catch (err) {
-      setObservers([{ id: '1', nama: 'IPCN_Adi Tresa Purnama' }]);
-      setObserver('IPCN_Adi Tresa Purnama');
-    }
-  };
 
   const handleError = (err: any) => {
     console.error(err);
@@ -90,6 +74,16 @@ export default function InputDekontaminasiAlatPage() {
 
   const handleActionClick = (id: string, stat: AuditStatus) => {
     setAuditData(prev => ({ ...prev, [id]: stat }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setImages(prev => [...prev, ...Array.from(e.target.files!)]);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const stats = useMemo(() => {
@@ -104,7 +98,9 @@ export default function InputDekontaminasiAlatPage() {
     const persentase = dinilai > 0 ? Math.round((patuh / dinilai) * 100) : 0;
     let statusText = 'Belum Dinilai';
     if (dinilai > 0) {
-      statusText = persentase === 100 ? 'Patuh' : 'Tidak Patuh';
+      if (persentase >= 85) statusText = 'Patuh';
+      else if (persentase >= 70) statusText = 'Cukup';
+      else statusText = 'Tidak Patuh';
     }
     return { patuh, dinilai, persentase, statusText };
   }, [auditData]);
@@ -114,17 +110,20 @@ export default function InputDekontaminasiAlatPage() {
     setIsSubmitting(true);
     
     try {
+      const ttd_pj = sigRef.current?.getPjSignature();
+      const ttd_ipcn = sigRef.current?.getSupervisorSignature();
+
       const payload = {
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
         observer, unit, profesi,
-        keterangan,
+        temuan, rekomendasi,
+        nama_pj_ruangan: pjName.trim(),
+        ttd_pj_ruangan: ttd_pj,
+        ttd_ipcn: ttd_ipcn,
         ...auditData,
-        jumlah_dinilai: stats.dinilai,
-        jumlah_patuh: stats.patuh,
-        persentase: stats.persentase,
-        status_kepatuhan: stats.statusText,
       };
 
+      // 1. Simpan ke session/audit record
       const { data: sessionData, error: sessionError } = await supabase
         .from('audit_sessions')
         .insert([{
@@ -132,17 +131,26 @@ export default function InputDekontaminasiAlatPage() {
           nama_indikator: 'DEKONTAMINASI ALAT',
           tanggal_waktu: payload.tanggal_waktu,
           observer, unit, profesi,
-          jenis_tindakan: keterangan,
+          jenis_tindakan: 'Dekontaminasi Alat Audit',
           jumlah_dinilai: stats.dinilai,
           jumlah_patuh: stats.patuh,
           persentase: stats.persentase,
           status_kepatuhan: stats.statusText,
-          data_indikator: auditData
+          data_indikator: auditData,
+          temuan, rekomendasi,
+          nama_pj_ruangan: pjName.trim(),
+          ttd_pj_ruangan: ttd_pj,
+          ttd_ipcn: ttd_ipcn
         }])
-        .select('*')
+        .select('id')
         .single();
 
       if (sessionError) throw sessionError;
+
+      // 3. Upload Images
+      for(let i=0; i<images.length; i++) {
+        await supabase.storage.from('audit_images').upload(`images/${sessionData.id}_${i}.jpg`, images[i]);
+      }
 
       setShowToast(true);
       setTimeout(() => {
@@ -157,7 +165,7 @@ export default function InputDekontaminasiAlatPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto pb-32">
+    <div className="max-w-7xl mx-auto pb-12">
       <AnimatePresence>
         {showToast && (
           <motion.div initial={{ opacity: 0, y: -50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -50 }}
@@ -170,73 +178,90 @@ export default function InputDekontaminasiAlatPage() {
       </AnimatePresence>
 
       <div className="flex items-center gap-6 mb-8 py-6 border-b border-white/5">
-        <Link href="/dashboard/input/isolasi" className="p-3 bg-white/5 rounded-2xl border border-white/10 text-slate-400 hover:text-white transition-all">
+        <Link href="/dashboard/input/isolasi" className="p-3 bg-white/5 rounded-2xl border border-white/10 text-slate-400 hover:text-white transition-all shadow-lg hover:shadow-blue-500/10">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 via-blue-500 to-emerald-500 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all drop-shadow-sm dark:drop-shadow-[0_0_10px_rgba(59,130,246,0.4)] uppercase">Audit Dekontaminasi Alat</h1>
-          <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.1em] text-emerald-600 dark:text-blue-400 mt-1">Observasi kepatuhan dekontaminasi peralatan medis</p>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-400 bg-[length:200%_auto] animate-gradient uppercase drop-shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+            Audit Dekontaminasi Alat
+          </h1>
+          <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.3em] text-blue-500/80 mt-2 flex items-center gap-2">
+            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+            Observasi kepatuhan dekontaminasi peralatan medis
+          </p>
         </div>
       </div>
 
       <div className="space-y-6">
-        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
             <Activity className="w-4 h-4 text-purple-400" /> Data Subjek
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Observer</label>
-              <select value={observer} onChange={(e) => setObserver(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none">
-                <option value="" className="bg-slate-900">Pilih Observer...</option>
-                {observers.map(o => <option key={o.id} value={o.nama} className="bg-slate-900">{o.nama}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Unit</label>
-              <select value={unit} onChange={(e) => setUnit(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none">
-                <option value="" className="bg-slate-900">Pilih Unit...</option>
-                {units.map(u => <option key={u} value={u} className="bg-slate-900">{u}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Profesi / Sasaran</label>
-              <select value={profesi} onChange={(e) => setProfesi(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none">
-                <option value="" className="bg-slate-900">Pilih...</option>
-                {professions.map(p => <option key={p} value={p} className="bg-slate-900">{p}</option>)}
-                <option value="Pasien" className="bg-slate-900">Pasien</option>
-                <option value="Pengunjung / Keluarga" className="bg-slate-900">Pengunjung / Keluarga</option>
-              </select>
-            </div>
+            <EditableSelect
+              label="Observer / Verifikator"
+              value={observer}
+              onChange={setObserver}
+              options={[]}
+              isIPCN={isIPCN}
+              table="master_observers"
+              placeholder="Pilih Observer..."
+            />
+            <EditableSelect
+              label="Unit Kerja / Ruangan"
+              value={unit}
+              onChange={setUnit}
+              options={units}
+              isIPCN={isIPCN}
+              storageKey="smartppi_units"
+              placeholder="Pilih Unit..."
+            />
+            <EditableSelect
+              label="Profesi / Sasaran"
+              value={profesi}
+              onChange={setProfesi}
+              options={professions}
+              isIPCN={isIPCN}
+              storageKey="smartppi_profesi"
+              placeholder="Pilih Profesi..."
+            />
           </div>
         </div>
 
-        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
-            <FileText className="w-4 h-4 text-amber-400" /> Keterangan Tambahan
+               Checklist Dekontaminasi Alat
           </h2>
-          <input type="text" value={keterangan} onChange={(e) => setKeterangan(e.target.value)} placeholder="Opsional..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none" />
-        </div>
-
-        <div className="space-y-4">
-          {auditItems.map((item) => (
-            <div key={item.id} className="bg-white/5 p-6 rounded-[24px] border border-white/5">
-              <h3 className="text-sm font-bold text-white mb-4">{item.label}</h3>
-              <div className="grid grid-cols-3 gap-3">
-                {['ya', 'tidak', 'na'].map(choice => (
-                  <button key={choice} onClick={() => handleActionClick(item.id, choice as any)}
-                    className={`py-3 px-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                      auditData[item.id] === choice 
-                        ? (choice === 'ya' ? 'bg-blue-600/20 text-blue-400 border-blue-500/50' : choice === 'tidak' ? 'bg-red-600/20 text-red-400 border-red-500/50' : 'bg-slate-600/20 text-slate-300 border-slate-500/50')
-                        : 'bg-white/5 text-slate-400 border-transparent hover:bg-white/10'
-                    }`}
-                  >
-                    {choice.toUpperCase()}
-                  </button>
-                ))}
+          <div className="space-y-4">
+            {auditItems.map((item, idx) => (
+              <div key={item.id} className="bg-white/5 p-6 rounded-[24px] border border-white/5 relative overflow-hidden group">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                  <div className="flex gap-4">
+                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border transition-all duration-500 bg-white/5 border-white/10 text-slate-500`}>
+                      <span className="text-xs font-black">{idx + 1}</span>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-white mb-2">{item.label}</h3>
+                    </div>
+                  </div>
+                  
+                  <div className="flex p-1.5 bg-white/5 rounded-2xl border border-white/5 w-fit self-end md:self-center">
+                    {['ya', 'tidak', 'na'].map(choice => (
+                      <button key={choice} onClick={() => handleActionClick(item.id, choice as any)}
+                        className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${
+                          auditData[item.id] === choice 
+                            ? (choice === 'ya' ? 'bg-emerald-600 text-white shadow-lg transform scale-105' : choice === 'tidak' ? 'bg-red-600 text-white shadow-lg transform scale-105' : 'bg-slate-600 text-white shadow-lg transform scale-105')
+                            : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                        }`}
+                      >
+                        {choice}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
         <LiveStatisticsCard 
@@ -244,12 +269,70 @@ export default function InputDekontaminasiAlatPage() {
           persentase={stats.persentase} statusText={stats.statusText} title="KEPATUHAN DEKONTAMINASI ALAT"
         />
 
-        <button onClick={handleSubmit} disabled={isSubmitting || !observer || !unit || !profesi || stats.dinilai === 0}
-          className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg disabled:opacity-50"
+        {/* Tambahan Fields */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+                <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">📝 TEMUAN</h2>
+                <textarea value={temuan} onChange={e => setTemuan(e.target.value)} placeholder="Tuliskan temuan audit dekontaminasi alat...&#10;Contoh:&#10;Peralatan belum dibersihkan&#10;Tanggal sterilisasi tidak jelas" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none"/>
+            </div>
+            <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+                <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">💡 REKOMENDASI</h2>
+                <textarea value={rekomendasi} onChange={e => setRekomendasi(e.target.value)} placeholder="Tuliskan rekomendasi tindak lanjut...&#10;Contoh:&#10;Bersihkan alat setelah dipakai&#10;Cek tanggal kadaluarsa sterilisasi" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none"/>
+            </div>
+        </div>
+
+        {/* Dokumentasi */}
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">📷 DOKUMENTASI</h2>
+            <div className="flex flex-wrap gap-4">
+                {images.map((img, i) => (
+                    <div key={i} className="relative w-24 h-24 rounded-xl overflow-hidden border border-white/10 shadow-sm">
+                        <img src={URL.createObjectURL(img)} alt="img" className="w-full h-full object-cover"/>
+                        <button onClick={() => removeImage(i)} className="absolute top-1 right-1 bg-red-500/80 p-1 rounded-full text-white backdrop-blur-md hover:bg-red-500 transition-colors"><X size={12}/></button>
+                    </div>
+                ))}
+                <button onClick={() => fileInputRef.current?.click()} className="w-24 h-24 rounded-[1.25rem] border-2 border-dashed border-white/20 flex flex-col items-center justify-center text-slate-500 hover:text-blue-400 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all cursor-pointer">
+                    <Upload size={24}/>
+                    <span className="text-[10px] mt-2 font-bold uppercase tracking-widest">Upload</span>
+                </button>
+                <input type="file" ref={fileInputRef} hidden multiple accept="image/*" onChange={handleImageChange}/>
+            </div>
+        </div>
+
+        {/* Tanda Tangan */}
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">✍️ TANDA TANGAN DIGITAL</h2>
+            <DigitalSignatureSection ref={sigRef} pjName={pjName} setPjName={setPjName} pjLabel="PJ RUANGAN" />
+        </div>
+
+        <motion.button 
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.99 }}
+          onClick={handleSubmit} 
+          disabled={isSubmitting || !observer || !unit || !profesi || stats.dinilai === 0}
+          className={`w-full group relative overflow-hidden py-6 rounded-[1.5rem] flex items-center justify-center gap-4 transition-all duration-500 disabled:opacity-30 disabled:cursor-not-allowed ${
+            isSubmitting 
+              ? 'bg-blue-600/50 cursor-wait' 
+              : 'bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-800 shadow-[0_20px_40px_-15px_rgba(37,99,235,0.4)] hover:shadow-[0_25px_50px_-12px_rgba(37,99,235,0.6)]'
+          }`}
         >
-          {isSubmitting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-          <span>Simpan Data Audit</span>
-        </button>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.2),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="relative flex items-center gap-4">
+            <div className="relative">
+              {isSubmitting ? (
+                <RefreshCw className="w-6 h-6 text-white animate-spin" />
+              ) : (
+                <>
+                  <Save className="w-6 h-6 text-white group-hover:scale-110 transition-transform duration-300" />
+                  <div className="absolute inset-0 bg-white/40 blur-lg rounded-full animate-pulse" />
+                </>
+              )}
+            </div>
+            <span className="text-xs font-black uppercase tracking-[0.3em] text-white drop-shadow-md">
+              {isSubmitting ? 'Memproses...' : 'Simpan Data Audit'}
+            </span>
+          </div>
+        </motion.button>
       </div>
     </div>
   );
@@ -258,3 +341,4 @@ export default function InputDekontaminasiAlatPage() {
 InputDekontaminasiAlatPage.getLayout = function getLayout(page: ReactElement) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };
+

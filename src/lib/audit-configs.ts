@@ -80,15 +80,33 @@ export const genericAuditConfigs: Record<string, { tableName: string; extraFilte
   penatalaksanaan_linen: {
     tableName: 'audit_penatalaksanaan_linen',
     items: [
-      { id: 'item_1', label: 'Linen bersih disimpan lemari tertutup', key: 'item_1' },
-      { id: 'item_2', label: 'Troli tertutup kotor', key: 'item_2' },
-      { id: 'item_3', label: 'Kantung kuning infeksius', key: 'item_3' },
-      { id: 'item_4', label: 'Linen kotor dipisah', key: 'item_4' },
-      { id: 'item_5', label: 'Petugas APD infeksius', key: 'item_5' }
+      { id: '1', label: 'Linen bersih disimpan di lemari tertutup dengan jarak setidaknya dari lantai 30 cm, dinding 20 cm, langit-langit 60 cm, di area bersih terlindung dari kontaminasi', key: '1' },
+      { id: '2', label: 'Tersedia troli/tempat linen kotor dalam kondisi baik dan tertutup', key: '2' },
+      { id: '3', label: 'Tersedia kantung linen berwarna kuning untuk linen infeksius / tercemar / basah', key: '3' },
+      { id: '4', label: 'Linen kotor dipisahkan sesuai dengan SPO', key: '4' },
+      { id: '5', label: 'Petugas menggunakan APD saat menangani linen infeksius / tercemar / basah', key: '5' }
     ]
   },
   monitoring_airborne: {
     tableName: 'penempatan_pasien_airbone',
+    items: [
+      { id: 'ruang_terpisah', label: 'Ruangan terpisah (sendiri) / cohorting jarak > 1 meter', key: 'ruang_terpisah' },
+      { id: 'ventilasi', label: 'Ventilasi memadai (sirkulasi udara 6–12 x / jam)', key: 'ventilasi' },
+      { id: 'sinar_matahari', label: 'Sinar matahari masuk ke ruangan', key: 'sinar_matahari' },
+      { id: 'jendela_terbuka', label: 'Jendela bisa dibuka ke area luar (terbuka)', key: 'jendela_terbuka' },
+      { id: 'pintu_tertutup', label: 'Pintu ruangan selalu tertutup', key: 'pintu_tertutup' },
+      { id: 'transport_perlu', label: 'Transport pasien bila diperlukan saja', key: 'transport_perlu' },
+      { id: 'pasien_masker', label: 'Pasien memakai masker saat keluar ruangan', key: 'pasien_masker' },
+      { id: 'fasilitas_ct', label: 'Tersedia fasilitas cuci tangan', key: 'fasilitas_ct' },
+      { id: 'petugas_5momen', label: 'Petugas melakukan cuci tangan sesuai 5 momen', key: 'petugas_5momen' },
+      { id: 'masker_kontak', label: 'Menggunakan masker saat kontak dengan pasien', key: 'masker_kontak' },
+      { id: 'sarungtangan_cairan', label: 'Memakai sarung tangan bila akan kontak dengan cairan tubuh', key: 'sarungtangan_cairan' },
+      { id: 'goggle_perlu', label: 'Memakai kacamata goggle bila perlu', key: 'goggle_perlu' },
+      { id: 'gaun_perlu', label: 'Memakai gaun pelindung bila perlu', key: 'gaun_perlu' },
+      { id: 'edukasi_pasien', label: 'Memberikan edukasi kepada pasien', key: 'edukasi_pasien' },
+      { id: 'edukasi_keluarga', label: 'Memberikan edukasi kepada keluarga pasien', key: 'edukasi_keluarga' },
+      { id: 'bersih_desinfektan', label: 'Setelah pasien pulang, bersihkan ruangan dengan cairan desinfektan sesuai standar', key: 'bersih_desinfektan' }
+    ]
   },
   monitoring_ppi_ruang_isolasi: {
     tableName: 'audit_monitoring_ppi',
@@ -182,14 +200,15 @@ export const genericAuditConfigs: Record<string, { tableName: string; extraFilte
   monitoring_fasilitas_apd: {
     tableName: 'monitoring_fasilitas_apd',
     items: [
-      { id: 'item_1', label: 'Tersedia Masker Medis', key: 'item_1' },
-      { id: 'item_2', label: 'Tersedia Masker N95', key: 'item_2' },
-      { id: 'item_3', label: 'Tersedia Gown / Apron', key: 'item_3' },
-      { id: 'item_4', label: 'Tersedia Sarung Tangan Steril', key: 'item_4' },
-      { id: 'item_5', label: 'Tersedia Sarung Tangan Non-Steril', key: 'item_5' },
-      { id: 'item_6', label: 'Tersedia Googles / Face Shield', key: 'item_6' },
-      { id: 'item_7', label: 'Tersedia Sepatu Boots', key: 'item_7' },
-      { id: 'item_8', label: 'Penyimpanan APD Tepat & Bersih', key: 'item_8' }
+      { id: '1', label: 'Tersedia masker di ruangan', key: '1' },
+      { id: '2', label: 'Tersedia sarung tangan on steril', key: '2' },
+      { id: '3', label: 'Tersedia sarung tangan steril di ruangan sesuai kebutuhan', key: '3' },
+      { id: '4', label: 'Tersedia penutup kepala di ruangan', key: '4' },
+      { id: '5', label: 'Tersedia gaun di ruang perawatan, intensif, ruang tindakan sesuai kebutuhan', key: '5' },
+      { id: '6', label: 'Tersedia apron di ruang perawatan, intensif, ruang tindakan sesuai kebutuhan', key: '6' },
+      { id: '7', label: 'Tersedia kaca mata pelindung / goggle di ruangan sesuai kebutuhan', key: '7' },
+      { id: '8', label: 'Tersedia pelindung kaki di ruang perawatan, intensif, ruang tindakan sesuai kebutuhan', key: '8' },
+      { id: '9', label: 'Penyimpanan APD dilakukan dengan cara yang benar', key: '9' }
     ]
   },
   monitoring_farmasi: {
@@ -210,16 +229,68 @@ export const genericAuditConfigs: Record<string, { tableName: string; extraFilte
   monitoring_ibs: {
     tableName: 'audit_ruangan_ibs',
     items: [
-      { id: 'a1', label: 'Personal hygiene baik', key: 'a1' },
-      { id: 'a2', label: 'Menggunakan pakaian khusus OK', key: 'a2' },
-      { id: 'a7', label: 'Cuci tangan bedah dengan benar sebelum prosedur', key: 'a7' },
-      { id: 'b1', label: 'Pintu selalu tertutup', key: 'b1' },
-      { id: 'b2', label: 'Pertahankan tekanan positif, suhu, dan kelembaban', key: 'b2' },
-      { id: 'c1', label: 'Tertib Limbah', key: 'c1' },
-      { id: 'd2', label: 'Wastafel cuci tangan tersedia', key: 'd2' },
-      { id: 'e1', label: 'Pembersihan antar pasien', key: 'e1' },
-      { id: 'f2', label: 'Suhu Ruangan 20ºC – 23ºC', key: 'f2' },
-      { id: 'g1', label: 'Pertukaran udara kamar operasi minimal 15x/jam', key: 'g1' },
+      // A. PERSONAL
+      { id: 'a_hygiene', label: 'Personal hygiene baik', key: 'a_hygiene', section: 'A: PERSONAL' },
+      { id: 'a_pakaian', label: 'Menggunakan pakaian khusus OK', key: 'a_pakaian', section: 'A: PERSONAL' },
+      { id: 'a_apd', label: 'Menggunakan APD yang sesuai', key: 'a_apd', section: 'A: PERSONAL' },
+      { id: 'a_sepatu', label: 'Menggunakan sepatu tertutup yang hanya digunakan di OK', key: 'a_sepatu', section: 'A: PERSONAL' },
+      { id: 'a_perhiasan', label: 'Tidak menggunakan perhiasan/aksesoris tangan', key: 'a_perhiasan', section: 'A: PERSONAL' },
+      { id: 'a_kuku', label: 'Kuku pendek, bersih, dan tidak berwarna', key: 'a_kuku', section: 'A: PERSONAL' },
+      { id: 'a_cucitangan', label: 'Cuci tangan bedah dengan benar sebelum prosedur', key: 'a_cucitangan', section: 'A: PERSONAL' },
+      { id: 'a_kesehatan', label: 'Pemeriksaan kesehatan berkala', key: 'a_kesehatan', section: 'A: PERSONAL' },
+      { id: 'a_imunisasi', label: 'Imunisasi penyakit menular', key: 'a_imunisasi', section: 'A: PERSONAL' },
+      { id: 'a_apdsesuai', label: 'Penggunaan APD sesuai', key: 'a_apdsesuai', section: 'A: PERSONAL' },
+      
+      // B. KONDISI RUANGAN
+      { id: 'b_pintu', label: 'Pintu selalu tertutup', key: 'b_pintu', section: 'B: KONDISI RUANGAN' },
+      { id: 'b_suhu', label: 'Pertahankan tekanan positif, suhu, dan kelembaban dalam rentang dipersyaratkan', key: 'b_suhu', section: 'B: KONDISI RUANGAN' },
+      { id: 'b_jumlah', label: 'Pembatasan jumlah orang dalam kamar bedah', key: 'b_jumlah', section: 'B: KONDISI RUANGAN' },
+      { id: 'b_akses', label: 'Pembatasan akses masuk kamar bedah', key: 'b_akses', section: 'B: KONDISI RUANGAN' },
+      { id: 'b_cssd', label: 'Ada akses CSSD', key: 'b_cssd', section: 'B: KONDISI RUANGAN' },
+      
+      // C. PEMBUANGAN LIMBAH
+      { id: 'c_wadah', label: 'Tersedia wadah limbah infeksius, non infeksius, dan benda tajam', key: 'c_wadah', section: 'C: PEMBUANGAN LIMBAH' },
+      { id: 'c_label', label: 'Ada label di setiap tempat sampah', key: 'c_label', section: 'C: PEMBUANGAN LIMBAH' },
+      { id: 'c_plastik', label: 'Tempat sampah infeksius dan non infeksius menggunakan plastik', key: 'c_plastik', section: 'C: PEMBUANGAN LIMBAH' },
+      { id: 'c_tajam', label: 'Tempat limbah benda tajam menggunakan container tahan air & tahan tusuk', key: 'c_tajam', section: 'C: PEMBUANGAN LIMBAH' },
+      { id: 'c_dibuang', label: 'Limbah dibuang setelah 3/4 penuh atau 48 jam', key: 'c_dibuang', section: 'C: PEMBUANGAN LIMBAH' },
+      { id: 'c_tertutup', label: 'Tempat sampah bersih dan tertutup', key: 'c_tertutup', section: 'C: PEMBUANGAN LIMBAH' },
+      { id: 'c_pedal', label: 'Pedal injak tempat sampah berfungsi baik', key: 'c_pedal', section: 'C: PEMBUANGAN LIMBAH' },
+      { id: 'c_organ', label: 'Limbah organ dibuang dalam kantong plastik kuning', key: 'c_organ', section: 'C: PEMBUANGAN LIMBAH' },
+      { id: 'c_spillkit', label: 'Tersedia spillkit untuk tumpahan cairan tubuh', key: 'c_spillkit', section: 'C: PEMBUANGAN LIMBAH' },
+      
+      // D. FASILITAS KEBERSIHAN TANGAN
+      { id: 'd_handrub', label: 'Tersedia botol handrub dan diberi tanggal pemakaian', key: 'd_handrub', section: 'D: FASILITAS KEBERSIHAN TANGAN' },
+      { id: 'd_wastafel', label: 'Tersedia wastafel cuci tangan', key: 'd_wastafel', section: 'D: FASILITAS KEBERSIHAN TANGAN' },
+      { id: 'd_keran', label: 'Keran air berfungsi baik', key: 'd_keran', section: 'D: FASILITAS KEBERSIHAN TANGAN' },
+      { id: 'd_sabun', label: 'Tersedia sabun cair di wastafel', key: 'd_sabun', section: 'D: FASILITAS KEBERSIHAN TANGAN' },
+      { id: 'd_tissue', label: 'Tersedia tissue towel di wastafel', key: 'd_tissue', section: 'D: FASILITAS KEBERSIHAN TANGAN' },
+      { id: 'd_pembuangan', label: 'Tersedia fasilitas pembuangan sampah di dekat wastafel', key: 'd_pembuangan', section: 'D: FASILITAS KEBERSIHAN TANGAN' },
+      { id: 'd_poster', label: 'Tersedia poster 6 langkah cuci tangan dan 5 momen cuci tangan', key: 'd_poster', section: 'D: FASILITAS KEBERSIHAN TANGAN' },
+      
+      // E. PEMBERSIHAN LINGKUNGAN
+      { id: 'e_desinfektan', label: 'Pembersihan antar pasien dengan larutan desinfektan', key: 'e_desinfektan', section: 'E: PEMBERSIHAN LINGKUNGAN' },
+      { id: 'e_jadwal', label: 'Ada jadwal pembersihan harian dan mingguan', key: 'e_jadwal', section: 'E: PEMBERSIHAN LINGKUNGAN' },
+      { id: 'e_alat', label: 'Pembersihan semua alat dalam kamar bedah', key: 'e_alat', section: 'E: PEMBERSIHAN LINGKUNGAN' },
+      { id: 'e_barang', label: 'Hanya barang yang digunakan berada di kamar bedah', key: 'e_barang', section: 'E: PEMBERSIHAN LINGKUNGAN' },
+      { id: 'e_debu', label: 'Secara visual bebas debu', key: 'e_debu', section: 'E: PEMBERSIHAN LINGKUNGAN' },
+      { id: 'e_sejajar', label: 'Alat dan BHP tidak sejajar lantai', key: 'e_sejajar', section: 'E: PEMBERSIHAN LINGKUNGAN' },
+      { id: 'e_grill', label: 'Grill ventilasi tidak tersumbat dan tidak berdebu', key: 'e_grill', section: 'E: PEMBERSIHAN LINGKUNGAN' },
+      { id: 'e_rotasi', label: 'Penyimpanan alat habis pakai dirotasi agar tidak menumpuk debu', key: 'e_rotasi', section: 'E: PEMBERSIHAN LINGKUNGAN' },
+      { id: 'e_bangunan', label: 'Bangunan kamar bedah kondisi baik (lantai, dinding, plafon, cat)', key: 'e_bangunan', section: 'E: PEMBERSIHAN LINGKUNGAN' },
+      { id: 'e_udara', label: 'Pemeriksaan kualitas udara jika ada perbaikan mayor', key: 'e_udara', section: 'E: PEMBERSIHAN LINGKUNGAN' },
+      { id: 'e_terpisah', label: 'Penyimpanan alat steril terpisah dari alat bersih', key: 'e_terpisah', section: 'E: PEMBERSIHAN LINGKUNGAN' },
+      { id: 'e_berlaku', label: 'Alat dan bahan steril masih berlaku', key: 'e_berlaku', section: 'E: PEMBERSIHAN LINGKUNGAN' },
+      { id: 'e_disimpan', label: 'Alat medis disimpan di tempat bersih dan kering', key: 'e_disimpan', section: 'E: PEMBERSIHAN LINGKUNGAN' },
+      
+      // F. SUHU DAN KELEMBABAN
+      { id: 'f_kelembaban', label: 'Kelembaban Ruang Operasi 30–60%', key: 'f_kelembaban', section: 'F: SUHU DAN KELEMBABAN' },
+      { id: 'f_suhu', label: 'Suhu Ruangan 20ºC – 23ºC', key: 'f_suhu', section: 'F: SUHU DAN KELEMBABAN' },
+      
+      // G. VENTILASI
+      { id: 'g_pertukaran', label: 'Pertukaran udara kamar operasi minimal 15x/jam', key: 'g_pertukaran', section: 'G: VENTILASI' },
+      { id: 'g_tekanan', label: 'Kamar Operasi bertekanan positif', key: 'g_tekanan', section: 'G: VENTILASI' },
+      { id: 'g_pintu', label: 'Pintu kamar operasi selalu tertutup', key: 'g_pintu', section: 'G: VENTILASI' }
     ]
   },
   ibs: {
@@ -299,7 +370,7 @@ export const genericAuditConfigs: Record<string, { tableName: string; extraFilte
     ]
   },
   monitoring_radiologi: {
-    tableName: 'audit_radiologi',
+    tableName: 'audit_radiologi_monitoring',
     items: [
       { id: 'a1', label: 'Permukaan lingkungan termasuk troli, meja, rak, perlengkapan, hiasan, dan tumbuhan bebas dari debu/kotoran', key: 'a1', section: 'A. KONTROL LINGKUNGAN' },
       { id: 'a2', label: 'Kipas angin, AC, dan langit-langit bersih dan bebas jamur', key: 'a2', section: 'A. KONTROL LINGKUNGAN' },

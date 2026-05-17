@@ -100,12 +100,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           if (stdRes.data) {
             stdRes.data.forEach(s => {
               const key = s.indikator.toLowerCase();
-              newStandards[key] = s;
-              // Aliases for common typos or variations to match dashboardpage logic
-              if (key.includes('phle')) newStandards.phlebitis = s;
+              if (key.includes('tangan') || key === 'hh') newStandards.hh = { ...s, nilai_standar: s.nilai_standar <= 1 ? s.nilai_standar * 100 : s.nilai_standar };
+              else if (key.includes('apd')) newStandards.apd = { ...s, nilai_standar: s.nilai_standar <= 1 ? s.nilai_standar * 100 : s.nilai_standar };
+              else if (key.includes('phle')) newStandards.phlebitis = s;
               else if (key.includes('isk')) newStandards.isk = s;
               else if (key.includes('ido')) newStandards.ido = s;
               else if (key.includes('vap')) newStandards.vap = s;
+              else newStandards[key] = s;
             });
           }
 
@@ -198,8 +199,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Link 
                 href="/login"
                 prefetch={false}
-                onClick={() => setUserRole('IPCN')}
-                className={`flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all group ${isLightMode ? 'text-green-300 hover:text-red-300' : 'text-slate-500 hover:text-red-400'}`}
+                onClick={() => {
+                  setUserRole('');
+                }}
+                className={`flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all group w-full ${isLightMode ? 'text-green-300 hover:text-red-300' : 'text-slate-500 hover:text-red-400'}`}
               >
                 <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
                 <span>Keluar</span>

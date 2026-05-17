@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { 
   BarChart2, Target as TargetIcon, Activity, CheckCircle2, AlertTriangle, TrendingUp, TrendingDown,
@@ -9,6 +10,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine, Cell, ComposedChart, Line
 } from '@/components/ChartComponents';
 import { format, parseISO } from 'date-fns';
+import { id as idLocale } from 'date-fns/locale';
 import { useAppContext } from '@/components/Providers';
 
 export default function ApdReport({ 
@@ -237,6 +239,24 @@ export default function ApdReport({
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-500">
       
+      {/* LAPORAN HEADER (PRINT READY) */}
+      <div className="hidden print:flex items-center justify-between gap-6 mb-8 border-b-4 border-slate-300 pb-6 w-full">
+         <div className="flex items-center gap-5 w-full justify-center text-center">
+            <div className="w-20 h-20 bg-white flex items-center justify-center p-1 border-2 border-slate-300 relative">
+              {hospitalLogoUrl ? (
+                <Image src={hospitalLogoUrl} alt="Logo RS" fill className="object-contain" referrerPolicy="no-referrer" />
+              ) : (
+                <ShieldCheck className="w-12 h-12 text-black" />
+              )}
+            </div>
+            <div className="text-left">
+              <h1 className="text-2xl font-black tracking-tight leading-tight uppercase text-black">LAPORAN MONITORING KEPATUHAN PENGGUNAAN APD</h1>
+              <p className="text-sm font-bold uppercase text-black tracking-widest mt-1">UOBK RSUD AL-MULK KOTA SUKABUMI</p>
+              <p className="text-xs text-slate-600 mt-1">Periode: {filters.periode ? format(new Date(filters.periode), 'MMMM yyyy', {locale: idLocale}) : 'Semua Periode'}</p>
+            </div>
+         </div>
+      </div>
+
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
          <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl rounded-[2rem] p-6 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden group">

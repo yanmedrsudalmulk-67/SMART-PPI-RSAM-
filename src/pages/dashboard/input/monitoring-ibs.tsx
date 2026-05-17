@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, ReactElement } from 'react';
 import { useRouter } from 'next/router';
 import { 
-  Activity, ArrowLeft, Save, CheckCircle2, Settings, Trash2, X
+  Activity, ArrowLeft, Save, CheckCircle2, Settings, Trash2, X, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
@@ -27,6 +27,8 @@ export default function MonitoringIBSPage() {
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [observer, setObserver] = useState('');
   const [data, setData] = useState<Record<string, AuditStatus>>({});
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  
   const [temuan, setTemuan] = useState('');
   const [rekomendasi, setRekomendasi] = useState('');
   const [pjName, setPjName] = useState('');
@@ -35,6 +37,8 @@ export default function MonitoringIBSPage() {
   const [isObserverModalOpen, setIsObserverModalOpen] = useState(false);
   const [newObserverName, setNewObserverName] = useState('');
   const [editObserverId, setEditObserverId] = useState<string | null>(null);
+  const [isChecklistOpen, setIsChecklistOpen] = useState(true);
+  
   const sigRef = useRef<DigitalSignatureRef>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -42,18 +46,31 @@ export default function MonitoringIBSPage() {
   useEffect(() => {
     fetchObservers();
     const initialData: Record<string, AuditStatus> = {};
-    checklistItems.forEach(item => initialData[item.id] = null);
+    const initialNotes: Record<string, string> = {};
+    checklistItems.forEach(item => {
+      initialData[item.id] = null;
+      initialNotes[item.id] = '';
+    });
     setStartTime(new Date());
     setData(initialData);
+    setNotes(initialNotes);
   }, []);
 
   const fetchObservers = async () => {
     try {
       const { data, error } = await supabase.from('master_observers').select('*').order('nama');
       if (error) throw error;
-      if (data) setObservers(data);
+      if (data) {
+        setObservers(data);
+        if (data.length > 0 && !observer) {
+          const defaultObs = data.find(o => o.nama.includes('Adi Tresa Purnama')) || data[0];
+          setObserver(defaultObs.nama);
+        }
+      }
     } catch (err) {
-      setObservers([{ id: '1', nama: 'IPCN_Adi Tresa Purnama' }]);
+      const fallback = { id: '1', nama: 'IPCN_Adi Tresa Purnama' };
+      setObservers([fallback]);
+      if (!observer) setObserver(fallback.nama);
     }
   };
 
@@ -81,7 +98,7 @@ export default function MonitoringIBSPage() {
   };
 
   const deleteObserver = async (id: string) => {
-    if (!confirm('Hapus observer ini?')) return;
+    if (!confirm('Hapus supervisor ini?')) return;
     try {
       if (!id.startsWith('local-')) await supabase.from('master_observers').delete().eq('id', id);
       setObservers(prev => prev.filter(o => o.id !== id));
@@ -95,6 +112,10 @@ export default function MonitoringIBSPage() {
     setData(prev => ({ ...prev, [id]: stat }));
   };
 
+  const handleNoteChange = (id: string, val: string) => {
+    setNotes(prev => ({ ...prev, [id]: val }));
+  };
+
   const stats = useMemo(() => {
     let patuh = 0;
     let dinilai = 0;
@@ -104,7 +125,9 @@ export default function MonitoringIBSPage() {
     });
     const persentase = dinilai > 0 ? Math.round((patuh / dinilai) * 100) : 0;
     let status = 'Belum Dinilai';
-    if (dinilai > 0) status = persentase >= 80 ? 'Patuh' : persentase >= 60 ? 'Cukup' : 'Tidak Patuh';
+    if (dinilai > 0) {
+      status = persentase >= 85 ? 'Baik' : persentase >= 70 ? 'Cukup' : 'Perlu Tindak Lanjut';
+    }
     return { patuh, dinilai, persentase, status };
   }, [data]);
 
@@ -118,36 +141,29 @@ export default function MonitoringIBSPage() {
       const ttd_pj = sigRef.current?.getPjSignature();
       const ttd_ipcn = sigRef.current?.getSupervisorSignature();
       const uploadedUrls = await uploadImagesToSupabase(supabase, images, 'logos', 'audit');
+      
+      const payloadIndikator: Record<string, any> = {};
+      Object.keys(data).forEach(key => {
+        payloadIndikator[key] = {
+          status: data[key],
+          keterangan: notes[key] || ''
+        };
+      });
 
       const sessionPayload = {
-        indikator_id: 'monitoring_ibs',
-        nama_indikator: 'MONITORING IBS',
-        tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
-        observer,
-        jumlah_dinilai: stats.dinilai,
-        jumlah_patuh: stats.patuh,
+        waktu: startTime?.toISOString() || new Date().toISOString(),
+        supervisor: observer,
+        checklist_json: payloadIndikator,
         persentase: stats.persentase,
-        status_kepatuhan: stats.status,
-        temuan, rekomendasi,
-        nama_pj_ruangan: pjName.trim(),
-        ttd_pj_ruangan: ttd_pj,
-        ttd_ipcn: ttd_ipcn,
-        dokumentasi: uploadedUrls,
-        data_indikator: data
+        temuan, 
+        rekomendasi,
+        ttd_pj,
+        ttd_ipcn,
+        foto: uploadedUrls,
+        created_at: new Date().toISOString()
       };
 
-      const { data: sessionData, error: sessionError } = await supabase.from('audit_sessions').insert([sessionPayload]).select('*').single();
-      if (sessionError) throw sessionError;
-
-      const detailPayloads = Object.keys(data).map(key => ({
-        session_id: sessionData.id,
-        pertanyaan_id: key,
-        pertanyaan: checklistItems.find(i => i.id === key)?.label || key,
-        jawaban: String(data[key])
-      }));
-      await supabase.from('audit_details').insert(detailPayloads);
-
-      await supabase.from(tableName || 'audit_ibs').insert([{ ...sessionPayload, created_at: new Date().toISOString() }]);
+      await supabase.from(tableName || 'audit_ruangan_ibs').insert([sessionPayload]);
 
       setShowToast(true);
       setTimeout(() => {
@@ -161,16 +177,27 @@ export default function MonitoringIBSPage() {
       setIsSubmitting(false);
     }
   };
+  
+  // Group checklist items by section
+  const sections = useMemo(() => {
+    const grouped: Record<string, typeof checklistItems> = {};
+    checklistItems.forEach(item => {
+      const section = item.section || 'General';
+      if (!grouped[section]) grouped[section] = [];
+      grouped[section].push(item);
+    });
+    return grouped;
+  }, []);
 
   return (
-    <div className="max-w-3xl mx-auto pb-32">
+    <div className="max-w-3xl mx-auto pb-8">
        <AnimatePresence>
         {showToast && (
           <motion.div initial={{ opacity: 0, y: -50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -50 }}
             className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-blue-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 font-bold uppercase tracking-widest text-xs border border-white/20"
           >
             <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-            Data Monitoring Berhasil Disimpan
+            Data audit IBS berhasil disimpan
           </motion.div>
         )}
       </AnimatePresence>
@@ -180,77 +207,105 @@ export default function MonitoringIBSPage() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 via-blue-500 to-emerald-500 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all drop-shadow-sm dark:drop-shadow-[0_0_10px_rgba(59,130,246,0.4)] uppercase">Monitoring IBS</h1>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400 mt-1">Audit kepatuhan PPI di area kamar operasi</p>
+          <h1 className="text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 via-blue-500 to-emerald-500 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all drop-shadow-sm dark:drop-shadow-[0_0_10px_rgba(59,130,246,0.4)] uppercase">Input Audit Instalasi Bedah Sentral (IBS)</h1>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">Audit kepatuhan PPI ruang operasi, personel, lingkungan, limbah, ventilasi, suhu dan fasilitas sesuai standar rumah sakit.</p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-8">
-        <div className="bg-white/5 backdrop-blur-xl p-8 rounded-[2rem] border border-white/5 space-y-6">
-          <div className="grid sm:grid-cols-2 gap-6">
-            <div className="space-y-3">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Waktu Monitoring</label>
-              <input type="datetime-local" value={startTime ? new Date(startTime.getTime() - startTime.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''} onChange={(e) => setStartTime(new Date(e.target.value))} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 [color-scheme:dark]" />
-            </div>
-            <div className="space-y-3">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex justify-between items-center">
-                Supervisor
-                <button type="button" onClick={() => setIsObserverModalOpen(true)} className="p-1.5 bg-white/5 rounded-lg text-blue-400"><Settings className="w-3 h-3" /></button>
-              </label>
-              <select value={observer} onChange={(e) => setObserver(e.target.value)} required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none">
-                <option value="" className="bg-slate-900">Pilih Supervisor...</option>
-                {observers.map(o => <option key={o.id} value={o.nama} className="bg-slate-900">{o.nama}</option>)}
-              </select>
-            </div>
+      <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+        <div className="bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-[2rem] border border-white/5 space-y-6 shadow-sm">
+          <div className="space-y-3">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Waktu Input</label>
+            <input type="datetime-local" value={startTime ? new Date(startTime.getTime() - startTime.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''} onChange={(e) => setStartTime(new Date(e.target.value))} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 [color-scheme:dark] transition-colors" />
+          </div>
+          <div className="space-y-3 pt-2">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex justify-between items-center">
+              Supervisor
+              <button type="button" onClick={() => setIsObserverModalOpen(true)} className="p-1.5 hover:bg-white/10 rounded-lg text-blue-400 transition-colors"><Settings className="w-3 h-3" /></button>
+            </label>
+            <select value={observer} onChange={(e) => setObserver(e.target.value)} required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 transition-colors">
+              <option value="" className="bg-slate-900">Pilih Supervisor...</option>
+              {observers.map(o => <option key={o.id} value={o.nama} className="bg-slate-900">{o.nama}</option>)}
+            </select>
           </div>
         </div>
 
-        <div className="bg-white/5 backdrop-blur-xl p-8 rounded-[2rem] border border-white/5 space-y-4">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-blue-400 border-b border-white/5 pb-4">Checklist TPS</h2>
-          {checklistItems.map((item, idx) => (
-            <div key={item.id} className="p-5 rounded-2xl bg-white/5 border border-white/5 flex flex-col gap-4">
-              <p className="text-sm font-medium text-slate-300">
-                <span className="text-blue-400 font-bold mr-2">{idx + 1}.</span>{item.label}
-              </p>
-              <div className="grid grid-cols-3 gap-3">
-                {['ya', 'tidak', 'na'].map(choice => (
-                  <button key={choice} type="button" onClick={() => toggleItem(item.id, choice as any)}
-                    className={`py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all border ${
-                      data[item.id] === choice 
-                        ? (choice === 'ya' ? 'bg-blue-600 text-white border-blue-500' : choice === 'tidak' ? 'bg-red-600 text-white border-red-500' : 'bg-slate-700 text-white border-slate-600')
-                        : 'bg-white/5 text-slate-500 border-transparent hover:bg-white/10'
-                    }`}
-                  >
-                    {choice}
-                  </button>
+        <div className="bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-[2rem] border border-white/5 space-y-4 shadow-sm">
+          <button 
+            type="button" 
+            onClick={() => setIsChecklistOpen(!isChecklistOpen)}
+            className="w-full flex items-center justify-between text-xs font-bold uppercase tracking-widest text-blue-400 border-b border-white/5 pb-4 group"
+          >
+            <span>Ceklist Audit Ruangan IBS</span>
+            {isChecklistOpen ? <ChevronUp className="w-4 h-4 group-hover:text-blue-300" /> : <ChevronDown className="w-4 h-4 group-hover:text-blue-300" />}
+          </button>
+          
+          <AnimatePresence>
+            {isChecklistOpen && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="space-y-6 overflow-hidden pt-2">
+                {Object.entries(sections).map(([sectionName, items]) => (
+                  <div key={sectionName} className="space-y-4">
+                    <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider">{sectionName}</h3>
+                    {items.map((item, idx) => (
+                      <div key={item.id} className="p-5 rounded-2xl bg-white/5 border border-white/5 flex flex-col gap-4 hover:border-blue-500/20 transition-colors">
+                        <p className="text-sm font-medium text-slate-300 leading-relaxed">
+                          <span className="text-blue-400 font-bold mr-2">{idx + 1}.</span>{item.label}
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-3 gap-3 bg-black/20 p-1.5 rounded-xl border border-white/5 h-fit">
+                            {['ya', 'tidak', 'na'].map(choice => (
+                              <button key={choice} type="button" onClick={() => toggleItem(item.id, choice as any)}
+                                className={`py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
+                                  data[item.id] === choice 
+                                    ? (choice === 'ya' ? 'bg-blue-600/90 text-white shadow-lg shadow-blue-900/20' : choice === 'tidak' ? 'bg-red-600/90 text-white shadow-lg shadow-red-900/20' : 'bg-slate-600/90 text-white shadow-lg shadow-slate-900/20')
+                                    : 'text-slate-400 hover:bg-white/10 hover:text-white'
+                                }`}
+                              >
+                                {choice}
+                              </button>
+                            ))}
+                          </div>
+                          <div>
+                            <input 
+                              type="text" 
+                              value={notes[item.id] || ''} 
+                              onChange={(e) => handleNoteChange(item.id, e.target.value)} 
+                              placeholder="Keterangan (Opsional)" 
+                              className="w-full h-full min-h-[44px] bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-blue-500/50 transition-colors"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 ))}
-              </div>
-            </div>
-          ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        <LiveStatisticsCard totalDinilai={stats.dinilai} totalPatuh={stats.patuh} totalTidakPatuh={stats.dinilai - stats.patuh} persentase={stats.persentase} statusText={stats.status} title="HASIL OBSERVASI" />
+        <LiveStatisticsCard totalDinilai={stats.dinilai} totalPatuh={stats.patuh} totalTidakPatuh={stats.dinilai - stats.patuh} persentase={stats.persentase} statusText={stats.status} title="PERSENTASE KEPATUHAN" />
 
-        <div className="bg-white/5 backdrop-blur-xl p-8 rounded-[2rem] border border-white/5 space-y-6 text-white">
+        <div className="bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-[2rem] border border-white/5 space-y-6 text-white shadow-sm">
           <div className="space-y-3">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Temuan Monitoring</label>
-            <textarea value={temuan} onChange={(e) => setTemuan(e.target.value)} placeholder="Tuliskan temuan..." className="w-full h-32 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white outline-none resize-none" />
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Temuan</label>
+            <textarea value={temuan} onChange={(e) => setTemuan(e.target.value)} placeholder="Contoh: Tissue towel habis, Tekanan positif tidak terbaca, Limbah tajam penuh..." className="w-full h-32 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white outline-none resize-none focus:border-blue-500/50 transition-colors" />
           </div>
           <div className="space-y-3">
             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Rekomendasi</label>
-            <textarea value={rekomendasi} onChange={(e) => setRekomendasi(e.target.value)} placeholder="Tuliskan rekomendasi..." className="w-full h-32 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white outline-none resize-none" />
+            <textarea value={rekomendasi} onChange={(e) => setRekomendasi(e.target.value)} placeholder="Contoh: Kalibrasi HVAC IBS, Tambah stok APD, Ganti safety box penuh..." className="w-full h-32 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white outline-none resize-none focus:border-blue-500/50 transition-colors" />
           </div>
         </div>
 
-        <div className="bg-white/5 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white/5">
+        <div className="bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
           <DocumentationUploader images={images} setImages={setImages} />
         </div>
 
-        <DigitalSignatureSection ref={sigRef} pjName={pjName} setPjName={setPjName} pjLabel="PJ TPS" />
+        <DigitalSignatureSection ref={sigRef} pjName={pjName} setPjName={setPjName} pjLabel="PJ Ruangan IBS" />
 
-        <button type="submit" disabled={isSubmitting} className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-blue-900/20 disabled:opacity-50">
+        <button type="submit" disabled={isSubmitting} className="w-full flex justify-center items-center gap-3 py-4 mt-6 bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white font-bold uppercase tracking-widest rounded-xl transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] disabled:opacity-50">
           {isSubmitting ? <Activity className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-          <span>Simpan Data Monitoring</span>
+          <span>Simpan Data</span>
         </button>
       </form>
 
@@ -261,19 +316,19 @@ export default function MonitoringIBSPage() {
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-md bg-slate-900 border border-white/10 rounded-[2rem] p-8 overflow-hidden">
                <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-bold text-white uppercase tracking-widest flex items-center gap-3">Kelola Supervisor</h3>
-                <button onClick={() => setIsObserverModalOpen(false)} className="p-2 text-slate-500 hover:text-white"><X className="w-5 h-5" /></button>
+                <button type="button" onClick={() => setIsObserverModalOpen(false)} className="p-2 text-slate-500 hover:text-white"><X className="w-5 h-5" /></button>
               </div>
               <div className="flex gap-2 mb-6 text-white">
                 <input type="text" value={newObserverName} onChange={(e) => setNewObserverName(e.target.value)} placeholder="Nama Supervisor..." className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none" />
-                <button onClick={saveObserver} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase hover:bg-blue-500">{editObserverId ? 'OK' : '+'}</button>
+                <button type="button" onClick={saveObserver} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase hover:bg-blue-500">{editObserverId ? 'OK' : '+'}</button>
               </div>
               <div className="max-h-[300px] overflow-y-auto space-y-2">
                 {observers.map(o => (
                   <div key={o.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-xl">
                     <span className="text-sm font-medium text-slate-300">{o.nama}</span>
                     <div className="flex gap-1">
-                      <button onClick={() => { setNewObserverName(o.nama); setEditObserverId(o.id); }} className="p-2 text-slate-500 hover:text-blue-400"><Settings className="w-4 h-4" /></button>
-                      <button onClick={() => deleteObserver(o.id)} className="p-2 text-slate-500 hover:text-red-400"><Trash2 className="w-4 h-4" /></button>
+                      <button type="button" onClick={() => { setNewObserverName(o.nama); setEditObserverId(o.id); }} className="p-2 text-slate-500 hover:text-blue-400"><Settings className="w-4 h-4" /></button>
+                      <button type="button" onClick={() => deleteObserver(o.id)} className="p-2 text-slate-500 hover:text-red-400"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </div>
                 ))}

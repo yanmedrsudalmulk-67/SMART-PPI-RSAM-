@@ -16,6 +16,10 @@ export const uploadImagesToSupabase = async (supabase: any, images: { file: File
       }
     } else {
         console.error("Upload failed", error);
+        if (error.message && error.message.toLowerCase().includes('bucket not found')) {
+            throw new Error(`Bucket '${bucket}' tidak ditemukan. Silakan buat bucket public bernama '${bucket}' di menu Storage Supabase.`);
+        }
+        throw error;
     }
   }
   

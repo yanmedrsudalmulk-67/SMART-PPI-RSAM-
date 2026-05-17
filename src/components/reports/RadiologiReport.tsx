@@ -35,7 +35,7 @@ export default function RadiologiReport({ filters }: { filters?: any }) {
     const fetchData = async () => {
       try {
         const { data: dbData } = await supabase
-          .from('audit_radiologi')
+          .from('audit_radiologi_monitoring')
           .select('*')
           .order('waktu', { ascending: false });
         

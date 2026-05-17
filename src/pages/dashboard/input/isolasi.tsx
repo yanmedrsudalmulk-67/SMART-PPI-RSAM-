@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { 
-  ArrowLeft, ShieldCheck, ShieldAlert, Activity, ClipboardCheck, Droplets, Shield, Trash2, Syringe, Shirt, Wind, Bed, UserCheck, Sparkles, FlaskConical, Stethoscope, Briefcase, Users, Truck, Coffee, Home
+  ArrowLeft, ShieldCheck, ShieldAlert, Activity, ClipboardCheck, Droplets, Shield, Trash2, Syringe, Shirt, Wind, Bed, UserCheck, Sparkles, FlaskConical, Stethoscope, Briefcase, Users, Truck, Coffee, Home, CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
@@ -43,7 +43,7 @@ const monitoringIndicators = [
 ];
 
 function getCorrectHref(id: string) {
-  if (id === 'isolasi') return '#';
+  if (id === 'isolasi') return '/dashboard/input/ppi-ruang-isolasi';
   if (['ibs', 'cssd', 'laboratorium', 'radiologi', 'gizi', 'jenazah', 'ambulance', 'tps', 'tunggu', 'farmasi', 'ruang_isolasi', 'airborne', 'immuno'].includes(id)) return `/dashboard/input/monitoring-${id}`;
   if (id.startsWith('fasilitas')) return `/dashboard/input/monitoring-${id}`;
   return '/dashboard/input/penatalaksanaan-linen';
@@ -124,14 +124,20 @@ export default function IsolasiInputPage() {
                   ind.id === 'suntik' ? "/dashboard/input/penyuntikan-aman" :
                   getCorrectHref(ind.id)
                 }
-                className={
-                  ind.id === 'jenazah' || ind.id === 'laboratorium' || ind.id === 'radiologi'
-                  ? "mt-6 flex items-center justify-center gap-2 w-full py-4 bg-gradient-to-r from-blue-400 to-indigo-600 hover:from-blue-500 hover:to-indigo-700 text-white text-[11px] font-black uppercase tracking-widest rounded-full shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all hover:shadow-[0_0_25px_rgba(59,130,246,0.7)] hover:-translate-y-0.5 active:scale-95 animate-pulse hover:animate-none"
-                  : "mt-6 flex items-center justify-center gap-2 w-full py-4 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold uppercase tracking-widest rounded-2xl shadow-lg transition-all active:scale-95"
-                }
+                className="mt-6 flex items-center justify-center gap-3 w-full py-4 bg-gradient-to-br from-blue-400 via-blue-600 to-indigo-800 hover:from-blue-500 hover:via-blue-700 hover:to-indigo-900 text-white text-[11px] font-black uppercase tracking-[0.15em] rounded-full shadow-[0_10px_20px_-10px_rgba(59,130,246,0.5)] hover:shadow-[0_15px_30px_-10px_rgba(59,130,246,0.6)] transition-all duration-300 hover:-translate-y-1 active:scale-95 group/btn relative overflow-hidden"
               >
-                {ind.id === 'jenazah' || ind.id === 'laboratorium' || ind.id === 'radiologi' ? <Activity className="w-4 h-4" /> : <ClipboardCheck className="w-4 h-4" />}
-                INPUT DATA
+                <motion.div 
+                  className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                  animate={{ opacity: [0, 0.1, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                />
+                <div className="relative flex items-center gap-3">
+                  <div className="relative">
+                    <ClipboardCheck className="w-5 h-5 group-hover/btn:scale-110 transition-transform" />
+                    <div className="absolute inset-0 bg-white/40 blur-md rounded-full animate-pulse" />
+                  </div>
+                  <span>INPUT DATA</span>
+                </div>
               </Link>
             </div>
           ))}

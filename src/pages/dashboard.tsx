@@ -62,7 +62,9 @@ const DEFAULT_STANDARDS: Record<string, Standard> = {
   phlebitis: { indikator: 'Phlebitis', nilai_standar: 1.5, operator: '<=' },
   isk: { indikator: 'ISK', nilai_standar: 5, operator: '<=' },
   ido: { indikator: 'IDO', nilai_standar: 2, operator: '<=' },
-  vap: { indikator: 'VAP', nilai_standar: 5, operator: '<=' }
+  vap: { indikator: 'VAP', nilai_standar: 5, operator: '<=' },
+  fasilitas_apd: { indikator: 'Fasilitas APD', nilai_standar: 100, operator: '>=' },
+  linen: { indikator: 'Penatalaksanaan Linen', nilai_standar: 100, operator: '>=' }
 };
 
 // --- Standalone Components & Helpers for Performance ---
@@ -131,13 +133,13 @@ export default function DashboardPage() {
   const [filterSemester, setFilterSemester] = useState<number>(Math.floor(new Date().getMonth() / 6));
   const [filterYear, setFilterYear] = useState<number>(new Date().getFullYear());
 
-  const [activeTab, setActiveTab] = useState<'hh'|'apd'|'hais'>('hh');
+  const [activeTab, setActiveTab] = useState<'hh'|'apd'|'hais'|'fasilitas_apd'|'linen'>('hh');
   const [chartMode, setChartMode] = useState<'bar'|'line'>('bar');
   const [selectedUnit, setSelectedUnit] = useState<string>('all');
 
   const slides = (isDashboardLoaded && dashboardData?.slides) ? dashboardData.slides : DEFAULT_SLIDES;
   const standards = (isDashboardLoaded && dashboardData?.standards) ? dashboardData.standards : DEFAULT_STANDARDS;
-  const rawData = useMemo(() => (isDashboardLoaded && dashboardData?.rawData) ? dashboardData.rawData : { hh: [], apd: [], hais: [] }, [isDashboardLoaded, dashboardData?.rawData]);
+  const rawData = useMemo(() => (isDashboardLoaded && dashboardData?.rawData) ? dashboardData.rawData : { hh: [], apd: [], hais: [], fapd: [], linen: [] }, [isDashboardLoaded, dashboardData?.rawData]);
   const isDataLoading = !isDashboardLoaded;
   const isSlidesLoading = !isDashboardLoaded;
 
@@ -150,17 +152,25 @@ export default function DashboardPage() {
         const currentYear = new Date().getFullYear();
         const startDate = new Date(currentYear - 1, 0, 1).toISOString();
 
-        const [slidesRes, stdRes, hhRes, apdRes, haisRes] = await Promise.all([
+        const [slidesRes, stdRes, hhRes, apdRes, haisRes, fapdRes, linenRes] = await Promise.all([
           supabase.from('dashboard_slider').select('*').order('sort_order', { ascending: true }),
           supabase.from('dashboard_standards').select('*'),
           supabase.from('audit_hand_hygiene').select('*'),
           supabase.from('audit_apd').select('*'),
-          supabase.from('insiden_hais').select('*')
+          supabase.from('insiden_hais').select('*'),
+          supabase.from('monitoring_fasilitas_apd').select('*'),
+          supabase.from('audit_penatalaksanaan_linen').select('*')
         ]);
 
         if (!mounted) return;
 
-        const newRawData = { hh: hhRes.data || [], apd: apdRes.data || [], hais: haisRes.data || [] };
+        const newRawData = { 
+          hh: hhRes.data || [], 
+          apd: apdRes.data || [], 
+          hais: haisRes.data || [],
+          fasilitas_apd: fapdRes.data || [],
+          linen: linenRes.data || []
+        };
         const newSlides = (slidesRes.data && slidesRes.data.length > 0) ? slidesRes.data : DEFAULT_SLIDES;
         const newStandards: any = {
           hh: { indikator: 'Kebersihan Tangan', nilai_standar: 85, operator: '>=' },
@@ -173,11 +183,13 @@ export default function DashboardPage() {
         if (stdRes.data) {
           stdRes.data.forEach(s => {
             const key = s.indikator.toLowerCase();
-            if (newStandards[key]) newStandards[key] = s;
+            if (key.includes('tangan') || key === 'hh') newStandards.hh = { ...s, nilai_standar: s.nilai_standar <= 1 ? s.nilai_standar * 100 : s.nilai_standar };
+            else if (key.includes('apd')) newStandards.apd = { ...s, nilai_standar: s.nilai_standar <= 1 ? s.nilai_standar * 100 : s.nilai_standar };
             else if (key.includes('phle')) newStandards.phlebitis = s;
             else if (key.includes('isk')) newStandards.isk = s;
             else if (key.includes('ido')) newStandards.ido = s;
             else if (key.includes('vap')) newStandards.vap = s;
+            else if (newStandards[key]) newStandards[key] = s;
           });
         }
 
@@ -191,7 +203,9 @@ export default function DashboardPage() {
       supabase.channel('hh_ch').on('postgres_changes', { event: '*', schema: 'public', table: 'audit_hand_hygiene' }, () => fetchFresh()).subscribe(),
       supabase.channel('apd_ch').on('postgres_changes', { event: '*', schema: 'public', table: 'audit_apd' }, () => fetchFresh()).subscribe(),
       supabase.channel('hais_ch').on('postgres_changes', { event: '*', schema: 'public', table: 'insiden_hais' }, () => fetchFresh()).subscribe(),
-      supabase.channel('std_ch').on('postgres_changes', { event: '*', schema: 'public', table: 'dashboard_standards' }, () => fetchFresh()).subscribe()
+      supabase.channel('std_ch').on('postgres_changes', { event: '*', schema: 'public', table: 'dashboard_standards' }, () => fetchFresh()).subscribe(),
+      supabase.channel('fapd_ch').on('postgres_changes', { event: '*', schema: 'public', table: 'monitoring_fasilitas_apd' }, () => fetchFresh()).subscribe(),
+      supabase.channel('linen_ch').on('postgres_changes', { event: '*', schema: 'public', table: 'audit_penatalaksanaan_linen' }, () => fetchFresh()).subscribe()
     ];
 
     return () => { 
@@ -214,9 +228,11 @@ export default function DashboardPage() {
       const hhData = rawData.hh.filter((d: any) => isDateMatch(d.start_time || d.created_at));
       const apdData = rawData.apd.filter((d: any) => isDateMatch(d.tanggal_waktu || d.created_at));
       const haisData = (rawData.hais || []).filter((d: any) => isDateMatch(d.tanggal_waktu || d.created_at));
+      const fapdData = (rawData.fasilitas_apd || []).filter((d: any) => isDateMatch(d.tanggal_waktu || d.created_at));
+      const linenData = (rawData.linen || []).filter((d: any) => isDateMatch(d.tanggal_waktu || d.created_at));
 
       const unitSet = new Set<string>();
-      [...hhData, ...apdData, ...haisData].forEach(d => {
+      [...hhData, ...apdData, ...haisData, ...fapdData, ...linenData].forEach(d => {
         if (d.unit) unitSet.add(d.unit);
         if (d.ruangan) unitSet.add(d.ruangan);
       });
@@ -251,7 +267,7 @@ export default function DashboardPage() {
           
           for (let i = startMonth; i <= endMonth; i++) {
               const k = `${["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"][i]}`;
-              grouped[k] = { hhSum: 0, hhCount: 0, apdPatuh: 0, apdDin: 0, hPhle: 0, hIsk: 0, hIdo: 0, hVap: 0 };
+              grouped[k] = { hhSum: 0, hhCount: 0, apdPatuh: 0, apdDin: 0, hPhle: 0, hIsk: 0, hIdo: 0, hVap: 0, fapdSum: 0, fapdCount: 0, linenSum: 0, linenCount: 0 };
           }
       };
       fillMonths();
@@ -328,6 +344,32 @@ export default function DashboardPage() {
          else if(type.includes('vap')) { tHais.vap += r; tHaisCounts.vap++; }
       });
 
+      let totalFapdSum = 0;
+      let fapdCount = 0;
+      fapdData.filter(unitMatch).forEach((d: any) => {
+        const k = getGroupKey(d.tanggal_waktu || d.created_at);
+        const p = Number(d.persentase) || 0;
+        if(grouped[k]) {
+          grouped[k].fapdSum += p;
+          grouped[k].fapdCount++;
+        }
+        totalFapdSum += p;
+        fapdCount++;
+      });
+
+      let totalLinenSum = 0;
+      let linenCount = 0;
+      linenData.filter(unitMatch).forEach((d: any) => {
+        const k = getGroupKey(d.tanggal_waktu || d.created_at);
+        const p = Number(d.persentase) || 0;
+        if(grouped[k]) {
+          grouped[k].linenSum += p;
+          grouped[k].linenCount++;
+        }
+        totalLinenSum += p;
+        linenCount++;
+      });
+
       // Simple string sort
       const sortedKeys = Object.keys(grouped).sort((a,b) => {
         const getVal = (s:string) => { 
@@ -347,7 +389,9 @@ export default function DashboardPage() {
             phlebitis: Number(g.hPhle.toFixed(2)), 
             isk: Number(g.hIsk.toFixed(2)), 
             ido: Number(g.hIdo.toFixed(2)), 
-            vap: Number(g.hVap.toFixed(2))
+            vap: Number(g.hVap.toFixed(2)),
+            fasilitas_apd: g.fapdCount > 0 ? Number((g.fapdSum / g.fapdCount).toFixed(1)) : 0,
+            linen: g.linenCount > 0 ? Number((g.linenSum / g.linenCount).toFixed(1)) : 0
          }
       });
 
@@ -359,7 +403,9 @@ export default function DashboardPage() {
           isk: tHaisCounts.isk > 0 ? Number((tHais.isk / tHaisCounts.isk).toFixed(2)) : 0,
           ido: tHaisCounts.ido > 0 ? Number((tHais.ido / tHaisCounts.ido).toFixed(2)) : 0,
           vap: tHaisCounts.vap > 0 ? Number((tHais.vap / tHaisCounts.vap).toFixed(2)) : 0
-        }
+        },
+        fasilitas_apd: fapdCount > 0 ? Math.round(totalFapdSum / fapdCount) : 0,
+        linen: linenCount > 0 ? Math.round(totalLinenSum / linenCount) : 0
       };
 
       return { units: unitsList, stats: computedStats, chartDataList: finalChartData };
@@ -461,6 +507,30 @@ export default function DashboardPage() {
        if (diff > 0) text += `Terjadi peningkatan ${(diff).toFixed(1)}% dibanding sebelumnya.`;
        else if (diff < 0) text += `Terjadi penurunan ${Math.abs(diff).toFixed(1)}% dibanding sebelumnya.`;
        else text += `Trend kepatuhan stabil.`;
+       
+       return text;
+    } else if (activeTab === 'fasilitas_apd') {
+       const std = standards['fasilitas_apd']?.nilai_standar || 100;
+       const isCurrentMeets = current.fasilitas_apd >= std;
+       const diff = current.fasilitas_apd - prev.fasilitas_apd;
+       let text = `Kelengkapan Fasilitas APD (${current.fasilitas_apd}%) `;
+       if (isCurrentMeets) text += `sudah optimal. `;
+       else text += `perlu ditingkatkan untuk mencapai target ${std}%. `;
+       
+       if (diff > 0) text += `Ada peningkatan ${(diff).toFixed(1)}% ketersediaan.`;
+       else if (diff < 0) text += `Ada penurunan ${Math.abs(diff).toFixed(1)}% ketersediaan.`;
+       
+       return text;
+    } else if (activeTab === 'linen') {
+       const std = standards['linen']?.nilai_standar || 100;
+       const isCurrentMeets = current.linen >= std;
+       const diff = current.linen - prev.linen;
+       let text = `Kepatuhan Penatalaksanaan Linen (${current.linen}%) `;
+       if (isCurrentMeets) text += `sudah sesuai target. `;
+       else text += `masih di bawah standar ${std}%. `;
+       
+       if (diff > 0) text += `Meningkat ${(diff).toFixed(1)}% dari periode lalu.`;
+       else if (diff < 0) text += `Menurun ${Math.abs(diff).toFixed(1)}% dari periode lalu.`;
        
        return text;
     }
@@ -581,7 +651,7 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-6">
         {/* HH Card */}
         <div 
           className="group relative bg-white dark:bg-[#111827] p-8 rounded-[32px] border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-500"
@@ -655,27 +725,87 @@ export default function DashboardPage() {
             </div>
             <div>
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 leading-none mb-1">Indikator Mutu</h3>
-              <p className="text-[20px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-tight">Monitoring INSIDEN RATE HAIs</p>
+              <p className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-tight">INSIDEN HAIs</p>
             </div>
           </div>
-           <div className="grid grid-cols-2 gap-3 mt-4">
-              <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-[16px] border border-slate-100 dark:border-white/5">
-                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Phlebitis</p>
-                <p className={`text-lg font-black ${getStatusColor(stats.hais.phlebitis, standards.phlebitis)}`}>{stats.hais.phlebitis}‰</p>
+           <div className="grid grid-cols-2 gap-2 mt-4">
+              <div className="bg-slate-50 dark:bg-white/5 p-2 rounded-[12px] border border-slate-100 dark:border-white/5">
+                <p className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">Phlebitis</p>
+                <p className={`text-sm font-black ${getStatusColor(stats.hais.phlebitis, standards.phlebitis)}`}>{stats.hais.phlebitis}‰</p>
               </div>
-              <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-[16px] border border-slate-100 dark:border-white/5">
-                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">ISK</p>
-                <p className={`text-lg font-black ${getStatusColor(stats.hais.isk, standards.isk)}`}>{stats.hais.isk}‰</p>
+              <div className="bg-slate-50 dark:bg-white/5 p-2 rounded-[12px] border border-slate-100 dark:border-white/5">
+                <p className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">ISK</p>
+                <p className={`text-sm font-black ${getStatusColor(stats.hais.isk, standards.isk)}`}>{stats.hais.isk}‰</p>
               </div>
-              <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-[16px] border border-slate-100 dark:border-white/5">
-                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">IDO</p>
-                <p className={`text-lg font-black ${getStatusColor(stats.hais.ido, standards.ido)}`}>{stats.hais.ido}‰</p>
+              <div className="bg-slate-50 dark:bg-white/5 p-2 rounded-[12px] border border-slate-100 dark:border-white/5">
+                <p className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">IDO</p>
+                <p className={`text-sm font-black ${getStatusColor(stats.hais.ido, standards.ido)}`}>{stats.hais.ido}‰</p>
               </div>
-              <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-[16px] border border-slate-100 dark:border-white/5">
-                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">VAP</p>
-                <p className={`text-lg font-black ${getStatusColor(stats.hais.vap, standards.vap)}`}>{stats.hais.vap}‰</p>
+              <div className="bg-slate-50 dark:bg-white/5 p-2 rounded-[12px] border border-slate-100 dark:border-white/5">
+                <p className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">VAP</p>
+                <p className={`text-sm font-black ${getStatusColor(stats.hais.vap, standards.vap)}`}>{stats.hais.vap}‰</p>
               </div>
            </div>
+        </div>
+
+        {/* Fasilitas APD Card */}
+        <div 
+          className="group relative bg-white dark:bg-[#111827] p-8 rounded-[32px] border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-500"
+        >
+          <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none">
+            <Shield className="w-16 h-16 text-purple-600" />
+          </div>
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-12 h-12 rounded-2xl bg-purple-500/10 dark:bg-purple-600/20 flex items-center justify-center text-purple-600 dark:text-purple-400">
+              <Shield className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 leading-none mb-1">Indikator Mutu</h3>
+              <p className="text-[16px] font-bold text-slate-700 dark:text-slate-300">Fasilitas APD</p>
+            </div>
+          </div>
+          <div className="flex items-baseline gap-3 mb-4">
+            <span className={`text-5xl font-black tracking-tighter ${getStatusColor(stats.fasilitas_apd, standards.fasilitas_apd)}`}>{stats.fasilitas_apd}%</span>
+          </div>
+          <div className="mt-8 pt-6 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+            <span className="text-[12px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest">Capaian</span>
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 mb-1">Std: {standards?.fasilitas_apd?.nilai_standar || 100}%</span>
+              <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${stats.fasilitas_apd >= (standards?.fasilitas_apd?.nilai_standar || 100) ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-600'}`}>
+                {stats.fasilitas_apd >= (standards?.fasilitas_apd?.nilai_standar || 100) ? 'Tercapai' : 'Kurang'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Linen Card */}
+        <div 
+          className="group relative bg-white dark:bg-[#111827] p-8 rounded-[32px] border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-xl hover:shadow-orange-500/10 transition-all duration-500"
+        >
+          <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none">
+            <Shield className="w-16 h-16 text-orange-600" />
+          </div>
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-12 h-12 rounded-2xl bg-orange-500/10 dark:bg-orange-600/20 flex items-center justify-center text-orange-600 dark:text-orange-400">
+              <Shield className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 leading-none mb-1">Indikator Mutu</h3>
+              <p className="text-[16px] font-bold text-slate-700 dark:text-slate-300">Audit Linen</p>
+            </div>
+          </div>
+          <div className="flex items-baseline gap-3 mb-4">
+            <span className={`text-5xl font-black tracking-tighter ${getStatusColor(stats.linen, standards.linen)}`}>{stats.linen}%</span>
+          </div>
+          <div className="mt-8 pt-6 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+            <span className="text-[12px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-widest">Capaian</span>
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 mb-1">Std: {standards?.linen?.nilai_standar || 100}%</span>
+              <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${stats.linen >= (standards?.linen?.nilai_standar || 100) ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-600'}`}>
+                {stats.linen >= (standards?.linen?.nilai_standar || 100) ? 'Tercapai' : 'Kurang'}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -684,7 +814,9 @@ export default function DashboardPage() {
             <div className="flex flex-wrap gap-2">
                {[ { id: 'hh', label: 'KEBERSIHAN TANGAN', icon: Droplets, c: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500/10 dark:bg-white/10' }, 
                   { id: 'apd', label: 'KEPATUHAN APD', icon: Shield, c: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10 dark:bg-white/10' },
-                  { id: 'hais', label: 'INSIDEN HAIS', icon: AlertCircle, c: 'text-red-600 dark:text-red-400', bg: 'bg-red-500/10 dark:bg-white/10' }
+                  { id: 'hais', label: 'INSIDEN HAIS', icon: AlertCircle, c: 'text-red-600 dark:text-red-400', bg: 'bg-red-500/10 dark:bg-white/10' },
+                  { id: 'fasilitas_apd', label: 'FASILITAS APD', icon: Shield, c: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-500/10 dark:bg-white/10' },
+                  { id: 'linen', label: 'LINEN', icon: Shield, c: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-500/10 dark:bg-white/10' }
                ].map(t => (
                   <button key={t.id} onClick={() => setActiveTab(t.id as any)}
                      className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${activeTab === t.id ? `${t.bg} ${t.c}` : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
@@ -800,15 +932,6 @@ export default function DashboardPage() {
                         <Tooltip content={renderTooltipContent} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
                         <Legend content={renderCustomLegend} />
                         
-                        {standards[activeTab] && activeTab !== 'hais' && (
-                           <ReferenceLine 
-                              y={standards[activeTab]?.nilai_standar} 
-                              stroke="#06b6d4" 
-                              strokeDasharray="5 5" 
-                              label={{ position: 'top', value: `Standar ${standards[activeTab]?.nilai_standar}%`, fill: '#06b6d4', fontSize: 10 }}
-                           />
-                        )}
-
                         {activeTab === 'hais' ? (
                           <>
                             <Bar dataKey="phlebitis" name="Phlebitis (‰)" fill="#f43f5e" radius={[4,4,0,0]} stackId="a" />
@@ -822,12 +945,33 @@ export default function DashboardPage() {
                                  <Cell key={`cell-${index}`} fill={getBarColor(entry.hh, 'hh')} />
                               ))}
                           </Bar>
-                        ) : (
+                        ) : activeTab === 'apd' ? (
                           <Bar dataKey="apd" name="Capaian APD (%)" radius={[8,8,0,0]}>
                               {chartDataList.map((entry: any, index: number) => (
                                  <Cell key={`cell-${index}`} fill={getBarColor(entry.apd, 'apd')} />
                               ))}
                           </Bar>
+                        ) : activeTab === 'fasilitas_apd' ? (
+                          <Bar dataKey="fasilitas_apd" name="Fasilitas APD (%)" radius={[8,8,0,0]}>
+                              {chartDataList.map((entry: any, index: number) => (
+                                 <Cell key={`cell-${index}`} fill={getBarColor(entry.fasilitas_apd, 'fasilitas_apd')} />
+                              ))}
+                          </Bar>
+                        ) : (
+                          <Bar dataKey="linen" name="Linen (%)" radius={[8,8,0,0]}>
+                              {chartDataList.map((entry: any, index: number) => (
+                                 <Cell key={`cell-${index}`} fill={getBarColor(entry.linen, 'linen')} />
+                              ))}
+                          </Bar>
+                        )}
+
+                        {standards[activeTab] && activeTab !== 'hais' && (
+                           <ReferenceLine 
+                              y={standards[activeTab]?.nilai_standar} 
+                              stroke="#06b6d4" 
+                              strokeDasharray="5 5" 
+                              label={{ position: 'top', value: `Standar ${standards[activeTab]?.nilai_standar}%`, fill: '#06b6d4', fontSize: 10 }}
+                           />
                         )}
                       </ComposedChart>
                     ) : (
@@ -838,15 +982,6 @@ export default function DashboardPage() {
                         <Tooltip content={renderTooltipContent} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
                         <Legend content={renderCustomLegend} />
                         
-                        {standards[activeTab] && activeTab !== 'hais' && (
-                           <ReferenceLine 
-                              y={standards[activeTab]?.nilai_standar} 
-                              stroke="#06b6d4" 
-                              strokeDasharray="5 5" 
-                              label={{ position: 'top', value: `Standar ${standards[activeTab]?.nilai_standar}%`, fill: '#06b6d4', fontSize: 10 }}
-                           />
-                        )}
-
                         {activeTab === 'hais' ? (
                           <>
                             <Line type="monotone" dataKey="phlebitis" name="Phlebitis" stroke="#f43f5e" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
@@ -856,8 +991,21 @@ export default function DashboardPage() {
                           </>
                         ) : activeTab === 'hh' ? (
                           <Line type="monotone" dataKey="hh" name="Capaian HH (%)" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                        ) : (
+                        ) : activeTab === 'apd' ? (
                           <Line type="monotone" dataKey="apd" name="Capaian APD (%)" stroke="#10b981" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                        ) : activeTab === 'fasilitas_apd' ? (
+                          <Line type="monotone" dataKey="fasilitas_apd" name="Fasilitas APD (%)" stroke="#9333ea" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                        ) : (
+                          <Line type="monotone" dataKey="linen" name="Linen (%)" stroke="#f97316" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                        )}
+
+                        {standards[activeTab] && activeTab !== 'hais' && (
+                           <ReferenceLine 
+                              y={standards[activeTab]?.nilai_standar} 
+                              stroke="#06b6d4" 
+                              strokeDasharray="5 5" 
+                              label={{ position: 'top', value: `Standar ${standards[activeTab]?.nilai_standar}%`, fill: '#06b6d4', fontSize: 10 }}
+                           />
                         )}
                       </ComposedChart>
                     )}

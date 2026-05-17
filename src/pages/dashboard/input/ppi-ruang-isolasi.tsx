@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, ReactElement } from 'react';
 import { useRouter } from 'next/router';
 import { 
-  ArrowLeft, Save, CheckCircle2, Activity, RefreshCw, Upload, X, ChevronDown, ChevronUp
+  ArrowLeft, Save, CheckCircle2, Activity, RefreshCw, Upload, X, UserSearch
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
@@ -12,53 +12,18 @@ import DigitalSignatureSection, { DigitalSignatureRef } from '@/components/Digit
 import { EditableSelect } from '@/components/EditableSelect';
 import { useAppContext } from '@/components/Providers';
 
-const checklistGroups = [
-  {
-    title: 'A: RUANG ISOLASI',
-    items: [
-      { id: 'iso_1', label: 'Tekanan Negatif' },
-      { id: 'iso_2', label: 'Pertukaran udara > 12 kali/jam' },
-      { id: 'iso_3', label: 'Suhu ruangan 22°C – 25°C' },
-      { id: 'iso_4', label: 'Kelembaban 40–60%' },
-      { id: 'iso_5', label: 'Kondisi pintu selalu tertutup' }
-    ]
-  },
-  {
-    title: 'B: FASILITAS KEBERSIHAN TANGAN',
-    items: [
-      { id: 'hh_1', label: 'Tersedia wastafel' },
-      { id: 'hh_2', label: 'Tersedia sabun cuci tangan' },
-      { id: 'hh_3', label: 'Tersedia tissue' },
-      { id: 'hh_4', label: 'Tersedia handrub' }
-    ]
-  },
-  {
-    title: 'C: FASILITAS APD',
-    items: [
-      { id: 'apd_1', label: 'Tersedia sarung tangan' },
-      { id: 'apd_2', label: 'Tersedia masker bedah' },
-      { id: 'apd_3', label: 'Tersedia masker N-95' },
-      { id: 'apd_4', label: 'Tersedia kaca mata pelindung' },
-      { id: 'apd_5', label: 'Tersedia apron' },
-      { id: 'apd_6', label: 'Tersedia sepatu boot' },
-      { id: 'apd_7', label: 'Tersedia penutup kepala' }
-    ]
-  },
-  {
-    title: 'D: PETUGAS ISOLASI',
-    items: [
-      { id: 'pet_1', label: 'Melakukan kebersihan tangan 5 momen' },
-      { id: 'pet_2', label: 'Menggunakan APD saat melakukan tindakan di ruang isolasi' },
-      { id: 'pet_3', label: 'Membuang limbah sesuai standar' },
-      { id: 'pet_4', label: 'Menempatkan linen kotor pada tempatnya' },
-      { id: 'pet_5', label: 'Memberikan edukasi pada pasien dan keluarga pasien' }
-    ]
-  }
+const checklistItems = [
+  { id: 'ppi_1', label: 'Penggunaan APD yang sesuai' },
+  { id: 'ppi_2', label: 'Ketersediaan APD yang sesuai' },
+  { id: 'ppi_3', label: 'Kelengkapan Fasilitas Hand Hygiene' },
+  { id: 'ppi_4', label: 'Edukasi Etika Batuk / Pembuangan Sputum' },
+  { id: 'ppi_5', label: 'Edukasi Hand Hygiene' }
 ];
 
-type AuditStatus = 'ya' | 'tidak' | 'na' | null;
+type AuditStatus = 'ya' | 'tidak' | null;
+type TekananUdara = 'negatif' | 'positif' | null;
 
-export default function InputMonitoringRuangIsolasiPage() {
+export default function InputPPIRuangIsolasiPage() {
   const router = useRouter();
   const { userRole } = useAppContext();
   const isIPCN = userRole === 'IPCN' || userRole === 'Admin';
@@ -66,9 +31,16 @@ export default function InputMonitoringRuangIsolasiPage() {
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [observer, setObserver] = useState('');
   
-  const [data, setData] = useState<Record<string, AuditStatus>>({});
-  const [keteranganData, setKeteranganData] = useState<Record<string, string>>({});
+  // Patient Data
+  const [namaPasien, setNamaPasien] = useState('');
+  const [umur, setUmur] = useState('');
+  const [noRm, setNoRm] = useState('');
   
+  const [tekananUdara, setTekananUdara] = useState<TekananUdara>(null);
+  
+  const [data, setData] = useState<Record<string, AuditStatus>>({});
+  
+  const [keterangan, setKeterangan] = useState('');
   const [temuan, setTemuan] = useState('');
   const [rekomendasi, setRekomendasi] = useState('');
   const [images, setImages] = useState<File[]>([]);
@@ -79,37 +51,18 @@ export default function InputMonitoringRuangIsolasiPage() {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
-    'A: RUANG ISOLASI': true,
-    'B: FASILITAS KEBERSIHAN TANGAN': true,
-    'C: FASILITAS APD': true,
-    'D: PETUGAS ISOLASI': true,
-  });
-
+  
   useEffect(() => {
     setStartTime(new Date());
     const initialData: Record<string, AuditStatus> = {};
-    const initialKet: Record<string, string> = {};
-    checklistGroups.forEach(group => {
-      group.items.forEach(item => {
-        initialData[item.id] = null;
-        initialKet[item.id] = '';
-      });
+    checklistItems.forEach(item => {
+      initialData[item.id] = null;
     });
     setData(initialData);
-    setKeteranganData(initialKet);
   }, []);
-
-  const toggleGroup = (title: string) => {
-    setExpandedGroups(prev => ({ ...prev, [title]: !prev[title] }));
-  };
 
   const handleActionClick = (id: string, stat: AuditStatus) => {
     setData(prev => ({ ...prev, [id]: stat }));
-  };
-
-  const handleKeteranganChange = (id: string, val: string) => {
-    setKeteranganData(prev => ({ ...prev, [id]: val }));
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,11 +103,14 @@ export default function InputMonitoringRuangIsolasiPage() {
 
       const payload = {
         waktu: startTime?.toISOString() || new Date().toISOString(),
+        ruangan: 'Ruang Isolasi',
         supervisor: observer,
-        checklist_json: {
-            data,
-            keterangan: keteranganData
-        },
+        nama_pasien: namaPasien,
+        umur: umur,
+        no_rm: noRm,
+        tekanan_udara: tekananUdara,
+        checklist_json: { data },
+        keterangan,
         persentase: stats.persentase,
         temuan,
         rekomendasi,
@@ -166,15 +122,15 @@ export default function InputMonitoringRuangIsolasiPage() {
         ttd_ipcn: ttd_ipcn
       };
 
-      const { data: sessionData, error } = await supabase.from('audit_ruang_isolasi').insert([payload]).select('id').single();
+      const { data: sessionData, error } = await supabase.from('ppi_ruang_isolasi').insert([payload]).select('id').single();
       if (error) {
-          // If table might not exist, fallback to general audit payload to not break
-          console.error("Error direct insert, fallback to audit_sessions", error);
+          console.error("Error direct insert", error);
           const fallbackPayload = {
-            indikator_id: 'monitoring_ppi_ruang_isolasi',
-            nama_indikator: 'MONITORING RUANG ISOLASI',
+            indikator_id: 'ppi_ruang_isolasi',
+            nama_indikator: 'PPI DI RUANG ISOLASI',
             tanggal_waktu: payload.waktu,
             observer: payload.supervisor,
+            ruangan: payload.ruangan,
             jumlah_dinilai: stats.dinilai,
             jumlah_patuh: stats.patuh,
             persentase: stats.persentase,
@@ -183,7 +139,14 @@ export default function InputMonitoringRuangIsolasiPage() {
             nama_pj_ruangan: pjName.trim(),
             ttd_pj_ruangan: ttd_pj,
             ttd_ipcn: ttd_ipcn,
-            data_indikator: payload.checklist_json
+            data_indikator: {
+              ...payload.checklist_json,
+              nama_pasien: payload.nama_pasien,
+              umur: payload.umur,
+              no_rm: payload.no_rm,
+              tekanan_udara: payload.tekanan_udara,
+              keterangan: payload.keterangan
+            }
           };
           const { data: fallbackData, error: fbError } = await supabase.from('audit_sessions').insert([fallbackPayload]).select('id').single();
           if (fbError) throw fbError;
@@ -207,9 +170,9 @@ export default function InputMonitoringRuangIsolasiPage() {
 
   const uploadAssets = async (id: string) => {
       for(let i=0; i<images.length; i++) {
-        await supabase.storage.from('audit_images').upload(`images/r_iso_${id}_${i}.jpg`, images[i]);
+        await supabase.storage.from('audit_images').upload(`images/ppi_iso_${id}_${i}.jpg`, images[i]);
       }
-  }
+  };
 
   return (
     <div className="max-w-4xl mx-auto pb-32">
@@ -219,7 +182,7 @@ export default function InputMonitoringRuangIsolasiPage() {
             className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-emerald-500 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 font-bold uppercase tracking-widest text-xs border border-emerald-400"
           >
             <CheckCircle2 className="w-5 h-5" />
-            Data Audit Ruang Isolasi Berhasil Disimpan
+            Data PPI Ruang Isolasi Berhasil Disimpan
           </motion.div>
         )}
       </AnimatePresence>
@@ -230,11 +193,11 @@ export default function InputMonitoringRuangIsolasiPage() {
         </Link>
         <div>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-400 bg-[length:200%_auto] animate-gradient uppercase drop-shadow-[0_0_15px_rgba(59,130,246,0.3)]">
-            Audit Ruang Isolasi
+            Input PPI di Ruang Isolasi
           </h1>
           <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.3em] text-blue-500/80 mt-2 flex items-center gap-2">
             <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-            Audit kepatuhan fasilitas dan pelaksanaan PPI pada ruang isolasi
+            Monitoring kepatuhan PPI pasien dan fasilitas di ruang isolasi
           </p>
         </div>
       </div>
@@ -242,13 +205,21 @@ export default function InputMonitoringRuangIsolasiPage() {
       <div className="space-y-6">
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
-            <Activity className="w-4 h-4 text-purple-400" /> Data Subjek
+            <Activity className="w-4 h-4 text-emerald-400" /> Data Subjek & Ruangan
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Waktu Audit</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Waktu Input</label>
               <input type="datetime-local" value={startTime ? new Date(startTime.getTime() - startTime.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''} onChange={(e) => setStartTime(new Date(e.target.value))} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 [color-scheme:dark]" />
             </div>
+            
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Ruangan</label>
+              <div className="w-full bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-3 text-sm text-blue-300 font-medium">
+                Ruang Isolasi
+              </div>
+            </div>
+
             <EditableSelect
               label="Supervisor"
               value={observer}
@@ -263,86 +234,100 @@ export default function InputMonitoringRuangIsolasiPage() {
 
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
-            📋 Checklist Audit Ruang Isolasi
+            👤 Data Pasien
           </h2>
-          <div className="space-y-6">
-            {checklistGroups.map((group) => (
-              <div key={group.title} className="bg-slate-900/50 border border-white/5 rounded-2xl overflow-hidden">
-                <button 
-                  type="button" 
-                  onClick={() => toggleGroup(group.title)}
-                  className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-white/5 transition-colors"
-                >
-                  <span className="text-sm font-bold text-white uppercase tracking-widest">{group.title}</span>
-                  {expandedGroups[group.title] ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
-                </button>
-                <AnimatePresence>
-                  {expandedGroups[group.title] && (
-                    <motion.div 
-                      initial={{ height: 0, opacity: 0 }} 
-                      animate={{ height: 'auto', opacity: 1 }} 
-                      exit={{ height: 0, opacity: 0 }}
-                      className="border-t border-white/5"
-                    >
-                      <div className="p-4 space-y-4">
-                        {group.items.map((item, idx) => (
-                          <div key={item.id} className="bg-white/5 p-5 rounded-[1.5rem] border border-white/5 relative overflow-hidden group">
-                            <div className="flex flex-col gap-4 relative z-10">
-                              <div className="flex gap-4">
-                                <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border bg-white/5 border-white/10 text-slate-400">
-                                  <span className="text-xs font-black">{idx + 1}</span>
-                                </div>
-                                <div className="mt-1 flex-1">
-                                  <h3 className="text-sm font-bold text-white mb-3">{item.label}</h3>
-                                  <div className="flex flex-col gap-3">
-                                      <div className="flex p-1.5 bg-slate-900 rounded-2xl border border-white/5 w-fit">
-                                        {['ya', 'tidak', 'na'].map(choice => (
-                                          <button key={choice} onClick={() => handleActionClick(item.id, choice as any)} type="button"
-                                            className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${
-                                              data[item.id] === choice 
-                                                ? (choice === 'ya' ? 'bg-emerald-600 text-white shadow-lg' : choice === 'tidak' ? 'bg-red-600 text-white shadow-lg' : 'bg-slate-600 text-white shadow-lg')
-                                                : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
-                                            }`}
-                                          >
-                                            {choice}
-                                          </button>
-                                        ))}
-                                      </div>
-                                      <input 
-                                        type="text" 
-                                        placeholder="Keterangan / Catatan tambahan (opsional)..." 
-                                        value={keteranganData[item.id] || ''}
-                                        onChange={(e) => handleKeteranganChange(item.id, e.target.value)}
-                                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-slate-300 outline-none focus:border-blue-500/50"
-                                      />
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-3">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Nama Pasien</label>
+                  <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <UserSearch className="w-4 h-4 text-slate-400"/>
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                      <input type="text" value={namaPasien} onChange={e => setNamaPasien(e.target.value)} placeholder="Nama pasien..." className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white outline-none focus:border-blue-500/50" />
+                  </div>
               </div>
+              <div className="space-y-3">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Umur</label>
+                  <input type="text" value={umur} onChange={e => setUmur(e.target.value)} placeholder="Contoh: 45 Tahun" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50" />
+              </div>
+              <div className="space-y-3">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">No. RM</label>
+                  <input type="text" value={noRm} onChange={e => setNoRm(e.target.value)} placeholder="00-00-00" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50" />
+              </div>
+          </div>
+
+          <div className="mt-8 border-t border-white/5 pt-8">
+              <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
+                🌬️ Tekanan Udara Ruangan
+              </h2>
+              <div className="flex bg-slate-900 rounded-xl border border-white/5 w-fit">
+                  {['negatif', 'positif'].map(choice => (
+                    <button key={choice} type="button" onClick={() => setTekananUdara(choice as TekananUdara)}
+                      className={`px-8 py-3 rounded-xl text-xs font-bold uppercase tracking-[0.2em] transition-all duration-300 ${
+                        tekananUdara === choice 
+                          ? 'bg-blue-600 text-white shadow-lg'
+                          : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                      }`}
+                    >
+                      {choice}
+                    </button>
+                  ))}
+              </div>
+          </div>
+        </div>
+
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+          <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
+            🛡️ Checklist PPI
+          </h2>
+          <div className="space-y-4">
+            {checklistItems.map((item, idx) => (
+                <div key={item.id} className="bg-slate-900/50 p-5 rounded-[1.5rem] border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-white/5 transition-colors">
+                    <div className="flex gap-4 relative z-10 w-full md:w-auto">
+                        <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border bg-white/5 border-white/10 text-slate-400">
+                            <span className="text-xs font-black">{idx + 1}</span>
+                        </div>
+                        <div className="mt-1 flex-1">
+                            <h3 className="text-sm font-bold text-white leading-relaxed">{item.label}</h3>
+                        </div>
+                    </div>
+                    
+                    <div className="flex p-1.5 bg-slate-900 rounded-2xl border border-white/5 w-fit shrink-0 self-end md:self-center z-10">
+                        {['ya', 'tidak'].map(choice => (
+                            <button key={choice} onClick={() => handleActionClick(item.id, choice as any)} type="button"
+                            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${
+                                data[item.id] === choice 
+                                ? (choice === 'ya' ? 'bg-emerald-600 text-white shadow-lg' : 'bg-red-600 text-white shadow-lg')
+                                : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                            }`}
+                            >
+                            {choice}
+                            </button>
+                        ))}
+                    </div>
+                </div>
             ))}
           </div>
+
+          <div className="mt-6">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block mb-3">📝 Keterangan</label>
+                <input type="text" value={keterangan} onChange={e => setKeterangan(e.target.value)} placeholder="Contoh: Susp. TB Paru, COVID Suspek..." className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50" />
+            </div>
         </div>
 
         <LiveStatisticsCard 
           totalDinilai={stats.dinilai} totalPatuh={stats.patuh} totalTidakPatuh={stats.dinilai - stats.patuh} 
-          persentase={stats.persentase} statusText={stats.statusText} title="KEPATUHAN RUANG ISOLASI"
+          persentase={stats.persentase} statusText={stats.statusText} title="KEPATUHAN PPI RUANG ISOLASI"
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
                 <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">📝 TEMUAN</h2>
-                <textarea value={temuan} onChange={e => setTemuan(e.target.value)} placeholder="Tuliskan temuan audit...&#10;Contoh:&#10;Handrub kosong&#10;Masker N95 tidak tersedia&#10;Pintu ruang isolasi sering terbuka" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none"/>
+                <textarea value={temuan} onChange={e => setTemuan(e.target.value)} placeholder="Tuliskan temuan monitoring...&#10;Contoh:&#10;APD tidak lengkap&#10;Edukasi sputum belum diberikan" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none"/>
             </div>
             <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
                 <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">💡 REKOMENDASI</h2>
-                <textarea value={rekomendasi} onChange={e => setRekomendasi(e.target.value)} placeholder="Tuliskan rekomendasi tindak lanjut...&#10;Contoh:&#10;Lengkapi stok APD&#10;Perbaiki sistem tekanan negatif&#10;Edukasi ulang petugas" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none"/>
+                <textarea value={rekomendasi} onChange={e => setRekomendasi(e.target.value)} placeholder="Tuliskan rekomendasi tindak lanjut...&#10;Contoh:&#10;Lengkapi stok masker N95&#10;Berikan edukasi ulang" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none"/>
             </div>
         </div>
 
@@ -401,6 +386,6 @@ export default function InputMonitoringRuangIsolasiPage() {
   );
 }
 
-InputMonitoringRuangIsolasiPage.getLayout = function getLayout(page: ReactElement) {
+InputPPIRuangIsolasiPage.getLayout = function getLayout(page: ReactElement) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };
