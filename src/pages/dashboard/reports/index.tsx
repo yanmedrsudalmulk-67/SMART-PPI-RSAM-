@@ -233,11 +233,11 @@ export default function ReportsPage() {
             
             {/* Header & Filter Periode */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-              <div>
+              <div className="text-center md:text-left">
                 <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white uppercase mb-2">
                    Laporan SMART PPI
                 </h1>
-                <p className="text-sm font-normal text-slate-500 dark:text-slate-400">
+                <p className="text-sm font-normal text-slate-500 dark:text-slate-400 mx-auto md:mx-0 max-w-[280px] sm:max-w-none">
                    Pusat analisis data pencegahan dan pengendalian infeksi terintegrasi.
                 </p>
               </div>
