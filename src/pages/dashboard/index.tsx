@@ -637,7 +637,7 @@ export default function DashboardPage() {
         <div className="text-center md:text-left">
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all uppercase">Dashboard SMART PPI</h1>
           <div className="mt-1">
-            <p className="text-slate-900 dark:text-slate-400 font-normal leading-tight max-w-[280px] sm:max-w-none mx-auto md:mx-0 text-[15px] sm:text-[15px] xl:text-[15px]" style={{ fontSize: '15px' }}>
+            <p className="text-slate-900 dark:text-slate-400 font-normal leading-tight max-w-[280px] sm:max-w-none mx-auto md:mx-0 text-[14px] sm:text-[14px] xl:text-[14px]" style={{ fontSize: '14px' }}>
               Pencegahan Dan Pengendalian Infeksi <br className="sm:hidden" /> di UOBK RSUD Al-Mulk Kota Sukabumi
             </p>
           </div>
