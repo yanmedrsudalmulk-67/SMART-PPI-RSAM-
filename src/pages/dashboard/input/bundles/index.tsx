@@ -65,22 +65,22 @@ export default function BundlesMenuPage() {
         {bundlesCategories.map((group, gIdx) => (
           <motion.div key={group.category} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: gIdx * 0.1 }}>
             <div className="flex items-center gap-3 mb-6">
-              <div className={`p-2 rounded-lg ${group.bg}`}>
-                <group.icon className={`w-5 h-5 ${group.color}`} />
+              <div className={`p-2 rounded-lg ${group.bg.replace('/10', '')} shadow-sm`}>
+                <group.icon className="w-5 h-5 text-white" />
               </div>
-              <h2 className="text-lg font-bold text-white tracking-wide">{group.category}</h2>
+              <h2 className="text-lg font-bold text-slate-800 dark:text-white tracking-wide">{group.category}</h2>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {group.items.map((item, iDx) => (
                 <motion.div key={item.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: (gIdx * 0.1) + (iDx * 0.05) }}
-                  className="bg-white/5 backdrop-blur-xl p-6 rounded-[2rem] border border-white/5 flex flex-col justify-between group hover:border-blue-500/30 transition-all"
+                  className="bg-white dark:bg-white/5 backdrop-blur-xl p-6 rounded-[2rem] border border-slate-200 dark:border-white/5 flex flex-col justify-between group hover:border-blue-500/30 transition-all shadow-sm"
                 >
                   <div className="space-y-4 mb-6">
-                    <div className="p-3 bg-blue-500/10 rounded-2xl inline-block group-hover:scale-110 transition-transform">
-                      <ClipboardCheck className={`w-6 h-6 ${group.color}`} />
+                    <div className={`p-3 rounded-2xl inline-block group-hover:scale-110 transition-transform ${group.bg.replace('/10', '')} shadow-lg shadow-blue-500/10`}>
+                      <ClipboardCheck className="w-6 h-6 text-white" />
                     </div>
-                    <h3 className="font-bold text-white text-lg group-hover:text-blue-400 transition-colors">{item.title}</h3>
+                    <h3 className="font-bold text-slate-800 dark:text-white text-lg group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">{item.title}</h3>
                   </div>
 
                   <Link href={`/dashboard/input/bundles/${item.id}`}

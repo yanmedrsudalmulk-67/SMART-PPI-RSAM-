@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Settings, Plus, Edit2, Trash2, X, Check } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -21,12 +21,7 @@ export function EditableSelect({ label, value, onChange, options: defaultOptions
   const [editItemId, setEditItemId] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-    fetchItems();
-  }, []);
-
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     if (table) {
       try {
         const { data, error } = await supabase.from(table).select('*').order('nama');
@@ -57,7 +52,13 @@ export function EditableSelect({ label, value, onChange, options: defaultOptions
       }
     }
     setItems(merged);
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table, storageKey, JSON.stringify(defaultOptions)]);
+
+  useEffect(() => {
+    setMounted(true);
+    fetchItems();
+  }, [fetchItems]);
 
   const saveItem = async () => {
     if (!newItemName.trim()) return;

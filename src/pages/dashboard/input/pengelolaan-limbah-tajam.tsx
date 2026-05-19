@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import { useAppContext } from '@/components/Providers';
 import { supabase } from '@/lib/supabase';
+import { uploadImagesToSupabase } from '@/lib/upload';
 import DashboardLayout from '@/components/DashboardLayout';
 import { LiveStatisticsCard } from '@/components/LiveStatisticsCard';
 import DigitalSignatureSection, { DigitalSignatureRef } from '@/components/DigitalSignatureSection';
@@ -151,6 +152,8 @@ export default function InputPengelolaanLimbahTajamPage() {
       const ttd_pj = sigRef.current?.getPjSignature();
       const ttd_ipcn = sigRef.current?.getSupervisorSignature();
 
+      const uploadedImages = await uploadImagesToSupabase(supabase, images || [], 'audit_images', 'images');
+
       const payload = {
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
         observer, unit,
@@ -177,7 +180,7 @@ export default function InputPengelolaanLimbahTajamPage() {
           jumlah_patuh: stats.patuh,
           persentase: stats.persentase,
           status_kepatuhan: stats.statusText,
-          data_indikator: auditData,
+          data_indikator: { ...auditData, temuan, rekomendasi, dokumentasi: uploadedImages, tanda_tangan_pj: ttd_pj, tanda_tangan_ipcn: ttd_ipcn, nama_pj_ruangan: pjName.trim() },
           temuan, rekomendasi,
           nama_pj_ruangan: pjName.trim(),
           ttd_pj_ruangan: ttd_pj,
@@ -187,10 +190,6 @@ export default function InputPengelolaanLimbahTajamPage() {
         .single();
 
       if (sessionError) throw sessionError;
-
-      for (let i = 0; i < images.length; i++) {
-        await supabase.storage.from('audit_images').upload(`images/${sessionData.id}_${i}.jpg`, images[i].file);
-      }
 
       setShowToast(true);
       setTimeout(() => {
@@ -349,6 +348,8 @@ export default function InputPengelolaanLimbahTajamPage() {
             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Rekomendasi</label>
             <textarea value={rekomendasi} onChange={(e) => setRekomendasi(e.target.value)} placeholder="Rekomendasi tindakan..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none min-h-[100px]" />
           </div>
+          
+          <DocumentationUploader images={images} setImages={setImages} />
           
           <DigitalSignatureSection 
             ref={sigRef} 

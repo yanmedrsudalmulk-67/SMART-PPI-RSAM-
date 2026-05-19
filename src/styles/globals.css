@@ -288,7 +288,28 @@ html.light .text-navy-dark {
   color: #0A2F1D !important;
 }
 
-/* Hide Next.js Development & Static Indicators */
+/* Sidebar Premium Scrollbar */
+.custom-sidebar-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.18);
+  border-radius: 20px;
+}
+.custom-sidebar-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Animate Float for Sidebar Icons */
+@keyframes float {
+  0% { transform: translateY(0px) scale(1.1); }
+  50% { transform: translateY(-3px) scale(1.1); }
+  100% { transform: translateY(0px) scale(1.1); }
+}
+.animate-float {
+  animation: float 2.5s ease-in-out infinite;
+}
+
 #__next-build-watcher,
 #__next-prerender-indicator,
 .nextjs-portal,

@@ -104,16 +104,11 @@ export default function RadiologiInputPage() {
       if (error) throw error;
       if (data && data.length > 0) {
           setObservers(data);
-          const defaultObs = data.find(o => o.nama.includes('Adi Tresa Purnama')) || data[0];
-          setObserver(defaultObs.nama);
       } else {
           setObservers([{ id: '1', nama: 'IPCN_Adi Tresa Purnama' }]);
-          setObserver('IPCN_Adi Tresa Purnama');
       }
     } catch (err) {
-      const defaultObs = { id: '1', nama: 'IPCN_Adi Tresa Purnama' };
-      setObservers([defaultObs]);
-      setObserver(defaultObs.nama);
+      setObservers([{ id: '1', nama: 'IPCN_Adi Tresa Purnama' }]);
     }
   };
 

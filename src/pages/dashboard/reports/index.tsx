@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, ReactElement } from 'react';
 import { 
   FileText, Download, Calendar, Filter, FileSpreadsheet, Search, ArrowLeft, 
   Activity, ShieldCheck, ClipboardCheck, GraduationCap, Building2, User, AlertTriangle, Truck, Users, Wind, ShieldAlert,
-  ChevronDown, CheckCircle2, ChevronRight
+  ChevronDown, CheckCircle2, ChevronRight, Edit, Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '@/lib/supabase';
@@ -13,6 +13,7 @@ import { genericAuditConfigs } from '@/lib/audit-configs';
 import GenericAuditReport from '@/components/reports/GenericAuditReport';
 import HandHygieneReport from '@/components/reports/HandHygieneReport';
 import ApdReport from '@/components/reports/ApdReport';
+import DekontaminasiAlatReport from '@/components/reports/DekontaminasiAlatReport';
 
 const INDICATORS_MAP: Record<string, { cat: string, subcat?: string, title: string, id: string, icon: any }> = {
   // Kewaspadaan Isolasi - Standar
@@ -144,6 +145,7 @@ export default function ReportsPage() {
   const [kategori, setKategori] = useState('Kewaspadaan Isolasi');
   const [subKategori, setSubKategori] = useState('Standar');
   const [selectedIndicator, setSelectedIndicator] = useState<string | null>(null);
+  const [selectedUnit, setSelectedUnit] = useState<string>('Semua Unit');
   
   const [statsMap, setStatsMap] = useState<Map<string, { count: number, sum: number, avgPercent: number }>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -232,8 +234,8 @@ export default function ReportsPage() {
           <motion.div key="hub" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20, scale: 0.98 }} className="space-y-8">
             
             {/* Header & Filter Periode */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-              <div className="text-center md:text-left">
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+              <div className="text-center lg:text-left w-full lg:w-auto">
                 <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white uppercase mb-2">
                    Laporan SMART PPI
                 </h1>
@@ -323,7 +325,7 @@ export default function ReportsPage() {
                    <button
                      key={cat}
                      onClick={() => { setKategori(cat); setSubKategori((SUB_CATEGORIES as any)[cat]?.[0] || null); }}
-                     className={`px-5 py-3 rounded-2xl text-[11px] sm:text-xs font-bold uppercase tracking-widest transition-all \${
+                     className={`px-5 py-3 rounded-2xl text-[11px] sm:text-xs font-bold uppercase tracking-widest transition-all ${
                        kategori === cat 
                          ? 'bg-blue-600 text-white shadow-md' 
                          : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
@@ -346,7 +348,7 @@ export default function ReportsPage() {
                        <button
                          key={sub}
                          onClick={() => setSubKategori(sub)}
-                         className={`px-4 py-2.5 rounded-xl text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all flex items-center gap-2 \${
+                         className={`px-4 py-2.5 rounded-xl text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all flex items-center gap-2 ${
                            subKategori === sub 
                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' 
                              : 'border border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'
@@ -424,22 +426,118 @@ export default function ReportsPage() {
                  </div>
                </div>
                
-               <div className="flex items-center gap-3 self-end md:self-auto">
-                 <div className="px-4 py-2 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold flex items-center gap-2">
-                   <Calendar className="w-4 h-4" /> Periode: {periode}
+               <div className="flex flex-wrap items-center gap-3 self-end md:self-auto">
+                 <div className="flex items-center gap-2 bg-white/60 dark:bg-[#111827]/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl p-1 shadow-sm">
+                   <div className="p-1.5 bg-blue-50 dark:bg-blue-500/10 rounded-lg text-blue-600 dark:text-blue-400">
+                     <Calendar className="w-4 h-4" />
+                   </div>
+                   <select 
+                     value={periode} 
+                     onChange={(e) => setPeriode(e.target.value)}
+                     className="bg-transparent border-none outline-none text-xs font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
+                   >
+                     {['Bulanan', 'Triwulan', 'Semester', 'Tahunan'].map(p => (
+                       <option key={p} value={p} className="bg-white dark:bg-slate-900">{p}</option>
+                     ))}
+                   </select>
+
+                   {periode === 'Bulanan' && (
+                     <>
+                       <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
+                       <select 
+                         value={selectedMonth} 
+                         onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                         className="bg-transparent border-none outline-none text-xs font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
+                       >
+                         {["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"].map((m, i) => (
+                           <option key={m} value={i} className="bg-white dark:bg-slate-900">{m}</option>
+                         ))}
+                       </select>
+                     </>
+                   )}
+                   {periode === 'Triwulan' && (
+                     <>
+                       <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
+                       <select 
+                         value={selectedQuarter} 
+                         onChange={(e) => setSelectedQuarter(parseInt(e.target.value))}
+                         className="bg-transparent border-none outline-none text-xs font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
+                       >
+                         {["Triwulan 1", "Triwulan 2", "Triwulan 3", "Triwulan 4"].map((q, i) => (
+                           <option key={q} value={i} className="bg-white dark:bg-slate-900">{q}</option>
+                         ))}
+                       </select>
+                     </>
+                   )}
+                   {periode === 'Semester' && (
+                     <>
+                       <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
+                       <select 
+                         value={selectedSemester} 
+                         onChange={(e) => setSelectedSemester(parseInt(e.target.value))}
+                         className="bg-transparent border-none outline-none text-xs font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
+                       >
+                         {["Semester 1", "Semester 2"].map((s, i) => (
+                           <option key={s} value={i} className="bg-white dark:bg-slate-900">{s}</option>
+                         ))}
+                       </select>
+                     </>
+                   )}
                  </div>
-                 <button className="p-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl shadow-lg transition-colors flex items-center justify-center group" title="Export Excel">
-                   <FileSpreadsheet className="w-5 h-5" />
-                 </button>
+
+                 <div className="flex items-center gap-2 bg-white/60 dark:bg-[#111827]/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl p-1 shadow-sm">
+                   <div className="p-1.5 bg-amber-50 dark:bg-amber-500/10 rounded-lg text-amber-600 dark:text-amber-400">
+                     <Building2 className="w-4 h-4" />
+                   </div>
+                   <select 
+                     value={selectedUnit} 
+                     onChange={(e) => setSelectedUnit(e.target.value)}
+                     className="bg-transparent border-none outline-none text-xs font-bold text-slate-900 dark:text-white pr-2 max-w-[120px] sm:max-w-none cursor-pointer"
+                   >
+                     <option value="Semua Unit" className="bg-white dark:bg-slate-900">Semua Unit</option>
+                     {['IGD', 'ICU', 'IBS', 'Rawat Jalan', 'Ranap Aisyah', 'Ranap Fatimah', 'Ranap Khadijah', 'Ranap Usman', 'Radiologi', 'Laboratorium', 'Pantry', 'Emergency Kebidanan'].map(u => (
+                       <option key={u} value={u} className="bg-white dark:bg-slate-900">{u}</option>
+                     ))}
+                   </select>
+                 </div>
+
+                 {selectedIndicator === 'dekontaminasi_alat' && (
+                   <div className="flex gap-2">
+                     <button
+                       onClick={() => window.dispatchEvent(new Event('edit-dekontaminasi'))}
+                       className="p-3 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 rounded-xl transition-colors"
+                       title="Edit Laporan"
+                     >
+                       <Edit className="w-5 h-5" />
+                     </button>
+                     <button
+                       onClick={() => window.dispatchEvent(new Event('delete-dekontaminasi'))}
+                       className="p-3 bg-red-500/10 hover:bg-red-500/20 text-red-600 rounded-xl transition-colors"
+                       title="Hapus Laporan"
+                     >
+                       <Trash2 className="w-5 h-5" />
+                     </button>
+                     <button
+                       onClick={() => window.dispatchEvent(new Event('print-dekontaminasi'))}
+                       className="p-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 rounded-xl transition-colors"
+                       title="Print PDF"
+                     >
+                       <FileText className="w-5 h-5" />
+                     </button>
+                   </div>
+                 )}
+
                </div>
-            </div>
+             </div>
 
             {/* Dynamic Report Content */}
             <div className="pt-2">
               {selectedIndicator === 'audit_hand_hygiene' ? (
-                 <HandHygieneReport filters={{ searchQuery: '', periode: startDateISO, type: periode }} />
+                 <HandHygieneReport filters={{ searchQuery: '', periode: startDateISO, type: periode, unitFilter: selectedUnit } as any} />
               ) : selectedIndicator === 'audit_apd' ? (
-                 <ApdReport filters={{ searchQuery: '', periode: startDateISO, type: periode }} />
+                 <ApdReport filters={{ searchQuery: '', periode: startDateISO, type: periode, unitFilter: selectedUnit } as any} />
+              ) : selectedIndicator === 'dekontaminasi_alat' ? (
+                 <DekontaminasiAlatReport filters={{ dateRange: { from: startDateISO, to: new Date().toISOString() }, searchQuery: '', unitFilter: selectedUnit, type: periode, periode: startDateISO } as any} />
               ) : (
                  <GenericAuditReport 
                     tableName={selectedIndicator}
@@ -460,5 +558,3 @@ export default function ReportsPage() {
 ReportsPage.getLayout = function getLayout(page: ReactElement) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };
-
-;

@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import { useAppContext } from '@/components/Providers';
 import { supabase } from '@/lib/supabase';
+import { uploadImagesToSupabase } from '@/lib/upload';
 import DashboardLayout from '@/components/DashboardLayout';
 import { LiveStatisticsCard } from '@/components/LiveStatisticsCard';
 import { EditableSelect } from '@/components/EditableSelect';
@@ -102,11 +103,7 @@ export default function InputPenempatanPasienPage() {
       const pjSig = signatureRef.current?.getPjSignature();
       const ipcnSig = signatureRef.current?.getSupervisorSignature();
 
-      const uploadedImages: string[] = [];
-      for (const img of images || []) {
-        // Assume image upload logic exists or will be implemented
-        uploadedImages.push(img.url); 
-      }
+      const uploadedImages = await uploadImagesToSupabase(supabase, images || [], 'audit_images', 'images');
 
       const payload = {
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
@@ -144,10 +141,6 @@ export default function InputPenempatanPasienPage() {
         .single();
 
       if (sessionError) throw sessionError;
-
-      for(let i=0; i<images.length; i++) {
-        await supabase.storage.from('audit_images').upload(`images/${sessionData.id}_${i}.jpg`, images[i].file);
-      }
 
       setShowToast(true);
       setTimeout(() => {

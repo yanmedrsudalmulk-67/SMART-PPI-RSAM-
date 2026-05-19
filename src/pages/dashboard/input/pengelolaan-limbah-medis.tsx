@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import { useAppContext } from '@/components/Providers';
 import { supabase } from '@/lib/supabase';
+import { uploadImagesToSupabase } from '@/lib/upload';
 import DashboardLayout from '@/components/DashboardLayout';
 import { LiveStatisticsCard } from '@/components/LiveStatisticsCard';
 import DigitalSignatureSection, { DigitalSignatureRef } from '@/components/DigitalSignatureSection';
@@ -138,10 +139,7 @@ export default function InputPengelolaanLimbahMedisPage() {
       const pjSig = signatureRef.current?.getPjSignature();
       const ipcnSig = signatureRef.current?.getSupervisorSignature();
 
-      const uploadedImages: string[] = [];
-      for (const img of images || []) {
-        uploadedImages.push(img.url); 
-      }
+      const uploadedImages = await uploadImagesToSupabase(supabase, images || [], 'audit_images', 'images');
 
       const payload = {
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
@@ -176,11 +174,6 @@ export default function InputPengelolaanLimbahMedisPage() {
         .single();
 
       if (sessionError) throw sessionError;
-
-      // 3. Upload Images
-      for(let i=0; i<images.length; i++) {
-        await supabase.storage.from('audit_images').upload(`images/${sessionData.id}_${i}.jpg`, images[i].file);
-      }
 
       setShowToast(true);
       setTimeout(() => {

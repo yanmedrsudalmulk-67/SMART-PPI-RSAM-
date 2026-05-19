@@ -22,33 +22,41 @@ import { ClockWidget } from '@/components/ClockWidget';
 import { useDashboardStore } from '@/hooks/useDashboardStore';
 import { supabase } from '@/lib/supabase';
 
-const NavItem = memo(({ item, isActive, isLightMode, onClick }: { item: any, isActive: boolean, isLightMode?: boolean, onClick?: () => void }) => (
-  <Link 
-    href={item.href}
-    prefetch={false}
-    onClick={onClick}
-    className={`relative flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-300 ease-out group overflow-hidden ${
-      isActive 
-        ? isLightMode
-          ? 'text-white'
-          : 'bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 text-emerald-400 shadow-[0_4px_20px_rgba(16,185,129,0.15)]' 
-        : isLightMode
-          ? 'text-white/70 hover:bg-white/10 hover:text-white hover:shadow-sm'
-          : 'text-slate-400 hover:bg-white/5 hover:text-emerald-300'
-    } hover:scale-[1.02]`}
-  >
-    {isActive && (
-      <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-r-full ${isLightMode ? 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.5)]' : 'bg-gradient-to-b from-emerald-400 to-cyan-500 shadow-[0_0_8px_rgba(52,211,153,0.5)]'}`} />
-    )}
-    <div className={`relative z-10 flex items-center justify-center w-8 h-8 rounded-lg transition-transform duration-300 ${isActive ? 'scale-110 animate-float' : 'group-hover:scale-110'}`}>
-      <item.icon className={`w-5 h-5 ${isActive ? (isLightMode ? 'text-white' : 'text-emerald-400') : ''}`} strokeWidth={isActive ? 2.5 : 2} />
-    </div>
-    <span className={`text-[13px] font-bold tracking-wide relative z-10 ${isActive ? '' : 'font-semibold'}`}>{item.name}</span>
+const NavItem = memo(({ item, isActive, isLightMode, onClick }: { item: any, isActive: boolean, isLightMode?: boolean, onClick?: () => void }) => {
+  const baseClasses = "relative flex items-center gap-3.5 px-4 py-3 rounded-xl transition-all duration-300 ease-out group antialiased";
+  
+  const activeClasses = isLightMode 
+    ? "bg-[#10B981]/12 border border-[#10B981]/25 backdrop-blur-[12px] shadow-[0_0_20px_rgba(16,185,129,0.15)] text-white font-[700]" 
+    : "bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 text-white shadow-[0_4px_20px_rgba(16,185,129,0.15)] font-[700]";
     
-    {/* Soft glow on hover */}
-    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-r from-white/0 via-white/5 to-white/0" />
-  </Link>
-));
+  const inactiveClasses = isLightMode
+    ? "text-[rgba(255,255,255,0.92)] hover:bg-white/10 hover:text-white hover:translate-x-1"
+    : "text-[rgba(255,255,255,0.8)] hover:bg-white/10 hover:text-white hover:translate-x-1";
+
+  const iconBase = "w-[20px] h-[20px]";
+  const iconActive = "text-white";
+  const iconInactive = "text-[rgba(255,255,255,0.88)] group-hover:text-white";
+
+  return (
+    <Link 
+      href={item.href}
+      prefetch={false}
+      onClick={onClick}
+      className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
+    >
+      {isActive && isLightMode && (
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#34D399] rounded-r-full shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+      )}
+      {isActive && !isLightMode && (
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 to-cyan-500 shadow-[0_0_8px_rgba(52,211,153,0.5)] rounded-r-full" />
+      )}
+      <div className={`relative z-10 flex items-center justify-center transition-transform duration-300 ${isActive ? 'animate-float' : 'group-hover:scale-110'}`}>
+        <item.icon className={`${iconBase} ${isActive ? iconActive : iconInactive}`} strokeWidth={isActive ? 2.5 : 2} />
+      </div>
+      <span className={`text-[15px] sm:text-[13px] tracking-wide relative z-10 ${isActive ? 'font-bold' : 'font-semibold'}`}>{item.name}</span>
+    </Link>
+  );
+});
 
 NavItem.displayName = 'NavItem';
 
@@ -198,25 +206,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             )}
             <motion.aside 
               initial={false}
-              animate={{ width: 280, opacity: 1, x: 0 }}
-              exit={{ width: isMobile ? 280 : 0, opacity: 0, x: isMobile ? -280 : 0 }}
-              className={`backdrop-blur-2xl border-r flex flex-col fixed inset-y-4 left-4 z-50 rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.1)] overflow-hidden transition-colors duration-500 ${isLightMode ? 'bg-emerald-600 text-white border-emerald-500' : 'bg-[#0a0f1c]/80 border-white/5 shadow-black/50'}`}
+              animate={{ width: isMobile ? '82%' : 280, maxWidth: isMobile ? 320 : 280, opacity: 1, x: 0 }}
+              exit={{ width: isMobile ? '82%' : 0, maxWidth: isMobile ? 320 : 280, opacity: 0, x: isMobile ? '-100%' : 0 }}
+              className={`backdrop-blur-xl border-r flex flex-col fixed inset-y-4 left-4 z-50 rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.1)] overflow-hidden transition-colors duration-500 print:hidden ${isLightMode ? 'bg-[linear-gradient(180deg,#10b981_0%,#059669_55%,#047857_100%)] text-white border-white/10' : 'bg-[#0a0f1c]/80 border-white/5 shadow-black/50'}`}
             >
-            <div className={`h-24 flex items-center px-6 border-b shrink-0 ${isLightMode ? 'border-white/20' : 'border-white/5'}`}>
-              <AppLogo className={`w-12 h-12 mr-4 ${isLightMode ? 'text-white' : 'text-emerald-400'}`} iconClassName={`w-6 h-6 ${isLightMode ? 'text-emerald-600' : 'text-[#0a0f1c]'}`} />
-              <div className="flex flex-col">
-                <span className={`font-heading font-black text-xl tracking-tight transition-all ${isLightMode ? 'text-white' : 'text-white drop-shadow-[0_0_15px_rgba(52,211,153,0.3)]'}`}>
+            <div className={`flex flex-col items-center justify-center pt-5 pb-4 border-b shrink-0 px-4 ${isLightMode ? 'border-white/5' : 'border-white/5'}`}>
+              <div className="flex items-center justify-center w-[56px] h-[56px] rounded-[18px] shadow-[0_10px_30px_rgba(0,0,0,0.12)] bg-white/5 backdrop-blur-md mb-3 border border-white/10 relative group">
+                <AppLogo className="w-full h-full text-white group-hover:text-emerald-100 transition-colors" iconClassName="w-6 h-6 text-emerald-600 dark:text-[#0a0f1c]" />
+              </div>
+              <div className="flex flex-col items-center text-center">
+                <span className={`font-heading font-[800] text-[16px] tracking-[1px] transition-all antialiased text-white ${isLightMode ? 'drop-shadow-[0_0_10px_rgba(255,255,255,0.12)]' : 'drop-shadow-[0_0_15px_rgba(52,211,153,0.3)]'}`}>
                   SMART PPI
                 </span>
-                <span className={`text-[8px] sm:text-[9px] font-semibold uppercase tracking-wider mt-0.5 leading-tight ${isLightMode ? 'text-white/80' : 'text-slate-400'}`}>
+                <span className={`text-[8px] whitespace-nowrap leading-[1.4] text-center mt-1 transition-all antialiased ${isLightMode ? 'text-[rgba(255,255,255,0.72)]' : 'text-slate-400'}`}>
                   Sistem Monitoring, Audit dan Supervisi Terintegrasi
                 </span>
               </div>
             </div>
             
-            <div className="flex-1 overflow-y-auto py-8 px-5 space-y-2 scrollbar-hide">
-              <div className="mb-6 px-1">
-                <p className={`text-[10px] font-bold uppercase tracking-widest ${isLightMode ? 'text-white/80' : 'text-slate-500'}`}>Menu Utama</p>
+            <div className="flex-1 overflow-y-auto py-5 px-4 space-y-1 custom-sidebar-scrollbar">
+              <div className="mb-4 px-1">
+                <p className={`text-[10px] font-bold uppercase tracking-widest antialiased ${isLightMode ? 'text-[rgba(255,255,255,0.92)]' : 'text-slate-500'}`}>Menu Utama</p>
               </div>
               {navItems.map((item) => (
                 <NavItem 
@@ -228,15 +238,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 />
               ))}
             </div>            
-            <div className="p-4 mt-auto shrink-0">
+            <div className="p-4 pt-2 mt-auto shrink-0 antialiased">
               <Link 
                 href="/login"
                 prefetch={false}
                 onClick={() => setUserRole('')}
-                className={`flex items-center justify-center gap-2 w-full p-3.5 rounded-xl font-bold text-sm tracking-wide transition-all group ${isLightMode ? 'bg-white/10 hover:bg-white/20 text-white border border-white/20' : 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20'}`}
+                className={`flex items-center justify-center gap-2 w-full p-3 rounded-xl font-[600] text-[15px] sm:text-[13px] tracking-wide transition-all group ${isLightMode ? 'bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(239,68,68,0.12)] text-[#FFFFFF] border border-[rgba(255,255,255,0.10)]' : 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20'}`}
                 title="Keluar"
               >
-                <LogOut className={`w-5 h-5 transition-transform group-hover:-translate-x-1 ${isLightMode ? 'text-white' : ''}`} strokeWidth={2.5} />
+                <LogOut className={`w-4 h-4 transition-transform group-hover:-translate-x-1 ${isLightMode ? 'text-[#FFFFFF]' : ''}`} strokeWidth={2.5} />
                 <span>Keluar</span>
               </Link>
             </div>
@@ -246,9 +256,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </AnimatePresence>
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-500 ${!isMobile && isSidebarOpen ? 'ml-[312px]' : ''}`}>
+      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-500 print:ml-0 ${!isMobile && isSidebarOpen ? 'ml-[312px]' : ''}`}>
         {/* Top Header */}
-        <header className={`min-h-[56px] sm:h-20 py-2 sm:py-0 backdrop-blur-xl border-b flex items-center justify-between px-4 sm:px-8 sticky top-0 z-10 transition-colors duration-500 ${isLightMode ? 'bg-white/80 border-slate-100 shadow-sm' : 'bg-[#0a0f1c]/80 border-white/5 shadow-md'}`}>
+        <header className={`min-h-[56px] sm:h-20 py-2 sm:py-0 backdrop-blur-xl border-b flex items-center justify-between px-4 sm:px-8 sticky top-0 z-10 transition-colors duration-500 print:hidden ${isLightMode ? 'bg-white/80 border-slate-100 shadow-sm' : 'bg-[#0a0f1c]/80 border-white/5 shadow-md'}`}>
           <div className="flex items-center gap-2 sm:gap-4">
             <button 
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}

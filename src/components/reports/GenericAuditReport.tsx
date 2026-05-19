@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { utils, writeFile } from 'xlsx';
 import { supabase } from '@/lib/supabase';
 import { 
   TrendingUp, Activity, BarChart2, TrendingDown, Target, Calendar, CheckSquare, Search, FileText, Printer, Download, FileSpreadsheet,
-  CheckCircle2, AlertTriangle, ShieldCheck, User, Building2, Clock, Check
+  CheckCircle2, AlertTriangle, ShieldCheck, User, Building2, Clock, Check, Trash2, Edit, Plus
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Cell
@@ -110,6 +111,38 @@ export default function GenericAuditReport({
       
     return () => { supabase.removeChannel(chTarget); };
   }, [tableName, fetchData]);
+
+  useEffect(() => {
+    const handleExportExcel = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail?.indicator === tableName) {
+        if (!data || data.length === 0) {
+          alert('Tidak ada data untuk diekspor');
+          return;
+        }
+
+        const wb = utils.book_new();
+        
+        // Export Overview
+        const wsData = data.map(item => ({
+          'ID': item.id,
+          'Waktu': item.waktu ? format(parseISO(item.waktu), 'dd/MM/yyyy HH:mm') : '',
+          'Supervisor': item.supervisor || item.observer || '-',
+          'Unit/Ruangan': item.unit || item.ruangan || '-',
+          'Profesi/Pasien': item.profesi || item.nama_pasien || '-',
+          'Skor Kepatuhan (%)': item.persentase || 0,
+          'Temuan': item.temuan || '-',
+          'Rekomendasi': item.rekomendasi || '-'
+        }));
+        const ws = utils.json_to_sheet(wsData);
+        utils.book_append_sheet(wb, ws, "Rekap Audit");
+
+        writeFile(wb, `Laporan_${tableName}_${format(new Date(), 'yyyyMMdd_HHmmss')}.xlsx`);
+      }
+    };
+    window.addEventListener('export-excel', handleExportExcel);
+    return () => window.removeEventListener('export-excel', handleExportExcel);
+  }, [data, tableName]);
 
   const { filteredRecords, summaryStats, trendData } = useMemo(() => {
     let filteredData = data;
@@ -243,6 +276,10 @@ export default function GenericAuditReport({
       ? indicatorItems.map(i => ({ id: i.key, label: i.label }))
       : Object.keys(selectedRecord?.checklist_json || {}).map(k => ({ id: k, label: toSentenceCase(k) }));
 
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('record-selected', { detail: { id: selectedRecordId } }));
+  }, [selectedRecordId]);
+
   if (loading) return (
     <div className="flex flex-col items-center justify-center p-20 bg-white/5 backdrop-blur-md rounded-3xl animate-pulse">
       <Activity className="w-10 h-10 text-slate-400 mb-4 animate-spin" />
@@ -283,12 +320,6 @@ export default function GenericAuditReport({
                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
              />
            </div>
-        </div>
-
-        <div className="flex items-end gap-3 self-end h-full mt-2 md:mt-0">
-          <button onClick={() => window.print()} className="h-[46px] px-6 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 rounded-xl shadow-lg transition-colors flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider whitespace-nowrap">
-            <Printer className="w-4 h-4" /> Cetak PDF
-          </button>
         </div>
       </div>
 

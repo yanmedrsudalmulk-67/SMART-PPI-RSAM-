@@ -4,7 +4,15 @@ import DashboardLayout from '@/components/DashboardLayout';
 import {  ArrowLeft, Save, Upload, X, CheckCircle2 , RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
+import dynamic from 'next/dynamic';
+import { supabase } from '@/lib/supabase';
 import { DocumentationUploader, DocImage } from '@/components/DocumentationUploader';
+import type { TrainingMaterial } from '@/components/MateriUploader';
+
+const MateriUploader = dynamic(() => import('@/components/MateriUploader').then(mod => mod.MateriUploader), {
+  ssr: false,
+  loading: () => <div className="h-40 w-full animate-pulse bg-white/5 rounded-2xl" />
+});
 
 export default function DiklatPage() {
   const [judulPendidikan, setJudulPendidikan] = useState('');
@@ -13,7 +21,7 @@ export default function DiklatPage() {
   const [tempat, setTempat] = useState('');
   const [narasumber, setNarasumber] = useState('');
   const [peserta, setPeserta] = useState<string[]>([]);
-  const [materi, setMateri] = useState('');
+  const [materials, setMaterials] = useState<TrainingMaterial[]>([]);
   const [images, setImages] = useState<DocImage[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -31,14 +39,38 @@ export default function DiklatPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if(peserta.length === 0) { alert('Harap pilih minimal 1 peserta!'); return; }
+    if(!judulPendidikan) { alert('Harap isi judul pendidikan!'); return; }
     
     setIsSubmitting(true);
     try {
-      // Mock delay for now
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const payload = {
+        indikator_id: 'diklat_ppi',
+        nama_indikator: 'PENDIDIKAN DAN PELATIHAN PPI',
+        tanggal_waktu: new Date(waktu).toISOString(),
+        observer: narasumber,
+        unit: tempat,
+        jenis_tindakan: jenisPendidikan,
+        jumlah_dinilai: peserta.length, // Let's simplify and assume 1 class = 1 dinilai, 1 patuh for tracking completion
+        jumlah_patuh: peserta.length,
+        persentase: 100,
+        status_kepatuhan: 'Terlaksana',
+        data_indikator: {
+          judul: judulPendidikan,
+          peserta: peserta,
+        }
+      };
+      
+      const { error } = await supabase.from('audit_sessions').insert([payload]);
+      if (error) throw error;
+      
       alert('Data pelatihan berhasil disimpan!');
-    } catch (err) {
+      setJudulPendidikan('');
+      setPeserta([]);
+      setNarasumber('');
+      setTempat('');
+    } catch (err: any) {
       console.error(err);
+      alert('Gagal menyimpan: ' + err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -120,6 +152,10 @@ export default function DiklatPage() {
                   ))}
                 </div>
               )}
+            </div>
+
+            <div>
+               <MateriUploader materials={materials} setMaterials={setMaterials} />
             </div>
 
             <div>

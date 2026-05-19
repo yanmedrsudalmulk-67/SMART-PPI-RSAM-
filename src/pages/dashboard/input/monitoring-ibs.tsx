@@ -62,15 +62,10 @@ export default function MonitoringIBSPage() {
       if (error) throw error;
       if (data) {
         setObservers(data);
-        if (data.length > 0 && !observer) {
-          const defaultObs = data.find(o => o.nama.includes('Adi Tresa Purnama')) || data[0];
-          setObserver(defaultObs.nama);
-        }
       }
     } catch (err) {
       const fallback = { id: '1', nama: 'IPCN_Adi Tresa Purnama' };
       setObservers([fallback]);
-      if (!observer) setObserver(fallback.nama);
     }
   };
 

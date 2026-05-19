@@ -82,12 +82,8 @@ export default function InputApdPage() {
         finalData = [{ id: 'adi-static', nama: 'IPCN_Adi Tresa Purnama' }, ...finalData];
       }
       setObservers(finalData);
-      if (finalData.length > 0 && !observer) {
-        setObserver(finalData[0].nama);
-      }
     } catch (err) {
       setObservers([{ id: '1', nama: 'IPCN_Adi Tresa Purnama' }]);
-      setObserver('IPCN_Adi Tresa Purnama');
     }
   };
 
@@ -142,6 +138,12 @@ export default function InputApdPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!observer) {
+      alert('Silakan pilih observer terlebih dahulu.');
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
@@ -270,22 +272,32 @@ export default function InputApdPage() {
         </div>
 
         <div className="space-y-4">
-          {apdItems.map((apd) => (
-            <div key={apd.id} className="bg-white/5 p-6 rounded-[24px] border border-white/5">
+          {apdItems.map((apd) => {
+            const selected = apdData[apd.id];
+            const borderLeftColor = selected === 'ya' ? 'border-l-blue-500' : selected === 'tidak' ? 'border-l-red-500' : selected === 'na' ? 'border-l-slate-500' : 'border-l-transparent';
+            return (
+            <div key={apd.id} className={`bg-white/5 p-6 rounded-[24px] border border-white/5 border-l-4 ${borderLeftColor} transition-colors duration-300`}>
               <h3 className="text-sm font-bold text-white mb-4">{apd.label}</h3>
               <div className="grid grid-cols-3 gap-3">
-                {['ya', 'tidak', 'na'].map(choice => (
-                  <button key={choice} onClick={() => handleActionClick(apd.id, choice as any)}
-                      className={`py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                        apdData[apd.id] === choice ? 'bg-blue-600 text-white border-blue-500' : 'bg-white/5 text-slate-400 border-transparent hover:bg-white/10'
-                      }`}
-                    >
-                      {choice === 'na' ? 'N/A' : choice}
-                    </button>
-                  ))}
+                {['ya', 'tidak', 'na'].map(choice => {
+                    let activeClass = '';
+                    if (choice === 'ya') activeClass = 'bg-blue-600 text-white border-blue-500 shadow-[0_0_15px_rgba(37,99,235,0.3)]';
+                    if (choice === 'tidak') activeClass = 'bg-red-500 text-white border-red-400 shadow-[0_0_15px_rgba(239,68,68,0.3)]';
+                    if (choice === 'na') activeClass = 'bg-slate-500 text-white border-slate-400 shadow-[0_0_15px_rgba(100,116,139,0.3)]';
+                    return (
+                      <button key={choice} onClick={() => handleActionClick(apd.id, choice as any)}
+                        className={`py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                          selected === choice ? activeClass : 'bg-white/5 text-slate-400 border-transparent hover:bg-white/10 hover:text-white'
+                        }`}
+                      >
+                        {choice === 'na' ? 'N/A' : choice}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-            ))}
+            );
+          })}
           </div>
 
         <LiveStatisticsCard 

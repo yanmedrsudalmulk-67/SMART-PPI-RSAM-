@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import { useAppContext } from '@/components/Providers';
 import { supabase } from '@/lib/supabase';
+import { uploadImagesToSupabase } from '@/lib/upload';
 import DashboardLayout from '@/components/DashboardLayout';
 import { LiveStatisticsCard } from '@/components/LiveStatisticsCard';
 import DigitalSignatureSection, { DigitalSignatureRef } from '@/components/DigitalSignatureSection';
@@ -20,14 +21,14 @@ const units = [
 ];
 
 const auditItems = [
-  { id: 'peralatan_tersedia', label: 'Peralatan tersedia dan tersusun baik di meja dan lemari', key: 'peralatan_tersedia' },
-  { id: 'peralatan_berkarat', label: 'Adakah peralatan sarana dan prasarana kesehatan yang berkarat', key: 'peralatan_berkarat' },
-  { id: 'sterilisasi_tersentral', label: 'Sterilisasi tersentral', key: 'sterilisasi_tersentral' },
-  { id: 'alat_reused', label: 'Alat used reused sesuai aturan', key: 'alat_reused' },
-  { id: 'metode_dekontaminasi', label: 'Petugas dapat menjelaskan metoda dekontaminasi peralatan yang biasa digunakan pasien', key: 'metode_dekontaminasi' },
-  { id: 'dekontaminasi_lokal', label: 'Dekontaminasi lokal dari instrumen bedah tidak dilakukan di area klinis', key: 'dekontaminasi_lokal' },
-  { id: 'expired_date', label: 'Tanggal kadaluarsa peralatan steril belum terlewati', key: 'expired_date' },
-  { id: 'instrumen_bekas', label: 'Tidak terlihat debu / darah tertinggal di instrumen bekas pakai', key: 'instrumen_bekas' }
+  { id: 'peralatan_tersedia', label: 'Peralatan tersedia dan tersusun baik di meja dan lemari', key: 'peralatan_tersedia', type: 'positive' },
+  { id: 'peralatan_berkarat', label: 'Adakah peralatan sarana dan prasarana kesehatan yang berkarat', key: 'peralatan_berkarat', type: 'negative' },
+  { id: 'sterilisasi_tersentral', label: 'Sterilisasi tersentral', key: 'sterilisasi_tersentral', type: 'positive' },
+  { id: 'alat_reused', label: 'Alat used reused sesuai aturan', key: 'alat_reused', type: 'positive' },
+  { id: 'metode_dekontaminasi', label: 'Petugas dapat menjelaskan metoda dekontaminasi peralatan yang biasa digunakan pasien', key: 'metode_dekontaminasi', type: 'positive' },
+  { id: 'dekontaminasi_lokal', label: 'Dekontaminasi lokal dari instrumen bedah tidak dilakukan di area klinis', key: 'dekontaminasi_lokal', type: 'positive' },
+  { id: 'expired_date', label: 'Tanggal kadaluarsa peralatan steril belum terlewati', key: 'expired_date', type: 'positive' },
+  { id: 'instrumen_bekas', label: 'Tidak terlihat debu / darah tertinggal di instrumen bekas pakai', key: 'instrumen_bekas', type: 'positive' }
 ] as const;
 
 type AuditStatus = 'ya' | 'tidak' | 'na' | null;
@@ -37,98 +38,57 @@ export default function InputDekontaminasiAlatPage() {
   const { userRole } = useAppContext();
   const isIPCN = userRole === 'IPCN' || userRole === 'Admin';
   
-  const [startTime, setStartTime] = useState<Date | null>(null);
-  
+  const [startTime, setStartTime] = useState<Date | null>(new Date());
   const [observer, setObserver] = useState('');
   const [unit, setUnit] = useState('');
   const [temuan, setTemuan] = useState('');
   const [rekomendasi, setRekomendasi] = useState('');
   const [images, setImages] = useState<DocImage[]>([]);
   const [pjName, setPjName] = useState('');
-  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+
   const sigRef = useRef<DigitalSignatureRef>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setStartTime(new Date());
-  }, []);
-
-  const formatDateForInput = (date: Date | null) => {
-    if (!date) return '';
-    try {
-      const d = new Date(date);
-      return d.toISOString().split('T')[0];
-    } catch (e) {
-      return '';
-    }
-  };
-
-  const formatTimeForInput = (date: Date | null) => {
-    if (!date) return '';
-    try {
-      const d = new Date(date);
-      const hours = d.getHours().toString().padStart(2, '0');
-      const mins = d.getMinutes().toString().padStart(2, '0');
-      return `${hours}:${mins}`;
-    } catch (e) {
-      return '';
-    }
-  };
-
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const [year, month, day] = e.target.value.split('-').map(Number);
-    if (!year) return;
-    
-    if (startTime) {
-      const newD = new Date(startTime);
-      newD.setFullYear(year, month - 1, day);
-      setStartTime(newD);
-    } else {
-        const newD = new Date();
-        newD.setFullYear(year, month - 1, day);
-        setStartTime(newD);
-    }
-  };
-
-  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const [hours, mins] = e.target.value.split(':').map(Number);
-    const newD = startTime ? new Date(startTime) : new Date();
-    newD.setHours(hours, mins);
-    setStartTime(newD);
-  };
 
   const [auditData, setAuditData] = useState<Record<string, AuditStatus>>({
     peralatan_tersedia: null, peralatan_berkarat: null, sterilisasi_tersentral: null, alat_reused: null, 
     metode_dekontaminasi: null, dekontaminasi_lokal: null, expired_date: null, instrumen_bekas: null
   });
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showToast, setShowToast] = useState(false);
+  const formatDateForInput = (date: Date | null) => date ? date.toISOString().split('T')[0] : '';
+  const formatTimeForInput = (date: Date | null) => date ? `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}` : '';
 
-  useEffect(() => {
-    setStartTime(new Date());
-  }, []);
-
-  const handleError = (err: any) => {
-    console.error(err);
-    alert(`Error: ${err.message || 'Terjadi kesalahan sistem'}`);
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const [year, month, day] = e.target.value.split('-').map(Number);
+    const newD = new Date(startTime || new Date());
+    newD.setFullYear(year, month - 1, day);
+    setStartTime(newD);
   };
 
-  const handleActionClick = (id: string, stat: AuditStatus) => {
-    setAuditData(prev => ({ ...prev, [id]: stat }));
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const [hours, mins] = e.target.value.split(':').map(Number);
+    const newD = new Date(startTime || new Date());
+    newD.setHours(hours, mins);
+    setStartTime(newD);
   };
 
-  const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
-  };
+  const handleActionClick = (id: string, stat: AuditStatus) => setAuditData(prev => ({ ...prev, [id]: stat }));
+  const handleError = (err: any) => { console.error(err); alert(`Error: ${err.message}`); };
 
   const stats = useMemo(() => {
     let patuh = 0;
     let dinilai = 0;
     
-    Object.values(auditData).forEach(val => {
-      if (val === 'ya') { patuh++; dinilai++; }
-      else if (val === 'tidak') { dinilai++; }
+    auditItems.forEach(item => {
+      const val = auditData[item.id];
+      if (val === 'ya' || val === 'tidak') {
+        dinilai++;
+        if (item.type === 'positive') {
+          if (val === 'ya') patuh++;
+        } else { // negative
+          if (val === 'tidak') patuh++;
+        }
+      }
     });
 
     const persentase = dinilai > 0 ? Math.round((patuh / dinilai) * 100) : 0;
@@ -149,10 +109,7 @@ export default function InputDekontaminasiAlatPage() {
       const ttd_pj = sigRef.current?.getPjSignature();
       const ttd_ipcn = sigRef.current?.getSupervisorSignature();
 
-      const uploadedImages: string[] = [];
-      for (const img of images || []) {
-        uploadedImages.push(img.url); 
-      }
+      const uploadedImages = await uploadImagesToSupabase(supabase, images || [], 'audit_images', 'images');
 
       const payload = {
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
@@ -302,8 +259,23 @@ export default function InputDekontaminasiAlatPage() {
                Checklist Dekontaminasi Alat
           </h2>
           <div className="space-y-4">
-            {auditItems.map((item, idx) => (
-              <div key={item.id} className="bg-white/5 p-6 rounded-[24px] border border-white/5 relative overflow-hidden group">
+            {auditItems.map((item, idx) => {
+              const selected = auditData[item.id];
+              const isNegativeQuestion = item.id === 'peralatan_berkarat';
+              
+              let borderLeftColor = 'border-l-transparent';
+              if (selected === 'na') {
+                 borderLeftColor = 'border-l-slate-500';
+              } else if (selected) {
+                 if (isNegativeQuestion) {
+                    borderLeftColor = selected === 'ya' ? 'border-l-red-500' : 'border-l-blue-500';
+                 } else {
+                    borderLeftColor = selected === 'ya' ? 'border-l-blue-500' : 'border-l-red-500';
+                 }
+              }
+              
+              return (
+              <div key={item.id} className={`bg-white/5 p-6 rounded-[24px] border border-white/5 border-l-4 ${borderLeftColor} transition-colors duration-300 relative overflow-hidden group`}>
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
                   <div className="flex gap-4">
                     <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border transition-all duration-500 bg-white/5 border-white/10 text-slate-500`}>
@@ -315,21 +287,32 @@ export default function InputDekontaminasiAlatPage() {
                   </div>
                   
                   <div className="flex p-1.5 bg-white/5 rounded-2xl border border-white/5 w-fit self-end md:self-center">
-                    {['ya', 'tidak', 'na'].map(choice => (
-                      <button key={choice} onClick={() => handleActionClick(item.id, choice as any)}
-                        className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${
-                          auditData[item.id] === choice 
-                            ? (choice === 'ya' ? 'bg-emerald-600 text-white shadow-lg transform scale-105' : choice === 'tidak' ? 'bg-red-600 text-white shadow-lg transform scale-105' : 'bg-slate-600 text-white shadow-lg transform scale-105')
-                            : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
-                        }`}
-                      >
-                        {choice}
-                      </button>
-                    ))}
+                    {['ya', 'tidak', 'na'].map(choice => {
+                      let activeClass = '';
+                      if (choice === 'na') {
+                         activeClass = 'bg-slate-500 text-white shadow-[0_0_15px_rgba(100,116,139,0.3)] transform scale-105';
+                      } else if (isNegativeQuestion) {
+                         activeClass = choice === 'ya' ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)] transform scale-105' : 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] transform scale-105';
+                      } else {
+                         activeClass = choice === 'ya' ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] transform scale-105' : 'bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)] transform scale-105';
+                      }
+
+                      return (
+                        <button key={choice} onClick={() => handleActionClick(item.id, choice as any)}
+                          className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${
+                            selected === choice 
+                              ? activeClass
+                              : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                          }`}
+                        >
+                          {choice}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         </div>
 
@@ -342,8 +325,8 @@ export default function InputDekontaminasiAlatPage() {
           <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">Section Audit Tambahan</h2>
           
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Temuan Audit</label>
-            <textarea value={temuan} onChange={(e) => setTemuan(e.target.value)} placeholder="Tuliskan temuan audit..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none min-h-[100px]" />
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Temuan Lapangan</label>
+            <textarea value={temuan} onChange={(e) => setTemuan(e.target.value)} placeholder="Tuliskan temuan lapangan..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none min-h-[100px]" />
           </div>
 
           <div>
@@ -358,6 +341,7 @@ export default function InputDekontaminasiAlatPage() {
             pjName={pjName} 
             setPjName={setPjName} 
             pjLabel="PJ RUANGAN"
+            supervisorLabel="TIM PPI"
           />
         </div>
 

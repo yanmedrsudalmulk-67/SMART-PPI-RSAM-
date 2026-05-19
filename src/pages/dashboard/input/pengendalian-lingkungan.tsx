@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import { useAppContext } from '@/components/Providers';
 import { supabase } from '@/lib/supabase';
+import { uploadImagesToSupabase } from '@/lib/upload';
 import DashboardLayout from '@/components/DashboardLayout';
 import { LiveStatisticsCard } from '@/components/LiveStatisticsCard';
 import { DocumentationUploader } from '@/components/DocumentationUploader';
@@ -132,12 +133,8 @@ export default function InputPengendalianLingkunganPage() {
         finalData = [{ id: 'adi-static', nama: 'IPCN_Adi Tresa Purnama' }, ...finalData];
       }
       setObservers(finalData);
-      if (finalData.length > 0 && !observer) {
-        setObserver(finalData[0].nama);
-      }
     } catch (err) {
       setObservers([{ id: '1', nama: 'IPCN_Adi Tresa Purnama' }]);
-      setObserver('IPCN_Adi Tresa Purnama');
     }
   };
 
@@ -175,12 +172,7 @@ export default function InputPengendalianLingkunganPage() {
       const pjSig = signatureRef.current?.getPjSignature();
       const spvSig = signatureRef.current?.getSupervisorSignature();
 
-      // Simplified image upload logic assuming exists
-      const uploadedImages: string[] = [];
-      for (const img of images || []) {
-        // Upload logic here...
-        uploadedImages.push(img.url); // placeholder
-      }
+      const uploadedImages = await uploadImagesToSupabase(supabase, images || [], 'audit_images', 'images');
 
       const payload = {
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),

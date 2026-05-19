@@ -80,12 +80,8 @@ export default function HandHygieneAuditPage() {
         finalData = [{ id: 'adi-static', nama: 'IPCN_Adi Tresa Purnama' }, ...finalData];
       }
       setObservers(finalData);
-      if (finalData.length > 0 && !observer) {
-        setObserver(finalData[0].nama);
-      }
     } catch (err) {
       setObservers([{ id: '1', nama: 'IPCN_Adi Tresa Purnama' }]);
-      setObserver('IPCN_Adi Tresa Purnama');
     }
   };
 
@@ -155,6 +151,12 @@ export default function HandHygieneAuditPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!observer) {
+      alert('Silakan pilih observer terlebih dahulu.');
+      return;
+    }
+
     const end = endTime || new Date();
     setEndTime(end);
     setIsSubmitting(true);
@@ -348,8 +350,7 @@ export default function HandHygieneAuditPage() {
                 <div className="relative group overflow-hidden bg-white/5 p-6 rounded-[24px] border border-white/5 hover:border-blue-500/30 transition-all duration-500 shadow-inner border-l-4 border-l-blue-500/30">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-transparent rounded-bl-full pointer-events-none" />
                   <label className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 mb-4 block flex items-center justify-between">
-                    Jam Selesai (Manual)
-                    <span className="text-[8px] opacity-50 animate-pulse italic text-slate-400">Scroll untuk pilih</span>
+                    Jam Selesai
                   </label>
                   <div className="relative flex items-center">
                     <input 
@@ -362,7 +363,6 @@ export default function HandHygieneAuditPage() {
                       <Activity className="w-4 h-4 text-blue-400" />
                     </div>
                   </div>
-                  {!endTime && <p className="text-[8px] font-bold text-blue-500/50 uppercase tracking-widest mt-2 flex items-center gap-1"><span className="w-1 h-1 bg-blue-500 rounded-full animate-ping" /> Klik di atas untuk ubah jam</p>}
                 </div>
               </div>
             </div>
@@ -374,13 +374,13 @@ export default function HandHygieneAuditPage() {
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 <EditableSelect
-                  label="Observer / Supervisi"
+                  label="Supervisor"
                   value={observer}
                   onChange={setObserver}
                   options={[]}
                   isIPCN={isIPCN}
                   table="master_observers"
-                  placeholder="Pilih Observer..."
+                  placeholder="Pilih Supervisor..."
                 />
                 <EditableSelect
                   label="Ruangan / Unit"
@@ -405,26 +405,33 @@ export default function HandHygieneAuditPage() {
 
             {/* 5 Moments */}
             <div className="space-y-4">
-              {moments.map((m) => (
-                <div key={m.id} className="bg-white/5 backdrop-blur-xl p-6 rounded-[24px] border border-white/5 relative overflow-hidden">
+              {moments.map((m) => {
+                const selectedOpt = momenData[m.id];
+                const activeColorLine = selectedOpt === 'hr' || selectedOpt === 'hw' ? 'border-l-blue-500 bg-blue-500/5' :
+                                        selectedOpt === 'miss' ? 'border-l-red-500 bg-red-500/5' :
+                                        selectedOpt === 'na' ? 'border-l-slate-400 bg-slate-500/5' :
+                                        'border-l-transparent';
+
+                return (
+                <div key={m.id} className={`bg-white/5 backdrop-blur-xl p-6 rounded-[24px] border border-white/5 relative overflow-hidden transition-all duration-300 border-l-4 ${activeColorLine}`}>
                   <div className="mb-4">
-                    <span className="text-[10px] font-bold uppercase tracking-widest bg-blue-500/20 text-blue-400 px-2 py-1 rounded-lg mb-2 inline-block">
+                    <span className="text-[10px] font-bold uppercase tracking-widest bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full mb-2 inline-block">
                       {m.label}
                     </span>
                     <p className="text-sm font-bold text-white">{m.desc}</p>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {[
-                      { id: 'hr', label: 'Handrub', color: 'blue' },
-                      { id: 'hw', label: 'Handwash', color: 'blue' },
-                      { id: 'miss', label: 'Tidak HH', color: 'red' },
-                      { id: 'na', label: 'N/A', color: 'slate' }
+                      { id: 'hr', label: 'Handrub', activeClass: 'bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-500/20' },
+                      { id: 'hw', label: 'Handwash', activeClass: 'bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-500/20' },
+                      { id: 'miss', label: 'Tidak HH', activeClass: 'bg-red-600 text-white border-red-500 shadow-lg shadow-red-500/20' },
+                      { id: 'na', label: 'N/A', activeClass: 'bg-slate-500 text-white border-slate-400 shadow-lg shadow-slate-500/20' }
                     ].map(btn => (
                       <button key={btn.id} onClick={() => handleActionClick(m.id, btn.id as any)}
                         className={`py-3 px-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
                           momenData[m.id] === btn.id 
-                            ? `bg-${btn.color}-600/20 text-${btn.color}-400 border-${btn.color}-500/50` 
-                            : 'bg-white/5 text-slate-400 border-transparent hover:bg-white/10'
+                            ? btn.activeClass
+                            : 'bg-white/5 text-slate-400 border-transparent hover:bg-white/10 hover:text-slate-300'
                         }`}
                       >
                         {btn.label}
@@ -432,7 +439,8 @@ export default function HandHygieneAuditPage() {
                     ))}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

@@ -153,30 +153,6 @@ const HeroSlider = ({ slides, isLoading }: { slides: Slide[], isLoading: boolean
         <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
       </button>
 
-      {/* Custom Styles for Swiper dots to make them Premium */}
-      <style jsx global>{`
-        .swiper-pagination-bullet {
-          width: 8px !important;
-          height: 8px !important;
-          background: white !important;
-          opacity: 0.5 !important;
-          transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1) !important;
-          border-radius: 4px !important;
-          backdrop-filter: blur(4px) !important;
-        }
-        .swiper-pagination-bullet-active {
-          width: 36px !important;
-          opacity: 1 !important;
-          background: #34d399 !important; /* emerald-400 */
-          box-shadow: 0 0 15px rgba(52, 211, 153, 0.6) !important;
-        }
-        .swiper-effect-fade .swiper-slide {
-          pointer-events: none;
-        }
-        .swiper-effect-fade .swiper-slide-active {
-          pointer-events: auto;
-        }
-      `}</style>
     </div>
   );
 };
@@ -535,7 +511,7 @@ export default function DashboardPage() {
                  <div key={index} className="flex justify-between gap-4 text-xs font-bold items-center">
                     <span style={{ color: color }}>{entry.name}:</span>
                     <span className="text-slate-700 dark:text-slate-300">
-                        {entry.value} {activeTab === 'hais' ? '‰' : '%'} 
+                        {entry.value} {activeTab === 'hais' ? 'per mil' : '%'} 
                         {std && <span className="ml-2 text-[10px] bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded" style={{ color }}>{status}</span>}
                     </span>
                  </div>
@@ -553,62 +529,73 @@ export default function DashboardPage() {
   };
 
   const generateAutoInsight = () => {
-    if (chartDataList.length < 2) return "Data belum cukup untuk menghasilkan analisis tren.";
+    if (chartDataList.length < 1) return "Data belum tersedia untuk periode observasi ini.";
     const current = chartDataList[chartDataList.length - 1];
-    const prev = chartDataList[chartDataList.length - 2];
+    const prev = chartDataList.length > 1 ? chartDataList[chartDataList.length - 2] : null;
     
+    // PPI Standards and Kemenkes guidance
+    // HH >= 85%, APD = 100%
     if (activeTab === 'hh') {
        const std = standards['hh']?.nilai_standar || 85;
        const isCurrentMeets = current.hh >= std;
-       const diff = current.hh - prev.hh;
-       let text = `Capaian bulan ini (${current.hh}%) `;
-       if (isCurrentMeets) text += `sudah memenuhi standar PPI (${std}%). `;
-       else text += `masih dibawah standar PPI (${std}%). `;
+       let text = `Analisis Capaian HH: Saat ini berada di angka ${current.hh}%. `;
        
-       if (diff > 0) text += `Terjadi peningkatan ${(diff).toFixed(1)}% dibanding sebelumnya.`;
-       else if (diff < 0) text += `Terjadi penurunan ${Math.abs(diff).toFixed(1)}% dibanding sebelumnya.`;
-       else text += `Trend kepatuhan stabil.`;
+       if (isCurrentMeets) {
+         text += `Sudah mencapai Target Kemenkes (>= ${std}%). Pertahankan budaya cuci tangan 5 momen & 6 langkah. `;
+       } else {
+         text += `Belum mencapai target PPI (Target ${std}%). Rekomendasi: Lakukan audit fasilitas HH (Ketersediaan Handrub/Sabun) dan edukasi ulang (Refreshment) kepada seluruh staff. `;
+       }
        
+       if (prev) {
+         const diff = current.hh - prev.hh;
+         if (diff > 0) text += `Tren menunjukkan progres positif (+${(diff).toFixed(1)}%). `;
+         else if (diff < 0) text += `Waspadai penurunan tren sebesar ${Math.abs(diff).toFixed(1)}%. Segera lakukan investigasi kepatuhan per departemen. `;
+         else text += `Tren kepatuhan terpantau stabil. `;
+       }
        return text;
     } else if (activeTab === 'apd') {
        const std = standards['apd']?.nilai_standar || 100;
        const isCurrentMeets = current.apd >= std;
-       const diff = current.apd - prev.apd;
-       let text = `Kepatuhan APD bulan ini (${current.apd}%) `;
-       if (isCurrentMeets) text += `sudah memenuhi standar (${std}%). `;
-       else text += `masih dibawah standar PPI (${std}%). `;
+       let text = `Analisis Kepatuhan APD: Capaian saat ini ${current.apd}%. `;
        
-       if (diff > 0) text += `Terjadi peningkatan ${(diff).toFixed(1)}% dibanding sebelumnya.`;
-       else if (diff < 0) text += `Terjadi penurunan ${Math.abs(diff).toFixed(1)}% dibanding sebelumnya.`;
-       else text += `Trend kepatuhan stabil.`;
+       if (isCurrentMeets) {
+         text += `Sangat Baik, sesuai standar Kemenkes/PPI. Pastikan ketersediaan stock APD tetap terjaga sesuai beban kerja. `;
+       } else {
+         text += `Perlu perhatian khusus karena di bawah standar (${std}%). Rekomendasi: Evaluasi ketersediaan APD di titik pelayanan dan lakukan supervisi langsung (Head to Head) pada saat tindakan medis berisiko. `;
+       }
        
+       if (prev) {
+         const diff = current.apd - prev.apd;
+         if (diff > 0) text += `Terdapat kenaikan kepatuhan (+${(diff).toFixed(1)}%). `;
+         else if (diff < 0) text += `Terdeteksi penurunan tren (${Math.abs(diff).toFixed(1)}%). Segera lakukan audit 'Peer Review' antar unit. `;
+       }
+       return text;
+    } else if (activeTab === 'hais') {
+       const phleStd = standards['phlebitis']?.nilai_standar || 1.5;
+       const iskStd = standards['isk']?.nilai_standar || 5;
+       let text = "Analisis HAIs: ";
+       const issues = [];
+       if (current.phlebitis > phleStd) issues.push(`Phlebitis (${current.phlebitis} per mil) di atas batas ${phleStd} per mil`);
+       if (current.isk > iskStd) issues.push(`ISK (${current.isk} per mil) di atas batas ${iskStd} per mil`);
+       
+       if (issues.length > 0) {
+         text += `Ditemukan insiden yang melebihi standar: ${issues.join(', ')}. Rekomendasi: Terapkan bundle monitoring secara ketat (Pemasangan & Maintenance line). `;
+       } else {
+         text += "Seluruh indikator HAIs bulan ini berada dalam batas normal sesuai standar Kemenkes. Tetap lakukan kewaspadaan standar. ";
+       }
        return text;
     } else if (activeTab === 'fasilitas_apd') {
-       const std = standards['fasilitas_apd']?.nilai_standar || 100;
-       const isCurrentMeets = current.fasilitas_apd >= std;
-       const diff = current.fasilitas_apd - prev.fasilitas_apd;
-       let text = `Kelengkapan Fasilitas APD (${current.fasilitas_apd}%) `;
-       if (isCurrentMeets) text += `sudah optimal. `;
-       else text += `perlu ditingkatkan untuk mencapai target ${std}%. `;
-       
-       if (diff > 0) text += `Ada peningkatan ${(diff).toFixed(1)}% ketersediaan.`;
-       else if (diff < 0) text += `Ada penurunan ${Math.abs(diff).toFixed(1)}% ketersediaan.`;
-       
+       let text = `Fasilitas APD: Ketersediaan di angka ${current.fasilitas_apd}%. `;
+       if (current.fasilitas_apd < 100) text += "Ditemukan beberapa titik point yang kekosongan stock. Koordinasikan dengan bagian Farmasi/Logistik untuk pemenuhan fasilitas. ";
+       else text += "Ketersediaan fasilitas sangat baik dan mendukung kepatuhan pencegahan infeksi. ";
        return text;
     } else if (activeTab === 'linen') {
-       const std = standards['linen']?.nilai_standar || 100;
-       const isCurrentMeets = current.linen >= std;
-       const diff = current.linen - prev.linen;
-       let text = `Kepatuhan Penatalaksanaan Linen (${current.linen}%) `;
-       if (isCurrentMeets) text += `sudah sesuai target. `;
-       else text += `masih di bawah standar ${std}%. `;
-       
-       if (diff > 0) text += `Meningkat ${(diff).toFixed(1)}% dari periode lalu.`;
-       else if (diff < 0) text += `Menurun ${Math.abs(diff).toFixed(1)}% dari periode lalu.`;
-       
+       let text = `Penatalaksanaan Linen: Capaian ${current.linen}%. `;
+       if (current.linen < 100) text += "Belum optimal sesuai standar. Rekomendasi: Pastikan alur pemisahan linen infeksius dan non-infeksius serta penggunaan APD yang benar di Laundry. ";
+       else text += "Pengeleloaan linen sudah sesuai dengan standar PPI. ";
        return text;
     }
-    return "Analisis tren HAIs perlu dievaluasi lebih lanjut pada detail observasi.";
+    return "Data monitoring PPI terpantau dinamis.";
   };
 
   const renderCustomLegend = (props: any) => {
@@ -633,8 +620,8 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 pb-10">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 dark:border-white/10 pb-6 mb-2">
-        <div className="text-center md:text-left">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 border-b border-slate-200 dark:border-white/10 pb-6 mb-2">
+        <div className="text-center lg:text-left w-full lg:w-auto">
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all uppercase">Dashboard SMART PPI</h1>
           <div className="mt-1">
             <p className="text-slate-900 dark:text-slate-400 font-normal leading-tight max-w-[280px] sm:max-w-none mx-auto md:mx-0 text-[14px] sm:text-[14px] xl:text-[14px]" style={{ fontSize: '14px' }}>
@@ -805,19 +792,19 @@ export default function DashboardPage() {
            <div className="grid grid-cols-2 gap-2 mt-4">
               <div className="bg-slate-50 dark:bg-white/5 p-2 rounded-[12px] border border-slate-100 dark:border-white/5">
                 <p className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">Phlebitis</p>
-                <p className={`text-sm font-black ${getStatusColor(stats.hais.phlebitis, standards.phlebitis)}`}>{stats.hais.phlebitis}‰</p>
+                <p className={`text-sm font-black ${getStatusColor(stats.hais.phlebitis, standards.phlebitis)}`}>{stats.hais.phlebitis} per mil</p>
               </div>
               <div className="bg-slate-50 dark:bg-white/5 p-2 rounded-[12px] border border-slate-100 dark:border-white/5">
                 <p className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">ISK</p>
-                <p className={`text-sm font-black ${getStatusColor(stats.hais.isk, standards.isk)}`}>{stats.hais.isk}‰</p>
+                <p className={`text-sm font-black ${getStatusColor(stats.hais.isk, standards.isk)}`}>{stats.hais.isk} per mil</p>
               </div>
               <div className="bg-slate-50 dark:bg-white/5 p-2 rounded-[12px] border border-slate-100 dark:border-white/5">
                 <p className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">IDO</p>
-                <p className={`text-sm font-black ${getStatusColor(stats.hais.ido, standards.ido)}`}>{stats.hais.ido}‰</p>
+                <p className={`text-sm font-black ${getStatusColor(stats.hais.ido, standards.ido)}`}>{stats.hais.ido} per mil</p>
               </div>
               <div className="bg-slate-50 dark:bg-white/5 p-2 rounded-[12px] border border-slate-100 dark:border-white/5">
                 <p className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">VAP</p>
-                <p className={`text-sm font-black ${getStatusColor(stats.hais.vap, standards.vap)}`}>{stats.hais.vap}‰</p>
+                <p className={`text-sm font-black ${getStatusColor(stats.hais.vap, standards.vap)}`}>{stats.hais.vap} per mil</p>
               </div>
            </div>
         </div>
@@ -918,118 +905,127 @@ export default function DashboardPage() {
                </div>
             </div>
          </div>
-
-         <div className="p-8 h-[400px]">
-            {isDataLoading ? (
-              <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-500">
-                <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                <p className="text-sm font-medium">Memuat data monitoring...</p>
-              </div>
-            ) : chartDataList.length > 0 ? (
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={chartMode}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.3 }}
-                  className="w-full h-full"
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    {chartMode === 'bar' ? (
-                      <ComposedChart data={chartDataList} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                        <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} dy={10} />
-                        <YAxis tick={{ fontSize: 11, fill: '#64748b' }} domain={activeTab !== 'hais' ? [0, 100] : ['auto', 'auto']} axisLine={false} tickLine={false} dx={-10} />
-                        <Tooltip content={renderTooltipContent} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
-                        <Legend content={renderCustomLegend} />
-                        
-                        {activeTab === 'hais' ? (
-                          <>
-                            <Bar dataKey="phlebitis" name="Phlebitis (‰)" fill="#f43f5e" radius={[4,4,0,0]} stackId="a" />
-                            <Bar dataKey="isk" name="ISK (‰)" fill="#3b82f6" radius={[4,4,0,0]} stackId="a" />
-                            <Bar dataKey="ido" name="IDO (‰)" fill="#10b981" radius={[4,4,0,0]} stackId="a" />
-                            <Bar dataKey="vap" name="VAP (‰)" fill="#f59e0b" radius={[4,4,0,0]} stackId="a" />
-                          </>
-                        ) : activeTab === 'hh' ? (
-                          <Bar dataKey="hh" name="Capaian HH (%)" radius={[8,8,0,0]}>
-                              {chartDataList.map((entry: any, index: number) => (
-                                 <Cell key={`cell-${index}`} fill={getBarColor(entry.hh, 'hh')} />
-                              ))}
-                          </Bar>
-                        ) : activeTab === 'apd' ? (
-                          <Bar dataKey="apd" name="Capaian APD (%)" radius={[8,8,0,0]}>
-                              {chartDataList.map((entry: any, index: number) => (
-                                 <Cell key={`cell-${index}`} fill={getBarColor(entry.apd, 'apd')} />
-                              ))}
-                          </Bar>
-                        ) : activeTab === 'fasilitas_apd' ? (
-                          <Bar dataKey="fasilitas_apd" name="Fasilitas APD (%)" radius={[8,8,0,0]}>
-                              {chartDataList.map((entry: any, index: number) => (
-                                 <Cell key={`cell-${index}`} fill={getBarColor(entry.fasilitas_apd, 'fasilitas_apd')} />
-                              ))}
-                          </Bar>
-                        ) : (
-                          <Bar dataKey="linen" name="Linen (%)" radius={[8,8,0,0]}>
-                              {chartDataList.map((entry: any, index: number) => (
-                                 <Cell key={`cell-${index}`} fill={getBarColor(entry.linen, 'linen')} />
-                              ))}
-                          </Bar>
-                        )}
-
-                        {standards[activeTab] && activeTab !== 'hais' && (
-                           <ReferenceLine 
-                              y={standards[activeTab]?.nilai_standar} 
-                              stroke="#06b6d4" 
-                              strokeDasharray="5 5" 
-                              label={{ position: 'top', value: `Standar ${standards[activeTab]?.nilai_standar}%`, fill: '#06b6d4', fontSize: 10 }}
-                           />
-                        )}
-                      </ComposedChart>
-                    ) : (
-                      <ComposedChart data={chartDataList} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                        <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} dy={10} />
-                        <YAxis tick={{ fontSize: 11, fill: '#64748b' }} domain={activeTab !== 'hais' ? [0, 100] : ['auto', 'auto']} axisLine={false} tickLine={false} dx={-10} />
-                        <Tooltip content={renderTooltipContent} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
-                        <Legend content={renderCustomLegend} />
-                        
-                        {activeTab === 'hais' ? (
-                          <>
-                            <Line type="monotone" dataKey="phlebitis" name="Phlebitis" stroke="#f43f5e" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                            <Line type="monotone" dataKey="isk" name="ISK" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                            <Line type="monotone" dataKey="ido" name="IDO" stroke="#10b981" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                            <Line type="monotone" dataKey="vap" name="VAP" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                          </>
-                        ) : activeTab === 'hh' ? (
-                          <Line type="monotone" dataKey="hh" name="Capaian HH (%)" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                        ) : activeTab === 'apd' ? (
-                          <Line type="monotone" dataKey="apd" name="Capaian APD (%)" stroke="#10b981" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                        ) : activeTab === 'fasilitas_apd' ? (
-                          <Line type="monotone" dataKey="fasilitas_apd" name="Fasilitas APD (%)" stroke="#9333ea" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                        ) : (
-                          <Line type="monotone" dataKey="linen" name="Linen (%)" stroke="#f97316" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                        )}
-
-                        {standards[activeTab] && activeTab !== 'hais' && (
-                           <ReferenceLine 
-                              y={standards[activeTab]?.nilai_standar} 
-                              stroke="#06b6d4" 
-                              strokeDasharray="5 5" 
-                              label={{ position: 'top', value: `Standar ${standards[activeTab]?.nilai_standar}%`, fill: '#06b6d4', fontSize: 10 }}
-                           />
-                        )}
-                      </ComposedChart>
-                    )}
-                  </ResponsiveContainer>
-                </motion.div>
-              </AnimatePresence>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-500">
-                <TrendingUp className="w-12 h-12 opacity-20" />
-                <p className="text-sm font-medium">Tidak ada data untuk periode ini.</p>
-              </div>
-            )}
+         <div className="p-4 sm:p-8 h-[350px] sm:h-[400px]">
+              {isDataLoading ? (
+                <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-500">
+                  <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-sm font-medium">Memuat data monitoring...</p>
+                </div>
+              ) : chartDataList.length > 0 ? (
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={chartMode}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.3 }}
+                    className="w-full h-full"
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      {chartMode === 'bar' ? (
+                        <ComposedChart data={chartDataList} margin={{ top: 20, right: 10, left: -20, bottom: 20 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                          <XAxis 
+                            dataKey="name" 
+                            tick={{ fontSize: 8, fill: '#64748b' }} 
+                            axisLine={false} 
+                            tickLine={false} 
+                            dy={10}
+                            interval={0}
+                          />
+                          <YAxis tick={{ fontSize: 10, fill: '#64748b' }} domain={activeTab !== 'hais' ? [0, 100] : ['auto', 'auto']} axisLine={false} tickLine={false} dx={-5} />
+                          <Tooltip content={renderTooltipContent} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
+                          <Legend content={renderCustomLegend} />
+                          {activeTab === 'hais' ? (
+                            <>
+                            <Bar dataKey="phlebitis" name="Phlebitis (per mil)" fill="#f43f5e" radius={[4,4,0,0]} stackId="a" />
+                            <Bar dataKey="isk" name="ISK (per mil)" fill="#3b82f6" radius={[4,4,0,0]} stackId="a" />
+                            <Bar dataKey="ido" name="IDO (per mil)" fill="#10b981" radius={[4,4,0,0]} stackId="a" />
+                            <Bar dataKey="vap" name="VAP (per mil)" fill="#f59e0b" radius={[4,4,0,0]} stackId="a" />
+                            </>
+                          ) : activeTab === 'hh' ? (
+                            <Bar dataKey="hh" name="Capaian HH (%)" radius={[8,8,0,0]}>
+                                {chartDataList.map((entry: any, index: number) => (
+                                   <Cell key={`cell-${index}`} fill={getBarColor(entry.hh, 'hh')} />
+                                ))}
+                            </Bar>
+                          ) : activeTab === 'apd' ? (
+                            <Bar dataKey="apd" name="Capaian APD (%)" radius={[8,8,0,0]}>
+                                {chartDataList.map((entry: any, index: number) => (
+                                   <Cell key={`cell-${index}`} fill={getBarColor(entry.apd, 'apd')} />
+                                ))}
+                            </Bar>
+                          ) : activeTab === 'fasilitas_apd' ? (
+                            <Bar dataKey="fasilitas_apd" name="Fasilitas APD (%)" radius={[8,8,0,0]}>
+                                {chartDataList.map((entry: any, index: number) => (
+                                   <Cell key={`cell-${index}`} fill={getBarColor(entry.fasilitas_apd, 'fasilitas_apd')} />
+                                ))}
+                            </Bar>
+                          ) : (
+                            <Bar dataKey="linen" name="Linen (%)" radius={[8,8,0,0]}>
+                                {chartDataList.map((entry: any, index: number) => (
+                                   <Cell key={`cell-${index}`} fill={getBarColor(entry.linen, 'linen')} />
+                                ))}
+                            </Bar>
+                          )}
+                          {standards[activeTab] && activeTab !== 'hais' && (
+                             <ReferenceLine 
+                                y={standards[activeTab]?.nilai_standar} 
+                                stroke="#06b6d4" 
+                                strokeDasharray="5 5" 
+                                label={{ position: 'top', value: `Standar ${standards[activeTab]?.nilai_standar}%`, fill: '#06b6d4', fontSize: 10 }}
+                             />
+                          )}
+                        </ComposedChart>
+                      ) : (
+                        <ComposedChart data={chartDataList} margin={{ top: 20, right: 10, left: -20, bottom: 20 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                          <XAxis 
+                            dataKey="name" 
+                            tick={{ fontSize: 8, fill: '#64748b' }} 
+                            axisLine={false} 
+                            tickLine={false} 
+                            dy={10} 
+                            interval={0}
+                          />
+                          <YAxis tick={{ fontSize: 10, fill: '#64748b' }} domain={activeTab !== 'hais' ? [0, 100] : ['auto', 'auto']} axisLine={false} tickLine={false} dx={-5} />
+                          <Tooltip content={renderTooltipContent} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
+                          <Legend content={renderCustomLegend} />
+                          {activeTab === 'hais' ? (
+                            <>
+                              <Line type="monotone" dataKey="phlebitis" name="Phlebitis" stroke="#f43f5e" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                              <Line type="monotone" dataKey="isk" name="ISK" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                              <Line type="monotone" dataKey="ido" name="IDO" stroke="#10b981" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                              <Line type="monotone" dataKey="vap" name="VAP" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                            </>
+                          ) : activeTab === 'hh' ? (
+                            <Line type="monotone" dataKey="hh" name="Capaian HH (%)" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                          ) : activeTab === 'apd' ? (
+                            <Line type="monotone" dataKey="apd" name="Capaian APD (%)" stroke="#10b981" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                          ) : activeTab === 'fasilitas_apd' ? (
+                            <Line type="monotone" dataKey="fasilitas_apd" name="Fasilitas APD (%)" stroke="#9333ea" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                          ) : (
+                            <Line type="monotone" dataKey="linen" name="Linen (%)" stroke="#f97316" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                          )}
+                          {standards[activeTab] && activeTab !== 'hais' && (
+                             <ReferenceLine 
+                                y={standards[activeTab]?.nilai_standar} 
+                                stroke="#06b6d4" 
+                                strokeDasharray="5 5" 
+                                label={{ position: 'top', value: `Standar ${standards[activeTab]?.nilai_standar}%`, fill: '#06b6d4', fontSize: 10 }}
+                             />
+                          )}
+                        </ComposedChart>
+                      )}
+                    </ResponsiveContainer>
+                  </motion.div>
+                </AnimatePresence>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-500">
+                  <TrendingUp className="w-12 h-12 opacity-20" />
+                  <p className="text-sm font-medium">Tidak ada data untuk periode ini.</p>
+                </div>
+              )}
          </div>
 
          {/* Auto Insight Card */}

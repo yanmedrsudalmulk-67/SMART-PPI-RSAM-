@@ -105,8 +105,8 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-20">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 py-4 border-b border-slate-200 dark:border-white/5">
-        <div className="text-center sm:text-left">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 py-4 border-b border-slate-200 dark:border-white/5">
+        <div className="text-center lg:text-left w-full lg:w-auto">
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase">Analitik Mutu</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">Analisa mendalam data PPI Rumah Sakit</p>
         </div>

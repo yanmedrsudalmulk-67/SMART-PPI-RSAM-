@@ -28,15 +28,20 @@ export function DocumentationUploader({ images, setImages }: DocumentationUpload
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
-          const max = 1200;
+          
+          // More aggressive sizing
+          const max = 1000;
           if (width > height && width > max) { height *= max / width; width = max; }
           else if (height > max) { width *= max / height; height = max; }
+          
           canvas.width = width; canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx?.drawImage(img, 0, 0, width, height);
+
+          // Iterate quality if needed? Or just use a lower fixed quality.
           canvas.toBlob((blob) => {
-            if (blob) resolve(new File([blob], file.name, { type: 'image/jpeg' }));
-          }, 'image/jpeg', 0.7);
+            if (blob) resolve(new File([blob], file.name.replace(/\.[^/.]+$/, ".webp"), { type: 'image/webp' }));
+          }, 'image/webp', 0.5);
         };
       };
     });
