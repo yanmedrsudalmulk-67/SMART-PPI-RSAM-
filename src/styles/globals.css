@@ -132,6 +132,17 @@ html.light .app-sidebar, html.light .app-mobile-nav {
   background-color: #047857 !important; /* Lighter emerald #10b981 changed to darker #047857 */
   border-color: #064e3b !important;
 }
+/* Disable any light mode h1/h2/span font-heading or gradient animations for sidebar items */
+html.light .app-sidebar .sidebar-title,
+html.light .app-sidebar .font-heading,
+html.light .app-sidebar span.font-heading {
+  background-image: none !important;
+  background-clip: unset !important;
+  -webkit-background-clip: unset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  color: #ffffff !important;
+  animation: none !important;
+}
 /* Sidebar Text & Top Header Fixes */
 html.light .app-sidebar .sidebar-title {
   background: none !important;
@@ -340,4 +351,75 @@ div[id^="nextjs-dev-overlay"] {
   height: 0 !important;
   z-index: -9999 !important;
 }
+
+/* Premium Audit Report Style Enforcement */
+.report-card-premium,
+.report-card-premium *:not(.text-red-600):not(.text-blue-600):not(.text-blue-700):not(.text-emerald-800):not(.text-red-800) {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+  background-clip: unset !important;
+  -webkit-background-clip: unset !important;
+  background-image: none !important;
+  animation: none !important;
+}
+
+/* Force borders inside premium report to be sharp slate-800 in all modes */
+.report-card-premium,
+.report-card-premium .border-slate-800,
+.report-card-premium .border-slate-200,
+.report-card-premium .border-slate-300,
+.report-card-premium .border-slate-400,
+.report-card-premium .border-2,
+.report-card-premium .border,
+.report-card-premium .border-t,
+.report-card-premium .border-b,
+.report-card-premium .border-r,
+.report-card-premium .border-l,
+.report-card-premium .border-y-2,
+.report-card-premium .border-b-2,
+.report-card-premium .border-r-2,
+.report-card-premium table,
+.report-card-premium th,
+.report-card-premium td,
+.report-card-premium div,
+:root:not(.light) .report-card-premium,
+:root:not(.light) .report-card-premium .border-slate-800,
+:root:not(.light) .report-card-premium .border-slate-200,
+:root:not(.light) .report-card-premium .border-slate-300,
+:root:not(.light) .report-card-premium .border-slate-400,
+:root:not(.light) .report-card-premium .border-2,
+:root:not(.light) .report-card-premium .border,
+:root:not(.light) .report-card-premium .border-t,
+:root:not(.light) .report-card-premium .border-b,
+:root:not(.light) .report-card-premium .border-r,
+:root:not(.light) .report-card-premium .border-l,
+:root:not(.light) .report-card-premium .border-y-2,
+:root:not(.light) .report-card-premium .border-b-2,
+:root:not(.light) .report-card-premium .border-r-2,
+:root:not(.light) .report-card-premium table,
+:root:not(.light) .report-card-premium th,
+:root:not(.light) .report-card-premium td,
+:root:not(.light) .report-card-premium div {
+  border-color: #1e293b !important;
+  border-style: solid !important;
+}
+
+/* Force light backgrounds for headers, rows, and summary sections within report card in both modes */
+.report-card-premium .bg-slate-50,
+:root:not(.light) .report-card-premium .bg-slate-50 {
+  background-color: #f8fafc !important;
+}
+.report-card-premium .bg-blue-50\/50,
+:root:not(.light) .report-card-premium .bg-blue-50\/50 {
+  background-color: #eff6ff !important;
+}
+.report-card-premium .bg-slate-50\/50,
+:root:not(.light) .report-card-premium .bg-slate-50\/50 {
+  background-color: #f8fafc !important;
+}
+.report-card-premium .bg-force-white,
+:root:not(.light) .report-card-premium .bg-force-white {
+  background-color: #ffffff !important;
+}
+
 

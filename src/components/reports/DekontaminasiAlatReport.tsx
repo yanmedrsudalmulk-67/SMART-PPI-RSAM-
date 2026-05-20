@@ -80,24 +80,24 @@ const DekontaminasiAlatReportPage = ({ record, indicatorItems, hospitalLogoUrl, 
     .filter(item => typeof item === 'string' && item.length > 0);
 
   return (
-    <div className="p-4 md:p-6 print:p-0 relative break-inside-avoid w-full max-w-[800px] mx-auto bg-force-white mb-8 border border-slate-200 dark:border-white/10 rounded-2xl print:border-none print:rounded-none print:mb-0 font-sans" style={{ pageBreakAfter: 'always', fontFamily: 'var(--font-sans), Poppins, sans-serif' }}>
+    <div className="p-4 md:p-6 print:p-0 relative break-inside-avoid w-full max-w-[800px] mx-auto bg-force-white mb-8 border border-slate-200 dark:border-white/10 rounded-2xl print:border-none print:rounded-none print:mb-0 font-sans report-card-premium" style={{ pageBreakAfter: 'always', fontFamily: 'var(--font-sans), Poppins, sans-serif' }}>
       
       <div className="flex flex-col md:flex-row items-center justify-between gap-3 mb-4 border-b-2 border-slate-800 pb-3 w-full text-center mt-6 print:mt-0">
-        <div className="flex items-center gap-2 sm:gap-4 w-full justify-center text-center">
-           <div className="w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0 flex items-center justify-center p-1">
+        <div className="flex items-center gap-2 sm:gap-4 w-full justify-center text-center max-w-full">
+           <div className="w-10 h-10 sm:w-16 sm:h-16 flex-shrink-0 flex items-center justify-center p-1">
              {hospitalLogoUrl ? (
                // eslint-disable-next-line @next/next/no-img-element
                <img src={hospitalLogoUrl} alt="Logo RS" className="w-full h-full object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} crossOrigin="anonymous" />
              ) : (
-               <ShieldCheck className="w-8 h-8 text-force-black" />
+               <ShieldCheck className="w-6 h-6 sm:w-8 sm:h-8 text-force-black" />
              )}
            </div>
-           <div className="text-left w-full overflow-hidden">
-             <h1 className="text-[11px] sm:text-[13px] md:text-[15px] font-black tracking-tight leading-tight uppercase font-heading text-force-black truncate">
+            <div className="text-left">
+             <h1 className="text-[9px] min-[400px]:text-[11px] sm:text-[13px] md:text-[15px] font-black tracking-tight leading-tight uppercase font-heading text-force-black whitespace-nowrap">
                TIM PENCEGAHAN & PENGENDALIAN INFEKSI (PPI)
              </h1>
-             <p className="text-[8.5px] sm:text-[10px] md:text-[12px] font-bold uppercase text-force-black tracking-widest mt-0.5 truncate">UOBK RSUD AL-MULK KOTA SUKABUMI</p>
-             <p className="text-[7.5px] sm:text-[8px] md:text-[9px] text-force-black mt-0.5 italic truncate">Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota Sukabumi, Jawa Barat.</p>
+             <p className="text-[7.5px] min-[400px]:text-[8.5px] sm:text-[10px] md:text-[12px] font-bold uppercase text-force-black tracking-widest mt-0.5 whitespace-nowrap">UOBK RSUD AL-MULK KOTA SUKABUMI</p>
+             <p className="text-[6.5px] min-[400px]:text-[7px] sm:text-[8px] md:text-[9px] text-force-black mt-0.5 italic whitespace-nowrap">Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota Sukabumi, Jawa Barat.</p>
            </div>
         </div>
       </div>
@@ -131,16 +131,16 @@ const DekontaminasiAlatReportPage = ({ record, indicatorItems, hospitalLogoUrl, 
         </div>
       </div>
 
-      <div className="mb-4 overflow-x-auto print:overflow-hidden w-full">
-        <table className="w-full border-collapse text-left text-[10px] text-force-black bg-force-white border-2 border-slate-800 min-w-[500px]">
+      <div className="mb-4 overflow-x-auto w-full print:overflow-visible">
+        <table className="w-full border-collapse text-left text-[7.5px] min-[360px]:text-[8.5px] sm:text-[10px] text-force-black bg-force-white border-2 border-slate-800 mb-2 print:min-w-0">
           <thead>
-            <tr className="bg-slate-50 font-black tracking-widest text-[9px] uppercase border-b-2 border-slate-800">
-              <th className="px-2 py-2 w-8 text-center border-r border-slate-800 text-force-black">No</th>
-              <th className="px-3 py-2 border-r border-slate-800 text-force-black text-center">Indikator</th>
-              <th className="px-2 py-2 w-10 text-center border-r border-slate-800 text-force-black">Ya</th>
-              <th className="px-2 py-2 w-12 text-center border-r border-slate-800 text-force-black">Tidak</th>
-              <th className="px-2 py-2 w-10 text-center border-r border-slate-800 text-force-black">N/A</th>
-              <th className="px-3 py-2 text-force-black text-center w-32">Keterangan</th>
+            <tr className="bg-slate-50 font-black tracking-wider text-[7px] min-[340px]:text-[7.5px] sm:text-[9px] uppercase border-b-2 border-slate-800">
+              <th className="px-1 py-1.5 sm:px-2 sm:py-2 w-6 sm:w-8 text-center border border-slate-800 text-force-black">No</th>
+              <th className="px-1.5 py-1.5 sm:px-3 sm:py-2 border border-slate-800 text-force-black text-center">Indikator</th>
+              <th className="px-1 py-1.5 sm:px-2 sm:py-2 w-7 sm:w-10 text-center border border-slate-800 text-force-black">Ya</th>
+              <th className="px-1 py-1.5 sm:px-2 sm:py-2 w-8 sm:w-12 text-center border border-slate-800 text-force-black">Tidak</th>
+              <th className="px-1 py-1.5 sm:px-2 sm:py-2 w-7 sm:w-10 text-center border border-slate-800 text-force-black">N/A</th>
+              <th className="px-1.5 py-1.5 sm:px-3 sm:py-2 border border-slate-800 text-force-black text-center w-20 min-[400px]:w-28 sm:w-32">Keterangan</th>
             </tr>
           </thead>
           <tbody>
@@ -149,22 +149,22 @@ const DekontaminasiAlatReportPage = ({ record, indicatorItems, hospitalLogoUrl, 
               const ket = getKeterangan(item.key);
               return (
                 <tr key={item.id} className="border-b border-slate-800 hover:bg-slate-50/50 transition-colors text-force-black">
-                  <td className="px-2 py-2 text-center border-r border-slate-800 font-bold leading-tight">{itemIdx + 1}</td>
-                  <td className="px-3 py-2 font-medium border-r border-slate-800 leading-tight">{item.label.replace(/^\d+\.\s*/, '')}</td>
-                  <td className="px-2 py-2 text-center border-r border-slate-800 align-middle">
+                  <td className="px-1 py-1 sm:px-2 sm:py-2 text-center border border-slate-800 font-bold leading-tight">{itemIdx + 1}</td>
+                  <td className="px-1.5 py-1 sm:px-3 sm:py-2 font-medium border border-slate-800 leading-tight">{item.label.replace(/^\d+\.\s*/, '')}</td>
+                  <td className="px-1 py-1 sm:px-2 sm:py-2 text-center border border-slate-800 align-middle">
                     {status === 'ya' && (
-                      <span className={`font-black text-[12px] ${item.key === 'peralatan_berkarat' ? 'text-red-600' : 'text-blue-600'}`}>✓</span>
+                      <span className={`font-black text-[10px] sm:text-[12px] ${item.key === 'peralatan_berkarat' ? 'text-red-600' : 'text-blue-600'}`}>✓</span>
                     )}
                   </td>
-                  <td className="px-2 py-2 text-center border-r border-slate-800 align-middle">
+                  <td className="px-1 py-1 sm:px-2 sm:py-2 text-center border border-slate-800 align-middle">
                     {status === 'tidak' && (
-                      <span className={`font-black text-[12px] ${item.key === 'peralatan_berkarat' ? 'text-blue-600' : 'text-red-600'}`}>✓</span>
+                      <span className={`font-black text-[10px] sm:text-[12px] ${item.key === 'peralatan_berkarat' ? 'text-blue-600' : 'text-red-600'}`}>✓</span>
                     )}
                   </td>
-                  <td className="px-2 py-2 text-center border-r border-slate-800 align-middle">
-                    {status === 'na' && <span className="font-black text-[12px] text-slate-500">✓</span>}
+                  <td className="px-1 py-1 sm:px-2 sm:py-2 text-center border border-slate-800 align-middle">
+                    {status === 'na' && <span className="font-black text-[10px] sm:text-[12px] text-slate-500">✓</span>}
                   </td>
-                  <td className="px-3 py-2 text-[10px] italic border-slate-800 leading-tight break-words">{ket}</td>
+                  <td className="px-1.5 py-1 sm:px-3 sm:py-2 text-[7px] sm:text-[10px] italic border border-slate-800 leading-tight break-words">{ket}</td>
                 </tr>
               );
             })}
@@ -444,6 +444,7 @@ export default function DekontaminasiAlatReport({
       window.removeEventListener('edit-dekontaminasi', triggerEdit);
       window.removeEventListener('delete-dekontaminasi', triggerDelete);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredRecords, filters]);
 
   const handleDelete = async (id: string) => {
