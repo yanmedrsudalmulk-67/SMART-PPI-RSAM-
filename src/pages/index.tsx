@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import Head from 'next/head';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAppContext } from '@/components/Providers';
@@ -48,16 +49,18 @@ export default function WelcomePage() {
     }
   }, [isDark, mounted]);
 
-  if (!mounted) return null;
-
   return (
     <div className={`h-screen w-full transition-colors duration-700 ease-in-out relative flex flex-col items-center justify-center overflow-hidden font-sans ${isDark ? 'bg-[#0a0f1c] text-white' : 'bg-[#ffffff] text-[#0A2F1D]'}`}>
+      <Head>
+        <link rel="preload" as="video" href="https://labs.google/fx/api/og-video/shared/c011686b-71a2-4cb1-909a-f47eb46eeb28" type="video/mp4" />
+      </Head>
       {/* Video Background */}
       <video
         autoPlay
         loop
         muted
         playsInline
+        preload="auto"
         className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none z-0"
         src="https://labs.google/fx/api/og-video/shared/c011686b-71a2-4cb1-909a-f47eb46eeb28"
       />
