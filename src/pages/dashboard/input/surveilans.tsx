@@ -94,9 +94,10 @@ export default function SurveilansFormPage() {
 
   const fetchHistoricalData = async () => {
     const { data } = await supabase
-      .from("insiden_hais")
+      .from("audit_sessions")
       .select("*")
-      .order("created_at", { ascending: true });
+      .eq("kategori", "Surveilans HAIs")
+      .order("tanggal_waktu", { ascending: true });
     if (data) setHistData(data);
   };
 
@@ -165,11 +166,11 @@ export default function SurveilansFormPage() {
     const grouped: Record<string, { num: number; den: number }> = {};
 
     histData.forEach((item) => {
-      if (item.jenis !== chartHais) return;
-      const key = getPeriodKey(item.created_at);
+      if (item.nama_indikator !== chartHais) return;
+      const key = getPeriodKey(item.tanggal_waktu || item.created_at);
       if (!grouped[key]) grouped[key] = { num: 0, den: 0 };
-      grouped[key].num += item.jml_insiden || 0;
-      grouped[key].den += item.jml_pemasangan || 0;
+      grouped[key].num += item.jumlah_patuh || 0;
+      grouped[key].den += item.jumlah_dinilai || 0;
     });
 
     return Object.entries(grouped).map(([period, counts]) => {
@@ -209,38 +210,21 @@ export default function SurveilansFormPage() {
         const isPercent = r.hais === "IDO";
         const rate = den > 0 ? (num / den) * (isPercent ? 100 : 1000) : 0;
 
-        return supabase.from("insiden_hais").insert([
+        return supabase.from("audit_sessions").insert([
           {
-            created_at: new Date(date).toISOString(),
+            indikator_id: r.hais.toLowerCase(),
+            nama_indikator: r.hais,
+            kategori: "Surveilans HAIs",
+            tanggal_waktu: new Date(date).toISOString(),
             unit: r.ruangan,
-            ruangan: r.ruangan,
-            jenis: r.hais,
-            rate: rate,
-            petugas: petugas,
-            nama_pasien: "Data Agregat", // Aggregate now
-            no_rm: "-",
-            jml_pemasangan: den,
-            jml_insiden: num,
+            observer: petugas,
+            jumlah_dinilai: den,
+            jumlah_patuh: num,
+            persentase: Math.round(rate),
+            data_indikator: { numerator: num, denominator: den, rate: rate, isPercent },
           },
         ]);
       });
-
-      // Saving audit sessions
-      promises.push(
-        supabase.from("audit_sessions").insert([
-          {
-            indikator_id: "surveilans_hais",
-            nama_indikator: "SURVEILANS HAIS",
-            tanggal_waktu: new Date(date).toISOString(),
-            observer: petugas,
-            unit: "Keseluruhan",
-            jumlah_dinilai: rows.reduce((s, r) => s + Number(r.denominator), 0),
-            jumlah_patuh: 0,
-            persentase: 100, // Aggregate meaning
-            data_indikator: { rows },
-          },
-        ]),
-      );
 
       await Promise.all(promises);
       setShowToast(true);

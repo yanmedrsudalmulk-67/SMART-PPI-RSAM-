@@ -52,20 +52,19 @@ export default function WelcomePage() {
 
   return (
     <div className={`h-screen w-full transition-colors duration-700 ease-in-out relative flex flex-col items-center justify-center overflow-hidden font-sans ${isDark ? 'bg-[#0a0f1c] text-white' : 'bg-[#ffffff] text-[#0A2F1D]'}`}>
-      {/* Dynamic Animated Background Blob */}
-      <motion.div
-        animate={{
-          scale: [1, 1.2, 0.9, 1.1, 1],
-          rotate: [0, 90, 180, 270, 360],
-          borderRadius: ["40% 60% 70% 30%", "50% 50% 30% 70%", "60% 40% 50% 50%", "30% 70% 70% 30%", "40% 60% 70% 30%"]
-        }}
-        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-        className={`absolute w-[400px] h-[400px] md:w-[600px] md:h-[600px] bg-gradient-to-tr blur-[80px] opacity-60 pointer-events-none transition-colors duration-1000 ${isDark ? 'mix-blend-screen from-blue-600/40 via-purple-600/40 to-emerald-500/40' : 'mix-blend-multiply from-[#38C968]/30 via-[#0F3D2E]/20 to-[#38C968]/30 opacity-70 blur-[100px]'}`}
+      {/* Video Background */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none z-0"
+        src="https://labs.google/fx/api/og-video/shared/c011686b-71a2-4cb1-909a-f47eb46eeb28"
       />
       
-      {/* Background Glows */}
-      <div className={`absolute top-[-10%] left-[-10%] w-[40%] h-[40%] blur-[120px] rounded-full pointer-events-none transition-colors duration-700 ${isDark ? 'bg-blue-600/10' : 'bg-[#38C968]/20'}`} />
-      <div className={`absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] blur-[120px] rounded-full pointer-events-none transition-colors duration-700 ${isDark ? 'bg-purple-600/10' : 'bg-[#0F3D2E]/10'}`} />
+      {/* Top / Bottom Black Shadow Gradients */}
+      <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-black/90 to-transparent pointer-events-none z-0" />
+      <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-black/90 to-transparent pointer-events-none z-0" />
 
       {/* Decorative Floating Glass UI Widgets */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden max-w-[1440px] mx-auto w-full z-10">

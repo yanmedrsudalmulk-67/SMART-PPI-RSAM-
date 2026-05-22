@@ -14,6 +14,7 @@ import GenericAuditReport from '@/components/reports/GenericAuditReport';
 import HandHygieneReport from '@/components/reports/HandHygieneReport';
 import ApdReport from '@/components/reports/ApdReport';
 import DekontaminasiAlatReport from '@/components/reports/DekontaminasiAlatReport';
+import SurveilansHaisReport from '@/components/reports/SurveilansHaisReport';
 
 const INDICATORS_MAP: Record<string, { cat: string, subcat?: string, title: string, id: string, icon: any }> = {
   // Kewaspadaan Isolasi - Standar
@@ -136,6 +137,97 @@ const SummaryCard = ({ indicator, stats, onClick }: any) => {
   );
 };
 
+const SurveilansSummaryCard = ({ indicator, stats, onClick }: any) => {
+  const rate = stats ? stats.rate : 0;
+  const count = stats ? stats.count : 0;
+  const prevRate = stats ? stats.prevRate : 0;
+  
+  const isPercent = indicator.id === 'ido';
+  const symbol = isPercent ? '%' : '‰';
+  
+  // Standard logic
+  const standards: Record<string, number> = { phlebitis: 1, isk: 4.7, vap: 5.8, ido: 2 };
+  const maxStandard = standards[indicator.id] || 0;
+  const isSesuai = rate <= maxStandard;
+
+  let colorClass = 'text-slate-400';
+  let bgClass = 'bg-slate-500/10';
+  let borderClass = 'border-slate-500/20';
+  
+  if (indicator.id === 'phlebitis') {
+    colorClass = 'text-cyan-500'; bgClass = 'bg-cyan-500/10'; borderClass = 'border-cyan-500/30';
+  } else if (indicator.id === 'isk') {
+    colorClass = 'text-emerald-500'; bgClass = 'bg-emerald-500/10'; borderClass = 'border-emerald-500/30';
+  } else if (indicator.id === 'vap') {
+    colorClass = 'text-purple-500'; bgClass = 'bg-purple-500/10'; borderClass = 'border-purple-500/30';
+  } else if (indicator.id === 'ido') {
+    colorClass = 'text-orange-500'; bgClass = 'bg-orange-500/10'; borderClass = 'border-orange-500/30';
+  }
+
+  const Icon = indicator.icon;
+  const trendUp = rate > prevRate;
+  const trendDown = rate < prevRate;
+  const trendSame = rate === prevRate;
+
+  return (
+    <motion.div 
+      whileHover={{ y: -5, scale: 1.02 }} 
+      onClick={onClick}
+      className={`bg-slate-900/40 backdrop-blur-xl p-5 sm:p-6 rounded-3xl border ${borderClass} cursor-pointer group relative overflow-hidden transition-all shadow-lg hover:shadow-[0_0_30px_rgba(59,130,246,0.15)] flex flex-col justify-between min-h-[240px]`}
+    >
+      <div className={`absolute top-0 right-0 w-40 h-40 blur-[80px] rounded-full -z-10 opacity-20 transition-all duration-500 group-hover:opacity-40 group-hover:scale-150 ${bgClass.replace('/10', '')}`} />
+      
+      <div className="flex justify-between items-start mb-4">
+        <div className={`p-4 rounded-2xl ${bgClass} ${colorClass} group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-inner`}>
+          <Icon className="w-6 h-6" />
+        </div>
+        <div className="flex flex-col items-end">
+          <span className={`text-4xl font-black font-mono tracking-tighter drop-shadow-md transition-colors ${colorClass}`}>
+            {rate.toFixed(2)}{symbol}
+          </span>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Rate Realtime</span>
+        </div>
+      </div>
+
+      <div className="mt-auto">
+        <h3 className="text-base font-bold text-white mb-4 uppercase tracking-tight leading-snug group-hover:opacity-80 transition-opacity">
+          {indicator.title}
+        </h3>
+        
+        <div className="flex flex-col gap-3 border-t border-white/10 pt-4">
+          <div className="flex justify-between items-center text-xs">
+             <span className="text-slate-400 font-medium">Status</span>
+             {count === 0 ? (
+                <span className="text-slate-500 font-bold">Belum ada data</span>
+             ) : isSesuai ? (
+                <span className="text-emerald-400 font-bold bg-emerald-400/10 px-2 py-0.5 rounded">Sesuai Standar</span>
+             ) : (
+                <span className="text-red-400 font-bold bg-red-400/10 px-2 py-0.5 rounded">Di Atas Standar</span>
+             )}
+          </div>
+          <div className="flex justify-between items-center text-xs">
+             <span className="text-slate-400 font-medium">Trend (vs sblm)</span>
+             {count === 0 ? (
+                <span className="text-slate-500 font-bold">-</span>
+             ) : trendSame ? (
+                <span className="text-slate-300 font-bold">-</span>
+             ) : trendUp ? (
+                <span className="text-red-400 font-bold flex items-center gap-1">Naik <Activity className="w-3 h-3" /></span>
+             ) : (
+                <span className="text-emerald-400 font-bold flex items-center gap-1">Turun <Activity className="w-3 h-3 rotate-180" /></span>
+             )}
+          </div>
+          <div className="flex justify-between items-center text-xs">
+             <span className="text-slate-400 font-medium">Total Input</span>
+             <span className="text-white font-bold">{count} Data</span>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+
 export default function ReportsPage() {
   const [periode, setPeriode] = useState('Bulanan');
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
@@ -148,6 +240,7 @@ export default function ReportsPage() {
   const [selectedUnit, setSelectedUnit] = useState<string>('Semua Unit');
   
   const [statsMap, setStatsMap] = useState<Map<string, { count: number, sum: number, avgPercent: number }>>(new Map());
+  const [haisStatsMap, setHaisStatsMap] = useState<Map<string, { count: number, num: number, den: number, rate: number, prevRate: number }>>(new Map());
   const [loading, setLoading] = useState(true);
 
   const startDateISO = useMemo(() => {
@@ -167,31 +260,70 @@ export default function ReportsPage() {
     return new Date().toISOString();
   }, [periode, selectedMonth, selectedYear, selectedQuarter, selectedSemester]);
 
+  // Calculate previous period for trend comparison
+  const prevPeriodStartISO = useMemo(() => {
+    const d = new Date(startDateISO);
+    if (periode === 'Bulanan') d.setMonth(d.getMonth() - 1);
+    else if (periode === 'Triwulan') d.setMonth(d.getMonth() - 3);
+    else if (periode === 'Semester') d.setMonth(d.getMonth() - 6);
+    else if (periode === 'Tahunan') d.setFullYear(d.getFullYear() - 1);
+    return d.toISOString();
+  }, [startDateISO, periode]);
+
   useEffect(() => {
     const fetchStats = async () => {
       setLoading(true);
       try {
-        const { data } = await supabase.from('audit_sessions')
-          .select('indikator_id, persentase, tanggal_waktu')
-          .gte('tanggal_waktu', startDateISO);
+        const [auditRes] = await Promise.all([
+           supabase.from('audit_sessions').select('indikator_id, kategori, persentase, tanggal_waktu, jumlah_patuh, jumlah_dinilai').gte('tanggal_waktu', prevPeriodStartISO)
+        ]);
           
-        if (data) {
+        if (auditRes.data) {
           const map = new Map<string, { count: number, sum: number, avgPercent: number }>();
-          data.forEach((row: any) => {
+          const hMap = new Map<string, { count: number, num: number, den: number, rate: number, prevRate: number, prevNum: number, prevDen: number }>();
+
+          auditRes.data.forEach((row: any) => {
              const key = row.indikator_id;
-             if (!map.has(key)) map.set(key, { count: 0, sum: 0, avgPercent: 0 });
-             const entry = map.get(key)!;
-             entry.count += 1;
-             entry.sum += (row.persentase || 0);
+
+             // HAIs stats
+             if (row.kategori === 'Surveilans HAIs' && ['isk', 'phlebitis', 'vap', 'ido'].includes(key)) {
+                if (!hMap.has(key)) hMap.set(key, { count: 0, num: 0, den: 0, rate: 0, prevRate: 0, prevNum: 0, prevDen: 0 });
+                const entry = hMap.get(key)!;
+                if (row.tanggal_waktu >= startDateISO) {
+                   entry.count += 1;
+                   entry.num += (row.jumlah_patuh || 0);
+                   entry.den += (row.jumlah_dinilai || 0);
+                } else {
+                   entry.prevNum += (row.jumlah_patuh || 0);
+                   entry.prevDen += (row.jumlah_dinilai || 0);
+                }
+             }
+
+             // General stats
+             if (row.tanggal_waktu >= startDateISO) {
+                 if (!map.has(key)) map.set(key, { count: 0, sum: 0, avgPercent: 0 });
+                 const entry = map.get(key)!;
+                 entry.count += 1;
+                 entry.sum += (row.persentase || 0);
+             }
           });
           
           for (let [key, val] of Array.from(map.entries())) {
              val.avgPercent = val.count > 0 ? (val.sum / val.count) : 0;
           }
           setStatsMap(map);
+
+          for (let [key, val] of Array.from(hMap.entries())) {
+             const mult = key === 'ido' ? 100 : 1000;
+             val.rate = val.den > 0 ? (val.num / val.den) * mult : 0;
+             val.prevRate = val.prevDen > 0 ? (val.prevNum / val.prevDen) * mult : 0;
+          }
+          setHaisStatsMap(hMap);
         } else {
           setStatsMap(new Map());
+          setHaisStatsMap(new Map());
         }
+
       } catch (e) {
         console.error(e);
       } finally {
@@ -201,16 +333,14 @@ export default function ReportsPage() {
     
     fetchStats();
     
-    const channel = supabase.channel('audit_sessions_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_sessions' }, () => {
-         fetchStats();
-      })
+    const channelAudit = supabase.channel('audit_sessions_changes_rep')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_sessions' }, fetchStats)
       .subscribe();
       
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(channelAudit);
     };
-  }, [startDateISO]);
+  }, [startDateISO, prevPeriodStartISO]);
 
   // Compute displayed indicators based on category/subcategory
   const displayedIndicators = useMemo(() => {
@@ -387,11 +517,19 @@ export default function ReportsPage() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.05 }}
                     >
-                      <SummaryCard
-                        indicator={ind}
-                        stats={statsMap.get(ind.id)}
-                        onClick={() => setSelectedIndicator(ind.id)}
-                      />
+                      {kategori === 'Surveilans HAIs' ? (
+                        <SurveilansSummaryCard
+                          indicator={ind}
+                          stats={haisStatsMap.get(ind.id)}
+                          onClick={() => setSelectedIndicator(ind.id)}
+                        />
+                      ) : (
+                        <SummaryCard
+                          indicator={ind}
+                          stats={statsMap.get(ind.id)}
+                          onClick={() => setSelectedIndicator(ind.id)}
+                        />
+                      )}
                     </motion.div>
                   ))}
                 </motion.div>
@@ -532,7 +670,9 @@ export default function ReportsPage() {
 
             {/* Dynamic Report Content */}
             <div className="pt-2">
-              {selectedIndicator === 'audit_hand_hygiene' ? (
+              {kategori === 'Surveilans HAIs' && ['phlebitis', 'isk', 'vap', 'ido'].includes(selectedIndicator || '') ? (
+                 <SurveilansHaisReport indicator={selectedIndicator!} periodeStartISO={startDateISO} periodeType={periode} />
+              ) : selectedIndicator === 'audit_hand_hygiene' ? (
                  <HandHygieneReport filters={{ searchQuery: '', periode: startDateISO, type: periode, unitFilter: selectedUnit } as any} />
               ) : selectedIndicator === 'audit_apd' ? (
                  <ApdReport filters={{ searchQuery: '', periode: startDateISO, type: periode, unitFilter: selectedUnit } as any} />

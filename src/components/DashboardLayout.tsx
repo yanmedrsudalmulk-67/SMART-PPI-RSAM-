@@ -92,7 +92,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             supabase.from('dashboard_standards').select('*'),
             supabase.from('audit_hand_hygiene').select('*'),
             supabase.from('audit_apd').select('*'),
-            supabase.from('insiden_hais').select('*'),
+            supabase.from('audit_sessions').select('*').eq('kategori', 'Surveilans HAIs'),
             supabase.from('monitoring_fasilitas_apd').select('*'),
             supabase.from('audit_penatalaksanaan_linen').select('*')
           ]);

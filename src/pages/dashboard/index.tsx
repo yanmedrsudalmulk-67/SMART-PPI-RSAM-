@@ -283,7 +283,7 @@ export default function DashboardPage() {
             supabase.from("dashboard_standards").select("*"),
             supabase.from("audit_hand_hygiene").select("*"),
             supabase.from("audit_apd").select("*"),
-            supabase.from("insiden_hais").select("*"),
+            supabase.from("audit_sessions").select("*").eq("kategori", "Surveilans HAIs"),
             supabase.from("monitoring_fasilitas_apd").select("*"),
             supabase.from("audit_penatalaksanaan_linen").select("*"),
           ]);
@@ -594,8 +594,8 @@ export default function DashboardPage() {
 
     haisData.filter(unitMatch).forEach((d: any) => {
       const k = getGroupKey(d.tanggal_waktu || d.created_at);
-      const r = parseFloat(d.rate) || 0;
-      const type = String(d.jenis).toLowerCase();
+      const r = d.data_indikator?.rate ? parseFloat(d.data_indikator.rate) : 0;
+      const type = String(d.indikator_id).toLowerCase();
 
       if (grouped[k]) {
         if (type.includes("ph")) grouped[k].hPhle += r;
@@ -883,7 +883,7 @@ export default function DashboardPage() {
       const phleStd = standards["phlebitis"]?.nilai_standar || 1.5;
       const iskStd = standards["isk"]?.nilai_standar || 5;
       let text = "Analisis HAIs: ";
-      const issues = [];
+      const issues: string[] = [];
       if (current.phlebitis > phleStd)
         issues.push(
           `Phlebitis (${current.phlebitis} ‰) di atas batas ${phleStd} ‰`,
