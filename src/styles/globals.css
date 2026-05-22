@@ -354,13 +354,23 @@ div[id^="nextjs-dev-overlay"] {
 
 /* Premium Audit Report Style Enforcement */
 .report-card-premium,
-.report-card-premium *:not(.text-red-600):not(.text-blue-600):not(.text-blue-700):not(.text-emerald-800):not(.text-red-800) {
+.report-card-premium * {
   color: #000000 !important;
   -webkit-text-fill-color: #000000 !important;
   background-clip: unset !important;
   -webkit-background-clip: unset !important;
   background-image: none !important;
   animation: none !important;
+}
+
+.report-card-premium .text-red-600 {
+  color: #dc2626 !important;
+  -webkit-text-fill-color: #dc2626 !important;
+}
+
+.report-card-premium .text-blue-600 {
+  color: #2563eb !important;
+  -webkit-text-fill-color: #2563eb !important;
 }
 
 /* Force borders inside premium report to be sharp slate-800 in all modes */

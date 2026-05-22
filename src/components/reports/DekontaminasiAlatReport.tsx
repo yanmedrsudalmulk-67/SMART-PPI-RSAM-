@@ -189,10 +189,8 @@ const DekontaminasiAlatReportPage = ({ record, indicatorItems, hospitalLogoUrl, 
         </div>
         <div className="w-full md:col-span-1 p-3 flex flex-col items-center justify-center text-center bg-blue-50/50">
            <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-force-black">Persentase Capaian</p>
-           <p className="text-2xl sm:text-3xl font-black font-heading mb-1.5 text-blue-700 leading-none">{record.persentase || 0}%</p>
-           <div className={`text-[9px] font-black uppercase tracking-widest py-0.5 px-2 rounded-full ${
-             (record.persentase || 0) >= 85 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
-           } print:bg-transparent print:text-force-black print:p-0`}>
+           <p className="text-2xl sm:text-3xl font-black font-heading mb-1.5 leading-none text-force-black">{record.persentase || 0}%</p>
+           <div className="text-[9px] font-black uppercase tracking-widest py-0.5 px-2 text-force-black print:p-0">
              {(record.persentase || 0) >= 85 ? 'SESUAI STANDAR' : 'TIDAK SESUAI'}
            </div>
         </div>

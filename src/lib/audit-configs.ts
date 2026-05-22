@@ -142,14 +142,14 @@ export const genericAuditConfigs: Record<string, { tableName: string; extraFilte
   penempatan_pasien: {
     tableName: 'audit_penempatan_pasien',
     items: [
-      { id: 'catatan_infeksi', label: 'Catatan infeksi', key: 'catatan_infeksi' },
-      { id: 'instruksi_ruang', label: 'Instruksi petugas (tanda)', key: 'instruksi_ruang' },
-      { id: 'poster_pencegahan', label: 'Poster pencegahan', key: 'poster_pencegahan' },
-      { id: 'apd_tersedia', label: 'APD tersedia', key: 'apd_tersedia' },
-      { id: 'catatan_klinis', label: 'Catatan klinis', key: 'catatan_klinis' },
-      { id: 'instruksi_isolasi', label: 'Instruksi isolasi', key: 'instruksi_isolasi' },
-      { id: 'pintu_tertutup', label: 'Pintu tertutup', key: 'pintu_tertutup' },
-      { id: 'alur_pasien', label: 'Alur terpasang', key: 'alur_pasien' }
+      { id: 'catatan_infeksi', label: 'Ada catatan pasien infeksi dan non infeksi', key: 'catatan_infeksi' },
+      { id: 'instruksi_ruang', label: 'Instruksi jelas untuk petugas dan pengunjung di ruang infeksi (tanda)', key: 'instruksi_ruang' },
+      { id: 'poster_pencegahan', label: 'Poster petunjuk pencegahan penularan penyakit (kontak, droplet, airborne)', key: 'poster_pencegahan' },
+      { id: 'apd_tersedia', label: 'Alat proteksi diri tersedia lengkap saat memasuki ruang isolasi', key: 'apd_tersedia' },
+      { id: 'catatan_klinis', label: 'Ada catatan kasus/bagan klinis di ruangan isolasi', key: 'catatan_klinis' },
+      { id: 'instruksi_isolasi', label: 'Instruksi jelas untuk petugas dan pengunjung saat pasien di isolasi (contoh: tanda di pintu)', key: 'instruksi_isolasi' },
+      { id: 'pintu_tertutup', label: 'Pintu selalu ditutup', key: 'pintu_tertutup' },
+      { id: 'alur_pasien', label: 'Alur pasien masuk terpasang jelas', key: 'alur_pasien' }
     ]
   },
   penyuntikan_aman: {
