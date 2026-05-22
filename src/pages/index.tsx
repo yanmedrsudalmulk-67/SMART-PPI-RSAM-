@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
@@ -11,6 +11,7 @@ export default function WelcomePage() {
   const [mounted, setMounted] = useState(false);
   const [isDark, setIsDark] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -49,6 +50,15 @@ export default function WelcomePage() {
     }
   }, [isDark, mounted]);
 
+  useEffect(() => {
+    // Force video to play after mounting to remove play button on mobile
+    if (mounted && videoRef.current) {
+      videoRef.current.defaultMuted = true;
+      videoRef.current.muted = true;
+      videoRef.current.play().catch(e => console.log('Autoplay prevented:', e));
+    }
+  }, [mounted]);
+
   return (
     <div className={`h-screen w-full transition-colors duration-700 ease-in-out relative flex flex-col items-center justify-center overflow-hidden font-sans ${isDark ? 'bg-[#0a0f1c] text-white' : 'bg-[#ffffff] text-[#0A2F1D]'}`}>
       <Head>
@@ -56,6 +66,7 @@ export default function WelcomePage() {
       </Head>
       {/* Video Background */}
       <video
+        ref={videoRef}
         autoPlay
         loop
         muted
