@@ -26,6 +26,8 @@ const DEFAULT_SLIDES: Slide[] = [
   }
 ];
 
+import WelcomeBackgroundSettings from '@/components/WelcomeBackgroundSettings';
+
 function SliderSettings() {
   const { dashboardData, setDashboardData } = useDashboardStore();
   const [slides, setSlides] = useState<Slide[]>([]);
@@ -344,6 +346,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      <WelcomeBackgroundSettings />
       <SliderSettings />
 
       <div className="bg-white dark:bg-white/5 backdrop-blur-xl p-8 rounded-[32px] border border-slate-200 dark:border-white/5 shadow-sm dark:shadow-none transition-all">

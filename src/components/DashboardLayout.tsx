@@ -239,16 +239,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               ))}
             </div>            
             <div className="p-4 pt-2 mt-auto shrink-0 antialiased">
-              <Link 
-                href="/login"
-                prefetch={false}
-                onClick={() => setUserRole('')}
+              <button 
+                onClick={(e) => {
+                  e.preventDefault();
+                  setUserRole('');
+                  router.push('/login');
+                }}
                 className={`flex items-center justify-center gap-2 w-full p-3 rounded-xl font-[600] text-[15px] sm:text-[13px] tracking-wide transition-all group ${isLightMode ? 'bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(239,68,68,0.12)] text-[#FFFFFF] border border-[rgba(255,255,255,0.10)]' : 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20'}`}
                 title="Keluar"
               >
                 <LogOut className={`w-4 h-4 transition-transform group-hover:-translate-x-1 ${isLightMode ? 'text-[#FFFFFF]' : ''}`} strokeWidth={2.5} />
                 <span>Keluar</span>
-              </Link>
+              </button>
             </div>
           </motion.aside>
           </>

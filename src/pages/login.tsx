@@ -202,9 +202,9 @@ export default function LoginPage() {
             {role === 'IPCLN' && (
               <div className="mt-6 text-center text-[10px] font-bold uppercase tracking-widest">
                 <span className="text-slate-400">Belum punya akun? </span>
-                <Link href="/register" className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-purple-300 transition-colors">
+                <button onClick={(e) => { e.preventDefault(); router.push('/register'); }} className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-purple-300 transition-colors bg-transparent border-none p-0 cursor-pointer text-[10px] font-bold uppercase tracking-widest">
                   Daftar di sini
-                </Link>
+                </button>
               </div>
             )}
           </form>

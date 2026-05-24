@@ -432,4 +432,19 @@ div[id^="nextjs-dev-overlay"] {
   background-color: #ffffff !important;
 }
 
+/* Hide video controls that might appear briefly on mobile before autoplay */
+video::-webkit-media-controls {
+  display: none !important;
+  opacity: 0 !important;
+  appearance: none !important;
+}
+video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+  opacity: 0 !important;
+  appearance: none !important;
+}
+video {
+  /* Prevent interaction directly */
+  pointer-events: none;
+}
 

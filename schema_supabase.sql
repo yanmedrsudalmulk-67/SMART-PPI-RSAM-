@@ -760,3 +760,28 @@ DROP POLICY IF EXISTS "Public access for compatibility" ON public.audit_details;
 CREATE POLICY "Public access for compatibility" ON public.audit_details
   FOR ALL TO anon USING (true) WITH CHECK (true);
 
+
+-- ==========================================
+-- WELCOME BACKGROUNDS TABLE & POLICIES
+-- ==========================================
+CREATE TABLE IF NOT EXISTS public.welcome_backgrounds (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  file_name text not null,
+  file_type text not null,
+  file_size bigint not null,
+  public_url text not null,
+  is_active boolean default false,
+  created_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+ALTER TABLE public.welcome_backgrounds ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public for welcome backgrounds" ON public.welcome_backgrounds;
+CREATE POLICY "Public for welcome backgrounds" ON public.welcome_backgrounds FOR ALL TO public USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Access for authenticated users" ON public.welcome_backgrounds;
+CREATE POLICY "Access for authenticated users" ON public.welcome_backgrounds FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public access for compatibility" ON public.welcome_backgrounds;
+CREATE POLICY "Public access for compatibility" ON public.welcome_backgrounds FOR ALL TO anon USING (true) WITH CHECK (true);
+

@@ -196,9 +196,20 @@ CREATE TABLE IF NOT EXISTS public.dashboard_standards (
   created_at timestamp with time zone default timezone('utc'::text, now())
 );
 
+CREATE TABLE IF NOT EXISTS public.welcome_backgrounds (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  file_name text not null,
+  file_type text not null,
+  file_size bigint not null,
+  public_url text not null,
+  is_active boolean default false,
+  created_at timestamp with time zone default timezone('utc'::text, now())
+);
+
 ALTER TABLE public.monitoring_fasilitas_apd ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.dashboard_slider ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.dashboard_standards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.welcome_backgrounds ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Public access" ON public.monitoring_fasilitas_apd;
 CREATE POLICY "Public access" ON public.monitoring_fasilitas_apd FOR ALL TO public USING (true) WITH CHECK (true);
@@ -208,6 +219,15 @@ CREATE POLICY "Public for slider" ON public.dashboard_slider FOR ALL TO public U
 
 DROP POLICY IF EXISTS "Public for standards" ON public.dashboard_standards;
 CREATE POLICY "Public for standards" ON public.dashboard_standards FOR ALL TO public USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public for welcome backgrounds" ON public.welcome_backgrounds;
+CREATE POLICY "Public for welcome backgrounds" ON public.welcome_backgrounds FOR ALL TO public USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Access for authenticated users" ON public.welcome_backgrounds;
+CREATE POLICY "Access for authenticated users" ON public.welcome_backgrounds FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public access for compatibility" ON public.welcome_backgrounds;
+CREATE POLICY "Public access for compatibility" ON public.welcome_backgrounds FOR ALL TO anon USING (true) WITH CHECK (true);
 
 -- Insert default slide if empty
 INSERT INTO public.dashboard_slider (title, subtitle, image_url, active, sort_order)

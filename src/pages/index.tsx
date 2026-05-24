@@ -1,20 +1,43 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAppContext } from '@/components/Providers';
 import { ShieldCheck, Activity, Clock, Sun, Moon, BarChart3, TrendingUp } from 'lucide-react';
 
+import { supabase } from '@/lib/supabase';
+
 export default function WelcomePage() {
+  const router = useRouter();
   const { hospitalLogoUrl } = useAppContext();
   const [time, setTime] = useState<Date | null>(null);
   const [mounted, setMounted] = useState(false);
   const [isDark, setIsDark] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [activeBackground, setActiveBackground] = useState<{ url: string; type: string } | null>(null);
 
   useEffect(() => {
     setMounted(true);
     setIsMobile(window.innerWidth < 640);
+    
+    // Fetch active background
+    const fetchBackground = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('welcome_backgrounds')
+          .select('public_url, file_type')
+          .eq('is_active', true)
+          .limit(1)
+          .single();
+        if (data && !error) {
+          setActiveBackground({ url: data.public_url, type: data.file_type });
+        }
+      } catch (err) {
+        // Table might not exist yet, fallback gracefully
+      }
+    };
+    fetchBackground();
     
     // Resume correct theme from local storage if available
     const savedTheme = localStorage.getItem('theme');
@@ -50,28 +73,60 @@ export default function WelcomePage() {
   }, [isDark, mounted]);
 
   return (
-    <div className={`h-screen w-full transition-colors duration-700 ease-in-out relative flex flex-col items-center justify-center overflow-hidden font-sans ${isDark ? 'bg-[#0a0f1c] text-white' : 'bg-[#ffffff] text-[#0A2F1D]'}`}>
+    <div className={`h-screen w-full transition-colors duration-700 ease-in-out relative flex flex-col items-center justify-center overflow-hidden font-sans ${isDark ? 'bg-[#0a0f1c] text-white' : 'bg-gradient-to-br from-white via-emerald-50 to-emerald-100 text-[#0A2F1D]'}`}>
       <Head>
         <link rel="preload" as="video" href="https://labs.google/fx/api/og-video/shared/c011686b-71a2-4cb1-909a-f47eb46eeb28" type="video/mp4" />
       </Head>
-      {/* Video Background */}
-      <div 
-        dangerouslySetInnerHTML={{ __html: `
-          <video
-            autoplay
-            loop
-            muted
-            playsinline
-            preload="auto"
-            class="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none z-0"
-            src="https://labs.google/fx/api/og-video/shared/c011686b-71a2-4cb1-909a-f47eb46eeb28"
-          ></video>
-        ` }}
-      />
-      
-      {/* Top / Bottom Black Shadow Gradients */}
-      <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-black/90 to-transparent pointer-events-none z-0" />
-      <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-black/90 to-transparent pointer-events-none z-0" />
+      {/* Background Media */}
+      {isDark && (
+        <>
+          {activeBackground ? (
+            activeBackground.type.startsWith('image/') ? (
+              <div 
+                className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none z-0 bg-no-repeat bg-cover bg-center transition-opacity duration-1000"
+                style={{ backgroundImage: `url(${activeBackground.url})` }}
+              />
+            ) : (
+              <div 
+                dangerouslySetInnerHTML={{ __html: `
+                  <video
+                    autoplay="autoplay"
+                    loop="loop"
+                    muted="muted"
+                    defaultMuted="true"
+                    playsinline="playsinline"
+                    webkit-playsinline="true"
+                    preload="auto"
+                    oncontextmenu="return false;"
+                    class="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none z-0 transition-opacity duration-1000"
+                    src="${activeBackground.url}"
+                  ></video>
+                ` }}
+              />
+            )
+          ) : (
+            <div 
+              dangerouslySetInnerHTML={{ __html: `
+                <video
+                  autoplay="autoplay"
+                  loop="loop"
+                  muted="muted"
+                  defaultMuted="true"
+                  playsinline="playsinline"
+                  webkit-playsinline="true"
+                  preload="auto"
+                  oncontextmenu="return false;"
+                  class="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none z-0 transition-opacity duration-1000"
+                  src="https://labs.google/fx/api/og-video/shared/c011686b-71a2-4cb1-909a-f47eb46eeb28"
+                ></video>
+              ` }}
+            />
+          )}
+          {/* Top / Bottom Black Shadow Gradients for Video */}
+          <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-black/90 to-transparent pointer-events-none z-0" />
+          <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-black/90 to-transparent pointer-events-none z-0" />
+        </>
+      )}
 
       {/* Decorative Floating Glass UI Widgets */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden max-w-[1440px] mx-auto w-full z-10">
@@ -210,7 +265,7 @@ export default function WelcomePage() {
           </div>
           
           <div className="flex flex-col text-left transition-colors duration-500">
-            <span className={`font-heading font-bold text-lg md:text-xl tracking-wide leading-tight transition-colors duration-500 ${isDark ? 'text-white' : 'text-[#0F3D2E]'}`}>
+            <span className={`font-heading font-bold text-base md:text-lg tracking-wide leading-tight transition-colors duration-500 ${isDark ? 'text-white' : 'text-[#0F3D2E]'}`}>
               UOBK RSUD AL-MULK
             </span>
             <span className={`text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] transition-colors duration-500 ${isDark ? 'text-slate-400' : 'text-[#0F3D2E]/60'}`}>
@@ -297,10 +352,9 @@ export default function WelcomePage() {
             initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.8, delay: 1 }}
             className="z-30 relative"
           >
-            <Link 
-              href="/login"
-              prefetch={false}
-              className={`group relative inline-flex items-center justify-center px-14 py-5 font-bold text-white text-lg rounded-full shadow-lg hover:-translate-y-1 transition-all ${isDark ? 'bg-blue-600 hover:bg-blue-500' : 'bg-blue-600 hover:bg-blue-500'}`}
+            <button 
+              onClick={() => router.push('/login')}
+              className={`group relative inline-flex items-center justify-center px-14 py-5 font-bold text-white text-lg rounded-full shadow-lg hover:-translate-y-1 w-full transition-all ${isDark ? 'bg-blue-600 hover:bg-blue-500' : 'bg-blue-600 hover:bg-blue-500'}`}
             >
               <span className="relative z-10 flex items-center gap-3 tracking-wider">
                 Ayo Mulai
@@ -312,7 +366,7 @@ export default function WelcomePage() {
                   →
                 </motion.span>
               </span>
-            </Link>
+            </button>
           </motion.div>
         </motion.div>
       </main>
