@@ -15,6 +15,7 @@ import HandHygieneReport from '@/components/reports/HandHygieneReport';
 import ApdReport from '@/components/reports/ApdReport';
 import DekontaminasiAlatReport from '@/components/reports/DekontaminasiAlatReport';
 import SurveilansHaisReport from '@/components/reports/SurveilansHaisReport';
+import UnifiedSurveilansHaisReport from '@/components/reports/UnifiedSurveilansHaisReport';
 
 const INDICATORS_MAP: Record<string, { cat: string, subcat?: string, title: string, id: string, icon: any }> = {
   // Kewaspadaan Isolasi - Standar
@@ -364,89 +365,91 @@ export default function ReportsPage() {
           <motion.div key="hub" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20, scale: 0.98 }} className="space-y-8">
             
             {/* Header & Filter Periode */}
-            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-              <div className="text-center lg:text-left w-full lg:w-auto">
-                <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white uppercase mb-2">
-                   Laporan SMART PPI
-                </h1>
-                <p className="text-sm font-normal text-slate-500 dark:text-slate-400 mx-auto md:mx-0 max-w-[280px] sm:max-w-none">
-                   Pusat analisis data pencegahan dan pengendalian infeksi terintegrasi.
-                </p>
-              </div>
-              
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-3 bg-white/60 dark:bg-[#111827]/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl p-2 shadow-sm">
-                   <div className="p-2 bg-blue-50 dark:bg-blue-500/10 rounded-xl text-blue-600 dark:text-blue-400">
-                     <Calendar className="w-5 h-5" />
-                   </div>
-                   <select 
-                     value={periode} 
-                     onChange={(e) => setPeriode(e.target.value)}
-                     className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
-                   >
-                     {['Bulanan', 'Triwulan', 'Semester', 'Tahunan'].map(p => (
-                       <option key={p} value={p} className="bg-white dark:bg-slate-900">{p}</option>
-                     ))}
-                   </select>
-
-                   {periode === 'Bulanan' && (
-                     <>
-                       <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
-                       <select 
-                         value={selectedMonth} 
-                         onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                         className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
-                       >
-                         {["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"].map((m, i) => (
-                           <option key={m} value={i} className="bg-white dark:bg-slate-900">{m}</option>
-                         ))}
-                       </select>
-                     </>
-                   )}
-
-                   {periode === 'Triwulan' && (
-                     <>
-                       <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
-                       <select 
-                         value={selectedQuarter} 
-                         onChange={(e) => setSelectedQuarter(parseInt(e.target.value))}
-                         className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
-                       >
-                         {["Triwulan 1", "Triwulan 2", "Triwulan 3", "Triwulan 4"].map((q, i) => (
-                           <option key={q} value={i} className="bg-white dark:bg-slate-900">{q}</option>
-                         ))}
-                       </select>
-                     </>
-                   )}
-
-                   {periode === 'Semester' && (
-                     <>
-                       <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
-                       <select 
-                         value={selectedSemester} 
-                         onChange={(e) => setSelectedSemester(parseInt(e.target.value))}
-                         className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
-                       >
-                         {["Semester 1", "Semester 2"].map((s, i) => (
-                           <option key={s} value={i} className="bg-white dark:bg-slate-900">{s}</option>
-                         ))}
-                       </select>
-                     </>
-                   )}
-
-                   <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
-                   <select 
-                     value={selectedYear} 
-                     onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                     className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
-                   >
-                     {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => (
-                       <option key={y} value={y} className="bg-white dark:bg-slate-900">{y}</option>
-                     ))}
-                   </select>
+            {kategori !== 'Surveilans HAIs' && (
+              <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+                <div className="text-center lg:text-left w-full lg:w-auto">
+                  <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white uppercase mb-2">
+                     Laporan SMART PPI
+                  </h1>
+                  <p className="text-sm font-normal text-slate-500 dark:text-slate-400 mx-auto md:mx-0 max-w-[280px] sm:max-w-none">
+                     Pusat analisis data pencegahan dan pengendalian infeksi terintegrasi.
+                  </p>
+                </div>
+                
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-3 bg-white/60 dark:bg-[#111827]/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl p-2 shadow-sm">
+                     <div className="p-2 bg-blue-50 dark:bg-blue-500/10 rounded-xl text-blue-600 dark:text-blue-400">
+                       <Calendar className="w-5 h-5" />
+                     </div>
+                     <select 
+                       value={periode} 
+                       onChange={(e) => setPeriode(e.target.value)}
+                       className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
+                     >
+                       {['Bulanan', 'Triwulan', 'Semester', 'Tahunan'].map(p => (
+                         <option key={p} value={p} className="bg-white dark:bg-slate-900">{p}</option>
+                       ))}
+                     </select>
+  
+                     {periode === 'Bulanan' && (
+                       <>
+                         <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
+                         <select 
+                           value={selectedMonth} 
+                           onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                           className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
+                         >
+                           {["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"].map((m, i) => (
+                             <option key={m} value={i} className="bg-white dark:bg-slate-900">{m}</option>
+                           ))}
+                         </select>
+                       </>
+                     )}
+  
+                     {periode === 'Triwulan' && (
+                       <>
+                         <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
+                         <select 
+                           value={selectedQuarter} 
+                           onChange={(e) => setSelectedQuarter(parseInt(e.target.value))}
+                           className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
+                         >
+                           {["Triwulan 1", "Triwulan 2", "Triwulan 3", "Triwulan 4"].map((q, i) => (
+                             <option key={q} value={i} className="bg-white dark:bg-slate-900">{q}</option>
+                           ))}
+                         </select>
+                       </>
+                     )}
+  
+                     {periode === 'Semester' && (
+                       <>
+                         <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
+                         <select 
+                           value={selectedSemester} 
+                           onChange={(e) => setSelectedSemester(parseInt(e.target.value))}
+                           className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
+                         >
+                           {["Semester 1", "Semester 2"].map((s, i) => (
+                             <option key={s} value={i} className="bg-white dark:bg-slate-900">{s}</option>
+                           ))}
+                         </select>
+                       </>
+                     )}
+  
+                     <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
+                     <select 
+                       value={selectedYear} 
+                       onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                       className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
+                     >
+                       {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => (
+                         <option key={y} value={y} className="bg-white dark:bg-slate-900">{y}</option>
+                       ))}
+                     </select>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Navigation Filter Kategori & Sub */}
             <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-3xl p-2 shadow-lg dark:shadow-[0_0_40px_rgba(0,0,0,0.2)]">
@@ -493,9 +496,11 @@ export default function ReportsPage() {
                </AnimatePresence>
             </div>
 
-            {/* Indicator Grid */}
+            {/* Indicator Grid or Unified Report */}
             <div className="pt-4">
-              {loading ? (
+              {kategori === 'Surveilans HAIs' ? (
+                 <UnifiedSurveilansHaisReport />
+              ) : loading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {[1,2,3,4,5,6].map(n => <div key={n} className="h-56 bg-white dark:bg-white/5 rounded-3xl animate-pulse"></div>)}
                 </div>
@@ -517,19 +522,11 @@ export default function ReportsPage() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.05 }}
                     >
-                      {kategori === 'Surveilans HAIs' ? (
-                        <SurveilansSummaryCard
-                          indicator={ind}
-                          stats={haisStatsMap.get(ind.id)}
-                          onClick={() => setSelectedIndicator(ind.id)}
-                        />
-                      ) : (
-                        <SummaryCard
-                          indicator={ind}
-                          stats={statsMap.get(ind.id)}
-                          onClick={() => setSelectedIndicator(ind.id)}
-                        />
-                      )}
+                      <SummaryCard
+                        indicator={ind}
+                        stats={statsMap.get(ind.id)}
+                        onClick={() => setSelectedIndicator(ind.id)}
+                      />
                     </motion.div>
                   ))}
                 </motion.div>

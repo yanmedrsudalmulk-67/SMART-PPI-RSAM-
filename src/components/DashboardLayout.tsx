@@ -40,7 +40,7 @@ const NavItem = memo(({ item, isActive, isLightMode, onClick }: { item: any, isA
   return (
     <Link 
       href={item.href}
-      prefetch={false}
+      prefetch={true}
       onClick={onClick}
       className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
     >
@@ -334,8 +334,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative">
-          <div className="fixed top-[20%] right-[10%] w-[30%] h-[30%] bg-gradient-to-r from-blue-400 to-purple-500/5 blur-[100px] rounded-full -z-10 pointer-events-none" />
-          <div className="fixed bottom-[10%] left-[10%] w-[30%] h-[30%] bg-purple-500/5 blur-[100px] rounded-full -z-10 pointer-events-none" />
+          <div className="fixed top-[20%] right-[10%] w-[30%] h-[30%] bg-gradient-to-r from-blue-400 to-purple-500/5 blur-[60px] rounded-full -z-10 pointer-events-none will-change-transform" />
+          <div className="fixed bottom-[10%] left-[10%] w-[30%] h-[30%] bg-purple-500/5 blur-[60px] rounded-full -z-10 pointer-events-none will-change-transform" />
           
           {children}
         </main>
@@ -343,24 +343,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Mobile Bottom Navigation */}
       {isMobile && (
-        <nav className={`fixed bottom-0 inset-x-0 backdrop-blur-2xl border-t flex justify-around items-center h-16 px-2 z-40 transition-all ${isLightMode ? 'bg-emerald-600 border-emerald-500' : 'bg-[#0a0f1c]/90 border-white/10'}`}>
+        <nav className={`fixed bottom-0 inset-x-0 backdrop-blur-xl border-t flex justify-around items-center h-[60px] px-2 z-40 transition-colors will-change-transform ${isLightMode ? 'bg-emerald-600/95 border-emerald-500' : 'bg-[#0a0f1c]/95 border-white/10'}`}>
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link 
                 key={item.name} 
                 href={item.href}
-                prefetch={false}
-                className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${
+                prefetch={true}
+                className={`flex flex-col items-center justify-center w-full h-[52px] space-y-1 rounded-xl transition-all ${
                   isActive 
-                    ? isLightMode ? 'text-white' : 'text-emerald-400' 
+                    ? isLightMode ? 'text-white bg-white/10' : 'text-emerald-400 bg-white/5' 
                     : isLightMode ? 'text-white/70 hover:text-white' : 'text-slate-500 hover:text-slate-300'
                 }`}
               >
-                <div className={`relative transition-transform duration-300 ${isActive ? 'scale-110 animate-float' : ''}`}>
-                  <item.icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} />
+                <div className={`relative transition-transform duration-200 ${isActive ? 'scale-[1.15] -translate-y-0.5' : ''}`}>
+                  <item.icon className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={isActive ? 2.5 : 2} />
                 </div>
-                <span className="text-[9px] font-bold uppercase tracking-wider">{item.name}</span>
+                <span className={`text-[8.5px] uppercase tracking-wide transition-all ${isActive ? 'font-bold opcaity-100' : 'font-medium opacity-80'}`}>{item.name}</span>
               </Link>
             );
           })}

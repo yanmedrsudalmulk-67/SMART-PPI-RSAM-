@@ -15,7 +15,10 @@ export default function WelcomePage() {
   const [mounted, setMounted] = useState(false);
   const [isDark, setIsDark] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
-  const [activeBackground, setActiveBackground] = useState<{ url: string; type: string } | null>(null);
+  const [activeBackground, setActiveBackground] = useState<{ url: string; type: string } | null>({
+    url: 'https://labs.google/fx/api/og-video/shared/c011686b-71a2-4cb1-909a-f47eb46eeb28',
+    type: 'video/mp4'
+  });
 
   useEffect(() => {
     setMounted(true);
@@ -265,7 +268,7 @@ export default function WelcomePage() {
           </div>
           
           <div className="flex flex-col text-left transition-colors duration-500">
-            <span className={`font-heading font-bold text-base md:text-lg tracking-wide leading-tight transition-colors duration-500 ${isDark ? 'text-white' : 'text-[#0F3D2E]'}`}>
+            <span className={`font-heading font-bold text-sm md:text-base tracking-wide leading-tight transition-colors duration-500 ${isDark ? 'text-white' : 'text-[#0F3D2E]'}`}>
               UOBK RSUD AL-MULK
             </span>
             <span className={`text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] transition-colors duration-500 ${isDark ? 'text-slate-400' : 'text-[#0F3D2E]/60'}`}>
