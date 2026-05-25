@@ -513,6 +513,7 @@ export default function DashboardPage() {
           hIsk: 0,
           hIdo: 0,
           hVap: 0,
+          hCount: 0, // for detecting any HAIs data
           fapdSum: 0,
           fapdCount: 0,
           linenSum: 0,
@@ -598,6 +599,7 @@ export default function DashboardPage() {
       const type = String(d.indikator_id).toLowerCase();
 
       if (grouped[k]) {
+        grouped[k].hCount++;
         if (type.includes("ph")) grouped[k].hPhle += r;
         else if (type.includes("isk")) grouped[k].hIsk += r;
         else if (type.includes("ido")) grouped[k].hIdo += r;
@@ -683,6 +685,13 @@ export default function DashboardPage() {
           g.fapdCount > 0 ? Number((g.fapdSum / g.fapdCount).toFixed(1)) : 0,
         linen:
           g.linenCount > 0 ? Number((g.linenSum / g.linenCount).toFixed(1)) : 0,
+        _hasData: {
+          hh: g.hhCount > 0,
+          apd: g.apdDin > 0,
+          hais: g.hCount > 0,
+          fasilitas_apd: g.fapdCount > 0,
+          linen: g.linenCount > 0
+        }
       };
     });
 
@@ -834,9 +843,22 @@ export default function DashboardPage() {
   const generateAutoInsight = () => {
     if (chartDataList.length < 1)
       return "Data belum tersedia untuk periode observasi ini.";
-    const current = chartDataList[chartDataList.length - 1];
-    const prev =
-      chartDataList.length > 1 ? chartDataList[chartDataList.length - 2] : null;
+      
+    // Find the last valid data point based on active tab
+    const hasTabData = (d: any) => {
+      if (activeTab === "hh") return d._hasData.hh;
+      if (activeTab === "apd") return d._hasData.apd;
+      if (activeTab === "hais") return d._hasData.hais;
+      if (activeTab === "fasilitas_apd") return d._hasData.fasilitas_apd;
+      if (activeTab === "linen") return d._hasData.linen;
+      return false;
+    };
+    
+    const validData = chartDataList.filter((d: any) => hasTabData(d));
+    const dataListToUse = validData.length > 0 ? validData : chartDataList;
+    
+    const current = dataListToUse[dataListToUse.length - 1];
+    const prev = dataListToUse.length > 1 ? dataListToUse[dataListToUse.length - 2] : null;
 
     // PPI Standards and Kemenkes guidance
     // HH >= 85%, APD = 100%

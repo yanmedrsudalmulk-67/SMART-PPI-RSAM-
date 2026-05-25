@@ -9,8 +9,10 @@ import {
 } from 'lucide-react';
 import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  ComposedChart, Bar, Line
+  ComposedChart, Bar, Line, ReferenceLine
 } from 'recharts';
+
+import { useAppContext } from '@/components/Providers';
 
 const STANDARDS: Record<string, number> = {
   phlebitis: 1,
@@ -47,6 +49,7 @@ const RUANGAN_LIST = [
 ];
 
 export default function UnifiedSurveilansHaisReport() {
+  const { hospitalLogoUrl } = useAppContext();
   const [periodeType, setPeriodeType] = useState("Bulanan");
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -205,36 +208,48 @@ export default function UnifiedSurveilansHaisReport() {
   }, [currentData, previousData, data, startDateISO, endDateISO, prevStartDateISO]);
 
   const chartData = useMemo(() => {
-    if (!data.length) return [];
-    
     const byPeriodAndType: any = {};
-    const getPeriodKey = (d: string) => {
-      const dt = parseISO(d);
-      if (periodeType === "Bulanan" || periodeType === "Tahunan") return format(dt, "MMM yyyy", { locale: idLocale });
-      if (periodeType === "Triwulan") return `Q${Math.floor(dt.getMonth() / 3) + 1} ${dt.getFullYear()}`;
-      if (periodeType === "Semester") return `S${Math.floor(dt.getMonth() / 6) + 1} ${dt.getFullYear()}`;
-      return `${dt.getFullYear()}`;
-    };
+    
+    let startMonth = 0;
+    let endMonth = 11;
+    if (periodeType === "Bulanan") {
+      startMonth = selectedMonth;
+      endMonth = selectedMonth;
+    } else if (periodeType === "Triwulan") {
+      startMonth = selectedQuarter * 3;
+      endMonth = startMonth + 2;
+    } else if (periodeType === "Semester") {
+      startMonth = selectedSemester * 6;
+      endMonth = startMonth + 5;
+    }
 
-    data.forEach((item) => {
-      const key = getPeriodKey(item.tanggal_waktu);
-      if (!byPeriodAndType[key]) {
-        byPeriodAndType[key] = { period: key };
-        KATEGORI_HAIS.filter(k => k !== "Semua HAIs").forEach(k => {
-           byPeriodAndType[key][`${k}_num`] = 0;
-           byPeriodAndType[key][`${k}_den`] = 0;
-           byPeriodAndType[key][k] = 0;
-        });
-      }
+    // Pre-fill months
+    for (let i = startMonth; i <= endMonth; i++) {
+      const monthKey = `${["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"][i]}`;
+      byPeriodAndType[monthKey] = { period: monthKey };
+      KATEGORI_HAIS.filter(k => k !== "Semua HAIs").forEach(k => {
+         byPeriodAndType[monthKey][`${k}_num`] = 0;
+         byPeriodAndType[monthKey][`${k}_den`] = 0;
+         byPeriodAndType[monthKey][k] = 0;
+      });
+    }
+
+    const currentPeriodData = data.filter(d => d.tanggal_waktu >= startDateISO && d.tanggal_waktu <= endDateISO);
+
+    currentPeriodData.forEach((item) => {
+      const dt = parseISO(item.tanggal_waktu);
+      const k = `${["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"][dt.getMonth()]}`;
+      
+      if (!byPeriodAndType[k]) return;
       
       const typeKey = item.nama_indikator || (item.indikator_id === 'ido' ? 'IDO' : 
                    item.indikator_id === 'isk' ? 'ISK' : 
                    item.indikator_id === 'vap' ? 'VAP' : 
                    item.indikator_id === 'phlebitis' ? 'Phlebitis' : 'Decubitus');
                    
-      if (byPeriodAndType[key][`${typeKey}_num`] !== undefined) {
-         byPeriodAndType[key][`${typeKey}_num`] += item.jumlah_patuh || 0;
-         byPeriodAndType[key][`${typeKey}_den`] += item.jumlah_dinilai || 0;
+      if (byPeriodAndType[k][`${typeKey}_num`] !== undefined) {
+         byPeriodAndType[k][`${typeKey}_num`] += item.jumlah_patuh || 0;
+         byPeriodAndType[k][`${typeKey}_den`] += item.jumlah_dinilai || 0;
       }
     });
 
@@ -247,7 +262,7 @@ export default function UnifiedSurveilansHaisReport() {
       });
       return row;
     });
-  }, [data, periodeType]);
+  }, [data, periodeType, selectedMonth, selectedQuarter, selectedSemester, startDateISO, endDateISO]);
 
   return (
     <div className="flex flex-col gap-6 w-full fade-in zoom-in-95 animate-in duration-500 pb-32">
@@ -257,7 +272,7 @@ export default function UnifiedSurveilansHaisReport() {
         <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white uppercase mb-2">
           SURVEILANS HAIs
         </h1>
-        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 max-w-2xl">
+        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 max-w-2xl">
           Monitoring realtime insiden Healthcare Associated Infections (HAIs) berdasarkan periode dan kategori ruangan.
         </p>
       </div>
@@ -320,110 +335,23 @@ export default function UnifiedSurveilansHaisReport() {
         <div className="flex justify-center p-20"><div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div></div>
       ) : (
         <>
-          {/* SUMMARY CARDS */}
-          {selectedHais === "Semua HAIs" ? (
-             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 xl:gap-6 mt-2">
-                {Object.keys(summarized).map(k => {
-                  const stat = summarized[k];
-                  const standard = STANDARDS[k.toLowerCase()] || 0;
-                  const isPercent = k === 'IDO';
-                  const symbol = isPercent ? '%' : '‰';
-                  
-                  const isSesuai = stat.rate <= standard;
-                  const targetStatus = stat.count === 0 ? 'Belum ada data' : isSesuai ? 'Sesuai Standar' : 'Di atas standar';
-                  
-                  const trendUp = stat.rate > stat.prevRate;
-                  const trendDown = stat.rate < stat.prevRate;
-                  
-                  return (
-                    <div key={k} className="bg-white dark:bg-[#111827] backdrop-blur-xl rounded-3xl p-5 border shadow-sm group hover:shadow-xl transition-all duration-300 relative overflow-hidden flex flex-col"
-                      style={{ borderColor: COLORS[k] + '33' }}
-                    >
-                      <div className="absolute top-0 right-0 w-32 h-32 blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity rounded-full pointer-events-none" style={{ background: COLORS[k] }} />
-                      
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="p-3 rounded-2xl text-white shadow-inner" style={{ background: COLORS[k] }}>
-                           <Activity className="w-5 h-5" />
-                        </div>
-                        <div className="text-right">
-                          <span className="text-3xl font-black font-mono tracking-tighter" style={{ color: COLORS[k] }}>
-                            {stat.rate.toFixed(2)}{symbol}
-                          </span>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Rate Realtime</p>
-                        </div>
-                      </div>
-
-                      <div className="mt-auto pt-4 border-t border-slate-100 dark:border-white/5 space-y-2">
-                        <h3 className="font-bold text-slate-900 dark:text-white uppercase tracking-tight">{k}</h3>
-                        
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-slate-500 font-medium">Status</span>
-                          {stat.count === 0 ? (
-                            <span className="text-slate-400 font-bold bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded">Belum ada data</span>
-                          ) : isSesuai ? (
-                            <span className="text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-400/10 px-2 py-0.5 rounded">Sesuai Standar</span>
-                          ) : (
-                            <span className="text-red-500 font-bold bg-red-50 dark:bg-red-400/10 px-2 py-0.5 rounded">Di Atas Standar</span>
-                          )}
-                        </div>
-
-                        <div className="flex justify-between items-center text-xs">
-                           <span className="text-slate-500 font-medium">Trend (vs sblm)</span>
-                           {stat.count === 0 ? <span className="text-slate-400">-</span> : 
-                            trendUp ? <span className="text-red-500 font-bold flex items-center gap-1">Naik <Activity className="w-3 h-3" /></span> :
-                            trendDown ? <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">Turun <Activity className="w-3 h-3 rotate-180" /></span> :
-                            <span className="text-slate-400 font-bold">-</span>
-                           }
-                        </div>
-                        
-                        <div className="flex justify-between items-center text-xs">
-                           <span className="text-slate-500 font-medium">Total Input</span>
-                           <span className="text-slate-900 dark:text-white font-bold">{stat.count} Data</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-             </div>
-          ) : (
-             <div className="bg-white dark:bg-[#111827] backdrop-blur-xl rounded-3xl p-6 border shadow-lg relative overflow-hidden flex flex-col sm:flex-row justify-between items-start sm:items-center w-full"
-                  style={{ borderColor: COLORS[selectedHais] + '44' }}
-             >
-                <div className="absolute top-0 right-0 w-64 h-64 blur-[80px] opacity-10 rounded-full pointer-events-none" style={{ background: COLORS[selectedHais] }} />
-                <div className="flex items-center gap-5 relative z-10 w-full sm:w-auto">
-                   <div className="p-4 rounded-2xl shadow-inner text-white hidden sm:block" style={{ background: COLORS[selectedHais] }}>
-                      <Activity className="w-8 h-8" />
-                   </div>
-                   <div>
-                     <h3 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white mb-1">{selectedHais}</h3>
-                     <div className="flex items-center gap-2">
-                       <span className="px-2 py-1 rounded bg-slate-100 dark:bg-white/5 text-xs font-bold text-slate-500">Standar Maksimal: {STANDARDS[selectedHais.toLowerCase()]} {selectedHais === 'IDO' ? '%' : '‰'}</span>
-                       <span className="px-2 py-1 rounded bg-slate-100 dark:bg-white/5 text-xs font-bold text-slate-500">{summarized[selectedHais]?.count || 0} Audit Realtime</span>
-                     </div>
-                   </div>
-                </div>
-                
-                <div className="text-left sm:text-right mt-4 sm:mt-0 relative z-10 w-full sm:w-auto">
-                  <span className="text-4xl sm:text-5xl font-black font-mono tracking-tighter drop-shadow-md" style={{ color: COLORS[selectedHais] }}>
-                    {summarized[selectedHais]?.rate.toFixed(2)}{selectedHais === 'IDO' ? '%' : '‰'}
-                  </span>
-                  <div className="flex items-center sm:justify-end gap-2 mt-1">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Rate Saat Ini</span>
-                    {summarized[selectedHais]?.count > 0 && summarized[selectedHais]?.rate > STANDARDS[selectedHais.toLowerCase()] && (
-                        <span className="flex items-center gap-1 text-[10px] font-bold text-red-500 bg-red-500/10 px-2 rounded-full uppercase tracking-wider"><AlertCircle className="w-3 h-3"/> Warning</span>
-                    )}
-                  </div>
-                </div>
-             </div>
-          )}
-
           {/* TABLE SECTION */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xl mt-4">
-            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-white/5">
-              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Table2 className="w-5 h-5 text-emerald-500" />
-                Data Monitoring Realtime
-              </h3>
+          <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-xl rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm transition-all mt-4">
+            <div className="p-8 border-b border-slate-100 dark:border-white/5 bg-white dark:bg-[#0f172a]">
+               <div className="flex flex-col md:flex-row items-center gap-6">
+                 {hospitalLogoUrl && (
+                   <img src={hospitalLogoUrl} alt="Logo RS" className="w-20 h-20 object-contain" />
+                 )}
+                 <div className="text-center md:text-left">
+                   <h2 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase tracking-tight">
+                     Laporan Surveilans HAIs
+                   </h2>
+                   <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase">UOBK RSUD AL-MULK KOTA SUKABUMI</h3>
+                   <p className="text-slate-500 dark:text-slate-400 font-medium mt-1 uppercase">
+                     Periode: {periodeType} {selectedYear} {periodeType === 'Bulanan' ? `- ${["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"][selectedMonth]}` : ''}
+                   </p>
+                 </div>
+               </div>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse whitespace-nowrap min-w-[700px]">
@@ -432,7 +360,10 @@ export default function UnifiedSurveilansHaisReport() {
                     <th className="py-3 px-4 font-black w-12 text-center">No</th>
                     <th className="py-3 px-4 font-black">Waktu Input</th>
                     <th className="py-3 px-4 font-black">Ruangan</th>
-                    <th className="py-3 px-4 font-black">Kategori</th>
+                    <th className="py-3 px-4 font-black">
+                      Insiden Rate<br />
+                      HAIs
+                    </th>
                     <th className="py-3 px-4 font-black text-right">Numerator</th>
                     <th className="py-3 px-4 font-black text-right">Denominator</th>
                     <th className="py-3 px-4 font-black text-right">Rate</th>
@@ -496,9 +427,9 @@ export default function UnifiedSurveilansHaisReport() {
           <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/5 rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden mt-4">
              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 whitespace-nowrap">
                     <TrendingUp className="w-5 h-5 text-blue-500" />
-                    Grafik Monitoring Dinamis
+                    Grafik Monitoring Surveilans HAIs
                   </h3>
                   <p className="text-xs font-medium text-slate-500 mt-1">Menampilkan capaian sepanjang periode tahun terpilih.</p>
                 </div>
@@ -516,9 +447,9 @@ export default function UnifiedSurveilansHaisReport() {
              <div className="h-[350px] w-full">
                {chartData.length > 0 ? (
                  <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
                        <CartesianGrid strokeDasharray="3 3" stroke="#94a3b833" vertical={false} />
-                       <XAxis dataKey="period" stroke="#64748b" fontSize={11} tickMargin={10} axisLine={false} tickLine={false} />
+                       <XAxis dataKey="period" stroke="#64748b" fontSize={9} tickMargin={10} axisLine={false} tickLine={false} interval={0} angle={-45} textAnchor="end" height={40} />
                        <YAxis stroke="#64748b" fontSize={11} axisLine={false} tickLine={false} />
                        <Tooltip 
                          contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.95)', borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)', color: '#fff' }}
@@ -538,6 +469,19 @@ export default function UnifiedSurveilansHaisReport() {
                              <Bar dataKey={selectedHais} fill={COLORS[selectedHais]} radius={[6, 6, 0, 0]} maxBarSize={50} /> :
                              <Line type="monotone" dataKey={selectedHais} stroke={COLORS[selectedHais]} strokeWidth={4} dot={{ r: 5, fill: '#fff', strokeWidth: 2 }} activeDot={{ r: 7 }} />
                        )}
+                        {selectedHais !== "Semua HAIs" && (
+                          <ReferenceLine
+                            y={STANDARDS[selectedHais.toLowerCase()]}
+                            stroke="#06b6d4"
+                            strokeDasharray="5 5"
+                            label={{
+                              position: "top",
+                              value: `Standar ${STANDARDS[selectedHais.toLowerCase()]}${selectedHais === 'IDO' ? '%' : '‰'}`,
+                              fill: "#06b6d4",
+                              fontSize: 10,
+                            }}
+                          />
+                        )}
                     </ComposedChart>
                  </ResponsiveContainer>
                ) : (
