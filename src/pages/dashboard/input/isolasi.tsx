@@ -23,7 +23,7 @@ import {
   Home,
   CheckCircle2,
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import DashboardLayout from "@/components/DashboardLayout";
 
@@ -161,6 +161,12 @@ const monitoringIndicators = [
     icon: Activity,
   },
   {
+    id: "farmasi",
+    title: "Farmasi",
+    desc: "Audit kepatuhan PPI di area Instalasi Farmasi.",
+    icon: Briefcase,
+  },
+  {
     id: "gizi",
     title: "Gizi",
     desc: "Audit higiene sanitasi makanan dan dapur gizi.",
@@ -189,12 +195,6 @@ const monitoringIndicators = [
     title: "Ruang Tunggu",
     desc: "Audit kebersihan dan fasilitas di ruang tunggu.",
     icon: Users,
-  },
-  {
-    id: "farmasi",
-    title: "Farmasi",
-    desc: "Audit kepatuhan PPI di area Instalasi Farmasi.",
-    icon: Briefcase,
   },
 ];
 

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
-import { motion, AnimatePresence } from 'motion/react';
+import { useSafeRouter as useRouter } from '@/hooks/useSafeRouter';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAppContext } from '@/components/Providers';
 import { ShieldCheck, Activity, Clock, Sun, Moon, BarChart3, TrendingUp } from 'lucide-react';
 

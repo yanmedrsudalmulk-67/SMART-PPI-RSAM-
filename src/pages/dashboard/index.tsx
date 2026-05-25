@@ -18,7 +18,7 @@ import {
   Calendar,
   ImageOff,
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { useAppContext } from "@/components/Providers";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -122,16 +122,22 @@ const SliderImage = ({
   setImageErrors: any;
 }) => {
   return (
-    <img
-      src={slide.image_url}
-      alt={slide.title}
-      className={`absolute inset-0 w-full h-full object-cover transition-all duration-[10000ms] ease-linear transform scale-100 group-[.swiper-slide-active]:scale-110`}
-      referrerPolicy="no-referrer"
-      onError={(e) => {
-        console.error("Slider image error", slide.image_url);
-        setImageErrors((prev: any) => ({ ...prev, [slide.id]: true }));
-      }}
-    />
+    <>
+      <div 
+        className="absolute inset-0 w-full h-full bg-cover bg-center blur-[40px] opacity-30 dark:opacity-40 scale-125 saturate-200"
+        style={{ backgroundImage: `url(${slide.image_url})` }}
+      />
+      <img
+        src={slide.image_url}
+        alt={slide.title}
+        className={`absolute inset-0 w-full h-full object-cover drop-shadow-2xl transition-[transform,opacity] duration-[15000ms] ease-out transform scale-100 group-[.swiper-slide-active]:scale-105`}
+        referrerPolicy="no-referrer"
+        onError={(e) => {
+          console.error("Slider image error", slide.image_url);
+          setImageErrors((prev: any) => ({ ...prev, [slide.id]: true }));
+        }}
+      />
+    </>
   );
 };
 
@@ -143,15 +149,58 @@ const HeroSlider = ({
   isLoading: boolean;
 }) => {
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const [aspectRatios, setAspectRatios] = useState<Record<string, number>>({});
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const visibleSlides = useMemo(() => {
     const active = slides.filter((s) => s.active);
     return active.length > 0 ? active : DEFAULT_SLIDES;
   }, [slides]);
 
+  useEffect(() => {
+    visibleSlides.forEach((slide) => {
+      if (slide.image_url && !aspectRatios[slide.id]) {
+        const img = new window.Image();
+        img.src = slide.image_url;
+        img.referrerPolicy = "no-referrer";
+        img.onload = () => {
+          if (img.naturalWidth && img.naturalHeight) {
+            const ratio = img.naturalWidth / img.naturalHeight;
+            // Sane ratios (from 1.4 to 2.7)
+            const boundedRatio = Math.max(1.4, Math.min(2.7, ratio));
+            setAspectRatios((prev) => ({ ...prev, [slide.id]: boundedRatio }));
+          }
+        };
+      }
+    });
+  }, [visibleSlides, aspectRatios]);
+
+  const currentSlide = visibleSlides[activeIndex] || visibleSlides[0];
+  const currentRatio = useMemo(() => {
+    if (!currentSlide) return 16 / 9;
+    const rawRatio = aspectRatios[currentSlide.id] || 16 / 9;
+    if (isMobile) {
+      return Math.max(1.3, Math.min(1.8, rawRatio));
+    }
+    return rawRatio;
+  }, [currentSlide, aspectRatios, isMobile]);
+
   if (isLoading)
     return (
-      <div className="relative w-full h-[220px] sm:h-[320px] md:h-[420px] rounded-[24px] overflow-hidden bg-slate-100 dark:bg-slate-900 flex items-center justify-center border border-slate-200 dark:border-white/5 animate-pulse shadow-sm">
+      <div 
+        className="relative w-full rounded-[24px] overflow-hidden bg-slate-100 dark:bg-slate-900 flex items-center justify-center border border-slate-200 dark:border-white/5 animate-pulse shadow-sm mb-8 mt-4 transition-all duration-300 ease-in-out"
+        style={{ aspectRatio: currentRatio }}
+      >
         <div className="flex flex-col items-center gap-4">
           <Shield className="w-12 h-12 text-slate-300 dark:text-slate-700" />
           <div className="h-2 w-24 bg-slate-200 dark:bg-slate-800 rounded-full" />
@@ -160,7 +209,10 @@ const HeroSlider = ({
     );
 
   return (
-    <div className="w-full relative group rounded-[24px] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-slate-200/50 dark:border-white/10 dark:shadow-blue-900/20 mb-8 mt-4">
+    <div 
+      className="w-full relative group rounded-[24px] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-slate-200/50 dark:border-white/10 dark:shadow-blue-900/20 mb-8 mt-4 bg-slate-900 transition-all duration-300 ease-in-out transform-gpu will-change-[width,height]"
+      style={{ aspectRatio: currentRatio }}
+    >
       <Swiper
         key={visibleSlides.map((s) => s.id).join(",")}
         modules={[Autoplay, Pagination, Navigation, EffectFade]}
@@ -178,15 +230,16 @@ const HeroSlider = ({
           clickable: true,
           dynamicBullets: true,
         }}
-        className="w-full h-[220px] sm:h-[320px] md:h-[420px] bg-slate-900"
+        onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
+        className="w-full h-full bg-transparent transition-all duration-300 ease-in-out transform-gpu will-change-[width,height]"
       >
         {visibleSlides.map((slide, i) => (
           <SwiperSlide key={slide.id || i} className="overflow-hidden">
-            <div className="relative w-full h-full bg-slate-800 dark:bg-slate-900 overflow-hidden">
+            <div className="relative w-full h-full overflow-hidden flex items-center justify-center">
               {slide.image_url && !imageErrors[slide.id] ? (
                 <SliderImage slide={slide} setImageErrors={setImageErrors} />
               ) : (
-                <div className="absolute inset-0 bg-slate-100 dark:bg-slate-800 flex flex-col items-center justify-center gap-3">
+                <div className="absolute inset-0 bg-slate-100 dark:bg-slate-800/80 flex flex-col items-center justify-center gap-3">
                   <ImageOff className="w-12 h-12 text-slate-400 dark:text-slate-600 mb-2" />
                   <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
                     Image not available

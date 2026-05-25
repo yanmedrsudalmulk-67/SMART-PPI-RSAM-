@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, ReactElement } from "react";
-import { useRouter } from "next/router";
+import { useSafeRouter as useRouter } from '@/hooks/useSafeRouter';
 import {
   Activity,
   ArrowLeft,
@@ -14,7 +14,7 @@ import {
   RefreshCw,
   User,
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { uploadImagesToSupabase } from "@/lib/upload";

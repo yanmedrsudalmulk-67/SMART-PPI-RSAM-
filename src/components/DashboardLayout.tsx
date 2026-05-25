@@ -1,7 +1,7 @@
 import { useState, useEffect, memo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/router';
+import { useSafeRouter as useRouter } from '@/hooks/useSafeRouter';
 import { 
   LayoutDashboard, 
   ClipboardCheck, 
@@ -15,7 +15,7 @@ import {
   Moon,
   ShieldCheck
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAppContext } from '@/components/Providers';
 import { AppLogo } from '@/components/AppLogo';
 import { ClockWidget } from '@/components/ClockWidget';
@@ -258,7 +258,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </AnimatePresence>
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-500 print:ml-0 ${!isMobile && isSidebarOpen ? 'ml-[312px]' : ''}`}>
+      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out print:ml-0 ${!isMobile && isSidebarOpen ? 'ml-[312px]' : ''}`}>
         {/* Top Header */}
         <header className={`min-h-[56px] sm:h-20 py-2 sm:py-0 backdrop-blur-xl border-b flex items-center justify-between px-4 sm:px-8 sticky top-0 z-10 transition-colors duration-500 print:hidden ${isLightMode ? 'bg-white/80 border-slate-100 shadow-sm' : 'bg-[#0a0f1c]/80 border-white/5 shadow-md'}`}>
           <div className="flex items-center gap-2 sm:gap-4">

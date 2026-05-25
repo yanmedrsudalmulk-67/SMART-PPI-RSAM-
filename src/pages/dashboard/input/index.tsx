@@ -17,7 +17,7 @@ import {
   Calendar,
   Filter,
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import DashboardLayout from "@/components/DashboardLayout";
 import { supabase } from "@/lib/supabase";
@@ -36,6 +36,9 @@ const STATIC_MODULES = [
       btnHoverBg: "group-hover:bg-[#2563EB]",
       watermark: "text-blue-500/5 dark:text-blue-500/10",
       progressColor: "bg-blue-600",
+      mainIconBox: "bg-blue-500/5 dark:bg-blue-500/10 border-[1.5px] border-blue-500/60 shadow-[inset_0_0_20px_rgba(37,99,235,0.1),0_0_15px_rgba(37,99,235,0.15)] text-blue-600 dark:text-blue-400",
+      colBorder: "border-blue-500/20 dark:border-blue-500/25 group-hover:border-blue-500/50",
+      colIconBox: "bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/30 text-blue-600 dark:text-blue-400"
     },
     href: "/dashboard/input/isolasi",
     standard: 85,
@@ -53,6 +56,9 @@ const STATIC_MODULES = [
       btnHoverBg: "group-hover:bg-[#10B981]",
       watermark: "text-emerald-500/5 dark:text-emerald-500/10",
       progressColor: "bg-emerald-500", // Although less means better, we map rate slightly differently
+      mainIconBox: "bg-emerald-500/5 dark:bg-emerald-500/10 border-[1.5px] border-emerald-500/60 shadow-[inset_0_0_20px_rgba(16,185,129,0.1),0_0_15px_rgba(16,185,129,0.15)] text-emerald-600 dark:text-emerald-400",
+      colBorder: "border-emerald-500/20 dark:border-emerald-500/25 group-hover:border-emerald-500/50",
+      colIconBox: "bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
     },
     href: "/dashboard/input/surveilans",
     standard: 1.5,
@@ -70,6 +76,9 @@ const STATIC_MODULES = [
       btnHoverBg: "group-hover:bg-[#7C3AED]",
       watermark: "text-purple-500/5 dark:text-purple-500/10",
       progressColor: "bg-purple-600",
+      mainIconBox: "bg-purple-500/5 dark:bg-purple-500/10 border-[1.5px] border-purple-500/60 shadow-[inset_0_0_20px_rgba(124,58,237,0.1),0_0_15px_rgba(124,58,237,0.15)] text-purple-600 dark:text-purple-400",
+      colBorder: "border-purple-500/20 dark:border-purple-500/25 group-hover:border-purple-500/50",
+      colIconBox: "bg-purple-500/5 dark:bg-purple-500/10 border border-purple-500/30 text-purple-600 dark:text-purple-400"
     },
     href: "/dashboard/input/bundles",
     standard: 90,
@@ -87,6 +96,9 @@ const STATIC_MODULES = [
       btnHoverBg: "group-hover:bg-[#F59E0B]",
       watermark: "text-amber-500/5 dark:text-amber-500/10",
       progressColor: "bg-amber-500",
+      mainIconBox: "bg-amber-500/5 dark:bg-amber-500/10 border-[1.5px] border-amber-500/60 shadow-[inset_0_0_20px_rgba(245,158,11,0.1),0_0_15px_rgba(245,158,11,0.15)] text-amber-600 dark:text-amber-400",
+      colBorder: "border-amber-500/20 dark:border-amber-500/25 group-hover:border-amber-500/50",
+      colIconBox: "bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400"
     },
     href: "/dashboard/input/diklat",
     standard: 80,
@@ -400,19 +412,21 @@ export default function InputIndexPage() {
               label: statCountLabel,
               value: statCountVal,
               icon: mod.icon,
-              iconColor: mod.colorTheme.bgActive,
+              iconColor: mod.colorTheme.colIconBox,
             },
             {
               label: statPatuhLabel,
               value: statPatuhVal,
               icon: CheckCircle2,
-              iconColor: passStandard ? "bg-emerald-500" : "bg-red-500",
+              iconColor: passStandard 
+                ? "bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400" 
+                : "bg-red-500/5 dark:bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400",
             },
             {
               label: "Trend",
               value: `${diff > 0 ? "+" : ""}${diff.toFixed(1)}%`,
               icon: isTrendUp ? TrendingUp : TrendingDown,
-              iconColor: mod.colorTheme.bgActive,
+              iconColor: mod.colorTheme.colIconBox,
             },
           ],
         },
@@ -427,6 +441,7 @@ export default function InputIndexPage() {
     filterSemester,
     filterUnit,
     filterProfesi,
+    getPreviousPeriodParams,
   ]);
 
   const months = [
@@ -580,6 +595,7 @@ export default function InputIndexPage() {
           >
             <Link
               href={mod.href}
+              prefetch={false}
               className="relative group p-6 rounded-[28px] bg-white/70 dark:bg-[#0F172A]/80 backdrop-blur-xl border border-slate-200 dark:border-white/5 flex flex-col justify-between overflow-hidden shadow-sm hover:shadow-xl dark:shadow-none dark:hover:shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all duration-300 w-full"
             >
               {/* Background gradient hint */}
@@ -590,10 +606,10 @@ export default function InputIndexPage() {
               <div className="flex justify-between items-start mb-6 relative z-10">
                 <div className="flex gap-4">
                   <div
-                    className={`w-14 h-14 rounded-[18px] flex flex-shrink-0 items-center justify-center ${mod.colorTheme.bgActive} shadow-lg ${mod.colorTheme.shadowActive}`}
+                    className={`w-14 h-14 rounded-[18px] flex flex-shrink-0 items-center justify-center ${mod.colorTheme.mainIconBox}`}
                   >
                     <mod.icon
-                      className="w-7 h-7 text-white"
+                      className="w-7 h-7"
                       strokeWidth={2.5}
                     />
                   </div>
@@ -669,10 +685,10 @@ export default function InputIndexPage() {
                 {mod.computed.subStats.map((stat, idx) => (
                   <div
                     key={idx}
-                    className="flex flex-col items-center bg-slate-50 dark:bg-slate-800/40 rounded-2xl py-3 border border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10 transition-colors"
+                    className={`flex flex-col items-center bg-slate-50/50 dark:bg-slate-800/20 rounded-2xl py-3 border ${mod.colorTheme.colBorder} transition-colors`}
                   >
                     <div
-                      className={`w-8 h-8 flex items-center justify-center rounded-xl text-white shadow-md ${stat.iconColor} mb-2`}
+                      className={`w-8 h-8 flex items-center justify-center rounded-xl ${stat.iconColor} mb-2`}
                     >
                       <stat.icon className="w-4 h-4" />
                     </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, ReactElement, useRef } from "react";
-import { useRouter } from "next/router";
+import { useSafeRouter as useRouter } from '@/hooks/useSafeRouter';
 import {
   ArrowLeft,
   Save,
@@ -15,7 +15,7 @@ import {
   Info,
   ShieldCheck,
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useAppContext } from "@/components/Providers";
 import { supabase } from "@/lib/supabase";
@@ -286,11 +286,10 @@ export default function InputDekontaminasiAlatPage() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-400 bg-[length:200%_auto] animate-gradient uppercase drop-shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+          <h1 className="text-xs min-[360px]:text-sm min-[410px]:text-base sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-400 bg-[length:200%_auto] animate-gradient uppercase drop-shadow-[0_0_15px_rgba(59,130,246,0.3)] whitespace-nowrap">
             Audit Dekontaminasi Alat
           </h1>
-          <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.3em] text-blue-500/80 mt-2 flex items-center gap-2">
-            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+          <p className="text-[8px] min-[360px]:text-[9px] min-[410px]:text-[10px] sm:text-xs font-bold uppercase tracking-[0.05em] sm:tracking-[0.1em] text-blue-500/80 mt-2 whitespace-nowrap">
             Observasi kepatuhan dekontaminasi peralatan medis
           </p>
         </div>

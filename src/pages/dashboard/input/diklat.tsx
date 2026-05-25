@@ -10,14 +10,21 @@ import {
   RefreshCw,
 } from "lucide-react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabase";
 import {
   DocumentationUploader,
   DocImage,
 } from "@/components/DocumentationUploader";
-import type { TrainingMaterial } from "@/components/MateriUploader";
+
+export interface TrainingMaterial {
+  id: string;
+  url: string;
+  file: File;
+  type: 'pdf' | 'pptx' | 'other';
+  name: string;
+}
 
 const MateriUploader = dynamic(
   () => import("@/components/MateriUploader").then((mod) => mod.MateriUploader),

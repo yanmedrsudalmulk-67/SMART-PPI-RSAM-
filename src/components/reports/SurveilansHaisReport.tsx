@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { format, parseISO } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Activity,
   ArrowDown,

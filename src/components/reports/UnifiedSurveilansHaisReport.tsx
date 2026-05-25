@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Activity, ArrowDown, ArrowUp, BarChart, LineChart, Table2, TrendingUp,
   AlertCircle, Calendar, Building2, Filter, CheckCircle2
@@ -240,7 +240,14 @@ export default function UnifiedSurveilansHaisReport() {
       const dt = parseISO(item.tanggal_waktu);
       const k = `${["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"][dt.getMonth()]}`;
       
-      if (!byPeriodAndType[k]) return;
+      if (!byPeriodAndType[k]) {
+        byPeriodAndType[k] = { period: k };
+        KATEGORI_HAIS.filter(kat => kat !== "Semua HAIs").forEach(kat => {
+           byPeriodAndType[k][`${kat}_num`] = 0;
+           byPeriodAndType[k][`${kat}_den`] = 0;
+           byPeriodAndType[k][kat] = 0;
+        });
+      }
       
       const typeKey = item.nama_indikator || (item.indikator_id === 'ido' ? 'IDO' : 
                    item.indikator_id === 'isk' ? 'ISK' : 
@@ -343,7 +350,7 @@ export default function UnifiedSurveilansHaisReport() {
                    <img src={hospitalLogoUrl} alt="Logo RS" className="w-20 h-20 object-contain" />
                  )}
                  <div className="text-center md:text-left">
-                   <h2 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase tracking-tight">
+                   <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
                      Laporan Surveilans HAIs
                    </h2>
                    <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase">UOBK RSUD AL-MULK KOTA SUKABUMI</h3>

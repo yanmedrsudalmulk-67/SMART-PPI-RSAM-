@@ -4,7 +4,7 @@ import {
   Activity, ShieldCheck, ClipboardCheck, GraduationCap, Building2, User, AlertTriangle, Truck, Users, Wind, ShieldAlert,
   ChevronDown, CheckCircle2, ChevronRight, Edit, Trash2
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { useAppContext } from '@/components/Providers';
 import DashboardLayout from '@/components/DashboardLayout';

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, ReactElement } from "react";
-import { useRouter } from "next/router";
+import { useSafeRouter as useRouter } from '@/hooks/useSafeRouter';
 import {
   ArrowLeft,
   Save,
@@ -17,7 +17,7 @@ import {
   Trash2,
   FileText,
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useAppContext } from "@/components/Providers";
 import { supabase } from "@/lib/supabase";
@@ -306,10 +306,10 @@ export default function InputApdPage() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 via-blue-500 to-emerald-500 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all drop-shadow-sm dark:drop-shadow-[0_0_10px_rgba(59,130,246,0.4)] uppercase">
+          <h1 className="text-xs min-[360px]:text-sm min-[410px]:text-base sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 via-blue-500 to-emerald-500 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all drop-shadow-sm dark:drop-shadow-[0_0_10px_rgba(59,130,246,0.4)] uppercase whitespace-nowrap">
             Audit Kepatuhan Penggunaan APD
           </h1>
-          <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.1em] text-emerald-600 dark:text-blue-400 mt-1">
+          <p className="text-[8px] min-[360px]:text-[9px] min-[410px]:text-[10px] sm:text-xs font-bold uppercase tracking-[0.05em] sm:tracking-[0.1em] text-emerald-600 dark:text-blue-400 mt-1 whitespace-nowrap">
             Observasi penggunaan Alat Pelindung Diri petugas
           </p>
         </div>

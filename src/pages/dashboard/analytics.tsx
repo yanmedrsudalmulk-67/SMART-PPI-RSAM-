@@ -7,7 +7,7 @@ import {
   Filter,
   Download
 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useDashboardStore } from '@/hooks/useDashboardStore';
 

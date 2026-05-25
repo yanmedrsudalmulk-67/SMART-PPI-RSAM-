@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, ReactElement, useRef } from "react";
-import { useRouter } from "next/router";
+import { useSafeRouter as useRouter } from '@/hooks/useSafeRouter';
 import {
   ArrowLeft,
   Save,
@@ -9,7 +9,7 @@ import {
   FileText,
   Clock,
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useAppContext } from "@/components/Providers";
 import { supabase } from "@/lib/supabase";

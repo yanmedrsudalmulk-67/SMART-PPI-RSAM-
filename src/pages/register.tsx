@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
+import { useSafeRouter as useRouter } from '@/hooks/useSafeRouter';
 import { Lock, User, ArrowRight, Building2, Mail } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { AppLogo } from '@/components/AppLogo';
 
 export default function RegisterPage() {

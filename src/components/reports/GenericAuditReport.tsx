@@ -40,7 +40,7 @@ import {
 } from "@/components/ChartComponents";
 import { format, parseISO } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { useAppContext } from "@/components/Providers";
 

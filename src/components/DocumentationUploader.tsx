@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Camera, Trash2, Eye, X, Image as ImageIcon } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export interface DocImage {
   url: string;

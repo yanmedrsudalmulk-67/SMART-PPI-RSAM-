@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
 import Image from 'next/image';
 import { ShieldCheck } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAppContext } from '@/components/Providers';
 
 interface Item {

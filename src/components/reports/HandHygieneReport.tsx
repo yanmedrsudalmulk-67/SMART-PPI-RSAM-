@@ -5,7 +5,7 @@ import {
   BarChart2, User, ChevronDown, CheckCircle2, ShieldCheck, Activity, Users, 
   MapPin, Clock, Calendar as CalendarIcon, Check, X, TrendingUp
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, ReferenceLine, ComposedChart, Line, Cell
 } from '@/components/ChartComponents';

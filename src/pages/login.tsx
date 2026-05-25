@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
+import { useSafeRouter as useRouter } from '@/hooks/useSafeRouter';
 import { Lock, User, ArrowRight, AlertCircle } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { useAppContext } from '@/components/Providers';
 import { AppLogo } from '@/components/AppLogo';
 
