@@ -191,80 +191,86 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className={`min-h-screen flex ${isLightMode ? 'bg-white text-slate-900' : 'bg-[#0a0f1c] text-slate-200'}`}>
-      {/* Desktop & Mobile Sidebar Drawer */}
-      <AnimatePresence mode="wait">
-        {isSidebarOpen && (
-          <>
-            {isMobile && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setIsSidebarOpen(false)}
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity"
-              />
-            )}
-            <motion.aside 
-              initial={false}
-              animate={{ width: isMobile ? '82%' : 280, maxWidth: isMobile ? 320 : 280, opacity: 1, x: 0 }}
-              exit={{ width: isMobile ? '82%' : 0, maxWidth: isMobile ? 320 : 280, opacity: 0, x: isMobile ? '-100%' : 0 }}
-              className={`backdrop-blur-xl border-r flex flex-col fixed inset-y-4 left-4 z-50 rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.1)] overflow-hidden transition-colors duration-500 print:hidden ${isLightMode ? 'bg-[linear-gradient(180deg,#10b981_0%,#059669_55%,#047857_100%)] text-white border-white/10' : 'bg-[#0a0f1c]/80 border-white/5 shadow-black/50'}`}
-            >
-            <div className={`flex flex-col items-center justify-center pt-5 pb-4 border-b shrink-0 px-4 ${isLightMode ? 'border-white/5' : 'border-white/5'}`}>
-              <div className="flex items-center justify-center w-[56px] h-[56px] rounded-[18px] shadow-[0_10px_30px_rgba(0,0,0,0.12)] bg-white/5 backdrop-blur-md mb-3 border border-white/10 relative group">
-                <AppLogo className="w-full h-full text-white group-hover:text-emerald-100 transition-colors" iconClassName="w-6 h-6 text-emerald-600 dark:text-[#0a0f1c]" />
-              </div>
-              <div className="flex flex-col items-center text-center">
-                <span className={`font-heading font-[800] text-[16px] tracking-[1px] transition-all antialiased text-white ${isLightMode ? 'drop-shadow-[0_0_10px_rgba(255,255,255,0.12)]' : 'drop-shadow-[0_0_15px_rgba(52,211,153,0.3)]'}`}>
-                  SMART PPI
-                </span>
-                <span className={`text-[8px] whitespace-nowrap leading-[1.4] text-center mt-1 transition-all antialiased ${isLightMode ? 'text-[rgba(255,255,255,0.72)]' : 'text-slate-400'}`}>
-                  Sistem Monitoring, Audit dan Supervisi Terintegrasi
-                </span>
-              </div>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto py-5 px-4 space-y-1 custom-sidebar-scrollbar">
-              <div className="mb-4 px-1">
-                <p className={`text-[10px] font-bold uppercase tracking-widest antialiased ${isLightMode ? 'text-[rgba(255,255,255,0.92)]' : 'text-slate-500'}`}>Menu Utama</p>
-              </div>
-              {navItems.map((item) => (
-                <NavItem 
-                  key={item.name} 
-                  item={item} 
-                  isActive={pathname === item.href} 
-                  isLightMode={isLightMode}
-                  onClick={() => { if (isMobile) setIsSidebarOpen(false); }}
-                />
-              ))}
-            </div>            
-            <div className="p-4 pt-2 mt-auto shrink-0 antialiased">
-              <button 
-                onClick={(e) => {
-                  e.preventDefault();
-                  setUserRole('');
-                  router.push('/login');
-                }}
-                className={`flex items-center justify-center gap-2 w-full p-3 rounded-xl font-[600] text-[15px] sm:text-[13px] tracking-wide transition-all group ${isLightMode ? 'bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(239,68,68,0.12)] text-[#FFFFFF] border border-[rgba(255,255,255,0.10)]' : 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20'}`}
-                title="Keluar"
-              >
-                <LogOut className={`w-4 h-4 transition-transform group-hover:-translate-x-1 ${isLightMode ? 'text-[#FFFFFF]' : ''}`} strokeWidth={2.5} />
-                <span>Keluar</span>
-              </button>
-            </div>
-          </motion.aside>
-          </>
+      {/* Mobile Backdrop Overlay */}
+      <AnimatePresence>
+        {isMobile && isSidebarOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 bg-black/55 backdrop-blur-[2px] z-40 transition-opacity duration-200"
+          />
         )}
       </AnimatePresence>
 
+      {/* Desktop & Mobile Sidebar Drawer */}
+      <motion.aside 
+        initial={false}
+        animate={{ 
+          x: isSidebarOpen ? 0 : -360,
+          opacity: isSidebarOpen ? 1 : 0
+        }}
+        transition={{ 
+          type: "spring",
+          stiffness: 420,
+          damping: 36,
+          mass: 0.8
+        }}
+        className={`backdrop-blur-xl border-r flex flex-col fixed inset-y-4 left-4 z-50 w-[280px] rounded-[24px] overflow-hidden transition-colors duration-500 print:hidden transform-gpu will-change-transform ${isLightMode ? 'bg-[linear-gradient(180deg,#10b981_0%,#059669_55%,#047857_100%)] text-white border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.15)]' : 'bg-[#0a0f1c]/85 border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.5)]'}`}
+      >
+        <div className={`flex flex-col items-center justify-center pt-5 pb-4 border-b shrink-0 px-4 ${isLightMode ? 'border-white/5' : 'border-white/5'}`}>
+          <div className="flex items-center justify-center w-[56px] h-[56px] rounded-[18px] shadow-[0_10px_30px_rgba(0,0,0,0.12)] bg-white/5 backdrop-blur-md mb-3 border border-white/10 relative group">
+            <AppLogo className="w-full h-full text-white group-hover:text-emerald-100 transition-colors" iconClassName="w-6 h-6 text-emerald-600 dark:text-[#0a0f1c]" />
+          </div>
+          <div className="flex flex-col items-center text-center">
+            <span className={`font-heading font-[800] text-[16px] tracking-[1px] transition-all antialiased text-white ${isLightMode ? 'drop-shadow-[0_0_10px_rgba(255,255,255,0.12)]' : 'drop-shadow-[0_0_15px_rgba(52,211,153,0.3)]'}`}>
+              SMART PPI
+            </span>
+            <span className={`text-[8px] whitespace-nowrap leading-[1.4] text-center mt-1 transition-all antialiased ${isLightMode ? 'text-[rgba(255,255,255,0.72)]' : 'text-slate-400'}`}>
+              Sistem Monitoring, Audit dan Supervisi Terintegrasi
+            </span>
+          </div>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto py-5 px-4 space-y-1 custom-sidebar-scrollbar">
+          <div className="mb-4 px-1">
+            <p className={`text-[10px] font-bold uppercase tracking-widest antialiased ${isLightMode ? 'text-[rgba(255,255,255,0.92)]' : 'text-slate-500'}`}>Menu Utama</p>
+          </div>
+          {navItems.map((item) => (
+            <NavItem 
+              key={item.name} 
+              item={item} 
+              isActive={pathname === item.href} 
+              isLightMode={isLightMode}
+              onClick={() => { if (isMobile) setIsSidebarOpen(false); }}
+            />
+          ))}
+        </div>            
+        <div className="p-4 pt-2 mt-auto shrink-0 antialiased">
+          <button 
+            onClick={(e) => {
+              e.preventDefault();
+              setUserRole('');
+              router.push('/login');
+            }}
+            className={`flex items-center justify-center gap-2 w-full p-3 rounded-xl font-[600] text-[15px] sm:text-[13px] tracking-wide transition-all group ${isLightMode ? 'bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(239,68,68,0.12)] text-[#FFFFFF] border border-[rgba(255,255,255,0.10)]' : 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20'}`}
+            title="Keluar"
+          >
+            <LogOut className={`w-4 h-4 transition-transform group-hover:-translate-x-1 ${isLightMode ? 'text-[#FFFFFF]' : ''}`} strokeWidth={2.5} />
+            <span>Keluar</span>
+          </button>
+        </div>
+      </motion.aside>
+
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out print:ml-0 ${!isMobile && isSidebarOpen ? 'ml-[312px]' : ''}`}>
+      <div className={`flex-1 flex flex-col min-w-0 transition-[margin-left] duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] print:ml-0 ${!isMobile && isSidebarOpen ? 'ml-[312px]' : 'ml-0'} transform-gpu will-change-[margin-left]`}>
         {/* Top Header */}
-        <header className={`min-h-[56px] sm:h-20 py-2 sm:py-0 backdrop-blur-xl border-b flex items-center justify-between px-4 sm:px-8 sticky top-0 z-10 transition-colors duration-500 print:hidden ${isLightMode ? 'bg-white/80 border-slate-100 shadow-sm' : 'bg-[#0a0f1c]/80 border-white/5 shadow-md'}`}>
+        <header className={`min-h-[56px] sm:h-20 py-2 sm:py-0 backdrop-blur-xl border-b flex items-center justify-between px-4 sm:px-8 sticky top-0 z-10 transition-colors duration-500 print:hidden ${isLightMode ? 'bg-white/80 border-slate-100 shadow-sm' : 'bg-[#0a0f1c]/80 border-white/5 shadow-[0_4px_12px_rgba(0,0,0,0.5)]'}`}>
           <div className="flex items-center gap-2 sm:gap-4">
             <button 
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className={`p-2 rounded-xl transition-colors hidden sm:block ${isLightMode ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'}`}
+              className={`p-2 rounded-xl transition-colors block ${isLightMode ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'}`}
               title="Toggle Sidebar"
             >
               <Menu className="w-5 h-5" />
@@ -334,9 +340,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative">
-          <div className="fixed top-[20%] right-[10%] w-[30%] h-[30%] bg-gradient-to-r from-blue-400 to-purple-500/5 blur-[60px] rounded-full -z-10 pointer-events-none will-change-transform" />
-          <div className="fixed bottom-[10%] left-[10%] w-[30%] h-[30%] bg-purple-500/5 blur-[60px] rounded-full -z-10 pointer-events-none will-change-transform" />
-          
           {children}
         </main>
       </div>
