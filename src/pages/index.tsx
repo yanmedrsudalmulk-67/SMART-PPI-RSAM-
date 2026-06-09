@@ -101,7 +101,7 @@ export default function WelcomePage() {
                     webkit-playsinline="true"
                     preload="auto"
                     oncontextmenu="return false;"
-                    class="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none z-0 transition-opacity duration-1000"
+                    class="absolute inset-0 w-full h-full object-cover opacity-50 pointer-events-none z-0"
                     src="${activeBackground.url}"
                   ></video>
                 ` }}
@@ -119,7 +119,7 @@ export default function WelcomePage() {
                   webkit-playsinline="true"
                   preload="auto"
                   oncontextmenu="return false;"
-                  class="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none z-0 transition-opacity duration-1000"
+                  class="absolute inset-0 w-full h-full object-cover opacity-50 pointer-events-none z-0"
                   src="https://labs.google/fx/api/og-video/shared/c011686b-71a2-4cb1-909a-f47eb46eeb28"
                 ></video>
               ` }}
@@ -355,8 +355,9 @@ export default function WelcomePage() {
             initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.8, delay: 1 }}
             className="z-30 relative"
           >
-            <button 
-              onClick={() => router.push('/login')}
+            <Link 
+              href="/login"
+              prefetch={true}
               className={`group relative inline-flex items-center justify-center px-14 py-5 font-bold text-white text-lg rounded-full shadow-lg hover:-translate-y-1 w-full transition-all ${isDark ? 'bg-blue-600 hover:bg-blue-500' : 'bg-blue-600 hover:bg-blue-500'}`}
             >
               <span className="relative z-10 flex items-center gap-3 tracking-wider">
@@ -369,7 +370,7 @@ export default function WelcomePage() {
                   →
                 </motion.span>
               </span>
-            </button>
+            </Link>
           </motion.div>
         </motion.div>
       </main>

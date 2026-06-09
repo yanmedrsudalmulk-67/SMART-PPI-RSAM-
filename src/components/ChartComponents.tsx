@@ -20,5 +20,6 @@ export {
   Legend, 
   ReferenceLine, 
   Pie, 
-  Cell 
+  Cell,
+  LabelList
 } from 'recharts';

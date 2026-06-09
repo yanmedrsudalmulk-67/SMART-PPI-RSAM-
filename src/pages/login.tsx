@@ -39,25 +39,23 @@ export default function LoginPage() {
     setError('');
     setIsLoading(true);
 
-    setTimeout(() => {
-      if (role === 'IPCN') {
-        if ((username === 'PPI RSAM' || username === 'admin') && (password === 'PPI RSAM' || password === 'admin')) {
-          setUserRole('IPCN');
-          router.push('/dashboard');
-        } else {
-          setError('Username atau password salah untuk IPCN.');
-          setIsLoading(false);
-        }
+    if (role === 'IPCN') {
+      if ((username === 'PPI RSAM' || username === 'admin') && (password === 'PPI RSAM' || password === 'admin')) {
+        setUserRole('IPCN');
+        router.push('/dashboard');
       } else {
-        if (username && password) {
-           setUserRole('IPCLN');
-           router.push('/dashboard');
-        } else {
-           setError('Harap isi username dan password.');
-           setIsLoading(false);
-        }
+        setError('Username atau password salah untuk IPCN.');
+        setIsLoading(false);
       }
-    }, 100);
+    } else {
+      if (username && password) {
+         setUserRole('IPCLN');
+         router.push('/dashboard');
+      } else {
+         setError('Harap isi username dan password.');
+         setIsLoading(false);
+      }
+    }
   };
 
   if (!mounted) return null;

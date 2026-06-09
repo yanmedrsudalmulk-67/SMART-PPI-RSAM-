@@ -42,6 +42,7 @@ import {
   Legend,
   ReferenceLine,
   Cell,
+  LabelList,
 } from "@/components/ChartComponents";
 
 // --- Types ---
@@ -123,7 +124,7 @@ const SliderImage = ({
 }) => {
   return (
     <>
-      <div 
+      <div
         className="absolute inset-0 w-full h-full bg-cover bg-center blur-[40px] opacity-30 dark:opacity-40 scale-125 saturate-200"
         style={{ backgroundImage: `url(${slide.image_url})` }}
       />
@@ -197,7 +198,7 @@ const HeroSlider = ({
 
   if (isLoading)
     return (
-      <div 
+      <div
         className="relative w-full rounded-[24px] overflow-hidden bg-slate-100 dark:bg-slate-900 flex items-center justify-center border border-slate-200 dark:border-white/5 animate-pulse shadow-sm mb-8 mt-4 transition-all duration-300 ease-in-out"
         style={{ aspectRatio: currentRatio }}
       >
@@ -209,7 +210,7 @@ const HeroSlider = ({
     );
 
   return (
-    <div 
+    <div
       className="w-full relative group rounded-[24px] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-slate-200/50 dark:border-white/10 dark:shadow-blue-900/20 mb-8 mt-4 bg-slate-900 transition-all duration-300 ease-in-out transform-gpu will-change-[width,height]"
       style={{ aspectRatio: currentRatio }}
     >
@@ -336,7 +337,10 @@ export default function DashboardPage() {
             supabase.from("dashboard_standards").select("*"),
             supabase.from("audit_hand_hygiene").select("*"),
             supabase.from("audit_apd").select("*"),
-            supabase.from("audit_sessions").select("*").eq("kategori", "Surveilans HAIs"),
+            supabase
+              .from("audit_sessions")
+              .select("*")
+              .eq("kategori", "Surveilans HAIs"),
             supabase.from("monitoring_fasilitas_apd").select("*"),
             supabase.from("audit_penatalaksanaan_linen").select("*"),
           ]);
@@ -743,8 +747,8 @@ export default function DashboardPage() {
           apd: g.apdDin > 0,
           hais: g.hCount > 0,
           fasilitas_apd: g.fapdCount > 0,
-          linen: g.linenCount > 0
-        }
+          linen: g.linenCount > 0,
+        },
       };
     });
 
@@ -896,7 +900,7 @@ export default function DashboardPage() {
   const generateAutoInsight = () => {
     if (chartDataList.length < 1)
       return "Data belum tersedia untuk periode observasi ini.";
-      
+
     // Find the last valid data point based on active tab
     const hasTabData = (d: any) => {
       if (activeTab === "hh") return d._hasData.hh;
@@ -906,12 +910,13 @@ export default function DashboardPage() {
       if (activeTab === "linen") return d._hasData.linen;
       return false;
     };
-    
+
     const validData = chartDataList.filter((d: any) => hasTabData(d));
     const dataListToUse = validData.length > 0 ? validData : chartDataList;
-    
+
     const current = dataListToUse[dataListToUse.length - 1];
-    const prev = dataListToUse.length > 1 ? dataListToUse[dataListToUse.length - 2] : null;
+    const prev =
+      dataListToUse.length > 1 ? dataListToUse[dataListToUse.length - 2] : null;
 
     // PPI Standards and Kemenkes guidance
     // HH >= 85%, APD = 100%
@@ -1624,6 +1629,14 @@ export default function DashboardPage() {
                           name="Capaian HH (%)"
                           radius={[8, 8, 0, 0]}
                         >
+                          <LabelList
+                            dataKey="hh"
+                            position="top"
+                            formatter={(val: number) => `${val}%`}
+                            fill="#64748b"
+                            fontSize={11}
+                            fontWeight={700}
+                          />
                           {chartDataList.map((entry: any, index: number) => (
                             <Cell
                               key={`cell-${index}`}
@@ -1637,6 +1650,14 @@ export default function DashboardPage() {
                           name="Capaian APD (%)"
                           radius={[8, 8, 0, 0]}
                         >
+                          <LabelList
+                            dataKey="apd"
+                            position="top"
+                            formatter={(val: number) => `${val}%`}
+                            fill="#64748b"
+                            fontSize={11}
+                            fontWeight={700}
+                          />
                           {chartDataList.map((entry: any, index: number) => (
                             <Cell
                               key={`cell-${index}`}
@@ -1650,6 +1671,14 @@ export default function DashboardPage() {
                           name="Fasilitas APD (%)"
                           radius={[8, 8, 0, 0]}
                         >
+                          <LabelList
+                            dataKey="fasilitas_apd"
+                            position="top"
+                            formatter={(val: number) => `${val}%`}
+                            fill="#64748b"
+                            fontSize={11}
+                            fontWeight={700}
+                          />
                           {chartDataList.map((entry: any, index: number) => (
                             <Cell
                               key={`cell-${index}`}
@@ -1666,6 +1695,14 @@ export default function DashboardPage() {
                           name="Linen (%)"
                           radius={[8, 8, 0, 0]}
                         >
+                          <LabelList
+                            dataKey="linen"
+                            position="top"
+                            formatter={(val: number) => `${val}%`}
+                            fill="#64748b"
+                            fontSize={11}
+                            fontWeight={700}
+                          />
                           {chartDataList.map((entry: any, index: number) => (
                             <Cell
                               key={`cell-${index}`}
@@ -1768,7 +1805,16 @@ export default function DashboardPage() {
                           strokeWidth={3}
                           dot={{ r: 4, strokeWidth: 2 }}
                           activeDot={{ r: 6 }}
-                        />
+                        >
+                          <LabelList
+                            dataKey="hh"
+                            position="top"
+                            formatter={(val: number) => `${val}%`}
+                            fill="#64748b"
+                            fontSize={11}
+                            fontWeight={700}
+                          />
+                        </Line>
                       ) : activeTab === "apd" ? (
                         <Line
                           type="monotone"
@@ -1778,7 +1824,16 @@ export default function DashboardPage() {
                           strokeWidth={3}
                           dot={{ r: 4, strokeWidth: 2 }}
                           activeDot={{ r: 6 }}
-                        />
+                        >
+                          <LabelList
+                            dataKey="apd"
+                            position="top"
+                            formatter={(val: number) => `${val}%`}
+                            fill="#64748b"
+                            fontSize={11}
+                            fontWeight={700}
+                          />
+                        </Line>
                       ) : activeTab === "fasilitas_apd" ? (
                         <Line
                           type="monotone"
@@ -1788,7 +1843,16 @@ export default function DashboardPage() {
                           strokeWidth={3}
                           dot={{ r: 4, strokeWidth: 2 }}
                           activeDot={{ r: 6 }}
-                        />
+                        >
+                          <LabelList
+                            dataKey="fasilitas_apd"
+                            position="top"
+                            formatter={(val: number) => `${val}%`}
+                            fill="#64748b"
+                            fontSize={11}
+                            fontWeight={700}
+                          />
+                        </Line>
                       ) : (
                         <Line
                           type="monotone"
@@ -1798,7 +1862,16 @@ export default function DashboardPage() {
                           strokeWidth={3}
                           dot={{ r: 4, strokeWidth: 2 }}
                           activeDot={{ r: 6 }}
-                        />
+                        >
+                          <LabelList
+                            dataKey="linen"
+                            position="top"
+                            formatter={(val: number) => `${val}%`}
+                            fill="#64748b"
+                            fontSize={11}
+                            fontWeight={700}
+                          />
+                        </Line>
                       )}
                       {standards[activeTab] && activeTab !== "hais" && (
                         <ReferenceLine

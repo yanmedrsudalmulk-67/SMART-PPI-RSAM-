@@ -279,7 +279,7 @@ export default function UnifiedSurveilansHaisReport() {
         <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white uppercase mb-2">
           SURVEILANS HAIs
         </h1>
-        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 max-w-2xl">
+        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 max-w-full sm:whitespace-nowrap">
           Monitoring realtime insiden Healthcare Associated Infections (HAIs) berdasarkan periode dan kategori ruangan.
         </p>
       </div>

@@ -23,19 +23,19 @@ import { useDashboardStore } from '@/hooks/useDashboardStore';
 import { supabase } from '@/lib/supabase';
 
 const NavItem = memo(({ item, isActive, isLightMode, onClick }: { item: any, isActive: boolean, isLightMode?: boolean, onClick?: () => void }) => {
-  const baseClasses = "relative flex items-center gap-3.5 px-4 py-3 rounded-xl transition-all duration-300 ease-out group antialiased";
+  const baseClasses = "relative flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-300 ease-in-out group antialiased hover:scale-[1.02] active:scale-[0.98] transform-gpu will-change-transform";
   
   const activeClasses = isLightMode 
-    ? "bg-[#10B981]/12 border border-[#10B981]/25 backdrop-blur-[12px] shadow-[0_0_20px_rgba(16,185,129,0.15)] text-white font-[700]" 
-    : "bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 text-white shadow-[0_4px_20px_rgba(16,185,129,0.15)] font-[700]";
+    ? "bg-white/20 border border-white/40 backdrop-blur-lg shadow-[0_8px_32px_rgba(0,0,0,0.1)] text-white font-bold ring-1 ring-white/50" 
+    : "bg-white/10 border border-white/20 backdrop-blur-lg shadow-[0_8px_32px_rgba(0,0,0,0.2)] text-white font-bold ring-1 ring-white/20";
     
   const inactiveClasses = isLightMode
-    ? "text-[rgba(255,255,255,0.92)] hover:bg-white/10 hover:text-white hover:translate-x-1"
-    : "text-[rgba(255,255,255,0.8)] hover:bg-white/10 hover:text-white hover:translate-x-1";
+    ? "text-white/90 hover:bg-white/10 hover:text-white hover:shadow-md border border-transparent"
+    : "text-white/70 hover:bg-white/10 hover:text-white hover:shadow-md border border-transparent";
 
-  const iconBase = "w-[20px] h-[20px]";
-  const iconActive = "text-white";
-  const iconInactive = "text-[rgba(255,255,255,0.88)] group-hover:text-white";
+  const iconBase = "w-[22px] h-[22px]";
+  const iconActive = "text-white drop-shadow-md";
+  const iconInactive = "text-white/80 group-hover:text-white transition-colors duration-300";
 
   return (
     <Link 
@@ -45,15 +45,15 @@ const NavItem = memo(({ item, isActive, isLightMode, onClick }: { item: any, isA
       className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
     >
       {isActive && isLightMode && (
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#34D399] rounded-r-full shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-white rounded-r-full shadow-[0_0_10px_rgba(255,255,255,0.8)]" />
       )}
       {isActive && !isLightMode && (
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 to-cyan-500 shadow-[0_0_8px_rgba(52,211,153,0.5)] rounded-r-full" />
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-emerald-400 rounded-r-full shadow-[0_0_10px_rgba(52,211,153,0.8)]" />
       )}
-      <div className={`relative z-10 flex items-center justify-center transition-transform duration-300 ${isActive ? 'animate-float' : 'group-hover:scale-110'}`}>
+      <div className={`relative z-10 flex items-center justify-center transition-transform duration-300 ${isActive ? 'scale-110 drop-shadow-lg' : 'group-hover:scale-110'}`}>
         <item.icon className={`${iconBase} ${isActive ? iconActive : iconInactive}`} strokeWidth={isActive ? 2.5 : 2} />
       </div>
-      <span className={`text-[15px] sm:text-[13px] tracking-wide relative z-10 ${isActive ? 'font-bold' : 'font-semibold'}`}>{item.name}</span>
+      <span className={`text-[15px] sm:text-[14px] tracking-wide relative z-10 ${isActive ? 'font-bold drop-shadow-md' : 'font-medium'}`}>{item.name}</span>
     </Link>
   );
 });
@@ -224,18 +224,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <AppLogo className="w-full h-full text-white group-hover:text-emerald-100 transition-colors" iconClassName="w-6 h-6 text-emerald-600 dark:text-[#0a0f1c]" />
           </div>
           <div className="flex flex-col items-center text-center">
-            <span className={`font-heading font-[800] text-[16px] tracking-[1px] transition-all antialiased text-white ${isLightMode ? 'drop-shadow-[0_0_10px_rgba(255,255,255,0.12)]' : 'drop-shadow-[0_0_15px_rgba(52,211,153,0.3)]'}`}>
+            <span className="font-heading font-[800] text-[18px] tracking-[1.5px] transition-all antialiased text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
               SMART PPI
             </span>
-            <span className={`text-[8px] whitespace-nowrap leading-[1.4] text-center mt-1 transition-all antialiased ${isLightMode ? 'text-[rgba(255,255,255,0.72)]' : 'text-slate-400'}`}>
+            <span className={`text-[8px] whitespace-nowrap leading-[1.4] text-center mt-1 transition-all antialiased ${isLightMode ? 'text-white/80' : 'text-slate-400'}`}>
               Sistem Monitoring, Audit dan Supervisi Terintegrasi
             </span>
           </div>
         </div>
         
-        <div className="flex-1 overflow-y-auto py-5 px-4 space-y-1 custom-sidebar-scrollbar">
-          <div className="mb-4 px-1">
-            <p className={`text-[10px] font-bold uppercase tracking-widest antialiased ${isLightMode ? 'text-[rgba(255,255,255,0.92)]' : 'text-slate-500'}`}>Menu Utama</p>
+        <div className="flex-1 overflow-y-auto py-6 px-4 space-y-2 custom-sidebar-scrollbar">
+          <div className="mb-5 px-1">
+            <p className={`text-[10px] font-bold uppercase tracking-[0.2em] antialiased ${isLightMode ? 'text-white/90 drop-shadow-sm' : 'text-slate-500'}`}>Menu Utama</p>
           </div>
           {navItems.map((item) => (
             <NavItem 
@@ -247,17 +247,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             />
           ))}
         </div>            
-        <div className="p-4 pt-2 mt-auto shrink-0 antialiased">
+        <div className="p-5 pt-2 mt-auto shrink-0 antialiased">
           <button 
             onClick={(e) => {
               e.preventDefault();
               setUserRole('');
               router.push('/login');
             }}
-            className={`flex items-center justify-center gap-2 w-full p-3 rounded-xl font-[600] text-[15px] sm:text-[13px] tracking-wide transition-all group ${isLightMode ? 'bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(239,68,68,0.12)] text-[#FFFFFF] border border-[rgba(255,255,255,0.10)]' : 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20'}`}
+            className="flex items-center justify-center gap-3 w-full py-3.5 px-4 rounded-xl font-bold text-[14px] tracking-wide transition-all duration-300 group bg-red-500/20 hover:bg-red-500/40 text-white border border-red-500/30 hover:border-red-400/50 hover:shadow-[0_4px_20px_rgba(239,68,68,0.3)] hover:scale-[1.02] active:scale-[0.98]"
             title="Keluar"
           >
-            <LogOut className={`w-4 h-4 transition-transform group-hover:-translate-x-1 ${isLightMode ? 'text-[#FFFFFF]' : ''}`} strokeWidth={2.5} />
+            <LogOut className="w-5 h-5 transition-transform duration-300 group-hover:-translate-x-1" strokeWidth={2.5} />
             <span>Keluar</span>
           </button>
         </div>
@@ -354,7 +354,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 key={item.name} 
                 href={item.href}
                 prefetch={true}
-                className={`flex flex-col items-center justify-center w-full h-[52px] space-y-1 rounded-xl transition-all ${
+                className={`flex flex-col items-center justify-center w-full h-[52px] space-y-1 rounded-xl transition-all transform-gpu will-change-transform ${
                   isActive 
                     ? isLightMode ? 'text-white bg-white/10' : 'text-emerald-400 bg-white/5' 
                     : isLightMode ? 'text-white/70 hover:text-white' : 'text-slate-500 hover:text-slate-300'
