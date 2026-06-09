@@ -93,17 +93,16 @@ export default function WelcomePage() {
               <div 
                 dangerouslySetInnerHTML={{ __html: `
                   <video
-                    autoplay="autoplay"
-                    loop="loop"
-                    muted="muted"
-                    defaultMuted="true"
-                    playsinline="playsinline"
-                    webkit-playsinline="true"
+                    autoplay
+                    muted
+                    playsinline
+                    loop
                     preload="auto"
                     oncontextmenu="return false;"
                     class="absolute inset-0 w-full h-full object-cover opacity-50 pointer-events-none z-0"
-                    src="${activeBackground.url}"
-                  ></video>
+                  >
+                    <source src="${activeBackground.url}" type="${activeBackground.type || 'video/mp4'}">
+                  </video>
                 ` }}
               />
             )
@@ -111,17 +110,16 @@ export default function WelcomePage() {
             <div 
               dangerouslySetInnerHTML={{ __html: `
                 <video
-                  autoplay="autoplay"
-                  loop="loop"
-                  muted="muted"
-                  defaultMuted="true"
-                  playsinline="playsinline"
-                  webkit-playsinline="true"
+                  autoplay
+                  muted
+                  playsinline
+                  loop
                   preload="auto"
                   oncontextmenu="return false;"
                   class="absolute inset-0 w-full h-full object-cover opacity-50 pointer-events-none z-0"
-                  src="https://labs.google/fx/api/og-video/shared/c011686b-71a2-4cb1-909a-f47eb46eeb28"
-                ></video>
+                >
+                  <source src="https://labs.google/fx/api/og-video/shared/c011686b-71a2-4cb1-909a-f47eb46eeb28" type="video/mp4">
+                </video>
               ` }}
             />
           )}

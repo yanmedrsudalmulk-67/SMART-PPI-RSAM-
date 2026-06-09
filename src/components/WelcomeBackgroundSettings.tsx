@@ -194,7 +194,21 @@ export default function WelcomeBackgroundSettings() {
           <div key={bg.id} className={`group relative rounded-3xl overflow-hidden border-2 transition-all ${bg.is_active ? 'border-emerald-500' : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'}`}>
             <div className="aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden">
               {bg.file_type.startsWith('video/') ? (
-                <video src={bg.public_url} className="w-full h-full object-cover" autoPlay muted loop playsInline />
+                <div 
+                  dangerouslySetInnerHTML={{ __html: `
+                    <video
+                      autoplay
+                      muted
+                      playsinline
+                      loop
+                      preload="auto"
+                      class="w-full h-full object-cover pointer-events-none"
+                    >
+                      <source src="${bg.public_url}" type="${bg.file_type}" />
+                    </video>
+                  ` }}
+                  className="w-full h-full"
+                />
               ) : (
                 <img src={bg.public_url} alt={bg.file_name} className="w-full h-full object-cover" />
               )}
