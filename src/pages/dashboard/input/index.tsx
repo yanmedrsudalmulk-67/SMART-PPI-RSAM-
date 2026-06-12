@@ -122,8 +122,6 @@ export default function InputIndexPage() {
   const [filterSemester, setFilterSemester] = useState(
     Math.floor(new Date().getMonth() / 6),
   );
-  const [filterUnit, setFilterUnit] = useState("Semua Unit");
-  const [filterProfesi, setFilterProfesi] = useState("Semua Profesi");
 
   const fetchSessions = async () => {
     try {
@@ -175,60 +173,43 @@ export default function InputIndexPage() {
     return true; // tahunan
   };
 
-  const getPreviousPeriodParams = () => {
-    let prevYear = filterYear;
-    let prevMonth = filterMonth;
-    let prevQuarter = filterQuarter;
-    let prevSemester = filterSemester;
-
-    if (filterPeriodType === "bulanan") {
-      if (prevMonth === 0) {
-        prevMonth = 11;
-        prevYear--;
-      } else {
-        prevMonth--;
-      }
-    } else if (filterPeriodType === "triwulan") {
-      if (prevQuarter === 0) {
-        prevQuarter = 3;
-        prevYear--;
-      } else {
-        prevQuarter--;
-      }
-    } else if (filterPeriodType === "semester") {
-      if (prevSemester === 0) {
-        prevSemester = 1;
-        prevYear--;
-      } else {
-        prevSemester--;
-      }
-    } else if (filterPeriodType === "tahunan") {
-      prevYear--;
-    }
-    return { prevYear, prevMonth, prevQuarter, prevSemester };
-  };
-
-  const { unitOptions, profesiOptions } = useMemo(() => {
-    const uSet = new Set<string>();
-    const pSet = new Set<string>();
-    sessions.forEach((s) => {
-      if (s.unit) uSet.add(s.unit);
-      if (s.profesi) pSet.add(s.profesi);
-    });
-    return {
-      unitOptions: ["Semua Unit", ...Array.from(uSet).sort()],
-      profesiOptions: ["Semua Profesi", ...Array.from(pSet).sort()],
-    };
-  }, [sessions]);
-
-  // Derived Realtime Stats
   const modules = useMemo(() => {
+    const getPreviousPeriodParams = () => {
+      let prevYear = filterYear;
+      let prevMonth = filterMonth;
+      let prevQuarter = filterQuarter;
+      let prevSemester = filterSemester;
+
+      if (filterPeriodType === "bulanan") {
+        if (prevMonth === 0) {
+          prevMonth = 11;
+          prevYear--;
+        } else {
+          prevMonth--;
+        }
+      } else if (filterPeriodType === "triwulan") {
+        if (prevQuarter === 0) {
+          prevQuarter = 3;
+          prevYear--;
+        } else {
+          prevQuarter--;
+        }
+      } else if (filterPeriodType === "semester") {
+        if (prevSemester === 0) {
+          prevSemester = 1;
+          prevYear--;
+        } else {
+          prevSemester--;
+        }
+      } else if (filterPeriodType === "tahunan") {
+        prevYear--;
+      }
+      return { prevYear, prevMonth, prevQuarter, prevSemester };
+    };
+
     const prevParams = getPreviousPeriodParams();
 
     const currSessions = sessions.filter((s) => {
-      if (filterUnit !== "Semua Unit" && s.unit !== filterUnit) return false;
-      if (filterProfesi !== "Semua Profesi" && s.profesi !== filterProfesi)
-        return false;
       return isDateMatch(
         s.tanggal_waktu || s.created_at,
         filterPeriodType,
@@ -240,9 +221,6 @@ export default function InputIndexPage() {
     });
 
     const prevSessions = sessions.filter((s) => {
-      if (filterUnit !== "Semua Unit" && s.unit !== filterUnit) return false;
-      if (filterProfesi !== "Semua Profesi" && s.profesi !== filterProfesi)
-        return false;
       return isDateMatch(
         s.tanggal_waktu || s.created_at,
         filterPeriodType,
@@ -439,9 +417,6 @@ export default function InputIndexPage() {
     filterYear,
     filterQuarter,
     filterSemester,
-    filterUnit,
-    filterProfesi,
-    getPreviousPeriodParams,
   ]);
 
   const months = [
@@ -465,124 +440,77 @@ export default function InputIndexPage() {
         <title>Input Data - SMART PPI</title>
       </Head>
 
-      <div className="mb-6 flex flex-col lg:flex-row justify-between items-center lg:items-center gap-4">
-        <div className="text-center lg:text-left w-full lg:w-auto">
+      <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-start gap-4">
+        <div className="text-left w-full md:w-auto shrink-0">
           <h1 className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase">
             Input Data SMART PPI
           </h1>
           <p className="text-sm text-slate-500 mt-1 font-medium">
-            Dashboard Realtime Data Audit PPI
+            Input Data Monitoring PPI Terintegrasi
           </p>
         </div>
-      </div>
 
-      {/* Filter Section directly on the Input Index page */}
-      <section className="relative group mb-8">
-        <div className="absolute -inset-1 bg-gradient-to-r from-emerald-600/20 to-blue-600/20 rounded-[28px] blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-        <div className="relative bg-white/80 dark:bg-[#111827]/80 backdrop-blur-xl rounded-[28px] p-5 md:p-6 border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden flex flex-col md:flex-row gap-4 items-center justify-between">
-          <div className="flex items-center gap-3 w-full md:w-auto mb-4 md:mb-0 shrink-0">
-            <div className="w-10 h-10 rounded-xl bg-emerald-600/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              <Filter className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                Filter Data
-              </h3>
-              <p className="font-bold text-slate-800 dark:text-slate-100">
-                Monitoring Realtime
-              </p>
-            </div>
-          </div>
+        {/* Filter Periode */}
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          {/* Tipe Periode */}
+          <select
+            value={filterPeriodType}
+            onChange={(e) => setFilterPeriodType(e.target.value as any)}
+            className="h-12 px-[18px] bg-white dark:bg-[rgba(255,255,255,0.05)] border border-[#E5E7EB] dark:border-[rgba(255,255,255,0.08)] text-[#111827] dark:text-white text-sm font-semibold rounded-[14px] outline-none hover:scale-[1.02] focus:scale-[1.02] focus:ring-2 focus:ring-blue-500/30 transition-all duration-200 cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:14px_14px] bg-[position:right_14px_center] bg-no-repeat pr-10 shadow-sm backdrop-blur-[10px]"
+          >
+            <option value="bulanan" className="dark:bg-slate-800">📅 Bulanan</option>
+            <option value="triwulan" className="dark:bg-slate-800">📅 Triwulan</option>
+            <option value="semester" className="dark:bg-slate-800">📅 Semester</option>
+            <option value="tahunan" className="dark:bg-slate-800">📅 Tahunan</option>
+          </select>
 
-          <div className="grid grid-cols-2 md:flex md:flex-wrap items-center gap-2 md:gap-3 w-full md:w-auto md:flex-1 md:justify-end mt-4 md:mt-0">
-            {/* Tipe Periode */}
+          {/* Sub Periode */}
+          {filterPeriodType === "bulanan" && (
             <select
-              value={filterPeriodType}
-              onChange={(e) => setFilterPeriodType(e.target.value as any)}
-              className="col-span-1 md:col-auto w-full bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-xl px-3 py-3 md:py-2.5 outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:14px_14px] bg-[position:right_12px_center] bg-no-repeat pr-8 truncate"
+              value={filterMonth}
+              onChange={(e) => setFilterMonth(parseInt(e.target.value))}
+              className="h-12 px-[18px] bg-white dark:bg-[rgba(255,255,255,0.05)] border border-[#E5E7EB] dark:border-[rgba(255,255,255,0.08)] text-[#111827] dark:text-white text-sm font-semibold rounded-[14px] outline-none hover:scale-[1.02] focus:scale-[1.02] focus:ring-2 focus:ring-blue-500/30 transition-all duration-200 cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:14px_14px] bg-[position:right_14px_center] bg-no-repeat pr-10 shadow-sm backdrop-blur-[10px]"
             >
-              <option value="bulanan">Bulanan</option>
-              <option value="triwulan">Triwulan</option>
-              <option value="semester">Semester</option>
-              <option value="tahunan">Tahunan</option>
+              {months.map((m, i) => (
+                <option key={i} value={i} className="dark:bg-slate-800">{m}</option>
+              ))}
             </select>
-
-            {/* Sub Periode Tergantung Tipe */}
-            {filterPeriodType === "bulanan" && (
-              <select
-                value={filterMonth}
-                onChange={(e) => setFilterMonth(parseInt(e.target.value))}
-                className="col-span-1 md:col-auto w-full bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-xl px-3 py-3 md:py-2.5 outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:14px_14px] bg-[position:right_12px_center] bg-no-repeat pr-8 truncate"
-              >
-                {months.map((m, i) => (
-                  <option key={i} value={i}>
-                    {m}
-                  </option>
-                ))}{" "}
-              </select>
-            )}
-            {filterPeriodType === "triwulan" && (
-              <select
-                value={filterQuarter}
-                onChange={(e) => setFilterQuarter(parseInt(e.target.value))}
-                className="col-span-1 md:col-auto w-full bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-xl px-3 py-3 md:py-2.5 outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:14px_14px] bg-[position:right_12px_center] bg-no-repeat pr-8 truncate"
-              >
-                <option value={0}>Q1 (Jan-Mar)</option>
-                <option value={1}>Q2 (Apr-Jun)</option>
-                <option value={2}>Q3 (Jul-Sep)</option>
-                <option value={3}>Q4 (Okt-Des)</option>
-              </select>
-            )}
-            {filterPeriodType === "semester" && (
-              <select
-                value={filterSemester}
-                onChange={(e) => setFilterSemester(parseInt(e.target.value))}
-                className="col-span-1 md:col-auto w-full bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-xl px-3 py-3 md:py-2.5 outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:14px_14px] bg-[position:right_12px_center] bg-no-repeat pr-8 truncate"
-              >
-                <option value={0}>Semester 1</option>
-                <option value={1}>Semester 2</option>
-              </select>
-            )}
-
-            {/* Tahun */}
+          )}
+          {filterPeriodType === "triwulan" && (
             <select
-              value={filterYear}
-              onChange={(e) => setFilterYear(parseInt(e.target.value))}
-              className="col-span-1 md:col-auto w-full bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-xl px-3 py-3 md:py-2.5 outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:14px_14px] bg-[position:right_12px_center] bg-no-repeat pr-8 truncate"
+              value={filterQuarter}
+              onChange={(e) => setFilterQuarter(parseInt(e.target.value))}
+              className="h-12 px-[18px] bg-white dark:bg-[rgba(255,255,255,0.05)] border border-[#E5E7EB] dark:border-[rgba(255,255,255,0.08)] text-[#111827] dark:text-white text-sm font-semibold rounded-[14px] outline-none hover:scale-[1.02] focus:scale-[1.02] focus:ring-2 focus:ring-blue-500/30 transition-all duration-200 cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:14px_14px] bg-[position:right_14px_center] bg-no-repeat pr-10 shadow-sm backdrop-blur-[10px]"
             >
-              <option value={2026}>2026</option>
-              <option value={2025}>2025</option>
-              <option value={2024}>2024</option>
+              <option value={0} className="dark:bg-slate-800">Q1 (Jan-Mar)</option>
+              <option value={1} className="dark:bg-slate-800">Q2 (Apr-Jun)</option>
+              <option value={2} className="dark:bg-slate-800">Q3 (Jul-Sep)</option>
+              <option value={3} className="dark:bg-slate-800">Q4 (Okt-Des)</option>
             </select>
-
-            {/* Profesi */}
+          )}
+          {filterPeriodType === "semester" && (
             <select
-              value={filterProfesi}
-              onChange={(e) => setFilterProfesi(e.target.value)}
-              className="col-span-1 md:col-auto w-full bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-xl px-3 py-3 md:py-2.5 outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:14px_14px] bg-[position:right_12px_center] bg-no-repeat pr-8 truncate max-w-[100%] md:max-w-[120px]"
+              value={filterSemester}
+              onChange={(e) => setFilterSemester(parseInt(e.target.value))}
+              className="h-12 px-[18px] bg-white dark:bg-[rgba(255,255,255,0.05)] border border-[#E5E7EB] dark:border-[rgba(255,255,255,0.08)] text-[#111827] dark:text-white text-sm font-semibold rounded-[14px] outline-none hover:scale-[1.02] focus:scale-[1.02] focus:ring-2 focus:ring-blue-500/30 transition-all duration-200 cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:14px_14px] bg-[position:right_14px_center] bg-no-repeat pr-10 shadow-sm backdrop-blur-[10px]"
             >
-              {profesiOptions.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}{" "}
+              <option value={0} className="dark:bg-slate-800">Semester 1</option>
+              <option value={1} className="dark:bg-slate-800">Semester 2</option>
             </select>
+          )}
 
-            {/* Unit */}
-            <select
-              value={filterUnit}
-              onChange={(e) => setFilterUnit(e.target.value)}
-              className="col-span-2 md:col-auto w-full bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-xl px-3 py-3 md:py-2.5 outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:14px_14px] bg-[position:right_12px_center] bg-no-repeat pr-8 truncate max-w-[100%] md:max-w-[140px]"
-            >
-              {unitOptions.map((u) => (
-                <option key={u} value={u}>
-                  {u}
-                </option>
-              ))}{" "}
-            </select>
-          </div>
+          {/* Tahun */}
+          <select
+            value={filterYear}
+            onChange={(e) => setFilterYear(parseInt(e.target.value))}
+            className="h-12 px-[18px] bg-white dark:bg-[rgba(255,255,255,0.05)] border border-[#E5E7EB] dark:border-[rgba(255,255,255,0.08)] text-[#111827] dark:text-white text-sm font-semibold rounded-[14px] outline-none hover:scale-[1.02] focus:scale-[1.02] focus:ring-2 focus:ring-blue-500/30 transition-all duration-200 cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:14px_14px] bg-[position:right_14px_center] bg-no-repeat pr-10 shadow-sm backdrop-blur-[10px]"
+          >
+            <option value={2026} className="dark:bg-slate-800">2026</option>
+            <option value={2025} className="dark:bg-slate-800">2025</option>
+            <option value={2024} className="dark:bg-slate-800">2024</option>
+          </select>
         </div>
-      </section>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
         {modules.map((mod, i) => (

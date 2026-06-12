@@ -421,47 +421,6 @@ export default function HandHygieneReport({
         />
       </div>
       
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-         <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl rounded-[2rem] p-6 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[40px] group-hover:bg-blue-500/20 transition-all" />
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl">
-                <Users className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Observasi</h4>
-                <p className="text-2xl font-black text-slate-900 dark:text-white leading-none mt-1">{filteredData.length}</p>
-              </div>
-            </div>
-         </div>
-         
-         <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl rounded-[2rem] p-6 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[40px] group-hover:bg-emerald-500/20 transition-all" />
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl">
-                <Activity className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Tindakan (Momen)</h4>
-                <p className="text-2xl font-black text-slate-900 dark:text-white leading-none mt-1">{overallStats.patuh} / {overallStats.total}</p>
-              </div>
-            </div>
-         </div>
-
-         <div className="bg-gradient-to-br from-emerald-500 to-blue-600 rounded-[2rem] p-6 border border-white/20 shadow-lg relative overflow-hidden group text-white h-full flex flex-col justify-center">
-            <div className="flex items-center gap-4 mb-2">
-              <div className="p-3 bg-white/20 rounded-xl">
-                <ShieldCheck className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="text-[10px] font-bold text-white/80 uppercase tracking-widest">Rata-rata Kepatuhan</h4>
-                <p className="text-4xl font-black leading-none mt-1">{overallStats.avg}%</p>
-              </div>
-            </div>
-         </div>
-      </div>
-
       <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-xl rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm transition-all -mx-4 sm:mx-0">
         <div className="p-8 border-b border-slate-100 dark:border-white/5 bg-white dark:bg-[#0f172a]">
            <div className="flex flex-col md:flex-row items-center gap-6">
@@ -547,6 +506,47 @@ export default function HandHygieneReport({
 
       <M1M5Info />
       <AuditLegend />
+
+      {/* Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+         <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl rounded-[2rem] p-6 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[40px] group-hover:bg-blue-500/20 transition-all" />
+            <div className="flex items-center gap-4 mb-4">
+              <div className="p-3 bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl">
+                <Users className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Observasi</h4>
+                <p className="text-2xl font-black text-slate-900 dark:text-white leading-none mt-1">{filteredData.length}</p>
+              </div>
+            </div>
+         </div>
+         
+         <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl rounded-[2rem] p-6 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[40px] group-hover:bg-emerald-500/20 transition-all" />
+            <div className="flex items-center gap-4 mb-4">
+              <div className="p-3 bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl">
+                <Activity className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Tindakan (Momen)</h4>
+                <p className="text-2xl font-black text-slate-900 dark:text-white leading-none mt-1">{overallStats.patuh} / {overallStats.total}</p>
+              </div>
+            </div>
+         </div>
+
+         <div className="bg-gradient-to-br from-emerald-500 to-blue-600 rounded-[2rem] p-6 border border-white/20 shadow-lg relative overflow-hidden group text-white h-full flex flex-col justify-center">
+            <div className="flex items-center gap-4 mb-2">
+              <div className="p-3 bg-white/20 rounded-xl">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="text-[10px] font-bold text-white/80 uppercase tracking-widest">Rata-rata Kepatuhan</h4>
+                <p className="text-4xl font-black leading-none mt-1">{overallStats.avg}%</p>
+              </div>
+            </div>
+         </div>
+      </div>
 
       {/* Recaps Percentage Per Moment (Circular Progress) */}
       <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-[2rem] p-6 shadow-sm">
