@@ -355,10 +355,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Mobile Bottom Navigation */}
       <div className="fixed bottom-5 inset-x-5 z-50 flex justify-center md:hidden pb-[env(safe-area-inset-bottom)]">
-        <nav className={`w-full max-w-md flex justify-around items-center h-[72px] px-2 rounded-[36px] transition-colors border backdrop-blur-md ${
+        <nav className={`w-full max-w-md flex justify-around items-center h-[72px] px-2 rounded-[36px] border backdrop-blur-xl transition-all duration-300 ${
           isLightMode 
-            ? 'bg-white/95 border-slate-200/80 shadow-[0_12px_30px_rgba(0,0,0,0.08)]' 
-            : 'bg-[#0a0f1c]/85 border-white/10 shadow-[0_8px_32px_rgba(59,130,246,0.15)]'
+            ? 'bg-white/40 border-white/60 shadow-[0_12px_40px_rgba(31,41,55,0.08),inset_0_1px_1px_rgba(255,255,255,0.7)]' 
+            : 'bg-[#0a0f1c]/40 border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15),_0_0_25px_rgba(16,185,129,0.05)]'
         }`}>
           {navItems.map((item) => {
             const isActive = pathname === item.href;
@@ -371,10 +371,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {isActive && (
                   <motion.div
                     layoutId="mobileNavIndicator"
-                    className={`absolute inset-x-1 inset-y-1 rounded-[24px] shadow-sm ${
+                    className={`absolute inset-x-1.5 inset-y-1.5 rounded-[22px] ${
                       isLightMode 
-                        ? 'bg-emerald-600 shadow-[0_4px_12px_rgba(16,185,129,0.35)]' 
-                        : 'bg-emerald-500 shadow-[0_4px_12px_rgba(16,185,129,0.25)]'
+                        ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 border border-emerald-400/40 shadow-[0_4px_12px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.35)]' 
+                        : 'bg-gradient-to-br from-emerald-500/80 to-teal-600/80 backdrop-blur-md border border-emerald-400/30 shadow-[0_4px_16px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.25)]'
                     }`}
                     transition={{ type: "spring", stiffness: 380, damping: 30 }}
                   />
@@ -386,14 +386,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <item.icon 
                     className={`w-[20px] h-[20px] transition-colors duration-200 ${
                       isActive 
-                        ? 'text-white' 
+                        ? 'text-white drop-shadow-md' 
                         : (isLightMode ? 'text-slate-600' : 'text-slate-300')
                     }`} 
                     strokeWidth={isActive ? 2.5 : 2} 
                   />
                   <span className={`text-[9px] font-semibold tracking-wide mt-1 transition-colors duration-200 ${
                     isActive 
-                      ? 'text-white font-bold' 
+                      ? 'text-white font-bold drop-shadow-sm' 
                       : (isLightMode ? 'text-slate-500 font-medium' : 'text-slate-400 font-medium')
                   }`}>
                     {item.name}
