@@ -499,7 +499,7 @@ export default function InputMonitoringTPSPage() {
           </div>
         </div>
 
-        <div className="bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
+        <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
           <DocumentationUploader images={images} setImages={setImages} />
         </div>
 

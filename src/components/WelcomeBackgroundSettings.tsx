@@ -155,7 +155,7 @@ export default function WelcomeBackgroundSettings() {
   };
 
   return (
-    <div className="bg-white dark:bg-white/5 backdrop-blur-xl p-8 rounded-[32px] border border-slate-200 dark:border-white/5 shadow-sm dark:shadow-none transition-all my-8">
+    <div className="bg-white dark:bg-white/5 backdrop-blur-sm p-8 rounded-[32px] border border-slate-200 dark:border-white/5 shadow-sm dark:shadow-none transition-all my-8">
       <div className="flex items-center justify-between mx-2 mb-6">
         <div>
           <h2 className="text-lg font-bold text-slate-800 dark:text-white tracking-wide flex items-center gap-2 uppercase">

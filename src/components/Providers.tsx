@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 
 interface AppContextType {
@@ -32,8 +32,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     fetchLogos();
   }, []);
 
+  const contextValue = useMemo(() => ({
+    appLogoUrl, setAppLogoUrl,
+    hospitalLogoUrl, setHospitalLogoUrl,
+    userRole, setUserRole
+  }), [appLogoUrl, hospitalLogoUrl, userRole]);
+
   return (
-    <AppContext.Provider value={{ appLogoUrl, setAppLogoUrl, hospitalLogoUrl, setHospitalLogoUrl, userRole, setUserRole }}>
+    <AppContext.Provider value={contextValue}>
       {children}
     </AppContext.Provider>
   );

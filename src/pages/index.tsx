@@ -141,7 +141,7 @@ export default function WelcomePage() {
           <motion.div
             animate={{ y: [0, -12, 0] }}
             transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0 }}
-            className={`flex items-center gap-3 backdrop-blur-xl shadow-2xl pointer-events-auto transition-colors duration-500 p-3 sm:p-4 rounded-2xl border ${isDark ? 'bg-white/5 border-white/10 hover:bg-white/10' : 'bg-white/60 border-white/80 hover:bg-white/80 text-[#0F3D2E]'}`}
+            className={`flex items-center gap-3 backdrop-blur-sm shadow-2xl pointer-events-auto transition-colors duration-500 p-3 sm:p-4 rounded-2xl border ${isDark ? 'bg-white/5 border-white/10 hover:bg-white/10' : 'bg-white/60 border-white/80 hover:bg-white/80 text-[#0F3D2E]'}`}
           >
             <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border transition-colors duration-500 drop-shadow flex-shrink-0 ${isDark ? 'bg-blue-500/20 border-blue-500/30' : 'bg-[#38C968]/20 border-[#38C968]/30'}`}>
               <Clock className={`w-4 h-4 sm:w-5 sm:h-5 ${isDark ? 'text-blue-400' : 'text-[#0A2F1D]'}`} />
@@ -173,7 +173,7 @@ export default function WelcomePage() {
           <motion.div
             animate={{ y: [0, -15, 0] }}
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-            className={`flex items-center gap-3 backdrop-blur-xl shadow-2xl pointer-events-auto transition-colors duration-500 p-3 sm:p-4 rounded-2xl border ${isDark ? 'bg-white/5 border-white/10 hover:bg-white/10' : 'bg-white/60 border-white/80 hover:bg-white/80 text-[#0F3D2E]'}`}
+            className={`flex items-center gap-3 backdrop-blur-sm shadow-2xl pointer-events-auto transition-colors duration-500 p-3 sm:p-4 rounded-2xl border ${isDark ? 'bg-white/5 border-white/10 hover:bg-white/10' : 'bg-white/60 border-white/80 hover:bg-white/80 text-[#0F3D2E]'}`}
           >
             <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border transition-colors duration-500 drop-shadow flex-shrink-0 ${isDark ? 'bg-emerald-500/20 border-emerald-500/30' : 'bg-[#38C968]/20 border-[#38C968]/30'}`}>
               <Activity className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors duration-500 ${isDark ? 'text-emerald-400' : 'text-[#0F3D2E]'}`} />
@@ -205,7 +205,7 @@ export default function WelcomePage() {
           <motion.div
             animate={{ y: [0, -10, 0] }}
             transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-            className={`flex items-center gap-3 backdrop-blur-xl shadow-2xl pointer-events-auto transition-colors duration-500 p-3 sm:p-4 rounded-2xl border ${isDark ? 'bg-white/5 border-white/10 hover:bg-white/10' : 'bg-white/60 border-white/80 hover:bg-white/80 text-[#0F3D2E]'}`}
+            className={`flex items-center gap-3 backdrop-blur-sm shadow-2xl pointer-events-auto transition-colors duration-500 p-3 sm:p-4 rounded-2xl border ${isDark ? 'bg-white/5 border-white/10 hover:bg-white/10' : 'bg-white/60 border-white/80 hover:bg-white/80 text-[#0F3D2E]'}`}
           >
             <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border transition-colors duration-500 drop-shadow flex-shrink-0 ${isDark ? 'bg-blue-500/20 border-blue-500/30' : 'bg-[#38C968]/20 border-[#38C968]/30'}`}>
               <TrendingUp className={`w-4 h-4 sm:w-5 sm:h-5 ${isDark ? 'text-blue-400' : 'text-[#0A2F1D]'}`} />
@@ -227,7 +227,7 @@ export default function WelcomePage() {
           <motion.div
             animate={{ y: [0, -12, 0] }}
             transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-            className={`flex items-center gap-4 backdrop-blur-xl shadow-2xl pointer-events-auto transition-colors duration-500 p-3 sm:p-4 rounded-2xl border ${isDark ? 'bg-white/5 border-white/10 hover:bg-white/10' : 'bg-white/60 border-white/80 hover:bg-white/80 text-[#0F3D2E]'}`}
+            className={`flex items-center gap-4 backdrop-blur-sm shadow-2xl pointer-events-auto transition-colors duration-500 p-3 sm:p-4 rounded-2xl border ${isDark ? 'bg-white/5 border-white/10 hover:bg-white/10' : 'bg-white/60 border-white/80 hover:bg-white/80 text-[#0F3D2E]'}`}
           >
             <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border transition-colors duration-500 drop-shadow flex-shrink-0 ${isDark ? 'bg-purple-500/20 border-purple-500/30' : 'bg-[#38C968]/20 border-[#38C968]/30'}`}>
               <BarChart3 className={`w-4 h-4 sm:w-5 sm:h-5 ${isDark ? 'text-purple-400' : 'text-[#0A2F1D]'}`} />

@@ -121,7 +121,7 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-white/5 backdrop-blur-xl p-6 rounded-[2rem] border border-slate-200 dark:border-white/5 shadow-sm dark:shadow-xl">
+        <div className="bg-white dark:bg-white/5 backdrop-blur-sm p-6 rounded-[2rem] border border-slate-200 dark:border-white/5 shadow-sm dark:shadow-xl">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-bold text-slate-800 dark:text-white uppercase text-xs tracking-widest">Kepatuhan per Unit</h3>
             <BarChart3 className="w-5 h-5 text-slate-400 dark:text-slate-500" />
@@ -154,7 +154,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-white/5 backdrop-blur-xl p-6 rounded-[2rem] border border-slate-200 dark:border-white/5 shadow-sm dark:shadow-xl">
+        <div className="bg-white dark:bg-white/5 backdrop-blur-sm p-6 rounded-[2rem] border border-slate-200 dark:border-white/5 shadow-sm dark:shadow-xl">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-bold text-slate-800 dark:text-white uppercase text-xs tracking-widest">Proporsi Jenis HAIs</h3>
             <PieChartIcon className="w-5 h-5 text-slate-400 dark:text-slate-500" />
@@ -177,7 +177,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-white/5 backdrop-blur-xl p-6 rounded-[2rem] border border-slate-200 dark:border-white/5 shadow-sm dark:shadow-xl lg:col-span-2">
+        <div className="bg-white dark:bg-white/5 backdrop-blur-sm p-6 rounded-[2rem] border border-slate-200 dark:border-white/5 shadow-sm dark:shadow-xl lg:col-span-2">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-bold text-slate-800 dark:text-white uppercase text-xs tracking-widest">Heatmap Risiko Unit</h3>
             <TrendingUp className="w-5 h-5 text-slate-400 dark:text-slate-500" />

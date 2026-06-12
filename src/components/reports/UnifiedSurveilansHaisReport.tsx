@@ -285,7 +285,7 @@ export default function UnifiedSurveilansHaisReport() {
       </div>
 
       {/* TOP FILTER SECTION (STICKY RESPONSIVE) */}
-      <div className="sticky top-20 z-40 bg-white/80 dark:bg-[#0f172a]/90 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-lg flex flex-col md:flex-row gap-4 justify-between items-center w-full">
+      <div className="sticky top-20 z-40 bg-white/80 dark:bg-[#0f172a]/90 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-lg flex flex-col md:flex-row gap-4 justify-between items-center w-full">
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           {/* Periode */}
           <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 rounded-xl p-1 px-2 flex-grow sm:flex-grow-0 min-w-max">
@@ -343,7 +343,7 @@ export default function UnifiedSurveilansHaisReport() {
       ) : (
         <>
           {/* TABLE SECTION */}
-          <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-xl rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm transition-all mt-4">
+          <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-sm rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm transition-all mt-4">
             <div className="p-8 border-b border-slate-100 dark:border-white/5 bg-white dark:bg-[#0f172a]">
                <div className="flex flex-col md:flex-row items-center gap-6">
                  {hospitalLogoUrl && (

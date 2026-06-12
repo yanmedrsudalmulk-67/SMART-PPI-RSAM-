@@ -47,7 +47,7 @@ const DigitalSignatureSection = forwardRef<DigitalSignatureRef, DigitalSignature
     if (!mounted) return <div className="h-[200px] bg-white/5 animate-pulse rounded-3xl" />;
 
     return (
-      <div className="bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-[2rem] border border-white/5 shadow-2xl space-y-8 relative overflow-hidden group">
+      <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2rem] border border-white/5 shadow-2xl space-y-8 relative overflow-hidden group">
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/10 blur-[100px] rounded-full group-hover:bg-blue-500/20 transition-all duration-700" />
         
         <div className="relative z-10">

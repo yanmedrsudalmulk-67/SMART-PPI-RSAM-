@@ -142,7 +142,7 @@ export default function DiklatPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/5 backdrop-blur-xl border border-white/5 rounded-[2.5rem] p-8 shadow-2xl"
+          className="bg-white/5 backdrop-blur-sm border border-white/5 rounded-[2.5rem] p-8 shadow-2xl"
         >
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

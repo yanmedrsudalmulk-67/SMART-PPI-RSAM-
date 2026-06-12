@@ -101,7 +101,7 @@ export default function LoginPage() {
         transition={{ delay: 0.1 }}
         className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10 px-4"
       >
-        <div className="bg-slate-50/50 dark:bg-white/5 backdrop-blur-xl p-8 sm:px-10 rounded-[32px] border border-slate-200 dark:border-white/5 shadow-2xl">
+        <div className="bg-slate-50/50 dark:bg-white/5 backdrop-blur-sm p-8 sm:px-10 rounded-[32px] border border-slate-200 dark:border-white/5 shadow-2xl">
           <form className="space-y-6" onSubmit={handleLogin}>
             
             {/* Role Selection */}

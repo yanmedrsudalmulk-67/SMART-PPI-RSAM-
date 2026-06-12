@@ -74,7 +74,7 @@ export default function BundlesMenuPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {group.items.map((item, iDx) => (
                 <motion.div key={item.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: (gIdx * 0.1) + (iDx * 0.05) }}
-                  className="bg-white dark:bg-white/5 backdrop-blur-xl p-6 rounded-[2rem] border border-slate-200 dark:border-white/5 flex flex-col justify-between group hover:border-blue-500/30 transition-all shadow-sm"
+                  className="bg-white dark:bg-white/5 backdrop-blur-sm p-6 rounded-[2rem] border border-slate-200 dark:border-white/5 flex flex-col justify-between group hover:border-blue-500/30 transition-all shadow-sm"
                 >
                   <div className="space-y-4 mb-6">
                     <div className={`p-3 rounded-2xl inline-block group-hover:scale-110 transition-transform ${group.bg.replace('/10', '')} shadow-lg shadow-blue-500/10`}>

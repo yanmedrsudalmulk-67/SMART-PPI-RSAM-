@@ -252,7 +252,7 @@ export default function IsolasiInputPage() {
         </div>
       </div>
 
-      <div className="relative flex p-1.5 bg-white/80 dark:bg-[#0B1120]/80 backdrop-blur-xl rounded-full mb-8 border border-white/20 dark:border-white/10 shadow-[inset_0_1px_4px_rgba(0,0,0,0.05)]">
+      <div className="relative flex p-1.5 bg-white/80 dark:bg-[#0B1120]/80 backdrop-blur-sm rounded-full mb-8 border border-white/20 dark:border-white/10 shadow-[inset_0_1px_4px_rgba(0,0,0,0.05)]">
         <motion.div
           className={`absolute top-1.5 bottom-1.5 rounded-full transition-colors duration-500 border ${
             activeTab === "standar"
@@ -347,7 +347,7 @@ export default function IsolasiInputPage() {
             return (
               <div
                 key={ind.id}
-                className={`bg-white/80 dark:bg-[#0B1120]/80 backdrop-blur-xl p-6 rounded-[24px] border border-slate-200 dark:border-white/5 flex flex-col justify-between group ${tabColors.hoverBorder} ${tabColors.hoverShadow} transition-all duration-300 transform hover:-translate-y-1`}
+                className={`bg-white/80 dark:bg-[#0B1120]/80 backdrop-blur-sm p-6 rounded-[24px] border border-slate-200 dark:border-white/5 flex flex-col justify-between group ${tabColors.hoverBorder} ${tabColors.hoverShadow} transition-all duration-300 transform hover:-translate-y-1`}
               >
                 <div className="space-y-4">
                   <div

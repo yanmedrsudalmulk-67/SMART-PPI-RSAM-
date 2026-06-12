@@ -258,7 +258,7 @@ export default function BundlesInputForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-8">
-        <div className="bg-white/5 backdrop-blur-xl p-8 rounded-[2rem] border border-white/5 space-y-6">
+        <div className="bg-white/5 backdrop-blur-sm p-8 rounded-[2rem] border border-white/5 space-y-6">
           <div className="grid sm:grid-cols-2 gap-6">
             <div className="space-y-3">
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Waktu Kepatuhan</label>
@@ -290,7 +290,7 @@ export default function BundlesInputForm() {
           </div>
         </div>
 
-        <div className="bg-white/5 backdrop-blur-xl p-8 rounded-[2rem] border border-white/5 space-y-4">
+        <div className="bg-white/5 backdrop-blur-sm p-8 rounded-[2rem] border border-white/5 space-y-4">
           <h2 className="text-xs font-bold uppercase tracking-widest text-blue-400 border-b border-white/5 pb-4">Indikator Kepatuhan</h2>
           {config.checklists.map((text, idx) => (
             <div key={idx} className="p-5 rounded-2xl bg-white/5 border border-white/5 flex flex-col gap-4">

@@ -381,7 +381,7 @@ export default function HandHygieneAuditPage() {
       <div className="space-y-8">
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
           <div className="space-y-6">
-            <div className="bg-white/5 backdrop-blur-xl p-8 rounded-[32px] border border-white/5 shadow-2xl">
+            <div className="bg-white/5 backdrop-blur-sm p-8 rounded-[32px] border border-white/5 shadow-2xl">
               <div className="flex items-center justify-between mb-8">
                 <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.2em] text-blue-400">
                   <Clock className="w-5 h-5" /> Waktu Observasi
@@ -451,7 +451,7 @@ export default function HandHygieneAuditPage() {
               </div>
             </div>
 
-            <div className="bg-white/5 backdrop-blur-xl p-6 rounded-[24px] border border-white/5">
+            <div className="bg-white/5 backdrop-blur-sm p-6 rounded-[24px] border border-white/5">
               <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
                 <Activity className="w-4 h-4 text-purple-400" /> Data Subjek
               </h2>
@@ -501,7 +501,7 @@ export default function HandHygieneAuditPage() {
                 return (
                   <div
                     key={m.id}
-                    className={`bg-white/5 backdrop-blur-xl p-6 rounded-[24px] border border-white/5 relative overflow-hidden transition-all duration-300 border-l-4 ${activeColorLine}`}
+                    className={`bg-white/5 backdrop-blur-sm p-6 rounded-[24px] border border-white/5 relative overflow-hidden transition-all duration-300 border-l-4 ${activeColorLine}`}
                   >
                     <div className="mb-4">
                       <span className="text-[10px] font-bold uppercase tracking-widest bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full mb-2 inline-block">

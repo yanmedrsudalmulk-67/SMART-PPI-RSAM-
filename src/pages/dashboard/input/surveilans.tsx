@@ -210,7 +210,7 @@ export default function SurveilansFormPage() {
       </AnimatePresence>
 
       <form onSubmit={handleSave} className="space-y-6">
-        <div className="bg-white/5 backdrop-blur-xl gap-6 p-6 sm:p-8 rounded-[2rem] border border-white/10 shadow-2xl">
+        <div className="bg-white/5 backdrop-blur-sm gap-6 p-6 sm:p-8 rounded-[2rem] border border-white/10 shadow-2xl">
           <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
             Waktu Surveilans
           </label>
@@ -222,7 +222,7 @@ export default function SurveilansFormPage() {
           />
         </div>
 
-        <div className="bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden">
+        <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-white flex items-center gap-3">
               <Activity className="w-6 h-6 text-blue-400" />
@@ -390,7 +390,7 @@ export default function SurveilansFormPage() {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-emerald-500 text-white px-8 py-4 rounded-full shadow-2xl font-black uppercase tracking-widest text-xs border border-emerald-400 flex items-center gap-3 backdrop-blur-xl"
+            className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-emerald-500 text-white px-8 py-4 rounded-full shadow-2xl font-black uppercase tracking-widest text-xs border border-emerald-400 flex items-center gap-3 backdrop-blur-sm"
           >
             <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
             <span>Data Surveilans Terekam Sukses</span>

@@ -13,7 +13,6 @@ import { genericAuditConfigs } from '@/lib/audit-configs';
 import GenericAuditReport from '@/components/reports/GenericAuditReport';
 import HandHygieneReport from '@/components/reports/HandHygieneReport';
 import ApdReport from '@/components/reports/ApdReport';
-import DekontaminasiAlatReport from '@/components/reports/DekontaminasiAlatReport';
 import SurveilansHaisReport from '@/components/reports/SurveilansHaisReport';
 import UnifiedSurveilansHaisReport from '@/components/reports/UnifiedSurveilansHaisReport';
 
@@ -98,7 +97,7 @@ const SummaryCard = ({ indicator, stats, onClick }: any) => {
     <motion.div 
       whileHover={{ y: -5, scale: 1.02 }} 
       onClick={onClick}
-      className={`bg-white dark:bg-[#111827]/80 backdrop-blur-xl p-5 sm:p-6 rounded-3xl border ${borderClass} cursor-pointer group relative overflow-hidden transition-all shadow-sm hover:shadow-lg dark:hover:shadow-[0_0_30px_rgba(59,130,246,0.15)] flex flex-col justify-between min-h-[220px]`}
+      className={`bg-white dark:bg-[#111827]/80 backdrop-blur-sm p-5 sm:p-6 rounded-3xl border ${borderClass} cursor-pointer group relative overflow-hidden transition-all shadow-sm hover:shadow-lg dark:hover:shadow-[0_0_30px_rgba(59,130,246,0.15)] flex flex-col justify-between min-h-[220px]`}
     >
       <div className={`absolute top-0 right-0 w-32 h-32 blur-[60px] rounded-full -z-10 opacity-20 transition-all duration-500 group-hover:opacity-40 group-hover:scale-150 ${bgClass.replace('/10', '')}`} />
       
@@ -174,7 +173,7 @@ const SurveilansSummaryCard = ({ indicator, stats, onClick }: any) => {
     <motion.div 
       whileHover={{ y: -5, scale: 1.02 }} 
       onClick={onClick}
-      className={`bg-slate-900/40 backdrop-blur-xl p-5 sm:p-6 rounded-3xl border ${borderClass} cursor-pointer group relative overflow-hidden transition-all shadow-lg hover:shadow-[0_0_30px_rgba(59,130,246,0.15)] flex flex-col justify-between min-h-[240px]`}
+      className={`bg-slate-900/40 backdrop-blur-sm p-5 sm:p-6 rounded-3xl border ${borderClass} cursor-pointer group relative overflow-hidden transition-all shadow-lg hover:shadow-[0_0_30px_rgba(59,130,246,0.15)] flex flex-col justify-between min-h-[240px]`}
     >
       <div className={`absolute top-0 right-0 w-40 h-40 blur-[80px] rounded-full -z-10 opacity-20 transition-all duration-500 group-hover:opacity-40 group-hover:scale-150 ${bgClass.replace('/10', '')}`} />
       
@@ -377,7 +376,7 @@ export default function ReportsPage() {
                 </div>
                 
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex items-center gap-3 bg-white/60 dark:bg-[#111827]/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl p-2 shadow-sm">
+                  <div className="flex items-center gap-3 bg-white/60 dark:bg-[#111827]/60 backdrop-blur-sm border border-slate-200 dark:border-white/10 rounded-2xl p-2 shadow-sm">
                      <div className="p-2 bg-blue-50 dark:bg-blue-500/10 rounded-xl text-blue-600 dark:text-blue-400">
                        <Calendar className="w-5 h-5" />
                      </div>
@@ -452,7 +451,7 @@ export default function ReportsPage() {
             )}
 
             {/* Navigation Filter Kategori & Sub */}
-            <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-3xl p-2 shadow-lg dark:shadow-[0_0_40px_rgba(0,0,0,0.2)]">
+            <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-3xl p-2 shadow-lg dark:shadow-[0_0_40px_rgba(0,0,0,0.2)]">
                <div className="flex flex-wrap items-center gap-2">
                  {CATEGORIES.map(cat => (
                    <button
@@ -540,7 +539,7 @@ export default function ReportsPage() {
           <motion.div key="detail" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
             
             {/* Header Detail View */}
-            <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-3xl p-4 sm:p-6 shadow-lg sticky top-6 z-20 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-3xl p-4 sm:p-6 shadow-lg sticky top-6 z-20 flex flex-col md:flex-row md:items-center justify-between gap-4">
                <div className="flex items-center gap-4">
                  <button onClick={handleBack} className="p-3 bg-slate-100 dark:bg-white/5 rounded-2xl hover:bg-slate-200 dark:hover:bg-white/10 transition-colors text-slate-600 dark:text-slate-300">
                    <ArrowLeft className="w-5 h-5" />
@@ -562,7 +561,7 @@ export default function ReportsPage() {
                </div>
                
                <div className="flex flex-wrap items-center gap-3 self-end md:self-auto">
-                 <div className="flex items-center gap-2 bg-white/60 dark:bg-[#111827]/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl p-1 shadow-sm">
+                 <div className="flex items-center gap-2 bg-white/60 dark:bg-[#111827]/60 backdrop-blur-sm border border-slate-200 dark:border-white/10 rounded-xl p-1 shadow-sm">
                    <div className="p-1.5 bg-blue-50 dark:bg-blue-500/10 rounded-lg text-blue-600 dark:text-blue-400">
                      <Calendar className="w-4 h-4" />
                    </div>
@@ -620,7 +619,7 @@ export default function ReportsPage() {
                    )}
                  </div>
 
-                 <div className="flex items-center gap-2 bg-white/60 dark:bg-[#111827]/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl p-1 shadow-sm">
+                 <div className="flex items-center gap-2 bg-white/60 dark:bg-[#111827]/60 backdrop-blur-sm border border-slate-200 dark:border-white/10 rounded-xl p-1 shadow-sm">
                    <div className="p-1.5 bg-amber-50 dark:bg-amber-500/10 rounded-lg text-amber-600 dark:text-amber-400">
                      <Building2 className="w-4 h-4" />
                    </div>
@@ -674,7 +673,12 @@ export default function ReportsPage() {
               ) : selectedIndicator === 'audit_apd' ? (
                  <ApdReport filters={{ searchQuery: '', periode: startDateISO, type: periode, unitFilter: selectedUnit } as any} />
               ) : selectedIndicator === 'dekontaminasi_alat' ? (
-                 <DekontaminasiAlatReport filters={{ dateRange: { from: startDateISO, to: new Date().toISOString() }, searchQuery: '', unitFilter: selectedUnit, type: periode, periode: startDateISO } as any} />
+                 <GenericAuditReport 
+                  tableName={'audit_dekontaminasi_alat'}
+                  indicatorItems={genericAuditConfigs['dekontaminasi_alat']?.items || []}
+                  title={selectedData?.title || 'Laporan'}
+                  filters={{ searchQuery: '', periode: startDateISO, type: periode }}
+                />
               ) : (
                  <GenericAuditReport 
                     tableName={selectedIndicator}

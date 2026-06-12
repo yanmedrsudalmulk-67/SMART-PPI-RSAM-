@@ -229,7 +229,7 @@ export default function ApdReport({
          </div>
       </div>
 
-      <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-xl rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm transition-all -mx-4 sm:mx-0 print:border-none print:shadow-none print:rounded-none">
+      <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-sm rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm transition-all -mx-4 sm:mx-0 print:border-none print:shadow-none print:rounded-none">
         
         <div className="p-6 sm:p-8 border-b border-slate-100 dark:border-white/5 bg-white dark:bg-[#0f172a]">
            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -357,7 +357,7 @@ export default function ApdReport({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-          <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-xl p-6 sm:p-8 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col">
+          <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-sm p-6 sm:p-8 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col">
              <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
                <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-3">
                  <TrendingUp className="w-5 h-5 text-emerald-500" /> Grafik Capaian Kepatuhan APD
@@ -393,7 +393,7 @@ export default function ApdReport({
           </div>
           
          {/* Analysis Otomatis */}
-         <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-xl p-6 sm:p-8 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col">
+         <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-sm p-6 sm:p-8 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-3 mb-6">
                <TrendingUp className="w-5 h-5 text-blue-500" />
                Analisa Data

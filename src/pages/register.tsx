@@ -48,7 +48,7 @@ export default function RegisterPage() {
         transition={{ delay: 0.1 }}
         className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10 px-4"
       >
-        <div className="bg-white/5 backdrop-blur-xl p-8 sm:px-10 rounded-[32px] border border-white/5 shadow-2xl">
+        <div className="bg-white/5 backdrop-blur-sm p-8 sm:px-10 rounded-[32px] border border-white/5 shadow-2xl">
           <form className="space-y-5" onSubmit={handleRegister}>
             
             {/* Full Name */}

@@ -42,7 +42,7 @@ export function LiveStatisticsCard({
   };
 
   return (
-    <div className="bg-slate-50 dark:bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-[32px] border border-slate-200 dark:border-white/5 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 relative overflow-hidden shadow-sm dark:shadow-2xl">
+    <div className="bg-slate-50 dark:bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[32px] border border-slate-200 dark:border-white/5 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 relative overflow-hidden shadow-sm dark:shadow-2xl">
       <h2 className="absolute top-6 left-8 flex items-center gap-2 text-[10px] sm:text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 z-10">
         <Activity className="w-4 sm:w-5 h-4 sm:h-5 text-blue-500 dark:text-blue-400" /> {title}
       </h2>

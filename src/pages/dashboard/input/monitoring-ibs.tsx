@@ -281,7 +281,7 @@ export default function MonitoringIBSPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-        <div className="bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-[2rem] border border-white/5 space-y-6 shadow-sm">
+        <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2rem] border border-white/5 space-y-6 shadow-sm">
           <div className="space-y-3">
             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
               Waktu Input
@@ -461,7 +461,7 @@ export default function MonitoringIBSPage() {
           </div>
         </div>
 
-        <div className="bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
+        <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
           <DocumentationUploader images={images} setImages={setImages} />
         </div>
 

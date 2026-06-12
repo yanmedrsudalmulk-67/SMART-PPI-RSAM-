@@ -379,7 +379,7 @@ export default function HandHygieneReport({
   const renderTooltipContent = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white/90 dark:bg-[#0f172a]/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-xl">
+        <div className="bg-white/90 dark:bg-[#0f172a]/95 backdrop-blur-sm border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-xl">
           <p className="text-sm font-black text-slate-800 dark:text-slate-100 mb-2">{label}</p>
           <div className="space-y-1.5">
              {payload.map((entry: any, index: number) => {
@@ -413,7 +413,7 @@ export default function HandHygieneReport({
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-500">
       
       {/* Filter Bar */}
-      <div className="flex gap-4 p-4 bg-white/80 dark:bg-white/5 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-white/10 overflow-x-auto">
+      <div className="flex gap-4 p-4 bg-white/80 dark:bg-white/5 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-white/10 overflow-x-auto">
         <ProfessionFilter 
            selectedProfessions={selectedProfessions}
            setSelectedProfessions={setSelectedProfessions}
@@ -421,7 +421,7 @@ export default function HandHygieneReport({
         />
       </div>
       
-      <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-xl rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm transition-all -mx-4 sm:mx-0">
+      <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-sm rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm transition-all -mx-4 sm:mx-0">
         <div className="p-8 border-b border-slate-100 dark:border-white/5 bg-white dark:bg-[#0f172a]">
            <div className="flex flex-col md:flex-row items-center gap-6">
              {hospitalLogoUrl && (
@@ -509,7 +509,7 @@ export default function HandHygieneReport({
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-         <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl rounded-[2rem] p-6 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden group">
+         <div className="bg-white/80 dark:bg-white/5 backdrop-blur-sm rounded-[2rem] p-6 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[40px] group-hover:bg-blue-500/20 transition-all" />
             <div className="flex items-center gap-4 mb-4">
               <div className="p-3 bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl">
@@ -522,7 +522,7 @@ export default function HandHygieneReport({
             </div>
          </div>
          
-         <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl rounded-[2rem] p-6 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden group">
+         <div className="bg-white/80 dark:bg-white/5 backdrop-blur-sm rounded-[2rem] p-6 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[40px] group-hover:bg-emerald-500/20 transition-all" />
             <div className="flex items-center gap-4 mb-4">
               <div className="p-3 bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl">
@@ -549,7 +549,7 @@ export default function HandHygieneReport({
       </div>
 
       {/* Recaps Percentage Per Moment (Circular Progress) */}
-      <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-[2rem] p-6 shadow-sm">
+      <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-sm border border-slate-200 dark:border-white/10 rounded-[2rem] p-6 shadow-sm">
         <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-widest mb-6 px-2">Analisis Persentase Per Momen</h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {Object.entries(momentStats).map(([moment, perc], idx) => {
@@ -570,7 +570,7 @@ export default function HandHygieneReport({
         </div>
       </div>
 
-      <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-xl pt-6 sm:pt-8 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-sm">
+      <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-sm pt-6 sm:pt-8 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-sm">
         <div className="flex px-6 sm:px-8 justify-between items-center mb-8">
            <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-3">
              <BarChart2 className="w-5 h-5 text-emerald-500" /> Analitik Tren Kepatuhan

@@ -823,7 +823,7 @@ export default function DashboardPage() {
   const renderTooltipContent = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white/90 dark:bg-[#0f172a]/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-xl">
+        <div className="bg-white/90 dark:bg-[#0f172a]/95 backdrop-blur-sm border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-xl">
           <p className="text-sm font-black text-slate-800 dark:text-slate-100 mb-2">
             {label}
           </p>
@@ -1047,7 +1047,7 @@ export default function DashboardPage() {
       {/* Global Period Filter - Control Center Style */}
       <section className="relative group">
         <div className="absolute -inset-1 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-[32px] blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-        <div className="relative bg-white/80 dark:bg-[#111827]/80 backdrop-blur-xl rounded-[32px] p-6 md:p-8 border border-slate-200 dark:border-white/10 shadow-sm transition-all overflow-hidden">
+        <div className="relative bg-white/80 dark:bg-[#111827]/80 backdrop-blur-sm rounded-[32px] p-6 md:p-8 border border-slate-200 dark:border-white/10 shadow-sm transition-all overflow-hidden">
           {/* Subtle Background Pattern */}
           <div className="absolute top-0 right-0 p-4 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
             <Activity className="w-24 h-24" />

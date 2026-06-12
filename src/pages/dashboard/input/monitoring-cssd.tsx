@@ -420,7 +420,7 @@ export default function MonitoringCSSDPage() {
         className="mt-8 grid xl:grid-cols-12 gap-8 items-start"
       >
         <div className="xl:col-span-8 space-y-8">
-          <div className="bg-white dark:bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-[2rem] border border-slate-200 dark:border-white/5 shadow-sm">
+          <div className="bg-white dark:bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2rem] border border-slate-200 dark:border-white/5 shadow-sm">
             <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 border-b border-slate-200 dark:border-white/5 pb-4 mb-6">
               1. INFORMASI UMUM
             </h2>
@@ -613,7 +613,7 @@ export default function MonitoringCSSDPage() {
             </div>
           </div>
 
-          <div className="bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
+          <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
             <DocumentationUploader images={images} setImages={setImages} />
           </div>
 

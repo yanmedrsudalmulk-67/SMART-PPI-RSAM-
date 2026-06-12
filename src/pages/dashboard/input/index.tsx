@@ -440,8 +440,8 @@ export default function InputIndexPage() {
         <title>Input Data - SMART PPI</title>
       </Head>
 
-      <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-start gap-4">
-        <div className="text-left w-full md:w-auto shrink-0">
+      <div className="mb-6 flex flex-col md:flex-row justify-between items-center md:items-start gap-4">
+        <div className="text-center md:text-left w-full md:w-auto shrink-0">
           <h1 className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase">
             Input Data SMART PPI
           </h1>
@@ -458,10 +458,10 @@ export default function InputIndexPage() {
             onChange={(e) => setFilterPeriodType(e.target.value as any)}
             className="h-12 px-[18px] bg-white dark:bg-[rgba(255,255,255,0.05)] border border-[#E5E7EB] dark:border-[rgba(255,255,255,0.08)] text-[#111827] dark:text-white text-sm font-semibold rounded-[14px] outline-none hover:scale-[1.02] focus:scale-[1.02] focus:ring-2 focus:ring-blue-500/30 transition-all duration-200 cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:14px_14px] bg-[position:right_14px_center] bg-no-repeat pr-10 shadow-sm backdrop-blur-[10px]"
           >
-            <option value="bulanan" className="dark:bg-slate-800">📅 Bulanan</option>
-            <option value="triwulan" className="dark:bg-slate-800">📅 Triwulan</option>
-            <option value="semester" className="dark:bg-slate-800">📅 Semester</option>
-            <option value="tahunan" className="dark:bg-slate-800">📅 Tahunan</option>
+            <option value="bulanan" className="dark:bg-slate-800">Bulanan</option>
+            <option value="triwulan" className="dark:bg-slate-800">Triwulan</option>
+            <option value="semester" className="dark:bg-slate-800">Semester</option>
+            <option value="tahunan" className="dark:bg-slate-800">Tahunan</option>
           </select>
 
           {/* Sub Periode */}
@@ -523,7 +523,7 @@ export default function InputIndexPage() {
           >
             <Link
               href={mod.href}
-              className="relative group p-6 rounded-[28px] bg-white/70 dark:bg-[#0F172A]/80 backdrop-blur-xl border border-slate-200 dark:border-white/5 flex flex-col overflow-hidden shadow-sm hover:shadow-xl dark:shadow-none dark:hover:shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all duration-300 w-full"
+              className="relative group p-6 rounded-[28px] bg-white/70 dark:bg-[#0F172A]/80 backdrop-blur-sm border border-slate-200 dark:border-white/5 flex flex-col overflow-hidden shadow-sm hover:shadow-xl dark:shadow-none dark:hover:shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all duration-300 w-full"
             >
               {/* Background gradient hint */}
               <div

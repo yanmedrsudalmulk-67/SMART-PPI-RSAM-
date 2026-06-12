@@ -386,7 +386,9 @@ export default function GenericAuditReport({
   const getStatus = (itemId: string) => {
     if (!selectedRecord) return undefined;
     const val: any = selectedRecord.checklist_json?.[itemId];
+    if (val === undefined || val === null) return undefined;
     if (typeof val === "string") return val.toLowerCase();
+    if (typeof val === "boolean") return val ? "ya" : "tidak";
     if (
       val &&
       typeof val === "object" &&
@@ -445,9 +447,8 @@ export default function GenericAuditReport({
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-500">
       {/* SELECTION ROW */}
-      {tableName !== "pengendalian_lingkungan" &&
-        tableName !== "penempatan_pasien" && (
-          <div className="bg-white dark:bg-[#111827]/80 backdrop-blur-xl rounded-[2rem] p-4 sm:p-6 border border-slate-200 dark:border-white/10 shadow-sm flex flex-col md:flex-row gap-6 justify-between items-center z-10 relative print:hidden">
+      {(
+          <div className="bg-white dark:bg-[#111827]/80 backdrop-blur-sm rounded-[2rem] p-4 sm:p-6 border border-slate-200 dark:border-white/10 shadow-sm flex flex-col md:flex-row gap-6 justify-between items-center z-10 relative print:hidden">
             <div className="flex-1 w-full">
               <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2">
                 Pilih Data Audit ({filteredRecords.length})
@@ -613,7 +614,7 @@ export default function GenericAuditReport({
                       <td className="px-1 py-1 sm:px-2 sm:py-2 text-center border border-slate-800 align-middle">
                         {status === "ya" && (
                           <span
-                            className={`font-black text-[10px] sm:text-[12px] ${item.id === "peralatan_berkarat" || item.id === "jarum_suntik_bekas" ? "text-red-600" : "text-blue-600"}`}
+                            className={`font-black text-[10px] sm:text-[14px] ${item.id === "peralatan_berkarat" || item.id === "jarum_suntik_bekas" ? "text-red-600" : "text-emerald-600"}`}
                           >
                             ✓
                           </span>
@@ -622,16 +623,16 @@ export default function GenericAuditReport({
                       <td className="px-1 py-1 sm:px-2 sm:py-2 text-center border border-slate-800 align-middle">
                         {status === "tidak" && (
                           <span
-                            className={`font-black text-[10px] sm:text-[12px] ${item.id === "peralatan_berkarat" || item.id === "jarum_suntik_bekas" ? "text-blue-600" : "text-red-600"}`}
+                            className={`font-black text-[10px] sm:text-[14px] ${item.id === "peralatan_berkarat" || item.id === "jarum_suntik_bekas" ? "text-emerald-600" : "text-red-600"}`}
                           >
-                            ✓
+                            ✗
                           </span>
                         )}
                       </td>
                       <td className="px-1 py-1 sm:px-2 sm:py-2 text-center border border-slate-800 align-middle">
-                        {status === "na" && (
-                          <span className="font-black text-[10px] sm:text-[12px] text-slate-500">
-                            ✓
+                        {(status === "na" || status === "n/a") && (
+                          <span className="font-black text-[12px] sm:text-[16px] text-slate-500">
+                            -
                           </span>
                         )}
                       </td>
@@ -822,8 +823,7 @@ export default function GenericAuditReport({
             </div>
           </div>
 
-          {tableName !== "pengendalian_lingkungan" &&
-            tableName !== "penempatan_pasien" && (
+          {(
               <div className="mt-8 text-center border-t-2 border-slate-800 pt-4 pb-2">
                 <p className="text-[8px] font-bold uppercase tracking-widest text-force-black">
                   SMART PPI - Dicetak pada{" "}
