@@ -52,7 +52,7 @@ export default function BundlesMenuPage() {
   return (
     <div className="max-w-6xl mx-auto pb-28">
       <div className="flex items-center gap-4 mb-8 py-4 border-b border-white/5">
-        <Link href="/dashboard/input" prefetch={false} className="p-2.5 bg-white/5 rounded-xl border border-white/10 text-slate-400 hover:text-white transition-all">
+        <Link href="/dashboard/input" className="p-2.5 bg-white/5 rounded-xl border border-white/10 text-slate-400 hover:text-white transition-all">
           <ArrowLeft className="w-4 h-4" />
         </Link>
         <div>
@@ -83,7 +83,7 @@ export default function BundlesMenuPage() {
                     <h3 className="font-bold text-slate-800 dark:text-white text-lg group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">{item.title}</h3>
                   </div>
 
-                  <Link href={`/dashboard/input/bundles/${item.id}`} prefetch={false}
+                  <Link href={`/dashboard/input/bundles/${item.id}`}
                     className="flex items-center justify-center gap-2 w-full py-4 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-blue-600/20 active:scale-95"
                   >
                     INPUT DATA

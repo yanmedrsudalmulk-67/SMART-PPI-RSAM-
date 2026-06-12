@@ -40,7 +40,6 @@ const NavItem = memo(({ item, isActive, isLightMode, onClick }: { item: any, isA
   return (
     <Link 
       href={item.href}
-      prefetch={true}
       onClick={onClick}
       className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
     >
@@ -353,7 +352,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Link 
                 key={item.name} 
                 href={item.href}
-                prefetch={true}
                 className={`flex flex-col items-center justify-center w-full h-[52px] space-y-1 rounded-xl transition-all transform-gpu will-change-transform ${
                   isActive 
                     ? isLightMode ? 'text-white bg-white/10' : 'text-emerald-400 bg-white/5' 

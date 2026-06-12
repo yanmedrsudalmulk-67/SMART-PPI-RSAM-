@@ -519,20 +519,19 @@ export default function InputIndexPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1, duration: 0.5 }}
-            className="flex h-full"
+            className="flex h-full w-full"
           >
             <Link
               href={mod.href}
-              prefetch={false}
-              className="relative group p-6 rounded-[28px] bg-white/70 dark:bg-[#0F172A]/80 backdrop-blur-xl border border-slate-200 dark:border-white/5 flex flex-col justify-between overflow-hidden shadow-sm hover:shadow-xl dark:shadow-none dark:hover:shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all duration-300 w-full"
+              className="relative group p-6 rounded-[28px] bg-white/70 dark:bg-[#0F172A]/80 backdrop-blur-xl border border-slate-200 dark:border-white/5 flex flex-col overflow-hidden shadow-sm hover:shadow-xl dark:shadow-none dark:hover:shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all duration-300 w-full"
             >
               {/* Background gradient hint */}
               <div
                 className={`absolute top-0 right-0 w-64 h-64 opacity-5 pointer-events-none rounded-bl-full filter blur-3xl transition-opacity duration-700 group-hover:opacity-20 ${mod.colorTheme.bgActive}`}
               />
 
-              <div className="flex justify-between items-start mb-6 relative z-10">
-                <div className="flex gap-4">
+              <div className="flex justify-between items-start gap-4 mb-6 relative z-10 flex-1">
+                <div className="flex gap-4 flex-1 min-w-0">
                   <div
                     className={`w-14 h-14 rounded-[18px] flex flex-shrink-0 items-center justify-center ${mod.colorTheme.mainIconBox}`}
                   >
@@ -541,52 +540,33 @@ export default function InputIndexPage() {
                       strokeWidth={2.5}
                     />
                   </div>
-                  <div className="pt-0.5">
-                    <h2 className="text-xl font-bold text-slate-900 dark:text-white leading-tight mb-1 group-hover:text-emerald-500 transition-colors">
+                  <div className="pt-0.5 flex-1 min-w-0">
+                    <h2 className="text-[clamp(18px,2vw,24px)] font-bold text-slate-900 dark:text-white leading-tight mb-1 group-hover:text-emerald-500 transition-colors break-words whitespace-normal">
                       {mod.title}
                     </h2>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    <p className="text-[clamp(12px,1.2vw,14px)] text-slate-500 dark:text-slate-400 font-medium break-words whitespace-normal leading-snug">
                       {mod.desc}
                     </p>
                   </div>
                 </div>
-
-                <div className="text-right flex-shrink-0 pt-0.5 hidden sm:block">
-                  <div
-                    className={`text-4xl font-black ${mod.colorTheme.textActive} leading-none mb-1`}
-                  >
-                    {mod.computed.mainCount}
-                  </div>
-                  <div
-                    className={`text-[10px] font-bold uppercase tracking-widest ${mod.colorTheme.textActive}`}
-                  >
-                    {mod.computed.mainLabel}
-                  </div>
-                  {/* Status Badge */}
-                  <div
-                    className={`mt-2 inline-flex border border-current px-2 py-0.5 rounded-full items-center gap-1 text-[9px] font-bold uppercase tracking-widest ${mod.passStandard ? "text-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.2)]" : "text-red-500 shadow-[0_0_10px_rgba(239,68,68,0.2)]"}`}
-                  >
-                    {mod.passStandard ? "DI ATAS STANDAR" : "DI BAWAH STANDAR"}
-                  </div>
-                </div>
               </div>
 
-              {/* Mobile Stats */}
-              <div className="flex justify-between items-end mb-5 sm:hidden">
+              {/* Stats Block (Uniform for all viewports) */}
+              <div className="flex justify-between items-end mb-5">
                 <div>
                   <div
-                    className={`text-3xl font-black ${mod.colorTheme.textActive} leading-none mb-1`}
+                    className={`text-4xl sm:text-5xl font-black ${mod.colorTheme.textActive} leading-none mb-1`}
                   >
                     {mod.computed.mainCount}
                   </div>
                   <div
-                    className={`text-[10px] font-bold uppercase tracking-widest ${mod.colorTheme.textActive}`}
+                    className={`text-[10px] sm:text-xs font-bold uppercase tracking-wide ${mod.colorTheme.textActive}`}
                   >
                     {mod.computed.mainLabel}
                   </div>
                 </div>
                 <div
-                  className={`inline-flex border border-current px-2 py-0.5 rounded-full items-center gap-1 text-[9px] font-bold uppercase tracking-widest ${mod.passStandard ? "text-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.2)]" : "text-red-500 shadow-[0_0_10px_rgba(239,68,68,0.2)]"}`}
+                  className={`inline-flex max-w-fit px-3 py-1.5 border border-current rounded-full items-center justify-center gap-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.1em] ${mod.passStandard ? "text-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.2)]" : "text-red-500 shadow-[0_0_10px_rgba(239,68,68,0.2)]"}`}
                 >
                   {mod.passStandard ? "DI ATAS STANDAR" : "DI BAWAH STANDAR"}
                 </div>
@@ -630,7 +610,7 @@ export default function InputIndexPage() {
                 ))}{" "}
               </div>
 
-              <div className="mt-auto pt-2 shrink-0">
+              <div className="mt-0 pt-2 shrink-0">
                 <div
                   className={`w-full py-3.5 rounded-full flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-300 ${mod.colorTheme.bgActive} text-white hover:opacity-90 shadow-lg ${mod.colorTheme.shadowActive}`}
                 >
