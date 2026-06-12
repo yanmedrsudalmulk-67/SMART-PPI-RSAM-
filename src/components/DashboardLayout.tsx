@@ -193,7 +193,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!mounted) return null;
 
   return (
-    <div className={`min-h-screen flex ${isLightMode ? 'bg-white text-slate-900' : 'bg-[#0a0f1c] text-slate-200'}`}>
+    <div className={`h-[100dvh] w-screen overflow-hidden flex ${isLightMode ? 'bg-white text-slate-900' : 'bg-[#0a0f1c] text-slate-200'}`}>
       {/* Mobile Backdrop Overlay */}
       <AnimatePresence>
         {isMobile && isSidebarOpen && (
@@ -267,9 +267,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </motion.aside>
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col min-w-0 transition-[margin-left] duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] print:ml-0 ${!isMobile && isSidebarOpen ? 'ml-[312px]' : 'ml-0'} transform-gpu will-change-[margin-left]`}>
+      <div className={`flex-1 flex flex-col h-full min-w-0 overflow-hidden transition-[margin-left] duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] print:ml-0 ${!isMobile && isSidebarOpen ? 'ml-[312px]' : 'ml-0'} transform-gpu will-change-[margin-left]`}>
         {/* Top Header */}
-        <header className={`min-h-[56px] sm:h-20 py-2 sm:py-0 backdrop-blur-md border-b flex items-center justify-between px-4 sm:px-8 sticky top-0 z-10 transition-colors duration-500 print:hidden ${isLightMode ? 'bg-white/90 border-slate-100 shadow-sm' : 'bg-[#0a0f1c]/90 border-white/5 shadow-sm'}`}>
+        <header className={`min-h-[64px] sm:h-20 shrink-0 border-b flex items-center justify-between px-4 sm:px-8 sticky top-0 z-[45] backdrop-blur-md transition-all duration-500 print:hidden ${
+          isLightMode 
+            ? 'bg-white/80 border-slate-200/60 shadow-sm' 
+            : 'bg-[#0a0f1c]/80 border-white/5 shadow-[0_4px_20px_rgba(59,130,246,0.08)]'
+        }`}>
           <div className="flex items-center gap-2 sm:gap-4">
             <button 
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -285,19 +289,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Mobile Hospital Identity */}
             {isMobile && (
               <div className="flex items-center gap-2 sm:hidden px-1">
-                <div className="w-9 h-9 md:w-10 md:h-10 flex-shrink-0 bg-white/5 border border-white/10 rounded-[10px] flex items-center justify-center overflow-hidden relative">
+                <div className={`w-9 h-9 md:w-10 md:h-10 flex-shrink-0 rounded-[10px] flex items-center justify-center overflow-hidden relative border ${
+                  isLightMode ? 'bg-slate-50 border-slate-200/80' : 'bg-white/5 border-white/10'
+                }`}>
                   {hospitalLogoUrl ? (
                     <Image src={hospitalLogoUrl} alt="Logo RS" fill sizes="40px" priority className="object-contain p-1" referrerPolicy="no-referrer" />
                   ) : (
-                    <ShieldCheck className="w-5 h-5 md:w-6 md:h-6 text-blue-400" />
+                    <ShieldCheck className={`w-5 h-5 md:w-6 md:h-6 ${isLightMode ? 'text-emerald-600' : 'text-blue-400'}`} />
                   )}
                 </div>
                 
                 <div className="flex flex-col text-left">
-                  <span className="font-heading font-bold text-sm tracking-wide text-white leading-tight">
+                  <span className={`font-heading font-bold text-xs sm:text-sm tracking-wide leading-tight ${isLightMode ? 'text-slate-900' : 'text-white'}`}>
                     UOBK RSUD AL-MULK
                   </span>
-                  <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400 leading-tight mt-0.5">
+                  <span className={`text-[8px] font-bold uppercase tracking-[0.2em] leading-tight mt-0.5 ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
                     KOTA SUKABUMI
                   </span>
                 </div>
@@ -342,47 +348,62 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 pb-28 sm:p-6 sm:pb-8 lg:p-8 relative">
+        <main className="flex-1 overflow-y-auto p-4 pb-32 sm:p-6 sm:pb-8 lg:p-8 relative">
           {children}
         </main>
       </div>
 
       {/* Mobile Bottom Navigation */}
-      {isMobile && (
-        <div className="fixed bottom-5 inset-x-5 z-40 flex justify-center">
-          <nav className={`w-full max-w-md backdrop-blur-md flex justify-around items-center h-[72px] px-3 rounded-[36px] shadow-lg transition-colors border ${isLightMode ? 'bg-emerald-600/98 border-emerald-500/50' : 'bg-[#0a0f1c]/98 border-white/10'}`}>
-            {navItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link 
-                  key={item.name} 
-                  href={item.href}
-                  className="relative flex items-center justify-center w-[52px] h-[52px] transition-all duration-300 outline-none"
-                >
-                  {isActive && (
-                    <motion.div
-                      layoutId="mobileNavIndicator"
-                      className={`absolute inset-0 rounded-full shadow-md ${isLightMode ? 'bg-white' : 'bg-emerald-500'}`}
-                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                    />
-                  )}
-                  
-                  <motion.div 
-                    animate={isActive ? { y: [-2, 2, -2] } : { y: 0 }}
-                    transition={isActive ? { repeat: Infinity, duration: 3, ease: "easeInOut" } : { duration: 0.3 }}
-                    className={`relative z-10 flex items-center justify-center transition-transform duration-300 ${isActive ? 'scale-110 drop-shadow-sm' : 'hover:scale-110'}`}
-                  >
-                    <item.icon 
-                      className={`w-[22px] h-[22px] transition-colors duration-300 ${isActive ? (isLightMode ? 'text-emerald-700' : 'text-white') : (isLightMode ? 'text-emerald-50 opacity-80' : 'text-slate-400')}`} 
-                      strokeWidth={isActive ? 2.5 : 2} 
-                    />
-                  </motion.div>
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-      )}
+      <div className="fixed bottom-5 inset-x-5 z-50 flex justify-center md:hidden pb-[env(safe-area-inset-bottom)]">
+        <nav className={`w-full max-w-md flex justify-around items-center h-[72px] px-2 rounded-[36px] transition-colors border backdrop-blur-md ${
+          isLightMode 
+            ? 'bg-white/95 border-slate-200/80 shadow-[0_12px_30px_rgba(0,0,0,0.08)]' 
+            : 'bg-[#0a0f1c]/85 border-white/10 shadow-[0_8px_32px_rgba(59,130,246,0.15)]'
+        }`}>
+          {navItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link 
+                key={item.name} 
+                href={item.href}
+                className="relative flex-1 h-[56px] flex flex-col items-center justify-center transition-all duration-200 outline-none px-1"
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="mobileNavIndicator"
+                    className={`absolute inset-x-1 inset-y-1 rounded-[24px] shadow-sm ${
+                      isLightMode 
+                        ? 'bg-emerald-600 shadow-[0_4px_12px_rgba(16,185,129,0.35)]' 
+                        : 'bg-emerald-500 shadow-[0_4px_12px_rgba(16,185,129,0.25)]'
+                    }`}
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+                
+                <div className={`relative z-10 flex flex-col items-center justify-center transition-all duration-200 ${
+                  isActive ? 'scale-105 opacity-100' : 'opacity-70 hover:opacity-100'
+                }`}>
+                  <item.icon 
+                    className={`w-[20px] h-[20px] transition-colors duration-200 ${
+                      isActive 
+                        ? 'text-white' 
+                        : (isLightMode ? 'text-slate-600' : 'text-slate-300')
+                    }`} 
+                    strokeWidth={isActive ? 2.5 : 2} 
+                  />
+                  <span className={`text-[9px] font-semibold tracking-wide mt-1 transition-colors duration-200 ${
+                    isActive 
+                      ? 'text-white font-bold' 
+                      : (isLightMode ? 'text-slate-500 font-medium' : 'text-slate-400 font-medium')
+                  }`}>
+                    {item.name}
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
     </div>
   );
 }

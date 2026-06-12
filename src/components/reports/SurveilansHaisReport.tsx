@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { format, parseISO } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
+import { ReportSkeleton } from '@/components/SkeletonLoading';
 import {
   Activity,
   ArrowDown,
@@ -110,6 +111,33 @@ export default function SurveilansHaisReport({
     };
   }, [indicator, periodeStartISO]);
 
+  // Ensure scroll resets to top when data loading finishes
+  useEffect(() => {
+    const scrollToTop = () => {
+      const mainEl = document.querySelector("main");
+      if (mainEl) {
+        mainEl.scrollTop = 0;
+        mainEl.scrollTo({ top: 0, behavior: "instant" as any });
+      }
+      const scrollableElements = document.querySelectorAll('.overflow-y-auto');
+      scrollableElements.forEach(el => {
+        el.scrollTop = 0;
+      });
+      window.scrollTo({ top: 0, behavior: "instant" as any });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    if (!loading) {
+      scrollToTop();
+      const intervals = [30, 80, 150, 300, 500, 750, 1000, 1500];
+      const timers = intervals.map(time => setTimeout(scrollToTop, time));
+      return () => {
+        timers.forEach(clearTimeout);
+      };
+    }
+  }, [loading]);
+
   const maxStandard = STANDARDS[indicator] || 0;
   const isPercent = indicator === "ido";
   const symbol = isPercent ? "%" : "‰";
@@ -177,6 +205,8 @@ export default function SurveilansHaisReport({
     }
     return msg;
   }, [chartData, indName, maxStandard, symbol]);
+
+  if (loading && !data.length) return <ReportSkeleton />;
 
   return (
     <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500">

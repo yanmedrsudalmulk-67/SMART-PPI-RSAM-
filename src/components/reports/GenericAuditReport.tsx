@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { utils, writeFile } from "xlsx";
 import { supabase } from "@/lib/supabase";
+import { ReportSkeleton } from '@/components/SkeletonLoading';
 import {
   TrendingUp,
   Activity,
@@ -101,6 +102,50 @@ export default function GenericAuditReport({
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   const [searchDoc, setSearchDoc] = useState("");
 
+  const normalizeItem = useCallback((item: any) => {
+    const jsonFallback =
+      item.checklist_json ||
+      item.data_indikator ||
+      item.checklist_data ||
+      {};
+    return {
+      ...item,
+      waktu: item.tanggal_waktu || item.waktu || item.created_at,
+      checklist_json: jsonFallback,
+      persentase:
+        item.persentase !== undefined
+          ? item.persentase
+          : item.compliance_score !== undefined
+            ? item.compliance_score
+            : 0,
+      tanda_tangan_1:
+        item.ttd_pj_ruangan ||
+        item.ttd_pj ||
+        item.tanda_tangan_1 ||
+        jsonFallback.tanda_tangan_pj ||
+        item.tanda_tangan?.[0],
+      tanda_tangan_2:
+        item.ttd_ipcn ||
+        item.tanda_tangan_2 ||
+        jsonFallback.tanda_tangan_ipcn ||
+        jsonFallback.tanda_tangan_spv ||
+        item.tanda_tangan?.[1],
+      foto:
+        item.dokumentasi || item.foto || jsonFallback.dokumentasi || [],
+      nama_pj_ruangan:
+        item.nama_pj_ruangan ||
+        item.nama_pj ||
+        item.auditee ||
+        jsonFallback.nama_pj_ruangan ||
+        jsonFallback.nama_pj ||
+        "",
+      observer: item.observer || item.supervisor || item.ipcn || "",
+      unit: item.unit || item.ruangan || "",
+      temuan: item.temuan || jsonFallback.temuan || "",
+      rekomendasi: item.rekomendasi || jsonFallback.rekomendasi || "",
+    };
+  }, []);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -133,49 +178,7 @@ export default function GenericAuditReport({
       });
 
       const normalized = result
-        .map((item: any) => {
-          const jsonFallback =
-            item.checklist_json ||
-            item.data_indikator ||
-            item.checklist_data ||
-            {};
-          return {
-            ...item,
-            waktu: item.tanggal_waktu || item.waktu || item.created_at,
-            checklist_json: jsonFallback,
-            persentase:
-              item.persentase !== undefined
-                ? item.persentase
-                : item.compliance_score !== undefined
-                  ? item.compliance_score
-                  : 0,
-            tanda_tangan_1:
-              item.ttd_pj_ruangan ||
-              item.ttd_pj ||
-              item.tanda_tangan_1 ||
-              jsonFallback.tanda_tangan_pj ||
-              item.tanda_tangan?.[0],
-            tanda_tangan_2:
-              item.ttd_ipcn ||
-              item.tanda_tangan_2 ||
-              jsonFallback.tanda_tangan_ipcn ||
-              jsonFallback.tanda_tangan_spv ||
-              item.tanda_tangan?.[1],
-            foto:
-              item.dokumentasi || item.foto || jsonFallback.dokumentasi || [],
-            nama_pj_ruangan:
-              item.nama_pj_ruangan ||
-              item.nama_pj ||
-              item.auditee ||
-              jsonFallback.nama_pj_ruangan ||
-              jsonFallback.nama_pj ||
-              "",
-            observer: item.observer || item.supervisor || item.ipcn || "",
-            unit: item.unit || item.ruangan || "",
-            temuan: item.temuan || jsonFallback.temuan || "",
-            rekomendasi: item.rekomendasi || jsonFallback.rekomendasi || "",
-          };
-        })
+        .map(normalizeItem)
         .sort(
           (a, b) => new Date(b.waktu).getTime() - new Date(a.waktu).getTime(),
         );
@@ -188,7 +191,7 @@ export default function GenericAuditReport({
     } finally {
       setLoading(false);
     }
-  }, [tableName, extraFilter, selectedRecordId]);
+  }, [tableName, extraFilter, selectedRecordId, normalizeItem]);
 
   useEffect(() => {
     fetchData();
@@ -197,14 +200,25 @@ export default function GenericAuditReport({
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: tableName },
-        () => fetchData(),
+        (payload) => {
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+             setData(prev => {
+                const norm = normalizeItem(payload.new);
+                const isUpdate = prev.some(p => p.id === norm.id);
+                const nextData = isUpdate ? prev.map(p => p.id === norm.id ? norm : p) : [norm, ...prev];
+                return nextData.sort((a,b) => new Date(b.waktu).getTime() - new Date(a.waktu).getTime());
+             });
+          } else if (payload.eventType === 'DELETE') {
+             setData(prev => prev.filter(p => p.id !== payload.old.id));
+          }
+        }
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(chTarget);
     };
-  }, [tableName, fetchData]);
+  }, [tableName, fetchData, normalizeItem]);
 
   useEffect(() => {
     const handleExportExcel = (e: Event) => {
@@ -420,13 +434,51 @@ export default function GenericAuditReport({
     return cleaned.charAt(0).toUpperCase() + cleaned.slice(1).toLowerCase();
   };
 
+  const [dynamicChecklist, setDynamicChecklist] = useState<{id: string, label: string}[] | null>(null);
+
+  useEffect(() => {
+    if (!selectedRecordId) {
+      setDynamicChecklist(null);
+      return;
+    }
+    const fetchDetails = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("audit_details")
+          .select("id, pertanyaan_id, pertanyaan")
+          .eq("session_id", selectedRecordId)
+          .order("id", { ascending: true });
+        
+        if (!error && data && data.length > 0) {
+          // Sort or preserve order? The database doesn't have an order column but usually inserted in order.
+          // We can assume insertion order or natural sort of IDs.
+          const uniqueItems = Array.from(new Set(data.map(d => d.pertanyaan_id))).map(id => {
+            const item = data.find(d => d.pertanyaan_id === id);
+            return {
+              id: item!.pertanyaan_id,
+              label: item!.pertanyaan
+            };
+          });
+          setDynamicChecklist(uniqueItems);
+        } else {
+          setDynamicChecklist(null);
+        }
+      } catch (err) {
+        setDynamicChecklist(null);
+      }
+    };
+    fetchDetails();
+  }, [selectedRecordId]);
+
   const checklistItems =
-    indicatorItems && indicatorItems.length > 0
-      ? indicatorItems.map((i) => ({ id: i.key, label: i.label }))
-      : Object.keys(selectedRecord?.checklist_json || {}).map((k) => ({
-          id: k,
-          label: toSentenceCase(k),
-        }));
+    dynamicChecklist && dynamicChecklist.length > 0
+      ? dynamicChecklist
+      : indicatorItems && indicatorItems.length > 0
+        ? indicatorItems.map((i) => ({ id: i.key, label: i.label }))
+        : Object.keys(selectedRecord?.checklist_json || {}).map((k) => ({
+            id: k,
+            label: toSentenceCase(k),
+          }));
 
   useEffect(() => {
     window.dispatchEvent(
@@ -434,63 +486,39 @@ export default function GenericAuditReport({
     );
   }, [selectedRecordId]);
 
-  if (loading)
-    return (
-      <div className="flex flex-col items-center justify-center p-20 bg-white/5 backdrop-blur-md rounded-3xl animate-pulse">
-        <Activity className="w-10 h-10 text-slate-400 mb-4 animate-spin" />
-        <span className="text-slate-500 font-medium">
-          Memuat Data Analisis...
-        </span>
-      </div>
-    );
+  // Ensure scroll resets to top when data loading finishes or selected record changes
+  useEffect(() => {
+    const scrollToTop = () => {
+      const mainEl = document.querySelector("main");
+      if (mainEl) {
+        mainEl.scrollTop = 0;
+        mainEl.scrollTo({ top: 0, behavior: "instant" as any });
+      }
+      const scrollableElements = document.querySelectorAll('.overflow-y-auto');
+      scrollableElements.forEach(el => {
+        el.scrollTop = 0;
+      });
+      window.scrollTo({ top: 0, behavior: "instant" as any });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    if (!loading) {
+      scrollToTop();
+      const intervals = [30, 80, 150, 300, 500, 750, 1000, 1500];
+      const timers = intervals.map(time => setTimeout(scrollToTop, time));
+      return () => {
+        timers.forEach(clearTimeout);
+      };
+    }
+  }, [loading, selectedRecordId]);
+
+  if (loading && !data.length)
+    return <ReportSkeleton />;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-500">
-      {/* SELECTION ROW */}
-      {(
-          <div className="bg-white dark:bg-[#111827]/80 backdrop-blur-sm rounded-[2rem] p-4 sm:p-6 border border-slate-200 dark:border-white/10 shadow-sm flex flex-col md:flex-row gap-6 justify-between items-center z-10 relative print:hidden">
-            <div className="flex-1 w-full">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2">
-                Pilih Data Audit ({filteredRecords.length})
-              </label>
-              <select
-                value={selectedRecordId || ""}
-                onChange={(e) => setSelectedRecordId(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white font-medium outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              >
-                {filteredRecords.length === 0 && (
-                  <option value="">Belum ada data di periode ini</option>
-                )}
-                {filteredRecords.map((rec, i) => (
-                  <option key={rec.id} value={rec.id}>
-                    {rec.waktu
-                      ? format(parseISO(rec.waktu), "dd/MM/yyyy HH:mm")
-                      : "-"}{" "}
-                    | {rec.unit || rec.ruangan || "Tanpa Unit"} |{" "}
-                    {rec.observer || rec.supervisor || "Tanpa Supervisor"} |{" "}
-                    {rec.persentase}%
-                  </option>
-                ))}
-              </select>
-            </div>
 
-            <div className="flex-1 w-full relative">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2">
-                Pencarian Cepat
-              </label>
-              <div className="relative w-full">
-                <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Cari unit atau supervisor..."
-                  value={searchDoc}
-                  onChange={(e) => setSearchDoc(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-          </div>
-        )}
 
       {filteredRecords.length > 0 && selectedRecord ? (
         <div
@@ -823,16 +851,7 @@ export default function GenericAuditReport({
             </div>
           </div>
 
-          {(
-              <div className="mt-8 text-center border-t-2 border-slate-800 pt-4 pb-2">
-                <p className="text-[8px] font-bold uppercase tracking-widest text-force-black">
-                  SMART PPI - Dicetak pada{" "}
-                  {format(new Date(), "dd MMMM yyyy HH:mm", {
-                    locale: idLocale,
-                  })}
-                </p>
-              </div>
-            )}
+
         </div>
       ) : (
         <div className="h-full bg-slate-50 dark:bg-[#111827]/80 rounded-[2rem] border border-slate-200 dark:border-white/10 flex flex-col items-center justify-center p-12 md:p-20 text-center text-slate-500 shadow-sm min-h-[400px]">

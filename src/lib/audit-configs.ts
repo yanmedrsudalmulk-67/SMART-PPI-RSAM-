@@ -67,14 +67,14 @@ export const genericAuditConfigs: Record<string, { tableName: string; extraFilte
   pengelolaan_limbah_tajam: {
     tableName: 'audit_pengelolaan_limbah_tajam',
     items: [
-      { id: 'item_1', label: 'Safety box sesuai WHO', key: 'item_1' },
-      { id: 'item_2', label: 'Wadah aman', key: 'item_2' },
-      { id: 'item_3', label: 'Wadah < 3/4 penuh', key: 'item_3' },
-      { id: 'item_4', label: 'Tidak ada tajam keluar', key: 'item_4' },
-      { id: 'item_5', label: 'Tajam masuk wadah tajam', key: 'item_5' },
-      { id: 'item_6', label: 'Tong tajam di troli', key: 'item_6' },
-      { id: 'item_7', label: '1 tangan / no recapping', key: 'item_7' },
-      { id: 'item_8', label: 'Jalur paska pajanan', key: 'item_8' }
+      { id: 'item_1', label: 'Tersedia safety box sesuai standar WHO', key: 'item_1' },
+      { id: 'item_2', label: 'Wadah limbah tajam diletakkan di tempat yang aman', key: 'item_2' },
+      { id: 'item_3', label: 'Wadah limbah tajam tidak lebih dari 3/4 penuh', key: 'item_3' },
+      { id: 'item_4', label: 'Tidak ada benda tajam yang keluar dari wadah', key: 'item_4' },
+      { id: 'item_5', label: 'Limbah tajam langsung dibuang ke wadah limbah tajam', key: 'item_5' },
+      { id: 'item_6', label: 'Tempat sampah khusus benda tajam tersedia pada troli tindakan', key: 'item_6' },
+      { id: 'item_7', label: 'Pengelolaan jarum suntik kontak minimal dan apabila menutup menggunakan metode 1 tangan', key: 'item_7' },
+      { id: 'item_8', label: 'Tersedia jalur pasca pajanan apabila terjadi tusukan benda tajam', key: 'item_8' }
     ]
   },
   penatalaksanaan_linen: {
@@ -187,14 +187,15 @@ export const genericAuditConfigs: Record<string, { tableName: string; extraFilte
   monitoring_fasilitas_hand_hygiene: {
     tableName: 'monitoring_fasilitas_hand_hygiene',
     items: [
-      { id: 'item_1', label: 'Tersedia Hand Rub Cukup', key: 'item_1' },
-      { id: 'item_2', label: 'Tersedia Sabun Cair Cukup', key: 'item_2' },
-      { id: 'item_3', label: 'Tersedia Tissue Towel Cukup', key: 'item_3' },
-      { id: 'item_4', label: 'Kondisi Wastafel Baik', key: 'item_4' },
-      { id: 'item_5', label: 'Air Wastafel Mengalir Lancar', key: 'item_5' },
-      { id: 'item_6', label: 'Tersedia Petunjuk Cuci Tangan', key: 'item_6' },
-      { id: 'item_7', label: 'Tersedia Tempat Sampah Non-Medis', key: 'item_7' },
-      { id: 'item_8', label: 'Lingkungan Sekitar Wastafel Bersih', key: 'item_8' },
+      { id: "1", label: "Tersedia Handrub di koridor ruang perawatan", key: "1" },
+      { id: "2", label: "Tersedia Handrub di tempat tidur pasien", key: "2" },
+      { id: "3", label: "Tersedia Handrub di setiap troli tindakan", key: "3" },
+      { id: "4", label: "Tersedia wastafel di setiap ruangan dengan kondisi baik", key: "4" },
+      { id: "5", label: "Tersedia sabun antiseptik di setiap ruangan", key: "5" },
+      { id: "6", label: "Tersedia tempat sampah non medis untuk tissue", key: "6" },
+      { id: "7", label: "Tersedia tissue di setiap ruangan", key: "7" },
+      { id: "8", label: "Tersedia poster handrub dan hand hygiene", key: "8" },
+      { id: "9", label: "Wastafel dalam kondisi bersih", key: "9" },
     ]
   },
   monitoring_fasilitas_apd: {

@@ -11,6 +11,7 @@ import {
 } from '@/components/ChartComponents';
 import { format, parseISO } from 'date-fns';
 import { useAppContext } from '@/components/Providers';
+import { ReportSkeleton } from '@/components/SkeletonLoading';
 
 
 const ProfessionFilter = ({ 
@@ -204,12 +205,48 @@ export default function HandHygieneReport({
   useEffect(() => {
     fetchData();
     const ch = supabase.channel('audit_hand_hygiene_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_hand_hygiene' }, () => {
-         fetchData();
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_hand_hygiene' }, (payload) => {
+         if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+             setData(prev => {
+                const norm = payload.new as any;
+                const isUpdate = prev.some(p => p.id === norm.id);
+                const nextData = isUpdate ? prev.map(p => p.id === norm.id ? norm : p) : [norm, ...prev];
+                return nextData.sort((a,b) => new Date(b.start_time || b.waktu).getTime() - new Date(a.start_time || a.waktu).getTime());
+             });
+          } else if (payload.eventType === 'DELETE') {
+             setData(prev => prev.filter(p => p.id !== payload.old.id));
+          }
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
+
+  // Ensure scroll resets to top when data loading finishes
+  useEffect(() => {
+    const scrollToTop = () => {
+      const mainEl = document.querySelector("main");
+      if (mainEl) {
+        mainEl.scrollTop = 0;
+        mainEl.scrollTo({ top: 0, behavior: "instant" as any });
+      }
+      const scrollableElements = document.querySelectorAll('.overflow-y-auto');
+      scrollableElements.forEach(el => {
+        el.scrollTop = 0;
+      });
+      window.scrollTo({ top: 0, behavior: "instant" as any });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    if (!loading) {
+      scrollToTop();
+      const intervals = [30, 80, 150, 300, 500, 750, 1000, 1500];
+      const timers = intervals.map(time => setTimeout(scrollToTop, time));
+      return () => {
+        timers.forEach(clearTimeout);
+      };
+    }
+  }, [loading]);
 
   const filteredData = useMemo(() => {
     return data.filter(item => {
@@ -402,12 +439,7 @@ export default function HandHygieneReport({
     return "Analisis tren disajikan per profesi.";
   };
 
-  if (loading) return (
-    <div className="flex flex-col items-center justify-center p-20 bg-white/5 backdrop-blur-md rounded-3xl animate-pulse">
-      <Activity className="w-10 h-10 text-slate-400 mb-4 animate-spin" />
-      <span className="text-slate-500 font-medium">Memuat Data Analisis...</span>
-    </div>
-  );
+  if (loading && !data.length) return <ReportSkeleton />;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-500">

@@ -10,11 +10,14 @@ import { useAppContext } from '@/components/Providers';
 import DashboardLayout from '@/components/DashboardLayout';
 import { genericAuditConfigs } from '@/lib/audit-configs';
 
-import GenericAuditReport from '@/components/reports/GenericAuditReport';
-import HandHygieneReport from '@/components/reports/HandHygieneReport';
-import ApdReport from '@/components/reports/ApdReport';
-import SurveilansHaisReport from '@/components/reports/SurveilansHaisReport';
-import UnifiedSurveilansHaisReport from '@/components/reports/UnifiedSurveilansHaisReport';
+import dynamic from 'next/dynamic';
+import { ReportSkeleton } from '@/components/SkeletonLoading';
+
+const GenericAuditReport = dynamic(() => import('@/components/reports/GenericAuditReport'), { ssr: false, loading: () => <ReportSkeleton /> });
+const HandHygieneReport = dynamic(() => import('@/components/reports/HandHygieneReport'), { ssr: false, loading: () => <ReportSkeleton /> });
+const ApdReport = dynamic(() => import('@/components/reports/ApdReport'), { ssr: false, loading: () => <ReportSkeleton /> });
+const SurveilansHaisReport = dynamic(() => import('@/components/reports/SurveilansHaisReport'), { ssr: false, loading: () => <ReportSkeleton /> });
+const UnifiedSurveilansHaisReport = dynamic(() => import('@/components/reports/UnifiedSurveilansHaisReport'), { ssr: false, loading: () => <ReportSkeleton /> });
 
 const INDICATORS_MAP: Record<string, { cat: string, subcat?: string, title: string, id: string, icon: any }> = {
   // Kewaspadaan Isolasi - Standar
@@ -228,7 +231,10 @@ const SurveilansSummaryCard = ({ indicator, stats, onClick }: any) => {
 };
 
 
+import { useDashboardStore } from '@/hooks/useDashboardStore';
+
 export default function ReportsPage() {
+  const { reportsData, setReportsData, isReportsLoaded } = useDashboardStore();
   const [periode, setPeriode] = useState('Bulanan');
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -242,6 +248,45 @@ export default function ReportsPage() {
   const [statsMap, setStatsMap] = useState<Map<string, { count: number, sum: number, avgPercent: number }>>(new Map());
   const [haisStatsMap, setHaisStatsMap] = useState<Map<string, { count: number, num: number, den: number, rate: number, prevRate: number }>>(new Map());
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (isReportsLoaded && reportsData && reportsData.statsMap && reportsData.haisStatsMap) {
+      setStatsMap(reportsData.statsMap);
+      setHaisStatsMap(reportsData.haisStatsMap);
+      setLoading(false);
+    }
+  }, [isReportsLoaded, reportsData]);
+
+  // Automatically scroll main container to top when changing indicators
+  useEffect(() => {
+    const scrollToTop = () => {
+      const mainEl = document.querySelector('main');
+      if (mainEl) {
+        mainEl.scrollTop = 0;
+        mainEl.scrollTo({ top: 0, behavior: 'instant' as any });
+      }
+      
+      const scrollableElements = document.querySelectorAll('.overflow-y-auto');
+      scrollableElements.forEach(el => {
+        el.scrollTop = 0;
+      });
+
+      window.scrollTo({ top: 0, behavior: 'instant' as any });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    // Scroll immediately
+    scrollToTop();
+
+    // Scroll repeatedly over 1.5 seconds to bypass all asynchronous loading, images downloading, transitions and font loads
+    const intervals = [30, 80, 150, 300, 500, 750, 1000, 1500];
+    const timers = intervals.map(time => setTimeout(scrollToTop, time));
+
+    return () => {
+      timers.forEach(clearTimeout);
+    };
+  }, [selectedIndicator]);
 
   const startDateISO = useMemo(() => {
     if (periode === 'Bulanan') {
@@ -271,8 +316,12 @@ export default function ReportsPage() {
   }, [startDateISO, periode]);
 
   useEffect(() => {
+    if (isReportsLoaded && reportsData && reportsData.startDateISO === startDateISO) {
+      return;
+    }
+
     const fetchStats = async () => {
-      setLoading(true);
+      if (!isReportsLoaded) setLoading(true);
       try {
         const [auditRes] = await Promise.all([
            supabase.from('audit_sessions').select('indikator_id, kategori, persentase, tanggal_waktu, jumlah_patuh, jumlah_dinilai').gte('tanggal_waktu', prevPeriodStartISO)
@@ -319,9 +368,14 @@ export default function ReportsPage() {
              val.prevRate = val.prevDen > 0 ? (val.prevNum / val.prevDen) * mult : 0;
           }
           setHaisStatsMap(hMap);
+          
+          setReportsData({ statsMap: map, haisStatsMap: hMap, startDateISO });
         } else {
-          setStatsMap(new Map());
-          setHaisStatsMap(new Map());
+          const map = new Map();
+          const hMap = new Map();
+          setStatsMap(map);
+          setHaisStatsMap(hMap);
+          setReportsData({ statsMap: map, haisStatsMap: hMap, startDateISO });
         }
 
       } catch (e) {
@@ -340,7 +394,7 @@ export default function ReportsPage() {
     return () => {
       supabase.removeChannel(channelAudit);
     };
-  }, [startDateISO, prevPeriodStartISO]);
+  }, [startDateISO, prevPeriodStartISO, isReportsLoaded, reportsData, setReportsData]);
 
   // Compute displayed indicators based on category/subcategory
   const displayedIndicators = useMemo(() => {
@@ -353,6 +407,12 @@ export default function ReportsPage() {
 
   const handleBack = () => {
      setSelectedIndicator(null);
+     const mainEl = document.querySelector('main');
+     if (mainEl) {
+       mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+     } else {
+       window.scrollTo({ top: 0, behavior: 'smooth' });
+     }
   };
 
   const selectedData = INDICATORS_MAP[selectedIndicator || ''];
@@ -524,7 +584,15 @@ export default function ReportsPage() {
                       <SummaryCard
                         indicator={ind}
                         stats={statsMap.get(ind.id)}
-                        onClick={() => setSelectedIndicator(ind.id)}
+                        onClick={() => {
+                          setSelectedIndicator(ind.id);
+                          const mainEl = document.querySelector('main');
+                          if (mainEl) {
+                            mainEl.scrollTo({ top: 0, behavior: 'instant' as any });
+                          } else {
+                            window.scrollTo({ top: 0, behavior: 'auto' });
+                          }
+                        }}
                       />
                     </motion.div>
                   ))}
@@ -539,7 +607,7 @@ export default function ReportsPage() {
           <motion.div key="detail" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
             
             {/* Header Detail View */}
-            <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-3xl p-4 sm:p-6 shadow-lg sticky top-6 z-20 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-3xl p-4 sm:p-6 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
                <div className="flex items-center gap-4">
                  <button onClick={handleBack} className="p-3 bg-slate-100 dark:bg-white/5 rounded-2xl hover:bg-slate-200 dark:hover:bg-white/10 transition-colors text-slate-600 dark:text-slate-300">
                    <ArrowLeft className="w-5 h-5" />

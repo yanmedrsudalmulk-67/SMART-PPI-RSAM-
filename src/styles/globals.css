@@ -2,6 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 120Hz / High Refresh Rate GPU rendering optimizations for performance-critical elements */
+.will-gpu {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+  /* Hardware Accelerated rendering optimizations */
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Force hardware acceleration on animatable elements for smooth 120fps physics animations */
+.animate-in, .animate-out, .transition-all, .transition-transform, .transition-colors {
+  transform: translate3d(0, 0, 0);
+  will-change: transform, opacity;
+}
+
 :root {
   --color-navy-dark: #020617;
   --color-navy-light: #0f172a;

@@ -1059,9 +1059,6 @@ export default function DashboardPage() {
                 <BarChart2 className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
-                  Filter Data Utama
-                </h3>
                 <p className="text-base font-bold text-slate-800 dark:text-slate-100">
                   Pilih Periode Monitoring
                 </p>

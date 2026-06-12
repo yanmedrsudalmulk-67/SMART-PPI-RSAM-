@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 
 import { useAppContext } from '@/components/Providers';
+import { ReportSkeleton } from '@/components/SkeletonLoading';
 
 const STANDARDS: Record<string, number> = {
   phlebitis: 1,
@@ -138,6 +139,33 @@ export default function UnifiedSurveilansHaisReport() {
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDateISO, endDateISO, selectedRuangan, selectedHais]);
+
+  // Ensure scroll resets to top when data loading finishes
+  useEffect(() => {
+    const scrollToTop = () => {
+      const mainEl = document.querySelector("main");
+      if (mainEl) {
+        mainEl.scrollTop = 0;
+        mainEl.scrollTo({ top: 0, behavior: "instant" as any });
+      }
+      const scrollableElements = document.querySelectorAll('.overflow-y-auto');
+      scrollableElements.forEach(el => {
+        el.scrollTop = 0;
+      });
+      window.scrollTo({ top: 0, behavior: "instant" as any });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    if (!loading) {
+      scrollToTop();
+      const intervals = [30, 80, 150, 300, 500, 750, 1000, 1500];
+      const timers = intervals.map(time => setTimeout(scrollToTop, time));
+      return () => {
+        timers.forEach(clearTimeout);
+      };
+    }
+  }, [loading]);
 
   const { currentData, previousData } = useMemo(() => {
     return {
@@ -284,8 +312,8 @@ export default function UnifiedSurveilansHaisReport() {
         </p>
       </div>
 
-      {/* TOP FILTER SECTION (STICKY RESPONSIVE) */}
-      <div className="sticky top-20 z-40 bg-white/80 dark:bg-[#0f172a]/90 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-lg flex flex-col md:flex-row gap-4 justify-between items-center w-full">
+      {/* TOP FILTER SECTION */}
+      <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-lg flex flex-col md:flex-row gap-4 justify-between items-center w-full">
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           {/* Periode */}
           <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 rounded-xl p-1 px-2 flex-grow sm:flex-grow-0 min-w-max">
@@ -338,8 +366,8 @@ export default function UnifiedSurveilansHaisReport() {
         </div>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center p-20"><div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div></div>
+      {loading && !data.length ? (
+        <ReportSkeleton />
       ) : (
         <>
           {/* TABLE SECTION */}
