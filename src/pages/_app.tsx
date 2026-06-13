@@ -12,11 +12,6 @@ const poppins = Poppins({
   variable: '--font-sans' 
 });
 
-const PerformanceMonitor = dynamic(
-  () => import('@/components/PerformanceMonitor').then((mod) => mod.PerformanceMonitor),
-  { ssr: false }
-);
-
 export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
   getLayout?: (page: ReactElement) => ReactNode;
 };
@@ -33,7 +28,6 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
     <AppProvider>
       <main className={`${poppins.variable} font-sans overflow-x-hidden`}>
         {getLayout(<Component {...pageProps} />)}
-        <PerformanceMonitor />
       </main>
     </AppProvider>
   );
