@@ -12,6 +12,8 @@ interface DigitalSignatureSectionProps {
 export interface DigitalSignatureRef {
   getPjSignature: () => string | null;
   getSupervisorSignature: () => string | null;
+  setPjSignature?: (dataUrl: string) => void;
+  setSupervisorSignature?: (dataUrl: string) => void;
   clearAll: () => void;
 }
 
@@ -37,6 +39,16 @@ const DigitalSignatureSection = forwardRef<DigitalSignatureRef, DigitalSignature
           return sigPadSupervisor.current.getCanvas().toDataURL('image/png');
         }
         return null;
+      },
+      setPjSignature: (dataUrl: string) => {
+        if (dataUrl) {
+          sigPadPJ.current?.fromDataURL(dataUrl);
+        }
+      },
+      setSupervisorSignature: (dataUrl: string) => {
+        if (dataUrl) {
+          sigPadSupervisor.current?.fromDataURL(dataUrl);
+        }
       },
       clearAll: () => {
         sigPadPJ.current?.clear();

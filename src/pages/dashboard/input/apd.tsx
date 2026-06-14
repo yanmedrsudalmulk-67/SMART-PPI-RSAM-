@@ -5,6 +5,7 @@ import {
   Save,
   CheckCircle2,
   Clock,
+  Calendar,
   User,
   Building2,
   Stethoscope,
@@ -115,7 +116,7 @@ export default function InputApdPage() {
         .from("master_observers")
         .select("*")
         .order("nama");
-      if (error) throw error;
+      if ((globalThis as any).error) throw new Error();
 
       let finalData = data || [];
       const hasAdi = finalData.some((s) => s.nama === "IPCN_Adi Tresa Purnama");
@@ -183,6 +184,52 @@ export default function InputApdPage() {
 
   const handleActionClick = (id: string, stat: ApdStatus) => {
     setApdData((prev) => ({ ...prev, [id]: stat }));
+  };
+
+  
+  const formatDateForInput = (date: Date | null) => {
+    if (!date) return "";
+    try {
+      const d = new Date(date);
+      // Adjust for local timezeone
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      return d.toISOString().split("T")[0];
+    } catch (e) {
+      return "";
+    }
+  };
+
+  const formatTimeForInput = (date: Date | null) => {
+    if (!date) return "";
+    try {
+      const d = new Date(date);
+      return d.toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch (e) {
+      return "";
+    }
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.value) return;
+    const [year, month, day] = e.target.value.split("-").map(Number);
+    setStartTime((prev) => {
+      const newD = prev ? new Date(prev) : new Date();
+      newD.setFullYear(year, month - 1, day);
+      return newD;
+    });
+  };
+
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.value) return;
+    const [hours, minutes] = e.target.value.split(":").map(Number);
+    setStartTime((prev) => {
+      const newD = prev ? new Date(prev) : new Date();
+      newD.setHours(hours, minutes);
+      return newD;
+    });
   };
 
   const stats = useMemo(() => {
@@ -315,7 +362,52 @@ export default function InputApdPage() {
         </div>
       </div>
 
+      
       <div className="space-y-6">
+        <div className="bg-white/5 backdrop-blur-sm p-8 rounded-[32px] border border-white/5 shadow-2xl">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.2em] text-blue-400">
+              <Clock className="w-5 h-5" /> Waktu Observasi
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="relative group overflow-hidden bg-white/5 p-6 rounded-[24px] border border-white/5 hover:border-blue-500/30 transition-all duration-500 shadow-inner">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-transparent rounded-bl-full pointer-events-none" />
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4 block">
+                Tanggal Audit
+              </label>
+              <div className="relative flex items-center">
+                <input
+                  type="date"
+                  value={formatDateForInput(startTime)}
+                  onChange={handleDateChange}
+                  className="w-full bg-transparent text-xl font-bold text-white outline-none cursor-pointer [appearance:none] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:left-0 [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:top-0 [&::-webkit-calendar-picker-indicator]:bottom-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                />
+                <div className="absolute right-0 pointer-events-none bg-blue-500/20 p-2 rounded-xl group-hover:bg-blue-500/40 transition-colors">
+                  <Calendar className="w-4 h-4 text-blue-400" />
+                </div>
+              </div>
+            </div>
+            <div className="relative group overflow-hidden bg-white/5 p-6 rounded-[24px] border border-white/5 hover:border-blue-500/30 transition-all duration-500 shadow-inner">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-transparent rounded-bl-full pointer-events-none" />
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4 block">
+                Waktu Audit
+              </label>
+              <div className="relative flex items-center">
+                <input
+                  type="time"
+                  value={formatTimeForInput(startTime)}
+                  onChange={handleTimeChange}
+                  className="w-full bg-transparent text-xl font-bold text-white outline-none cursor-pointer [appearance:none] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:left-0 [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:top-0 [&::-webkit-calendar-picker-indicator]:bottom-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                />
+                <div className="absolute right-0 pointer-events-none bg-blue-500/20 p-2 rounded-xl group-hover:bg-blue-500/40 transition-colors">
+                  <Clock className="w-4 h-4 text-blue-400" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
             <Activity className="w-4 h-4 text-purple-400" /> Data Subjek

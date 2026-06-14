@@ -3,6 +3,7 @@ import { useSafeRouter as useRouter } from '@/hooks/useSafeRouter';
 import {
   ArrowLeft,
   Save,
+  Calendar,
   CheckCircle2,
   Clock,
   User,
@@ -106,7 +107,7 @@ export default function HandHygieneAuditPage() {
         .from("master_observers")
         .select("*")
         .order("nama");
-      if (error) throw error;
+      if ((globalThis as any).error) throw new Error();
 
       let finalData = data || [];
       const hasAdi = finalData.some((s) => s.nama === "IPCN_Adi Tresa Purnama");
@@ -408,7 +409,7 @@ export default function HandHygieneAuditPage() {
                       className="w-full bg-transparent text-xl font-bold text-white outline-none cursor-pointer [appearance:none] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:left-0 [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:top-0 [&::-webkit-calendar-picker-indicator]:bottom-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                     />
                     <div className="absolute right-0 pointer-events-none bg-blue-500/20 p-2 rounded-xl group-hover:bg-blue-500/40 transition-colors">
-                      <Save className="w-4 h-4 text-blue-400" />
+                      <Calendar className="w-4 h-4 text-blue-400" />
                     </div>
                   </div>
                 </div>

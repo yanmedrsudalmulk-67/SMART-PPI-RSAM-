@@ -159,11 +159,6 @@ export default function UnifiedSurveilansHaisReport() {
 
     if (!loading) {
       scrollToTop();
-      const intervals = [30, 80, 150, 300, 500, 750, 1000, 1500];
-      const timers = intervals.map(time => setTimeout(scrollToTop, time));
-      return () => {
-        timers.forEach(clearTimeout);
-      };
     }
   }, [loading]);
 
@@ -317,7 +312,6 @@ export default function UnifiedSurveilansHaisReport() {
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           {/* Periode */}
           <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 rounded-xl p-1 px-2 flex-grow sm:flex-grow-0 min-w-max">
-            <Calendar className="w-4 h-4 text-emerald-500" />
             <select value={periodeType} onChange={(e) => setPeriodeType(e.target.value)} className="bg-transparent border-none text-xs sm:text-sm font-bold text-slate-900 dark:text-white outline-none cursor-pointer">
               {['Bulanan', 'Triwulan', 'Semester', 'Tahunan'].map(p => <option key={p} value={p}>{p}</option>)}
             </select>

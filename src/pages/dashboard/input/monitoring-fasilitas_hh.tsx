@@ -65,6 +65,8 @@ type Observer = { id: string; nama: string };
 
 export default function FasilitasHandHygienePage() {
   const router = useRouter();
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   const { userRole } = useAppContext();
   const isIPCN = userRole === "admin" || userRole === "ipcn";
 
@@ -421,7 +423,7 @@ export default function FasilitasHandHygienePage() {
           ) : (
             <Save className="w-5 h-5" />
           )}
-          <span>Simpan Data Audit</span>
+          <span>{isEditMode ? 'Update Data Audit' : 'Simpan Data Audit'}</span>
         </button>
       </form>
     </div>

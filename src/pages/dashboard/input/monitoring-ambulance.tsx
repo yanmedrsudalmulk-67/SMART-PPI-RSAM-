@@ -42,8 +42,47 @@ export default function MonitoringAmbulancePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [preloadedPjSignature, setPreloadedPjSignature] = useState<string | null>(null);
+  const [preloadedIpcnSignature, setPreloadedIpcnSignature] = useState<string | null>(null);
+
   useEffect(() => {
-    setStartTime(new Date());
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+      const mode = params.get("mode");
+      if (id && mode === "edit") {
+        setIsEditMode(true);
+        setEditId(id);
+
+        const loadEditData = async () => {
+          const { data: ed, error } = await supabase
+            .from("audit_sessions")
+            .select("*")
+            .eq("id", id)
+            .single();
+
+          if (ed && !error) {
+            if (ed.tanggal_waktu) setStartTime(new Date(ed.tanggal_waktu));
+            const indicatorsData = ed.data_indikator || ed.checklist_json || {};
+            try { setData((prev: any) => {
+                const updated = { ...prev };
+                Object.keys(updated).forEach((key) => {
+                  if (indicatorsData[key] !== undefined) {
+                    updated[key] = indicatorsData[key];
+                  }
+                });
+                return updated; }); } catch(err) {}
+          }
+        };
+        loadEditData();
+      } else {
+        setStartTime(new Date());
+      }
+    } else {
+      setStartTime(new Date());
+    }
   }, []);
 
   const handleActionClick = (id: string, val: "ya" | "tidak" | "na") => {

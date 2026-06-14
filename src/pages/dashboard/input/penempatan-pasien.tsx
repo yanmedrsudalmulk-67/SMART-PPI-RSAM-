@@ -95,6 +95,11 @@ export default function InputPenempatanPasienPage() {
   const [pjName, setPjName] = useState("");
   const signatureRef = useRef<DigitalSignatureRef>(null);
 
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [preloadedPjSignature, setPreloadedPjSignature] = useState<string | null>(null);
+  const [preloadedIpcnSignature, setPreloadedIpcnSignature] = useState<string | null>(null);
+
   const [auditData, setAuditData] = useState<Record<string, AuditStatus>>({
     catatan_infeksi: null,
     instruksi_ruang: null,
@@ -110,8 +115,70 @@ export default function InputPenempatanPasienPage() {
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
-    const d = new Date();
-    setStartTime(d);
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+      const mode = params.get("mode");
+      if (id && mode === "edit") {
+        setIsEditMode(true);
+        setEditId(id);
+
+        const loadEditData = async () => {
+          const { data, error } = await supabase
+            .from("audit_sessions")
+            .select("*")
+            .eq("id", id)
+            .single();
+
+          if (data && !error) {
+            if (data.tanggal_waktu) setStartTime(new Date(data.tanggal_waktu));
+            if (data.observer) setObserver(data.observer);
+            if (data.unit) setUnit(data.unit);
+            if (data.temuan) setTemuan(data.temuan);
+            if (data.rekomendasi) setRekomendasi(data.rekomendasi);
+            if (data.nama_pj_ruangan) setPjName(data.nama_pj_ruangan);
+            if (data.ttd_pj_ruangan) setPreloadedPjSignature(data.ttd_pj_ruangan);
+            if (data.ttd_ipcn) setPreloadedIpcnSignature(data.ttd_ipcn);
+
+            // Populate checklist items
+            const indicatorsData = data.data_indikator || data.checklist_json || {};
+            setAuditData((prev) => {
+              const updated = { ...prev };
+              Object.keys(updated).forEach((key) => {
+                if (indicatorsData[key] !== undefined) {
+                  updated[key] = indicatorsData[key] as AuditStatus;
+                }
+              });
+              return updated;
+            });
+
+            // Prefill signatures to signature pads
+            if (data.ttd_pj_ruangan && signatureRef.current?.setPjSignature) {
+              setTimeout(() => {
+                signatureRef.current?.setPjSignature?.(data.ttd_pj_ruangan!);
+              }, 400);
+            }
+            if (data.ttd_ipcn && signatureRef.current?.setSupervisorSignature) {
+              setTimeout(() => {
+                signatureRef.current?.setSupervisorSignature?.(data.ttd_ipcn!);
+              }, 400);
+            }
+            
+            // Prefill documentation
+            if (indicatorsData.dokumentasi) {
+              setImages(indicatorsData.dokumentasi.map((url: string) => ({ url, file: null })));
+            } else if (data.dokumentasi) {
+              setImages(data.dokumentasi.map((url: string) => ({ url, file: null })));
+            }
+          }
+        };
+
+        loadEditData();
+      } else {
+        const d = new Date();
+        setStartTime(d);
+      }
+    }
   }, []);
 
   const handleError = (err: any) => {
@@ -167,8 +234,8 @@ export default function InputPenempatanPasienPage() {
     setIsSubmitting(true);
 
     try {
-      const pjSig = signatureRef.current?.getPjSignature();
-      const ipcnSig = signatureRef.current?.getSupervisorSignature();
+      const pjSig = signatureRef.current?.getPjSignature() || preloadedPjSignature;
+      const ipcnSig = signatureRef.current?.getSupervisorSignature() || preloadedIpcnSignature;
 
       const uploadedImages = await uploadImagesToSupabase(
         supabase,
@@ -194,12 +261,11 @@ export default function InputPenempatanPasienPage() {
         nama_pj_ruangan: pjName.trim(),
       };
 
-      const { data: sessionData, error: sessionError } = await supabase
-        .from("audit_sessions")
-        .insert([
-          {
-            indikator_id: "penempatan_pasien",
-            nama_indikator: "PENEMPATAN PASIEN",
+      let sessionError;
+      if (isEditMode && editId) {
+        const { error } = await supabase
+          .from("audit_sessions")
+          .update({
             tanggal_waktu: payload.tanggal_waktu,
             observer,
             unit,
@@ -221,17 +287,52 @@ export default function InputPenempatanPasienPage() {
             nama_pj_ruangan: pjName.trim(),
             ttd_pj_ruangan: pjSig,
             ttd_ipcn: ipcnSig,
-          },
-        ])
-        .select("id")
-        .single();
+          })
+          .eq("id", editId);
+        sessionError = error;
+      } else {
+        const { error } = await supabase
+          .from("audit_sessions")
+          .insert([
+            {
+              indikator_id: "penempatan_pasien",
+              nama_indikator: "PENEMPATAN PASIEN",
+              tanggal_waktu: payload.tanggal_waktu,
+              observer,
+              unit,
+              temuan,
+              rekomendasi,
+              jumlah_dinilai: stats.dinilai,
+              jumlah_patuh: stats.patuh,
+              persentase: stats.persentase,
+              status_kepatuhan: stats.statusText,
+              data_indikator: {
+                ...auditData,
+                temuan,
+                rekomendasi,
+                dokumentasi: uploadedImages,
+                tanda_tangan_pj: pjSig,
+                tanda_tangan_ipcn: ipcnSig,
+                nama_pj_ruangan: pjName.trim(),
+              },
+              nama_pj_ruangan: pjName.trim(),
+              ttd_pj_ruangan: pjSig,
+              ttd_ipcn: ipcnSig,
+            },
+          ]);
+        sessionError = error;
+      }
 
       if (sessionError) throw sessionError;
 
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
-        router.push("/dashboard/input/isolasi");
+        if (isEditMode) {
+          router.push("/dashboard/reports");
+        } else {
+          router.push("/dashboard/input/isolasi");
+        }
       }, 2000);
     } catch (err: any) {
       handleError(err);
@@ -251,7 +352,7 @@ export default function InputPenempatanPasienPage() {
             className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-blue-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 font-bold uppercase tracking-widest text-xs border border-blue-400/30"
           >
             <CheckCircle2 className="w-5 h-5" />
-            Data berhasil disimpan
+            {isEditMode ? "Data berhasil diperbarui" : "Data berhasil disimpan"}
           </motion.div>
         )}
       </AnimatePresence>
@@ -264,9 +365,16 @@ export default function InputPenempatanPasienPage() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r bg-[length:200%_auto] animate-gradient drop-shadow-[0_0_10px_rgba(59,130,246,0.4)] from-blue-400 via-purple-500 to-blue-400">
-            Audit Penempatan Pasien
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r bg-[length:200%_auto] animate-gradient drop-shadow-[0_0_10px_rgba(59,130,246,0.4)] from-blue-400 via-purple-500 to-blue-400">
+              Audit Penempatan Pasien
+            </h1>
+            {isEditMode && (
+              <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-blue-500/20 text-blue-400 border border-blue-500/40 animate-pulse">
+                MODE EDIT DATA
+              </span>
+            )}
+          </div>
           <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.1em] text-blue-400 mt-1">
             Observasi kepatuhan penempatan pasien infeksius
           </p>
@@ -480,7 +588,7 @@ export default function InputPenempatanPasienPage() {
           ) : (
             <Save className="w-5 h-5" />
           )}
-          <span>Simpan Data Audit</span>
+          <span>{isEditMode ? "Update Data Audit" : "Simpan Data Audit"}</span>
         </button>
       </form>
     </div>

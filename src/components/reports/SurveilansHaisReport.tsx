@@ -1,9 +1,12 @@
 import React, { useState, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase";
 import { format, parseISO } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
 import { ReportSkeleton } from '@/components/SkeletonLoading';
+import { useSafeRouter as useRouter } from '@/hooks/useSafeRouter';
+import { useAppContext } from "@/components/Providers";
 import {
   Activity,
   ArrowDown,
@@ -13,6 +16,10 @@ import {
   Table2,
   TrendingUp,
   AlertCircle,
+  Edit,
+  Trash2,
+  AlertTriangle,
+  CheckCircle2,
 } from "lucide-react";
 import {
   XAxis,
@@ -58,9 +65,18 @@ export default function SurveilansHaisReport({
   periodeStartISO,
   periodeType,
 }: SurveilansHaisReportProps) {
+  const router = useRouter();
+  const { userRole } = useAppContext();
+  const hasEditAccess = userRole === "Admin" || userRole === "IPCN" || userRole === "Supervisor";
+
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [chartMode, setChartMode] = useState<"bar" | "line">("bar");
+
+  // Deletion States
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
 
   // Load historical data for this year to show trend
   useEffect(() => {
@@ -130,13 +146,36 @@ export default function SurveilansHaisReport({
 
     if (!loading) {
       scrollToTop();
-      const intervals = [30, 80, 150, 300, 500, 750, 1000, 1500];
-      const timers = intervals.map(time => setTimeout(scrollToTop, time));
-      return () => {
-        timers.forEach(clearTimeout);
-      };
     }
   }, [loading]);
+
+  const handleEditClick = (recordId: string) => {
+    router.push(`/dashboard/input/surveilans?id=${recordId}&mode=edit`);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmId) return;
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("audit_sessions")
+        .delete()
+        .eq("id", deleteConfirmId);
+      if (error) throw error;
+
+      setShowDeleteSuccess(true);
+      setTimeout(() => setShowDeleteSuccess(false), 3000);
+
+      // Re-trigger local update
+      setData((prev) => prev.filter((item) => item.id !== deleteConfirmId));
+    } catch (err: any) {
+      console.error(err);
+      alert(`Gagal menghapus data surveilans: ${err.message}`);
+    } finally {
+      setIsDeleting(false);
+      setDeleteConfirmId(null);
+    }
+  };
 
   const maxStandard = STANDARDS[indicator] || 0;
   const isPercent = indicator === "ido";
@@ -232,18 +271,19 @@ export default function SurveilansHaisReport({
                 <th className="py-4 px-6 font-black text-right">Numerator</th>
                 <th className="py-4 px-6 font-black text-right">Denominator</th>
                 <th className="py-4 px-6 font-black text-right">Rate</th>
+                <th className="py-4 px-6 font-black text-center">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/50 text-sm">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-500">
+                  <td colSpan={7} className="py-12 text-center text-slate-500">
                     Memuat data realtime...
                   </td>
                 </tr>
               ) : currentPeriodData.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-16 text-center">
+                  <td colSpan={7} className="py-16 text-center">
                     <div className="flex flex-col items-center justify-center text-slate-500">
                       <AlertCircle className="w-10 h-10 mb-3 opacity-50" />
                       <p className="font-medium">
@@ -293,6 +333,30 @@ export default function SurveilansHaisReport({
                           {symbol}
                         </span>
                       </td>
+                      <td className="py-3 px-6 text-center">
+                        {hasEditAccess ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => handleEditClick(row.id)}
+                              type="button"
+                              className="p-2 rounded-xl bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all duration-300 shadow-md border border-blue-500/20 group/btn"
+                              title="Edit Data"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirmId(row.id)}
+                              type="button"
+                              className="p-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all duration-300 shadow-md border border-red-500/20 group/btn"
+                              title="Hapus Data"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-500">-</span>
+                        )}
+                      </td>
                     </tr>
                   );
                 })
@@ -301,6 +365,73 @@ export default function SurveilansHaisReport({
           </table>
         </div>
       </div>
+
+      {typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          {deleteConfirmId && (
+            <div className="fixed inset-0 z-[99999] font-sans flex items-center justify-center p-4" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setDeleteConfirmId(null)}
+                className="absolute inset-0 bg-black/70 backdrop-blur-md"
+              />
+              
+              <motion.div
+                initial={{ scale: 0.95, y: 15, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                exit={{ scale: 0.95, y: 15, opacity: 0 }}
+                transition={{ type: "spring", damping: 25, stiffness: 350 }}
+                className="relative w-full max-w-md overflow-hidden rounded-[2rem] border border-white/10 bg-slate-900 p-8 shadow-2xl backdrop-blur-xl"
+              >
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-500 to-rose-500" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500/10 text-red-500 mb-6 border border-red-500/20">
+                  <AlertTriangle className="h-6 w-6" />
+                </div>
+                
+                <h3 className="text-xl font-bold text-white tracking-tight mb-2">Hapus Data Laporan</h3>
+                <p className="text-sm text-slate-300 font-medium">Apakah Anda yakin ingin menghapus data laporan ini?</p>
+                <p className="text-xs text-slate-400 mt-2 italic">Data yang telah dihapus tidak dapat dikembalikan.</p>
+                
+                <div className="mt-8 flex items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    disabled={isDeleting}
+                    onClick={() => setDeleteConfirmId(null)}
+                    className="px-5 py-3 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-slate-300 hover:bg-white/10 hover:text-white transition-all uppercase tracking-widest cursor-pointer disabled:opacity-50"
+                  >
+                    Tidak
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isDeleting}
+                    onClick={handleConfirmDelete}
+                    className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-red-500 to-red-600 hover:from-red-400 hover:to-red-500 text-xs font-bold text-white transition-all uppercase tracking-widest shadow-[0_0_15px_rgba(220,38,38,0.3)] disabled:opacity-50 cursor-pointer border border-red-400/50"
+                  >
+                    {isDeleting ? "Menghapus..." : "Ya"}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
+      <AnimatePresence>
+        {showDeleteSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: 50, x: "-50%" }}
+            className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[210] bg-emerald-600 text-white px-8 py-4 rounded-full shadow-2xl flex items-center gap-3 font-bold uppercase tracking-widest text-xs border border-emerald-400/30 font-sans"
+          >
+            <CheckCircle2 className="w-5 h-5 text-white" />
+            ✅ Data berhasil dihapus
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* CHART SECTION */}
       <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl relative p-6">

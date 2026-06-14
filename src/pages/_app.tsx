@@ -26,6 +26,14 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
 
   return (
     <AppProvider>
+      <style jsx global>{`
+        :root {
+          --font-sans: ${poppins.style.fontFamily};
+        }
+        body {
+          font-family: var(--font-sans);
+        }
+      `}</style>
       <main className={`${poppins.variable} font-sans overflow-x-hidden`}>
         {getLayout(<Component {...pageProps} />)}
       </main>

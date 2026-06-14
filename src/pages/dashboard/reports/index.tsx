@@ -278,14 +278,6 @@ export default function ReportsPage() {
 
     // Scroll immediately
     scrollToTop();
-
-    // Scroll repeatedly over 1.5 seconds to bypass all asynchronous loading, images downloading, transitions and font loads
-    const intervals = [30, 80, 150, 300, 500, 750, 1000, 1500];
-    const timers = intervals.map(time => setTimeout(scrollToTop, time));
-
-    return () => {
-      timers.forEach(clearTimeout);
-    };
   }, [selectedIndicator]);
 
   const startDateISO = useMemo(() => {
@@ -437,9 +429,6 @@ export default function ReportsPage() {
                 
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="flex items-center gap-3 bg-white/60 dark:bg-[#111827]/60 backdrop-blur-sm border border-slate-200 dark:border-white/10 rounded-2xl p-2 shadow-sm">
-                     <div className="p-2 bg-blue-50 dark:bg-blue-500/10 rounded-xl text-blue-600 dark:text-blue-400">
-                       <Calendar className="w-5 h-5" />
-                     </div>
                      <select 
                        value={periode} 
                        onChange={(e) => setPeriode(e.target.value)}
@@ -630,9 +619,7 @@ export default function ReportsPage() {
                
                <div className="flex flex-wrap items-center gap-3 self-end md:self-auto">
                  <div className="flex items-center gap-2 bg-white/60 dark:bg-[#111827]/60 backdrop-blur-sm border border-slate-200 dark:border-white/10 rounded-xl p-1 shadow-sm">
-                   <div className="p-1.5 bg-blue-50 dark:bg-blue-500/10 rounded-lg text-blue-600 dark:text-blue-400">
-                     <Calendar className="w-4 h-4" />
-                   </div>
+                   
                    <select 
                      value={periode} 
                      onChange={(e) => setPeriode(e.target.value)}

@@ -45,29 +45,84 @@ export default function SurveilansFormPage() {
   const router = useRouter();
 
   const [date, setDate] = useState<string>("");
-
   const [rows, setRows] = useState<AggregateRow[]>([]);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+
   useEffect(() => {
-    const now = new Date();
-    const tzOffset = now.getTimezoneOffset() * 60000;
-    const localISOTime = new Date(now.getTime() - tzOffset)
-      .toISOString()
-      .slice(0, 16);
-    setDate(localISOTime);
-    setRows([
-      {
-        id: Date.now().toString(),
-        ruangan: "",
-        hais: "",
-        numerator: "",
-        denominator: "",
-      },
-    ]);
+    const initForm = async () => {
+      let isEdit = false;
+      let editRecordId: string | null = null;
+      
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get("id");
+        const mode = params.get("mode");
+        if (id && mode === "edit") {
+          isEdit = true;
+          editRecordId = id;
+          setIsEditMode(true);
+          setEditId(id);
+        }
+      }
+
+      if (isEdit && editRecordId) {
+        const { data, error } = await supabase
+          .from("audit_sessions")
+          .select("*")
+          .eq("id", editRecordId)
+          .single();
+
+        if (data && !error) {
+          if (data.tanggal_waktu) {
+            const dt = new Date(data.tanggal_waktu);
+            const tzOffset = dt.getTimezoneOffset() * 60000;
+            const localTime = new Date(dt.getTime() - tzOffset).toISOString().slice(0, 16);
+            setDate(localTime);
+          }
+          
+          let formattedName = data.nama_indikator || "";
+          // Safe casing match
+          if (formattedName.toLowerCase() === "phlebitis") formattedName = "Phlebitis";
+          else if (formattedName.toLowerCase() === "isk") formattedName = "ISK";
+          else if (formattedName.toLowerCase() === "ido") formattedName = "IDO";
+          else if (formattedName.toLowerCase() === "vap") formattedName = "VAP";
+          else if (formattedName.toLowerCase() === "decubitus") formattedName = "Decubitus";
+
+          setRows([
+            {
+              id: data.id,
+              ruangan: data.unit || "",
+              hais: formattedName,
+              numerator: data.jumlah_patuh !== undefined ? data.jumlah_patuh : "",
+              denominator: data.jumlah_dinilai !== undefined ? data.jumlah_dinilai : "",
+            }
+          ]);
+        }
+      } else {
+        const now = new Date();
+        const tzOffset = now.getTimezoneOffset() * 60000;
+        const localISOTime = new Date(now.getTime() - tzOffset)
+          .toISOString()
+          .slice(0, 16);
+        setDate(localISOTime);
+        setRows([
+          {
+            id: Date.now().toString(),
+            ruangan: "",
+            hais: "",
+            numerator: "",
+            denominator: "",
+          },
+        ]);
+      }
+    };
+    
+    initForm();
   }, []);
 
   const addRow = () => {
@@ -131,42 +186,73 @@ export default function SurveilansFormPage() {
 
     setIsSubmitting(true);
     try {
-      const promises = rows.map((r) => {
+      if (isEditMode && editId) {
+        // Edit mode (single record)
+        const r = rows[0];
         const num = Number(r.numerator);
         const den = Number(r.denominator);
         const isPercent = r.hais === "IDO";
         const rate = den > 0 ? (num / den) * (isPercent ? 100 : 1000) : 0;
 
-        return supabase.from("audit_sessions").insert([
-          {
+        const { error: editError } = await supabase
+          .from("audit_sessions")
+          .update({
             indikator_id: r.hais.toLowerCase(),
             nama_indikator: r.hais,
-            kategori: "Surveilans HAIs",
             tanggal_waktu: new Date(date).toISOString(),
             unit: r.ruangan,
-            observer: "",
             jumlah_dinilai: den,
             jumlah_patuh: num,
             persentase: Math.round(rate),
             data_indikator: { numerator: num, denominator: den, rate: rate, isPercent },
-          },
-        ]);
-      });
+          })
+          .eq("id", editId);
 
-      await Promise.all(promises);
+        if (editError) throw editError;
+      } else {
+        // Normal mode (insert rows)
+        const promises = rows.map((r) => {
+          const num = Number(r.numerator);
+          const den = Number(r.denominator);
+          const isPercent = r.hais === "IDO";
+          const rate = den > 0 ? (num / den) * (isPercent ? 100 : 1000) : 0;
+
+          return supabase.from("audit_sessions").insert([
+            {
+              indikator_id: r.hais.toLowerCase(),
+              nama_indikator: r.hais,
+              kategori: "Surveilans HAIs",
+              tanggal_waktu: new Date(date).toISOString(),
+              unit: r.ruangan,
+              observer: "",
+              jumlah_dinilai: den,
+              jumlah_patuh: num,
+              persentase: Math.round(rate),
+              data_indikator: { numerator: num, denominator: den, rate: rate, isPercent },
+            },
+          ]);
+        });
+
+        await Promise.all(promises);
+      }
+
       setShowToast(true);
 
       setTimeout(() => {
-        setRows([
-          {
-            id: Date.now().toString(),
-            ruangan: "",
-            hais: "",
-            numerator: "",
-            denominator: "",
-          },
-        ]);
         setShowToast(false);
+        if (isEditMode) {
+          router.push("/dashboard/reports");
+        } else {
+          setRows([
+            {
+              id: Date.now().toString(),
+              ruangan: "",
+              hais: "",
+              numerator: "",
+              denominator: "",
+            },
+          ]);
+        }
       }, 1500);
     } catch (err: any) {
       console.error(err);
@@ -186,9 +272,16 @@ export default function SurveilansFormPage() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-blue-500 to-emerald-400 bg-[length:200%_auto] animate-gradient uppercase">
-            Surveilans HAIs
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-blue-500 to-emerald-400 bg-[length:200%_auto] animate-gradient uppercase">
+              Surveilans HAIs
+            </h1>
+            {isEditMode && (
+              <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-blue-500/20 text-blue-400 border border-blue-500/40 animate-pulse">
+                MODE EDIT DATA
+              </span>
+            )}
+          </div>
           <p className="text-sm font-bold uppercase tracking-widest text-emerald-600 dark:text-blue-400 mt-1">
             Input Data Insiden Terintegrasi
           </p>
@@ -346,27 +439,33 @@ export default function SurveilansFormPage() {
                       </div>
                     </td>
                     <td className="py-4 px-2 text-center">
-                      <button
-                        type="button"
-                        onClick={() => removeRow(row.id)}
-                        disabled={rows.length === 1}
-                        className="w-9 h-9 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 flex items-center justify-center transition-all disabled:opacity-50 disabled:bg-transparent mx-auto"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {!isEditMode ? (
+                        <button
+                          type="button"
+                          onClick={() => removeRow(row.id)}
+                          disabled={rows.length === 1}
+                          className="w-9 h-9 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 flex items-center justify-center transition-all disabled:opacity-50 disabled:bg-transparent mx-auto"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      ) : (
+                        <span className="text-xs text-slate-500 font-bold">-</span>
+                      )}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <button
-            type="button"
-            onClick={addRow}
-            className="w-full mt-6 py-4 bg-white/[0.02] hover:bg-white/[0.05] text-blue-400 font-black text-xs uppercase tracking-widest rounded-2xl transition-all border-2 border-blue-500/20 hover:border-blue-500/40 border-dashed"
-          >
-            + Tambah Baris Input
-          </button>
+          {!isEditMode && (
+            <button
+              type="button"
+              onClick={addRow}
+              className="w-full mt-6 py-4 bg-white/[0.02] hover:bg-white/[0.05] text-blue-400 font-black text-xs uppercase tracking-widest rounded-2xl transition-all border-2 border-blue-500/20 hover:border-blue-500/40 border-dashed"
+            >
+              + Tambah Baris Input
+            </button>
+          )}
         </div>
 
         <button
@@ -379,7 +478,7 @@ export default function SurveilansFormPage() {
           ) : (
             <Save className="w-5 h-5 group-hover:scale-110 transition-transform" />
           )}
-          <span>Simpan Data Surveilans</span>
+          <span>{isEditMode ? "Update Data Surveilans" : "Simpan Data Surveilans"}</span>
           <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out"></div>
         </button>
       </form>
@@ -393,7 +492,7 @@ export default function SurveilansFormPage() {
             className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-emerald-500 text-white px-8 py-4 rounded-full shadow-2xl font-black uppercase tracking-widest text-xs border border-emerald-400 flex items-center gap-3 backdrop-blur-sm"
           >
             <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-            <span>Data Surveilans Terekam Sukses</span>
+            <span>{isEditMode ? "Data Surveilans Berhasil Diperbarui" : "Data Surveilans Terekam Sukses"}</span>
           </motion.div>
         )}
       </AnimatePresence>

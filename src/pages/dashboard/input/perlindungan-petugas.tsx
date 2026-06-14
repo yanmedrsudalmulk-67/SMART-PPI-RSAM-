@@ -48,6 +48,8 @@ type AuditStatus = "ya" | "tidak" | "na" | null;
 
 export default function InputPerlindunganPetugasPage() {
   const router = useRouter();
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   const { userRole } = useAppContext();
 
   const [startTime, setStartTime] = useState<Date | null>(null);
@@ -366,7 +368,7 @@ export default function InputPerlindunganPetugasPage() {
           ) : (
             <Save className="w-5 h-5" />
           )}
-          <span>Simpan Data Audit</span>
+          <span>{isEditMode ? 'Update Data Audit' : 'Simpan Data Audit'}</span>
         </button>
       </form>
     </div>

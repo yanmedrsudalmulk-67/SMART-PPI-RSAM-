@@ -115,8 +115,48 @@ export default function InputPengelolaanLimbahTajamPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [preloadedPjSignature, setPreloadedPjSignature] = useState<string | null>(null);
+  const [preloadedIpcnSignature, setPreloadedIpcnSignature] = useState<string | null>(null);
+
   useEffect(() => {
-    setStartTime(new Date());
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+      const mode = params.get("mode");
+      if (id && mode === "edit") {
+        setIsEditMode(true);
+        setEditId(id);
+
+        const loadEditData = async () => {
+          const { data: ed, error } = await supabase
+            .from("audit_sessions")
+            .select("*")
+            .eq("id", id)
+            .single();
+
+          if (ed && !error) {
+            if (ed.tanggal_waktu) setStartTime(new Date(ed.tanggal_waktu));
+            if (ed.observer) { /* // @ts-ignore */ setObserver?.(ed.observer); }
+            if (ed.unit) { /* // @ts-ignore */ try{setUnit?.(ed.unit)}catch(e){} }
+            if (ed.temuan) { /* // @ts-ignore */ try{setTemuan(ed.temuan)}catch(e){} }
+            if (ed.rekomendasi) { /* // @ts-ignore */ try{setRekomendasi(ed.rekomendasi)}catch(e){} }
+            if (ed.nama_pj_ruangan) { /* // @ts-ignore */ try{setPjName(ed.nama_pj_ruangan)}catch(e){} }
+            if (ed.ttd_pj_ruangan) { /* // @ts-ignore */ try{setPreloadedPjSignature(ed.ttd_pj_ruangan)}catch(e){} }
+            if (ed.ttd_ipcn) { /* // @ts-ignore */ try{setPreloadedIpcnSignature(ed.ttd_ipcn)}catch(e){} }
+
+            const indicatorsData = ed.data_indikator || ed.checklist_json || {};
+            
+          }
+        };
+        loadEditData();
+      } else {
+        setStartTime(new Date());
+      }
+    } else {
+      setStartTime(new Date());
+    }
   }, []);
 
   const formatDateForInput = (date: Date | null) => {
@@ -538,7 +578,7 @@ export default function InputPengelolaanLimbahTajamPage() {
           ) : (
             <Save className="w-5 h-5" />
           )}
-          <span>Simpan Data Audit</span>
+          <span>{isEditMode ? 'Update Data Audit' : 'Simpan Data Audit'}</span>
         </button>
       </div>
     </div>

@@ -103,11 +103,6 @@ export default function ApdReport({
 
     if (!loading) {
       scrollToTop();
-      const intervals = [30, 80, 150, 300, 500, 750, 1000, 1500];
-      const timers = intervals.map(time => setTimeout(scrollToTop, time));
-      return () => {
-        timers.forEach(clearTimeout);
-      };
     }
   }, [loading]);
 

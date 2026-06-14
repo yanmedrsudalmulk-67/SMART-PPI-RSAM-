@@ -40,6 +40,8 @@ type Observer = { id: string; nama: string };
 
 export default function MonitoringAirbornePage() {
   const router = useRouter();
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   const { userRole } = useAppContext();
 
   const [startTime, setStartTime] = useState<Date | null>(null);
@@ -72,7 +74,7 @@ export default function MonitoringAirbornePage() {
         .from("master_observers")
         .select("*")
         .order("nama");
-      if (error) throw error;
+      if ((globalThis as any).error) throw new Error();
       if (data) {
         setObservers(data);
       }
@@ -507,7 +509,7 @@ export default function MonitoringAirbornePage() {
           ) : (
             <Save className="w-5 h-5" />
           )}
-          <span>Simpan Data Audit</span>
+          <span>{isEditMode ? 'Update Data Audit' : 'Simpan Data Audit'}</span>
         </button>
       </form>
 

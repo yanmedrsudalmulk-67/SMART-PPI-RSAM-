@@ -70,6 +70,8 @@ type Observer = { id: string; nama: string };
 
 export default function MonitoringJenazahPage() {
   const router = useRouter();
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
 
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [ruangan, setRuangan] = useState("Kamar Jenazah");
@@ -103,7 +105,7 @@ export default function MonitoringJenazahPage() {
         .from("master_observers")
         .select("*")
         .order("nama");
-      if (error) throw error;
+      if ((globalThis as any).error) throw new Error();
       if (data) setObservers(data);
     } catch (err) {
       setObservers([{ id: "1", nama: "IPCN_Adi Tresa Purnama" }]);
@@ -495,7 +497,7 @@ export default function MonitoringJenazahPage() {
             ) : (
               <Save className="w-5 h-5" />
             )}
-            <span>Simpan Data Audit</span>
+            <span>{isEditMode ? 'Update Data Audit' : 'Simpan Data Audit'}</span>
           </button>
         </div>
       </form>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, ReactElement } from "react";
+import { useState, useEffect, useMemo, useRef, ReactElement } from "react";
 import dynamic from "next/dynamic";
 import "swiper/css";
 import "swiper/css/pagination";
@@ -75,7 +75,7 @@ const DEFAULT_SLIDES: Slide[] = [
     subtitle:
       "Pusat Pemantauan dan Pengendalian Infeksi UOBK RSUD AL-MULK. Mencegah lebih baik daripada mengobati.",
     image_url:
-      "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=1600",
+      "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=70&w=1200",
     active: true,
     sort_order: 1,
   },
@@ -85,7 +85,7 @@ const DEFAULT_SLIDES: Slide[] = [
     subtitle:
       "Mari tingkatkan kepatuhan Kebersihan Tangan dan penggunaan APD demi mewujudkan zero insiden.",
     image_url:
-      "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&q=80&w=1600",
+      "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&q=70&w=1200",
     active: true,
     sort_order: 2,
   },
@@ -122,17 +122,36 @@ const SliderImage = ({
   slide: any;
   setImageErrors: any;
 }) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    if (imgRef.current && imgRef.current.complete) {
+      setIsLoaded(true);
+    }
+  }, []);
+
   return (
     <>
       <div
-        className="absolute inset-0 w-full h-full bg-cover bg-center blur-[40px] opacity-30 dark:opacity-40 scale-125 saturate-200"
-        style={{ backgroundImage: `url(${slide.image_url})` }}
+        className="absolute inset-0 w-full h-full bg-cover bg-center blur-[40px] saturate-200 scale-125 transition-opacity duration-700 ease-out"
+        style={{
+          backgroundImage: `url(${slide.image_url})`,
+          opacity: isLoaded ? 0.4 : 0,
+        }}
       />
+      <div className="absolute inset-0 w-full h-full bg-slate-950/20" />
       <img
+        ref={imgRef}
         src={slide.image_url}
         alt={slide.title}
-        className={`absolute inset-0 w-full h-full object-cover drop-shadow-2xl transition-[transform,opacity] duration-[15000ms] ease-out transform scale-100 group-[.swiper-slide-active]:scale-105`}
+        className="absolute inset-0 w-full h-full object-cover drop-shadow-2xl scale-100 group-[.swiper-slide-active]:scale-105"
+        style={{
+          opacity: isLoaded ? 1 : 0,
+          transition: "opacity 700ms ease-out, transform 15000ms ease-out",
+        }}
         referrerPolicy="no-referrer"
+        onLoad={() => setIsLoaded(true)}
         onError={(e) => {
           console.error("Slider image error", slide.image_url);
           setImageErrors((prev: any) => ({ ...prev, [slide.id]: true }));
@@ -150,11 +169,16 @@ const HeroSlider = ({
   isLoading: boolean;
 }) => {
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
-  const [aspectRatios, setAspectRatios] = useState<Record<string, number>>({});
+  const [aspectRatios, setAspectRatios] = useState<Record<string, number>>({
+    s1: 1.777,
+    s2: 1.777,
+  });
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
@@ -165,8 +189,8 @@ const HeroSlider = ({
 
   const visibleSlides = useMemo(() => {
     const active = slides.filter((s) => s.active);
-    return active.length > 0 ? active : DEFAULT_SLIDES;
-  }, [slides]);
+    return active.length > 0 ? active : (isLoading ? [] : DEFAULT_SLIDES);
+  }, [slides, isLoading]);
 
   useEffect(() => {
     visibleSlides.forEach((slide) => {
@@ -188,30 +212,37 @@ const HeroSlider = ({
 
   const currentSlide = visibleSlides[activeIndex] || visibleSlides[0];
   const currentRatio = useMemo(() => {
+    if (!mounted) return 1.777;
     if (!currentSlide) return 16 / 9;
     const rawRatio = aspectRatios[currentSlide.id] || 16 / 9;
     if (isMobile) {
       return Math.max(1.3, Math.min(1.8, rawRatio));
     }
     return rawRatio;
-  }, [currentSlide, aspectRatios, isMobile]);
+  }, [mounted, currentSlide, aspectRatios, isMobile]);
 
-  if (isLoading)
+  if (isLoading || !mounted) {
     return (
       <div
-        className="relative w-full rounded-[24px] overflow-hidden bg-slate-100 dark:bg-slate-900 flex items-center justify-center border border-slate-200 dark:border-white/5 animate-pulse shadow-sm mb-8 mt-4 transition-all duration-300 ease-in-out"
-        style={{ aspectRatio: currentRatio }}
+        className="w-full relative group rounded-[24px] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-slate-200/50 dark:border-white/10 dark:shadow-blue-900/20 mb-8 mt-4 bg-slate-950 flex flex-col justify-end p-8 md:p-14 animate-pulse"
+        style={{ aspectRatio: 1.777 }}
       >
-        <div className="flex flex-col items-center gap-4">
-          <Shield className="w-12 h-12 text-slate-300 dark:text-slate-700" />
-          <div className="h-2 w-24 bg-slate-200 dark:bg-slate-800 rounded-full" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-slate-950 via-slate-900 to-slate-950 opacity-90" />
+        <div className="relative z-10 max-w-2xl space-y-4">
+          <div className="h-6 w-28 bg-blue-500/10 rounded-full border border-blue-500/20 flex items-center justify-center text-[10px] text-blue-400 font-bold uppercase tracking-widest">
+            Memuat...
+          </div>
+          <div className="h-8 md:h-12 w-3/4 bg-slate-800/80 rounded-2xl" />
+          <div className="h-4 w-5/6 bg-slate-800/50 rounded-xl" />
+          <div className="h-4 w-2/3 bg-slate-800/50 rounded-xl" />
         </div>
       </div>
     );
+  }
 
   return (
     <div
-      className="w-full relative group rounded-[24px] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-slate-200/50 dark:border-white/10 dark:shadow-blue-900/20 mb-8 mt-4 bg-slate-900 transition-all duration-300 ease-in-out transform-gpu will-change-[width,height]"
+      className="w-full relative group rounded-[24px] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-slate-200/50 dark:border-white/10 dark:shadow-blue-900/20 mb-8 mt-4 bg-slate-950 transition-all duration-300 ease-in-out transform-gpu will-change-[width,height]"
       style={{ aspectRatio: currentRatio }}
     >
       <Swiper
@@ -253,10 +284,10 @@ const HeroSlider = ({
       </Swiper>
 
       {/* Custom Navigation Buttons */}
-      <button className="slider-prev absolute left-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/30 backdrop-blur-md text-white border border-white/20 transition-all opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 shadow-lg cursor-pointer">
+      <button className="slider-prev absolute left-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/30 backdrop-blur-md text-white border border-white/20 transition-all opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 shadow-lg cursor-pointer animate-in fade-in">
         <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
       </button>
-      <button className="slider-next absolute right-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/30 backdrop-blur-md text-white border border-white/20 transition-all opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 shadow-lg cursor-pointer">
+      <button className="slider-next absolute right-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/30 backdrop-blur-md text-white border border-white/20 transition-all opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 shadow-lg cursor-pointer animate-in fade-in">
         <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
       </button>
     </div>
@@ -307,7 +338,7 @@ export default function DashboardPage() {
     dashboardData?.slides &&
     dashboardData.slides.length > 0
       ? dashboardData.slides
-      : DEFAULT_SLIDES;
+      : (isDashboardLoaded ? DEFAULT_SLIDES : []);
   const standards =
     isDashboardLoaded && dashboardData?.standards
       ? dashboardData.standards

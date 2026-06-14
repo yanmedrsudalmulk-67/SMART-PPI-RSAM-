@@ -104,6 +104,8 @@ type AuditStatus = "ya" | "tidak" | "na" | null;
 
 export default function InputMonitoringRuangTungguPage() {
   const router = useRouter();
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   const { userRole } = useAppContext();
   const isIPCN = userRole === "ipcn" || userRole === "admin";
 
@@ -513,7 +515,7 @@ export default function InputMonitoringRuangTungguPage() {
           ) : (
             <Save className="w-5 h-5" />
           )}
-          <span>Simpan Data Audit</span>
+          <span>{isEditMode ? 'Update Data Audit' : 'Simpan Data Audit'}</span>
         </button>
       </div>
     </div>

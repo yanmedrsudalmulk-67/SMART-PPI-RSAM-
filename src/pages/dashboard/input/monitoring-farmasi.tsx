@@ -116,6 +116,8 @@ type AuditStatus = "ya" | "tidak" | "na" | null;
 
 export default function InputMonitoringFarmasiPage() {
   const router = useRouter();
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   const { userRole } = useAppContext();
   const isIPCN = userRole === "IPCN" || userRole === "Admin";
 
@@ -536,7 +538,7 @@ export default function InputMonitoringFarmasiPage() {
           ) : (
             <Save className="w-5 h-5" />
           )}
-          <span>Simpan Data Audit</span>
+          <span>{isEditMode ? 'Update Data Audit' : 'Simpan Data Audit'}</span>
         </button>
       </div>
     </div>

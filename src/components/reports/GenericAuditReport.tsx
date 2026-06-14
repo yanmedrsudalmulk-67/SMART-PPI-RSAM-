@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { utils, writeFile } from "xlsx";
 import { supabase } from "@/lib/supabase";
 import { ReportSkeleton } from '@/components/SkeletonLoading';
+import { useSafeRouter as useRouter } from '@/hooks/useSafeRouter';
 import {
   TrendingUp,
   Activity,
@@ -26,6 +28,7 @@ import {
   Edit,
   Plus,
   Camera,
+  ClipboardCheck,
 } from "lucide-react";
 import {
   BarChart,
@@ -71,6 +74,33 @@ interface GenericAuditData {
   nama_pj_ruangan?: string;
 }
 
+const INDICATOR_TO_FORM_PATH: Record<string, string> = {
+  'etika_batuk': '/dashboard/input/etika-batuk',
+  'penempatan_pasien': '/dashboard/input/penempatan-pasien',
+  'dekontaminasi_alat': '/dashboard/input/dekontaminasi-alat',
+  'pengelolaan_limbah_medis': '/dashboard/input/pengelolaan-limbah-medis',
+  'pengelolaan_limbah_tajam': '/dashboard/input/pengelolaan-limbah-tajam',
+  'penatalaksanaan_linen': '/dashboard/input/penatalaksanaan-linen',
+  'pengendalian_lingkungan': '/dashboard/input/pengendalian-lingkungan',
+  'penyuntikan_aman': '/dashboard/input/penyuntikan-aman',
+  'perlindungan_petugas': '/dashboard/input/perlindungan-petugas',
+  'monitoring_airborne': '/dashboard/input/monitoring-airborne',
+  'monitoring_jenazah': '/dashboard/input/monitoring-jenazah',
+  'monitoring_laboratorium': '/dashboard/input/monitoring-laboratorium',
+  'monitoring_radiologi': '/dashboard/input/monitoring-radiologi',
+  'monitoring_ppi_ruang_isolasi': '/dashboard/input/monitoring-ruang_isolasi',
+  'monitoring_immuno': '/dashboard/input/monitoring-immuno',
+  'monitoring_fasilitas_hand_hygiene': '/dashboard/input/monitoring-fasilitas_hh',
+  'monitoring_fasilitas_apd': '/dashboard/input/monitoring-fasilitas_apd',
+  'monitoring_farmasi': '/dashboard/input/monitoring-farmasi',
+  'monitoring_ibs': '/dashboard/input/monitoring-ibs',
+  'monitoring_cssd': '/dashboard/input/monitoring-cssd',
+  'monitoring_gizi': '/dashboard/input/monitoring-gizi',
+  'monitoring_ambulance': '/dashboard/input/monitoring-ambulance',
+  'monitoring_tunggu': '/dashboard/input/monitoring-tunggu',
+  'monitoring_tps': '/dashboard/input/monitoring-tps',
+};
+
 export default function GenericAuditReport({
   tableName,
   indicatorItems,
@@ -94,13 +124,21 @@ export default function GenericAuditReport({
     type?: string;
   };
 }) {
-  const { hospitalLogoUrl } = useAppContext();
+  const router = useRouter();
+  const { hospitalLogoUrl, userRole } = useAppContext();
+  const hasEditAccess = userRole === "Admin" || userRole === "IPCN" || userRole === "Supervisor";
+
   const [data, setData] = useState<GenericAuditData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
   const [chartType, setChartType] = useState<"line" | "bar">("line");
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   const [searchDoc, setSearchDoc] = useState("");
+
+  // Deletion States
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
 
   const normalizeItem = useCallback((item: any) => {
     const jsonFallback =
@@ -219,6 +257,61 @@ export default function GenericAuditReport({
       supabase.removeChannel(chTarget);
     };
   }, [tableName, fetchData, normalizeItem]);
+
+  const handleEditClick = (recordId: string) => {
+    const formPath = INDICATOR_TO_FORM_PATH[tableName];
+    if (formPath) {
+      router.push(`${formPath}?id=${recordId}&mode=edit`);
+    } else {
+      alert("Form input untuk indikator ini belum terdaftar atau tidak didukung.");
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmId) return;
+    setIsDeleting(true);
+    try {
+      // 1. Delete from audit_sessions
+      const { error: err1 } = await supabase
+        .from("audit_sessions")
+        .delete()
+        .eq("id", deleteConfirmId);
+        
+      if (err1) throw err1;
+
+      // 2. Also delete from specific table if applicable
+      if (tableName && tableName !== "audit_sessions" && tableName !== "audit_hand_hygiene" && tableName !== "audit_apd") {
+        try {
+          await supabase.from(tableName).delete().eq("id", deleteConfirmId);
+        } catch (e) {
+          console.error("Error deleting from specific indicator table:", e);
+        }
+      }
+      
+      // 3. Delete from details
+      try {
+        await supabase.from("audit_details").delete().eq("session_id", deleteConfirmId);
+      } catch (e) {}
+
+      // Success toast
+      setShowDeleteSuccess(true);
+      setTimeout(() => setShowDeleteSuccess(false), 3000);
+
+      // Refresh
+      await fetchData();
+      
+      // If active record was deleted, clear it or pick first available
+      if (selectedRecordId === deleteConfirmId) {
+        setSelectedRecordId(null);
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(`Gagal menghapus data: ${err.message}`);
+    } finally {
+      setIsDeleting(false);
+      setDeleteConfirmId(null);
+    }
+  };
 
   useEffect(() => {
     const handleExportExcel = (e: Event) => {
@@ -505,11 +598,6 @@ export default function GenericAuditReport({
 
     if (!loading) {
       scrollToTop();
-      const intervals = [30, 80, 150, 300, 500, 750, 1000, 1500];
-      const timers = intervals.map(time => setTimeout(scrollToTop, time));
-      return () => {
-        timers.forEach(clearTimeout);
-      };
     }
   }, [loading, selectedRecordId]);
 
@@ -517,8 +605,78 @@ export default function GenericAuditReport({
     return <ReportSkeleton />;
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-500">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
 
+      {typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          {deleteConfirmId && (
+            <div className="fixed inset-0 z-[99999] font-sans flex items-center justify-center p-4" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setDeleteConfirmId(null)}
+                className="absolute inset-0 bg-black/70 backdrop-blur-md"
+              />
+              
+              <motion.div
+                initial={{ scale: 0.95, y: 15, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                exit={{ scale: 0.95, y: 15, opacity: 0 }}
+                transition={{ type: "spring", damping: 25, stiffness: 350 }}
+                className="relative w-full max-w-md overflow-hidden rounded-[2rem] border border-white/10 bg-slate-900 p-8 shadow-2xl backdrop-blur-xl"
+              >
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-500 to-rose-500" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500/10 text-red-500 mb-6 border border-red-500/20">
+                  <AlertTriangle className="h-6 w-6" />
+                </div>
+                
+                <h3 className="text-xl font-bold text-white tracking-tight mb-2">Hapus Data Laporan</h3>
+                <p className="text-sm text-slate-300 font-medium">Apakah Anda yakin ingin menghapus data laporan ini?</p>
+                <p className="text-xs text-slate-400 mt-2 italic">Data yang telah dihapus tidak dapat dikembalikan.</p>
+                
+                <div className="mt-8 flex items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    disabled={isDeleting}
+                    onClick={() => setDeleteConfirmId(null)}
+                    className="px-5 py-3 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-slate-300 hover:bg-white/10 hover:text-white transition-all uppercase tracking-widest cursor-pointer disabled:opacity-50"
+                  >
+                    Tidak
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isDeleting}
+                    onClick={handleConfirmDelete}
+                    className="flex items-center gap-2 px-5 py-3 rounded-xl bg-red-600 text-xs font-black text-white hover:bg-red-500 transition-all shadow-[0_0_15px_rgba(220,38,38,0.3)] disabled:opacity-50 uppercase tracking-widest cursor-pointer"
+                  >
+                    {isDeleting ? "Menghapus..." : "Ya"}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
+      <AnimatePresence>
+        {showDeleteSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: 50, x: "-50%" }}
+            className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[210] bg-emerald-600 text-white px-8 py-4 rounded-full shadow-2xl flex items-center gap-3 font-bold uppercase tracking-widest text-xs border border-emerald-400/30 font-sans"
+          >
+            <CheckCircle2 className="w-5 h-5 text-white" />
+            ✅ Data berhasil dihapus
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="pt-6 border-t border-white/5">
+        <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 mb-4 pl-1">Lembar Laporan Resmi</h4>
+      </div>
 
       {filteredRecords.length > 0 && selectedRecord ? (
         <div
@@ -865,6 +1023,112 @@ export default function GenericAuditReport({
           </p>
         </div>
       )}
+
+      {/* Tabel Riwayat Laporan */}
+      <div className="bg-white/5 backdrop-blur-md rounded-3xl border border-white/5 shadow-2xl overflow-hidden relative group">
+        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500" />
+        <div className="p-6 border-b border-white/5 flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+              <ClipboardCheck className="w-5 h-5 text-blue-400" />
+              Tabel Riwayat Laporan
+            </h3>
+            <p className="text-xs text-slate-400 mt-1">Daftar laporan kepatuhan yang tercatat pada sistem</p>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse whitespace-nowrap">
+            <thead>
+              <tr className="bg-white/5 text-[11px] uppercase tracking-widest text-slate-400 font-bold border-b border-white/5">
+                <th className="py-4 px-6 w-16 text-center">No</th>
+                <th className="py-4 px-6">Tanggal Audit</th>
+                <th className="py-4 px-6">Unit / Ruangan</th>
+                <th className="py-4 px-6">Observer</th>
+                <th className="py-4 px-6 text-center">Capaian</th>
+                <th className="py-4 px-6 text-center">Status</th>
+                <th className="py-4 px-6 text-center shadow-sm">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5 text-sm">
+              {filteredRecords.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-slate-500 font-bold uppercase tracking-wider">
+                    Belum Ada Data Audit
+                  </td>
+                </tr>
+              ) : (
+                filteredRecords.map((row, idx) => {
+                  const isActive = row.id === selectedRecordId;
+                  const score = row.persentase !== undefined ? row.persentase : 0;
+                  
+                  return (
+                    <tr
+                      key={row.id}
+                      onClick={() => setSelectedRecordId(row.id)}
+                      className={`cursor-pointer transition-all ${
+                        isActive
+                          ? "bg-blue-600/10 hover:bg-blue-600/15 border-l-4 border-l-blue-500"
+                          : "hover:bg-white/[0.02]"
+                      }`}
+                    >
+                      <td className="py-4 px-6 text-center font-bold text-slate-400">
+                        {idx + 1}
+                      </td>
+                      <td className="py-4 px-6 text-slate-300 font-medium font-mono text-xs">
+                        {row.waktu ? format(parseISO(row.waktu), "dd MMMM yyyy HH:mm", { locale: idLocale }) : "-"}
+                      </td>
+                      <td className="py-4 px-6 text-white font-semibold">
+                        {row.unit || "-"}
+                      </td>
+                      <td className="py-4 px-6 text-slate-400 italic">
+                        {row.observer || "-"}
+                      </td>
+                      <td className="py-4 px-6 text-center font-mono font-black text-white">
+                        {score}%
+                      </td>
+                      <td className="py-4 px-6 text-center">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border ${
+                          score >= 85 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
+                          score >= 70 ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' :
+                          'bg-rose-500/10 border-rose-500/20 text-rose-400'
+                        }`}>
+                          {score >= 85 ? 'Patuh' : score >= 70 ? 'Cukup' : 'Tidak Patuh'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-6 text-center" onClick={(e) => e.stopPropagation()}>
+                        {hasEditAccess && tableName !== "audit_hand_hygiene" && tableName !== "audit_apd" ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => handleEditClick(row.id)}
+                              type="button"
+                              className="p-2 rounded-xl bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all duration-300 shadow-md border border-blue-500/20 group/btn"
+                              title="Edit Data"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirmId(row.id)}
+                              type="button"
+                              className="p-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all duration-300 shadow-md border border-red-500/20 group/btn"
+                              title="Hapus Data"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-500">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
 
       {/* ZOOM IMAGE MODAL */}
       <AnimatePresence>

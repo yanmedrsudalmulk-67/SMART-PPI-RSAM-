@@ -118,6 +118,11 @@ export default function InputDekontaminasiAlatPage() {
 
   const sigRef = useRef<DigitalSignatureRef>(null);
 
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [preloadedPjSignature, setPreloadedPjSignature] = useState<string | null>(null);
+  const [preloadedIpcnSignature, setPreloadedIpcnSignature] = useState<string | null>(null);
+
   const [auditData, setAuditData] = useState<Record<string, AuditStatus>>({
     peralatan_tersedia: null,
     peralatan_berkarat: null,
@@ -128,6 +133,70 @@ export default function InputDekontaminasiAlatPage() {
     expired_date: null,
     instrumen_bekas: null,
   });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+      const mode = params.get("mode");
+      if (id && mode === "edit") {
+        setIsEditMode(true);
+        setEditId(id);
+
+        const loadEditData = async () => {
+          const { data, error } = await supabase
+            .from("audit_sessions")
+            .select("*")
+            .eq("id", id)
+            .single();
+
+          if (data && !error) {
+            if (data.tanggal_waktu) setStartTime(new Date(data.tanggal_waktu));
+            if (data.observer) setObserver(data.observer);
+            if (data.unit) setUnit(data.unit);
+            if (data.temuan) setTemuan(data.temuan);
+            if (data.rekomendasi) setRekomendasi(data.rekomendasi);
+            if (data.nama_pj_ruangan) setPjName(data.nama_pj_ruangan);
+            if (data.ttd_pj_ruangan) setPreloadedPjSignature(data.ttd_pj_ruangan);
+            if (data.ttd_ipcn) setPreloadedIpcnSignature(data.ttd_ipcn);
+
+            // Populate checklist items
+            const indicatorsData = data.data_indikator || data.checklist_json || {};
+            setAuditData((prev) => {
+              const updated = { ...prev };
+              Object.keys(updated).forEach((key) => {
+                if (indicatorsData[key] !== undefined) {
+                  updated[key] = indicatorsData[key] as AuditStatus;
+                }
+              });
+              return updated;
+            });
+
+            // Prefill signatures to signature pads
+            if (data.ttd_pj_ruangan && sigRef.current?.setPjSignature) {
+              setTimeout(() => {
+                sigRef.current?.setPjSignature?.(data.ttd_pj_ruangan!);
+              }, 400);
+            }
+            if (data.ttd_ipcn && sigRef.current?.setSupervisorSignature) {
+              setTimeout(() => {
+                sigRef.current?.setSupervisorSignature?.(data.ttd_ipcn!);
+              }, 400);
+            }
+            
+            // Prefill documentation
+            if (indicatorsData.dokumentasi) {
+              setImages(indicatorsData.dokumentasi.map((url: string) => ({ url, file: null })));
+            } else if (data.dokumentasi) {
+              setImages(data.dokumentasi.map((url: string) => ({ url, file: null })));
+            }
+          }
+        };
+
+        loadEditData();
+      }
+    }
+  }, []);
 
   const formatDateForInput = (date: Date | null) =>
     date ? date.toISOString().split("T")[0] : "";
@@ -188,8 +257,8 @@ export default function InputDekontaminasiAlatPage() {
     setIsSubmitting(true);
 
     try {
-      const ttd_pj = sigRef.current?.getPjSignature();
-      const ttd_ipcn = sigRef.current?.getSupervisorSignature();
+      const ttd_pj = sigRef.current?.getPjSignature() || preloadedPjSignature;
+      const ttd_ipcn = sigRef.current?.getSupervisorSignature() || preloadedIpcnSignature;
 
       const uploadedImages = await uploadImagesToSupabase(
         supabase,
@@ -215,16 +284,14 @@ export default function InputDekontaminasiAlatPage() {
         nama_pj_ruangan: pjName.trim(),
       };
 
-      const { data: sessionData, error: sessionError } = await supabase
-        .from("audit_sessions")
-        .insert([
-          {
-            indikator_id: "dekontaminasi_alat",
-            nama_indikator: "DEKONTAMINASI ALAT",
+      let sessionError;
+      if (isEditMode && editId) {
+        const { error } = await supabase
+          .from("audit_sessions")
+          .update({
             tanggal_waktu: payload.tanggal_waktu,
             observer,
             unit,
-            jenis_tindakan: "Dekontaminasi Alat Audit",
             jumlah_dinilai: stats.dinilai,
             jumlah_patuh: stats.patuh,
             persentase: stats.persentase,
@@ -243,17 +310,53 @@ export default function InputDekontaminasiAlatPage() {
             nama_pj_ruangan: pjName.trim(),
             ttd_pj_ruangan: ttd_pj,
             ttd_ipcn: ttd_ipcn,
-          },
-        ])
-        .select("id")
-        .single();
+          })
+          .eq("id", editId);
+        sessionError = error;
+      } else {
+        const { error } = await supabase
+          .from("audit_sessions")
+          .insert([
+            {
+              indikator_id: "dekontaminasi_alat",
+              nama_indikator: "DEKONTAMINASI ALAT",
+              tanggal_waktu: payload.tanggal_waktu,
+              observer,
+              unit,
+              jenis_tindakan: "Dekontaminasi Alat Audit",
+              jumlah_dinilai: stats.dinilai,
+              jumlah_patuh: stats.patuh,
+              persentase: stats.persentase,
+              status_kepatuhan: stats.statusText,
+              data_indikator: {
+                ...auditData,
+                temuan,
+                rekomendasi,
+                dokumentasi: uploadedImages,
+                tanda_tangan_pj: ttd_pj,
+                tanda_tangan_ipcn: ttd_ipcn,
+                nama_pj_ruangan: pjName.trim(),
+              },
+              temuan,
+              rekomendasi,
+              nama_pj_ruangan: pjName.trim(),
+              ttd_pj_ruangan: ttd_pj,
+              ttd_ipcn: ttd_ipcn,
+            },
+          ]);
+        sessionError = error;
+      }
 
       if (sessionError) throw sessionError;
 
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
-        router.push("/dashboard/input/isolasi");
+        if (isEditMode) {
+          router.push("/dashboard/reports");
+        } else {
+          router.push("/dashboard/input/isolasi");
+        }
       }, 2000);
     } catch (err: any) {
       handleError(err);
@@ -273,7 +376,7 @@ export default function InputDekontaminasiAlatPage() {
             className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-blue-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 font-bold uppercase tracking-widest text-xs border border-blue-400/30"
           >
             <CheckCircle2 className="w-5 h-5" />
-            Data Audit Dekontaminasi Alat Tersimpan!
+            {isEditMode ? "Data Audit Dekontaminasi Alat Diperbarui!" : "Data Audit Dekontaminasi Alat Tersimpan!"}
           </motion.div>
         )}
       </AnimatePresence>
@@ -286,9 +389,16 @@ export default function InputDekontaminasiAlatPage() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-xs min-[360px]:text-sm min-[410px]:text-base sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-400 bg-[length:200%_auto] animate-gradient uppercase drop-shadow-[0_0_15px_rgba(59,130,246,0.3)] whitespace-nowrap">
-            Audit Dekontaminasi Alat
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-xs min-[360px]:text-sm min-[410px]:text-base sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-400 bg-[length:200%_auto] animate-gradient uppercase drop-shadow-[0_0_15px_rgba(59,130,246,0.3)] whitespace-nowrap">
+              Audit Dekontaminasi Alat
+            </h1>
+            {isEditMode && (
+              <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-blue-500/20 text-blue-400 border border-blue-500/40 animate-pulse">
+                MODE EDIT DATA
+              </span>
+            )}
+          </div>
           <p className="text-[8px] min-[360px]:text-[9px] min-[410px]:text-[10px] sm:text-xs font-bold uppercase tracking-[0.05em] sm:tracking-[0.1em] text-blue-500/80 mt-2 whitespace-nowrap">
             Observasi kepatuhan dekontaminasi peralatan medis
           </p>

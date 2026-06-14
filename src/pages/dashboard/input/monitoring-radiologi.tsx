@@ -125,6 +125,8 @@ type Observer = { id: string; nama: string };
 
 export default function RadiologiInputPage() {
   const router = useRouter();
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   const { userRole } = useAppContext();
 
   const [waktu, setWaktu] = useState<Date | null>(null);
@@ -559,7 +561,7 @@ export default function RadiologiInputPage() {
             ) : (
               <Save className="w-5 h-5" />
             )}
-            <span>Simpan Data Audit</span>
+            <span>{isEditMode ? 'Update Data Audit' : 'Simpan Data Audit'}</span>
           </button>
         </div>
       </form>
