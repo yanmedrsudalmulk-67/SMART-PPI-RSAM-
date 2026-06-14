@@ -47,6 +47,7 @@ import { id as idLocale } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { useAppContext } from "@/components/Providers";
+import { genericAuditConfigs } from "@/lib/audit-configs";
 
 interface GenericAuditData {
   id: string;
@@ -198,7 +199,8 @@ export default function GenericAuditReport({
 
       let tableData: any[] = [];
       try {
-        let tableQuery = supabase.from(tableName).select("*");
+        const actualTable = genericAuditConfigs[tableName]?.tableName || tableName;
+        let tableQuery = supabase.from(actualTable).select("*");
         if (extraFilter) tableQuery = tableQuery.match(extraFilter);
         const { data: tData } = await tableQuery.order("tanggal_waktu", {
           ascending: false,
@@ -233,24 +235,26 @@ export default function GenericAuditReport({
 
   useEffect(() => {
     fetchData();
+    const actualTable = genericAuditConfigs[tableName]?.tableName || tableName;
+    
+    const handlePayload = (payload: any) => {
+      if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+         if (payload.new.indikator_id && payload.new.indikator_id !== tableName) return;
+         setData(prev => {
+            const norm = normalizeItem(payload.new);
+            const isUpdate = prev.some(p => p.id === norm.id);
+            const nextData = isUpdate ? prev.map(p => p.id === norm.id ? norm : p) : [norm, ...prev];
+            return nextData.sort((a,b) => new Date(b.waktu).getTime() - new Date(a.waktu).getTime());
+         });
+      } else if (payload.eventType === 'DELETE') {
+         setData(prev => prev.filter(p => p.id !== payload.old.id));
+      }
+    };
+
     const chTarget = supabase
       .channel(`changes_${tableName}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: tableName },
-        (payload) => {
-          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-             setData(prev => {
-                const norm = normalizeItem(payload.new);
-                const isUpdate = prev.some(p => p.id === norm.id);
-                const nextData = isUpdate ? prev.map(p => p.id === norm.id ? norm : p) : [norm, ...prev];
-                return nextData.sort((a,b) => new Date(b.waktu).getTime() - new Date(a.waktu).getTime());
-             });
-          } else if (payload.eventType === 'DELETE') {
-             setData(prev => prev.filter(p => p.id !== payload.old.id));
-          }
-        }
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "audit_sessions", filter: `indikator_id=eq.${tableName}` }, handlePayload)
+      .on("postgres_changes", { event: "*", schema: "public", table: actualTable }, handlePayload)
       .subscribe();
 
     return () => {

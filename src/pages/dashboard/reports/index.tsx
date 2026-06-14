@@ -23,34 +23,34 @@ const INDICATORS_MAP: Record<string, { cat: string, subcat?: string, title: stri
   // Kewaspadaan Isolasi - Standar
   'audit_hand_hygiene': { cat: 'Kewaspadaan Isolasi', subcat: 'Standar', title: 'Kepatuhan Kebersihan Tangan', id: 'audit_hand_hygiene', icon: Activity },
   'audit_apd': { cat: 'Kewaspadaan Isolasi', subcat: 'Standar', title: 'Kepatuhan Penggunaan APD', id: 'audit_apd', icon: ShieldCheck },
-  'etika_batuk': { cat: 'Kewaspadaan Isolasi', subcat: 'Standar', title: 'Etika Batuk', id: 'etika_batuk', icon: Wind },
-  'penempatan_pasien': { cat: 'Kewaspadaan Isolasi', subcat: 'Standar', title: 'Penempatan Pasien', id: 'penempatan_pasien', icon: Users },
   'dekontaminasi_alat': { cat: 'Kewaspadaan Isolasi', subcat: 'Standar', title: 'Dekontaminasi Alat', id: 'dekontaminasi_alat', icon: ClipboardCheck },
+  'pengendalian_lingkungan': { cat: 'Kewaspadaan Isolasi', subcat: 'Standar', title: 'Pengendalian Lingkungan', id: 'pengendalian_lingkungan', icon: Wind },
   'pengelolaan_limbah_medis': { cat: 'Kewaspadaan Isolasi', subcat: 'Standar', title: 'Pengelolaan Limbah Medis', id: 'pengelolaan_limbah_medis', icon: AlertTriangle },
   'pengelolaan_limbah_tajam': { cat: 'Kewaspadaan Isolasi', subcat: 'Standar', title: 'Pengelolaan Limbah Tajam', id: 'pengelolaan_limbah_tajam', icon: AlertTriangle },
   'penatalaksanaan_linen': { cat: 'Kewaspadaan Isolasi', subcat: 'Standar', title: 'Penatalaksanaan Linen', id: 'penatalaksanaan_linen', icon: ClipboardCheck },
-  'pengendalian_lingkungan': { cat: 'Kewaspadaan Isolasi', subcat: 'Standar', title: 'Pengendalian Lingkungan', id: 'pengendalian_lingkungan', icon: Wind },
-  'penyuntikan_aman': { cat: 'Kewaspadaan Isolasi', subcat: 'Standar', title: 'Penyuntikan Aman', id: 'penyuntikan_aman', icon: ShieldAlert },
   'perlindungan_petugas': { cat: 'Kewaspadaan Isolasi', subcat: 'Standar', title: 'Perlindungan Petugas', id: 'perlindungan_petugas', icon: ShieldCheck },
+  'penempatan_pasien': { cat: 'Kewaspadaan Isolasi', subcat: 'Standar', title: 'Penempatan Pasien', id: 'penempatan_pasien', icon: Users },
+  'etika_batuk': { cat: 'Kewaspadaan Isolasi', subcat: 'Standar', title: 'Etika Batuk', id: 'etika_batuk', icon: Wind },
+  'penyuntikan_aman': { cat: 'Kewaspadaan Isolasi', subcat: 'Standar', title: 'Penyuntikan Aman', id: 'penyuntikan_aman', icon: ShieldAlert },
 
   // Kewaspadaan Isolasi - Transmisi
   'monitoring_airborne': { cat: 'Kewaspadaan Isolasi', subcat: 'Transmisi', title: 'Transmisi Airborne', id: 'monitoring_airborne', icon: Wind },
 
   // Kewaspadaan Isolasi - Monitoring
-  'monitoring_jenazah': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Kamar Jenazah', id: 'monitoring_jenazah', icon: Building2 },
-  'monitoring_laboratorium': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Laboratorium', id: 'monitoring_laboratorium', icon: Activity },
-  'monitoring_radiologi': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Radiologi', id: 'monitoring_radiologi', icon: Activity },
-  'monitoring_ppi_ruang_isolasi': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Ruang Isolasi', id: 'monitoring_ppi_ruang_isolasi', icon: Users },
-  'monitoring_immuno': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Immunocompromised', id: 'monitoring_immuno', icon: ShieldAlert },
   'monitoring_fasilitas_hand_hygiene': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Fasilitas Hand Hygiene', id: 'monitoring_fasilitas_hand_hygiene', icon: Activity },
   'monitoring_fasilitas_apd': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Fasilitas APD', id: 'monitoring_fasilitas_apd', icon: ShieldCheck },
-  'monitoring_farmasi': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Farmasi', id: 'monitoring_farmasi', icon: Building2 },
   'monitoring_ibs': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Ruangan IBS', id: 'monitoring_ibs', icon: Building2 },
   'monitoring_cssd': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'CSSD', id: 'monitoring_cssd', icon: Building2 },
+  'monitoring_laboratorium': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Laboratorium', id: 'monitoring_laboratorium', icon: Activity },
+  'monitoring_radiologi': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Radiologi', id: 'monitoring_radiologi', icon: Activity },
+  'monitoring_farmasi': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Farmasi', id: 'monitoring_farmasi', icon: Building2 },
   'monitoring_gizi': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Gizi', id: 'monitoring_gizi', icon: Building2 },
+  'monitoring_jenazah': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Kamar Jenazah', id: 'monitoring_jenazah', icon: Building2 },
   'monitoring_ambulance': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Ambulance', id: 'monitoring_ambulance', icon: Truck },
-  'monitoring_tunggu': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Ruang Tunggu', id: 'monitoring_tunggu', icon: Users },
   'monitoring_tps': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'TPS Limbah', id: 'monitoring_tps', icon: AlertTriangle },
+  'monitoring_tunggu': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Ruang Tunggu', id: 'monitoring_tunggu', icon: Users },
+  'monitoring_ppi_ruang_isolasi': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Ruang Isolasi', id: 'monitoring_ppi_ruang_isolasi', icon: Users },
+  'monitoring_immuno': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Immunocompromised', id: 'monitoring_immuno', icon: ShieldAlert },
   
   // Surveilans HAIs
   'isk': { cat: 'Surveilans HAIs', title: 'Infeksi Saluran Kemih (ISK)', id: 'isk', icon: Activity },
@@ -727,13 +727,6 @@ export default function ReportsPage() {
                  <HandHygieneReport filters={{ searchQuery: '', periode: startDateISO, type: periode, unitFilter: selectedUnit } as any} />
               ) : selectedIndicator === 'audit_apd' ? (
                  <ApdReport filters={{ searchQuery: '', periode: startDateISO, type: periode, unitFilter: selectedUnit } as any} />
-              ) : selectedIndicator === 'dekontaminasi_alat' ? (
-                 <GenericAuditReport 
-                  tableName={'audit_dekontaminasi_alat'}
-                  indicatorItems={genericAuditConfigs['dekontaminasi_alat']?.items || []}
-                  title={selectedData?.title || 'Laporan'}
-                  filters={{ searchQuery: '', periode: startDateISO, type: periode }}
-                />
               ) : (
                  <GenericAuditReport 
                     tableName={selectedIndicator}

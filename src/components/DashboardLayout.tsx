@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, memo, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSafeRouter as useRouter } from '@/hooks/useSafeRouter';
@@ -80,6 +80,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isLightMode, setIsLightMode] = useState(false);
+
+  const mainRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      window.scrollTo(0, 0);
+      if (mainRef.current) {
+        mainRef.current.scrollTop = 0;
+      }
+    };
+    handleScroll();
+    requestAnimationFrame(handleScroll);
+    setTimeout(handleScroll, 10);
+    setTimeout(handleScroll, 100);
+    setTimeout(handleScroll, 300);
+  }, [pathname]);
 
   useEffect(() => {
     // Global Data Pre-fetching
@@ -348,7 +364,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 pb-32 sm:p-6 sm:pb-8 lg:p-8 relative">
+        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 pb-32 sm:p-6 sm:pb-8 lg:p-8 relative">
           {children}
         </main>
       </div>

@@ -482,7 +482,7 @@ export default function LinenAuditPage() {
 
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 space-y-6">
           <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">
-            Section Audit Tambahan
+            Temuan dan Rekomendasi
           </h2>
 
           <div>
