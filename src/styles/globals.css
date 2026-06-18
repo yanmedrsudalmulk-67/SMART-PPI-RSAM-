@@ -8,19 +8,23 @@
   -webkit-backface-visibility: hidden;
 }
 
-html {
+html, body {
   scroll-behavior: smooth;
   scroll-padding-top: 5rem;
   /* Hardware Accelerated rendering optimizations */
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Force hardware acceleration on animatable elements for smooth 120fps physics animations */
+/* Force hardware acceleration on animatable elements for smooth 144fps physics animations */
 .animate-in, .animate-out, .transition-all, .transition-transform, .transition-colors {
-  transform: translate3d(0, 0, 0);
-  will-change: transform, opacity;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000;
 }
 
 :root {

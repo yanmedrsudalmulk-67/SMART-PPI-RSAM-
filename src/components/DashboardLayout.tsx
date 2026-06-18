@@ -364,8 +364,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Page Content */}
-        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 pb-32 sm:p-6 sm:pb-8 lg:p-8 relative">
-          {children}
+        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 pb-32 sm:p-6 sm:pb-8 lg:p-8 relative overscroll-y-none transform-gpu will-change-[scroll-position,transform]">
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0, scale: 0.98, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.98, y: -10 }}
+              transition={{ type: "spring", stiffness: 450, damping: 30, mass: 0.8 }}
+              className="w-full h-full transform-gpu"
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
 
