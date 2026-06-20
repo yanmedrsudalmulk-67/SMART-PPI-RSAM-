@@ -283,7 +283,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </motion.aside>
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col h-full min-w-0 overflow-hidden transition-[margin-left] duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] print:ml-0 ${!isMobile && isSidebarOpen ? 'ml-[312px]' : 'ml-0'} transform-gpu will-change-[margin-left]`}>
+      <div className={`flex-1 flex flex-col h-full min-w-0 overflow-hidden transition-[margin-left] duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] print:ml-0 ${!isMobile && isSidebarOpen ? 'ml-[312px]' : 'ml-0'}`}>
         {/* Top Header */}
         <header className={`min-h-[64px] sm:h-20 shrink-0 border-b flex items-center justify-between px-4 sm:px-8 sticky top-0 z-[45] backdrop-blur-md transition-all duration-500 print:hidden ${
           isLightMode 
@@ -364,15 +364,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Page Content */}
-        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 pb-32 sm:p-6 sm:pb-8 lg:p-8 relative overscroll-y-none transform-gpu will-change-[scroll-position,transform]">
-          <AnimatePresence mode="popLayout" initial={false}>
+        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 pb-32 sm:p-6 sm:pb-8 lg:p-8 relative overscroll-y-none [transform:translateZ(0)] will-change-scroll">
+          <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={pathname}
               initial={{ opacity: 0, scale: 0.98, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.98, y: -10 }}
               transition={{ type: "spring", stiffness: 450, damping: 30, mass: 0.8 }}
-              className="w-full h-full transform-gpu"
+              className="w-full h-full"
             >
               {children}
             </motion.div>

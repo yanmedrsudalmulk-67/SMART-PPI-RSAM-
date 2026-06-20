@@ -36,7 +36,7 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
           font-family: var(--font-sans);
         }
       `}</style>
-      <main className={`${poppins.variable} font-sans overflow-x-hidden transform-gpu`}>
+      <main className={`${poppins.variable} font-sans overflow-x-hidden`}>
         {getLayout(
           <Component {...pageProps} />
         )}

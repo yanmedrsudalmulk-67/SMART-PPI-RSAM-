@@ -419,7 +419,7 @@ export default function ReportsPage() {
             {kategori !== 'Surveilans HAIs' && (
               <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
                 <div className="text-center lg:text-left w-full lg:w-auto">
-                  <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white uppercase mb-2">
+                  <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all uppercase mb-2">
                      Laporan SMART PPI
                   </h1>
                   <p className="text-sm font-normal text-slate-500 dark:text-slate-400 mx-auto md:mx-0 max-w-[280px] sm:max-w-none">
@@ -427,8 +427,8 @@ export default function ReportsPage() {
                   </p>
                 </div>
                 
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex items-center gap-3 bg-white/60 dark:bg-[#111827]/60 backdrop-blur-sm border border-slate-200 dark:border-white/10 rounded-2xl p-2 shadow-sm">
+                <div className="flex flex-wrap items-center justify-center lg:justify-end gap-3 w-full lg:w-auto">
+                  <div className="flex flex-wrap justify-center items-center gap-3 bg-white/60 dark:bg-[#111827]/60 backdrop-blur-sm border border-slate-200 dark:border-white/10 rounded-2xl p-2 shadow-sm w-full sm:w-auto">
                      <select 
                        value={periode} 
                        onChange={(e) => setPeriode(e.target.value)}
@@ -617,8 +617,8 @@ export default function ReportsPage() {
                  </div>
                </div>
                
-               <div className="flex flex-wrap items-center gap-3 self-end md:self-auto">
-                 <div className="flex items-center gap-2 bg-white/60 dark:bg-[#111827]/60 backdrop-blur-sm border border-slate-200 dark:border-white/10 rounded-xl p-1 shadow-sm">
+               <div className="flex flex-wrap justify-center items-center gap-3 self-center md:self-auto w-full md:w-auto mt-4 md:mt-0">
+                 <div className="flex flex-wrap justify-center items-center gap-2 bg-white/60 dark:bg-[#111827]/60 backdrop-blur-sm border border-slate-200 dark:border-white/10 rounded-xl p-1 shadow-sm w-full sm:w-auto">
                    
                    <select 
                      value={periode} 

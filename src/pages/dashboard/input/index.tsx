@@ -451,64 +451,75 @@ export default function InputIndexPage() {
         </div>
 
         {/* Filter Periode */}
-        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-          {/* Tipe Periode */}
-          <select
-            value={filterPeriodType}
-            onChange={(e) => setFilterPeriodType(e.target.value as any)}
-            className="h-12 px-[18px] bg-white dark:bg-[rgba(255,255,255,0.05)] border border-[#E5E7EB] dark:border-[rgba(255,255,255,0.08)] text-[#111827] dark:text-white text-sm font-semibold rounded-[14px] outline-none hover:scale-[1.02] focus:scale-[1.02] focus:ring-2 focus:ring-blue-500/30 transition-all duration-200 cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:14px_14px] bg-[position:right_14px_center] bg-no-repeat pr-10 shadow-sm backdrop-blur-[10px]"
-          >
-            <option value="bulanan" className="dark:bg-slate-800">Bulanan</option>
-            <option value="triwulan" className="dark:bg-slate-800">Triwulan</option>
-            <option value="semester" className="dark:bg-slate-800">Semester</option>
-            <option value="tahunan" className="dark:bg-slate-800">Tahunan</option>
-          </select>
+        <div className="flex flex-wrap items-center justify-center lg:justify-end gap-3 w-full lg:w-auto">
+          <div className="flex flex-wrap justify-center items-center gap-3 bg-white/60 dark:bg-[#111827]/60 backdrop-blur-sm border border-slate-200 dark:border-white/10 rounded-2xl p-2 shadow-sm w-full sm:w-auto">
+            {/* Tipe Periode */}
+            <select
+              value={filterPeriodType}
+              onChange={(e) => setFilterPeriodType(e.target.value as any)}
+              className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer capitalize"
+            >
+              <option value="bulanan" className="bg-white dark:bg-slate-900">Bulanan</option>
+              <option value="triwulan" className="bg-white dark:bg-slate-900">Triwulan</option>
+              <option value="semester" className="bg-white dark:bg-slate-900">Semester</option>
+              <option value="tahunan" className="bg-white dark:bg-slate-900">Tahunan</option>
+            </select>
 
-          {/* Sub Periode */}
-          {filterPeriodType === "bulanan" && (
-            <select
-              value={filterMonth}
-              onChange={(e) => setFilterMonth(parseInt(e.target.value))}
-              className="h-12 px-[18px] bg-white dark:bg-[rgba(255,255,255,0.05)] border border-[#E5E7EB] dark:border-[rgba(255,255,255,0.08)] text-[#111827] dark:text-white text-sm font-semibold rounded-[14px] outline-none hover:scale-[1.02] focus:scale-[1.02] focus:ring-2 focus:ring-blue-500/30 transition-all duration-200 cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:14px_14px] bg-[position:right_14px_center] bg-no-repeat pr-10 shadow-sm backdrop-blur-[10px]"
-            >
-              {months.map((m, i) => (
-                <option key={i} value={i} className="dark:bg-slate-800">{m}</option>
-              ))}
-            </select>
-          )}
-          {filterPeriodType === "triwulan" && (
-            <select
-              value={filterQuarter}
-              onChange={(e) => setFilterQuarter(parseInt(e.target.value))}
-              className="h-12 px-[18px] bg-white dark:bg-[rgba(255,255,255,0.05)] border border-[#E5E7EB] dark:border-[rgba(255,255,255,0.08)] text-[#111827] dark:text-white text-sm font-semibold rounded-[14px] outline-none hover:scale-[1.02] focus:scale-[1.02] focus:ring-2 focus:ring-blue-500/30 transition-all duration-200 cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:14px_14px] bg-[position:right_14px_center] bg-no-repeat pr-10 shadow-sm backdrop-blur-[10px]"
-            >
-              <option value={0} className="dark:bg-slate-800">Q1 (Jan-Mar)</option>
-              <option value={1} className="dark:bg-slate-800">Q2 (Apr-Jun)</option>
-              <option value={2} className="dark:bg-slate-800">Q3 (Jul-Sep)</option>
-              <option value={3} className="dark:bg-slate-800">Q4 (Okt-Des)</option>
-            </select>
-          )}
-          {filterPeriodType === "semester" && (
-            <select
-              value={filterSemester}
-              onChange={(e) => setFilterSemester(parseInt(e.target.value))}
-              className="h-12 px-[18px] bg-white dark:bg-[rgba(255,255,255,0.05)] border border-[#E5E7EB] dark:border-[rgba(255,255,255,0.08)] text-[#111827] dark:text-white text-sm font-semibold rounded-[14px] outline-none hover:scale-[1.02] focus:scale-[1.02] focus:ring-2 focus:ring-blue-500/30 transition-all duration-200 cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:14px_14px] bg-[position:right_14px_center] bg-no-repeat pr-10 shadow-sm backdrop-blur-[10px]"
-            >
-              <option value={0} className="dark:bg-slate-800">Semester 1</option>
-              <option value={1} className="dark:bg-slate-800">Semester 2</option>
-            </select>
-          )}
+            {/* Sub Periode */}
+            {filterPeriodType === "bulanan" && (
+              <>
+                <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
+                <select
+                  value={filterMonth}
+                  onChange={(e) => setFilterMonth(parseInt(e.target.value))}
+                  className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
+                >
+                  {months.map((m, i) => (
+                    <option key={i} value={i} className="bg-white dark:bg-slate-900">{m}</option>
+                  ))}
+                </select>
+              </>
+            )}
+            {filterPeriodType === "triwulan" && (
+              <>
+                <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
+                <select
+                  value={filterQuarter}
+                  onChange={(e) => setFilterQuarter(parseInt(e.target.value))}
+                  className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
+                >
+                  <option value={0} className="bg-white dark:bg-slate-900">Q1 (Jan-Mar)</option>
+                  <option value={1} className="bg-white dark:bg-slate-900">Q2 (Apr-Jun)</option>
+                  <option value={2} className="bg-white dark:bg-slate-900">Q3 (Jul-Sep)</option>
+                  <option value={3} className="bg-white dark:bg-slate-900">Q4 (Okt-Des)</option>
+                </select>
+              </>
+            )}
+            {filterPeriodType === "semester" && (
+              <>
+                <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
+                <select
+                  value={filterSemester}
+                  onChange={(e) => setFilterSemester(parseInt(e.target.value))}
+                  className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
+                >
+                  <option value={0} className="bg-white dark:bg-slate-900">Semester 1</option>
+                  <option value={1} className="bg-white dark:bg-slate-900">Semester 2</option>
+                </select>
+              </>
+            )}
 
-          {/* Tahun */}
-          <select
-            value={filterYear}
-            onChange={(e) => setFilterYear(parseInt(e.target.value))}
-            className="h-12 px-[18px] bg-white dark:bg-[rgba(255,255,255,0.05)] border border-[#E5E7EB] dark:border-[rgba(255,255,255,0.08)] text-[#111827] dark:text-white text-sm font-semibold rounded-[14px] outline-none hover:scale-[1.02] focus:scale-[1.02] focus:ring-2 focus:ring-blue-500/30 transition-all duration-200 cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:14px_14px] bg-[position:right_14px_center] bg-no-repeat pr-10 shadow-sm backdrop-blur-[10px]"
-          >
-            <option value={2026} className="dark:bg-slate-800">2026</option>
-            <option value={2025} className="dark:bg-slate-800">2025</option>
-            <option value={2024} className="dark:bg-slate-800">2024</option>
-          </select>
+            <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
+            <select
+              value={filterYear}
+              onChange={(e) => setFilterYear(parseInt(e.target.value))}
+              className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
+            >
+              <option value={2026} className="bg-white dark:bg-slate-900">2026</option>
+              <option value={2025} className="bg-white dark:bg-slate-900">2025</option>
+              <option value={2024} className="bg-white dark:bg-slate-900">2024</option>
+            </select>
+          </div>
         </div>
       </div>
 

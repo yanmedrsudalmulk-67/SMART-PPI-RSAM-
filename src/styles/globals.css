@@ -19,14 +19,6 @@ html, body {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Force hardware acceleration on animatable elements for smooth 144fps physics animations */
-.animate-in, .animate-out, .transition-all, .transition-transform, .transition-colors {
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  perspective: 1000;
-}
-
 :root {
   --color-navy-dark: #020617;
   --color-navy-light: #0f172a;
