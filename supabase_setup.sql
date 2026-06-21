@@ -277,8 +277,24 @@ CREATE TABLE IF NOT EXISTS public.audit_details (
     jawaban TEXT
 );
 
+CREATE TABLE IF NOT EXISTS public.training_materials (
+    id TEXT PRIMARY KEY,
+    kegiatan_id TEXT,
+    nama_file TEXT,
+    jenis_file TEXT,
+    ukuran_file INTEGER,
+    storage_path TEXT,
+    public_url TEXT,
+    uploaded_by TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 ALTER TABLE IF EXISTS "public"."audit_sessions" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS "public"."audit_details" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "public"."training_materials" ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public for training_materials" ON public.training_materials;
+CREATE POLICY "Public for training_materials" ON public.training_materials FOR ALL TO public USING (true) WITH CHECK (true);
 
 CREATE TABLE IF NOT EXISTS public.audit_farmasi (
   id uuid default gen_random_uuid() primary key,

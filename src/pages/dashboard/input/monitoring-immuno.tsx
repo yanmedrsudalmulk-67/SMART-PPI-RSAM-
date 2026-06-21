@@ -138,10 +138,7 @@ export default function InputMonitoringImmunoPage() {
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         status_kepatuhan: stats.statusText,
-        nama_pj_ruangan: pjName.trim(),
-        ttd_pj_ruangan: ttd_pj,
-        ttd_ipcn: ttd_ipcn,
-      };
+              };
 
       const { data: sessionData, error } = await supabase
         .from("penempatan_pasien_immunocompromised")
@@ -160,11 +157,6 @@ export default function InputMonitoringImmunoPage() {
           jumlah_patuh: stats.patuh,
           persentase: stats.persentase,
           status_kepatuhan: stats.statusText,
-          temuan,
-          rekomendasi,
-          nama_pj_ruangan: pjName.trim(),
-          ttd_pj_ruangan: ttd_pj,
-          ttd_ipcn: ttd_ipcn,
           data_indikator: payload.checklist_json,
         };
         const { data: fallbackData, error: fbError } = await supabase

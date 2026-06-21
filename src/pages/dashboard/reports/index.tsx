@@ -18,6 +18,8 @@ const HandHygieneReport = dynamic(() => import('@/components/reports/HandHygiene
 const ApdReport = dynamic(() => import('@/components/reports/ApdReport'), { ssr: false, loading: () => <ReportSkeleton /> });
 const SurveilansHaisReport = dynamic(() => import('@/components/reports/SurveilansHaisReport'), { ssr: false, loading: () => <ReportSkeleton /> });
 const UnifiedSurveilansHaisReport = dynamic(() => import('@/components/reports/UnifiedSurveilansHaisReport'), { ssr: false, loading: () => <ReportSkeleton /> });
+const EtikaBatukReport = dynamic(() => import('@/components/reports/EtikaBatukReport'), { ssr: false, loading: () => <ReportSkeleton /> });
+const DiklatReport = dynamic(() => import('@/components/reports/DiklatReport'), { ssr: false, loading: () => <ReportSkeleton /> });
 
 const INDICATORS_MAP: Record<string, { cat: string, subcat?: string, title: string, id: string, icon: any }> = {
   // Kewaspadaan Isolasi - Standar
@@ -57,6 +59,15 @@ const INDICATORS_MAP: Record<string, { cat: string, subcat?: string, title: stri
   'phlebitis': { cat: 'Surveilans HAIs', title: 'Phlebitis', id: 'phlebitis', icon: Activity },
   'vap': { cat: 'Surveilans HAIs', title: 'Ventilator Associated Pneumonia (VAP)', id: 'vap', icon: Activity },
   'ido': { cat: 'Surveilans HAIs', title: 'Infeksi Daerah Operasi (IDO)', id: 'ido', icon: Activity },
+
+  // Monitoring Bundles
+  'iadp': { cat: 'Monitoring Bundles', title: 'Bundles PLABSI / IADP', id: 'iadp', icon: ClipboardCheck },
+  'cauti': { cat: 'Monitoring Bundles', title: 'Bundles CAUTI / ISK', id: 'cauti', icon: ClipboardCheck },
+  'ido_b': { cat: 'Monitoring Bundles', title: 'Bundles IDO', id: 'ido_b', icon: ClipboardCheck },
+  'vap_b': { cat: 'Monitoring Bundles', title: 'Bundles VAP', id: 'vap_b', icon: ClipboardCheck },
+
+  // Pendidikan dan Pelatihan
+  'diklat_ppi': { cat: 'Pendidikan dan Pelatihan', title: 'Pendidikan Dan Pelatihan Staff', id: 'diklat_ppi', icon: GraduationCap },
 };
 
 const CATEGORIES = [
@@ -64,6 +75,65 @@ const CATEGORIES = [
   'Surveilans HAIs',
   'Monitoring Bundles',
   'Pendidikan dan Pelatihan'
+];
+
+const CATEGORY_DETAILS = [
+  {
+    id: 'Kewaspadaan Isolasi',
+    title: 'Kewaspadaan Isolasi',
+    subtitle: 'Monitoring Kepatuhan Isolasi',
+    statistic: '8 Indikator Terintegrasi',
+    icon: ShieldCheck,
+    emoji: '🛡️',
+    gradient: 'from-emerald-500/10 via-emerald-500/5 to-cyan-500/5',
+    activeGradient: 'from-emerald-500/20 via-emerald-500/10 to-cyan-500/10',
+    border: 'border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10',
+    activeBorder: 'border-emerald-500/60 dark:border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.3)]',
+    textGlow: 'hover:shadow-[0_0_15px_rgba(16,185,129,0.15)]',
+    iconColor: 'text-emerald-500 dark:text-emerald-400',
+  },
+  {
+    id: 'Surveilans HAIs',
+    title: 'Surveilans HAIs',
+    subtitle: 'Monitoring Healthcare Associated Infections',
+    statistic: '7 Indikator Realtime Monitoring',
+    icon: Activity,
+    emoji: '🦠',
+    gradient: 'from-blue-500/10 via-blue-500/5 to-cyan-500/5',
+    activeGradient: 'from-blue-500/20 via-blue-500/10 to-cyan-500/10',
+    border: 'border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10',
+    activeBorder: 'border-blue-500/60 dark:border-blue-500/60 shadow-[0_0_20px_rgba(59,130,246,0.3)]',
+    textGlow: 'hover:shadow-[0_0_15px_rgba(59,130,246,0.15)]',
+    iconColor: 'text-blue-500 dark:text-blue-400',
+  },
+  {
+    id: 'Monitoring Bundles',
+    title: 'Monitoring Bundles',
+    subtitle: 'Monitoring Bundle Pencegahan Infeksi',
+    statistic: '6 Bundle Aktif',
+    icon: ClipboardCheck,
+    emoji: '📋',
+    gradient: 'from-amber-500/10 via-amber-500/5 to-orange-500/5',
+    activeGradient: 'from-amber-500/20 via-amber-500/10 to-orange-500/10',
+    border: 'border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10',
+    activeBorder: 'border-amber-500/60 dark:border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.3)]',
+    textGlow: 'hover:shadow-[0_0_15px_rgba(245,158,11,0.15)]',
+    iconColor: 'text-amber-500 dark:text-amber-400',
+  },
+  {
+    id: 'Pendidikan dan Pelatihan',
+    title: 'Pendidikan & Pelatihan',
+    subtitle: 'Pelatihan dan Edukasi PPI',
+    statistic: 'Pelatihan PPI Terdokumentasi',
+    icon: GraduationCap,
+    emoji: '🎓',
+    gradient: 'from-purple-500/10 via-purple-500/5 to-pink-500/5',
+    activeGradient: 'from-purple-500/20 via-purple-500/10 to-pink-500/10',
+    border: 'border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10',
+    activeBorder: 'border-purple-500/60 dark:border-purple-500/60 shadow-[0_0_20px_rgba(168,85,247,0.3)]',
+    textGlow: 'hover:shadow-[0_0_15px_rgba(168,85,247,0.15)]',
+    iconColor: 'text-purple-500 dark:text-purple-400',
+  }
 ];
 
 const SUB_CATEGORIES = {
@@ -242,6 +312,17 @@ export default function ReportsPage() {
   const [selectedSemester, setSelectedSemester] = useState(Math.floor(new Date().getMonth() / 6));
   const [kategori, setKategori] = useState('Kewaspadaan Isolasi');
   const [subKategori, setSubKategori] = useState('Standar');
+  const [isCategoryTransitioning, setIsCategoryTransitioning] = useState(false);
+
+  const handleCategoryChange = (cat: string) => {
+    if (cat === kategori) return;
+    setIsCategoryTransitioning(true);
+    setKategori(cat);
+    setSubKategori((SUB_CATEGORIES as any)[cat]?.[0] || null);
+    setTimeout(() => {
+      setIsCategoryTransitioning(false);
+    }, 280);
+  };
   const [selectedIndicator, setSelectedIndicator] = useState<string | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<string>('Semua Unit');
   
@@ -308,12 +389,9 @@ export default function ReportsPage() {
   }, [startDateISO, periode]);
 
   useEffect(() => {
-    if (isReportsLoaded && reportsData && reportsData.startDateISO === startDateISO) {
-      return;
-    }
-
     const fetchStats = async () => {
-      if (!isReportsLoaded) setLoading(true);
+      const currentIsLoaded = useDashboardStore.getState().isReportsLoaded;
+      if (!currentIsLoaded) setLoading(true);
       try {
         const [auditRes] = await Promise.all([
            supabase.from('audit_sessions').select('indikator_id, kategori, persentase, tanggal_waktu, jumlah_patuh, jumlah_dinilai').gte('tanggal_waktu', prevPeriodStartISO)
@@ -345,7 +423,7 @@ export default function ReportsPage() {
                  if (!map.has(key)) map.set(key, { count: 0, sum: 0, avgPercent: 0 });
                  const entry = map.get(key)!;
                  entry.count += 1;
-                 entry.sum += (row.persentase || 0);
+                 entry.sum += (key === 'etika_batuk' ? 100 : (row.persentase || 0));
              }
           });
           
@@ -386,7 +464,7 @@ export default function ReportsPage() {
     return () => {
       supabase.removeChannel(channelAudit);
     };
-  }, [startDateISO, prevPeriodStartISO, isReportsLoaded, reportsData, setReportsData]);
+  }, [startDateISO, prevPeriodStartISO, setReportsData]);
 
   // Compute displayed indicators based on category/subcategory
   const displayedIndicators = useMemo(() => {
@@ -500,58 +578,159 @@ export default function ReportsPage() {
             )}
 
             {/* Navigation Filter Kategori & Sub */}
-            <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-3xl p-2 shadow-lg dark:shadow-[0_0_40px_rgba(0,0,0,0.2)]">
-               <div className="flex flex-wrap items-center gap-2">
-                 {CATEGORIES.map(cat => (
-                   <button
-                     key={cat}
-                     onClick={() => { setKategori(cat); setSubKategori((SUB_CATEGORIES as any)[cat]?.[0] || null); }}
-                     className={`px-5 py-3 rounded-2xl text-[11px] sm:text-xs font-bold uppercase tracking-widest transition-all ${
-                       kategori === cat 
-                         ? 'bg-blue-600 text-white shadow-md' 
-                         : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
-                     }`}
-                   >
-                     {cat}
-                   </button>
-                 ))}
-               </div>
-               
-               <AnimatePresence>
-                 {(SUB_CATEGORIES as any)[kategori] && (
-                   <motion.div 
-                     initial={{ height: 0, opacity: 0 }}
-                     animate={{ height: 'auto', opacity: 1 }}
-                     exit={{ height: 0, opacity: 0 }}
-                     className="mt-2 pt-2 border-t border-slate-100 dark:border-white/5 flex flex-wrap items-center gap-2 overflow-hidden"
-                   >
-                     {(SUB_CATEGORIES as any)[kategori].map((sub: string) => (
-                       <button
-                         key={sub}
-                         onClick={() => setSubKategori(sub)}
-                         className={`px-4 py-2.5 rounded-xl text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all flex items-center gap-2 ${
-                           subKategori === sub 
-                             ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' 
-                             : 'border border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'
-                         }`}
-                       >
-                         {subKategori === sub && <CheckCircle2 className="w-3 h-3" />}
-                         {sub}
-                       </button>
-                     ))}
-                   </motion.div>
-                 )}
-               </AnimatePresence>
+            <div id="smart-ppi-category-cards" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              {CATEGORY_DETAILS.map(detail => {
+                const isActive = kategori === detail.id;
+                const Icon = detail.icon;
+                
+                return (
+                  <motion.div
+                    key={detail.id}
+                    id={`cat-card-${detail.id.toLowerCase().replace(/\s+/g, '-')}`}
+                    whileHover={{ y: -4, scale: 1.01 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => handleCategoryChange(detail.id)}
+                    className={`cursor-pointer rounded-2xl p-5 border transition-all duration-300 relative overflow-hidden backdrop-blur-md flex flex-col justify-between min-h-[140px] select-none ${
+                      isActive 
+                        ? `bg-[#0f172a]/90 dark:bg-slate-900/95 bg-gradient-to-br ${detail.activeGradient} ${detail.activeBorder} z-10` 
+                        : `bg-white/80 dark:bg-[#111827]/80 hover:bg-slate-50 dark:hover:bg-white/5 ${detail.border} ${detail.textGlow}`
+                    }`}
+                  >
+                    {/* Glow Accent Background Ornaments */}
+                    {isActive && (
+                      <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 rounded-full blur-xl pointer-events-none animate-pulse" />
+                    )}
+
+                    <div className="flex items-start justify-between">
+                      <div className="flex flex-col gap-1 pr-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl filter drop-shadow">{detail.emoji}</span>
+                          <h3 className={`text-sm sm:text-base font-extrabold tracking-tight ${
+                            isActive ? 'text-white' : 'text-slate-800 dark:text-slate-100'
+                          }`}>
+                            {detail.title}
+                          </h3>
+                        </div>
+                        <p className={`text-[10px] sm:text-xs leading-normal mt-1 font-medium ${
+                          isActive ? 'text-white/80' : 'text-slate-500 dark:text-slate-400'
+                        }`}>
+                          {detail.subtitle}
+                        </p>
+                      </div>
+                      <div className={`p-2.5 rounded-xl ${
+                        isActive 
+                          ? 'bg-white/20 text-white shadow-inner scale-105' 
+                          : `bg-slate-100 dark:bg-white/5 ${detail.iconColor}`
+                      } transition-all duration-300`}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-slate-200/50 dark:border-white/5 flex items-center justify-between">
+                      <span className={`text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider ${
+                        isActive ? 'text-emerald-400' : 'text-slate-400 dark:text-slate-500'
+                      }`}>
+                        {detail.statistic}
+                      </span>
+                      {isActive && (
+                        <span className="flex h-2 w-2 relative">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
+
+            {/* Sub-Category Premium Redesigned Tabs */}
+            <AnimatePresence>
+              {(SUB_CATEGORIES as any)[kategori] && (
+                <motion.div
+                  id="smart-ppi-subcategory-container"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="mt-4 mb-2 max-w-2xl mx-auto w-full"
+                >
+                  <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2.5 px-3">Klasifikasi Indikator</p>
+                  <div className="relative flex p-1.5 bg-white/80 dark:bg-[#0B1120]/80 backdrop-blur-md rounded-full border border-slate-200 dark:border-white/10 shadow-[inset_0_1px_4px_rgba(0,0,0,0.05)] w-full">
+                    <motion.div
+                      className={`absolute top-1.5 bottom-1.5 rounded-full transition-colors duration-500 border ${
+                        subKategori === "Standar"
+                          ? "bg-gradient-to-r from-blue-600 to-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.4)] border-blue-400/30"
+                          : subKategori === "Transmisi"
+                            ? "bg-gradient-to-r from-purple-600 to-purple-500 shadow-[0_0_20px_rgba(139,92,246,0.4)] border-purple-400/30"
+                            : "bg-gradient-to-r from-emerald-600 to-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.4)] border-emerald-400/30"
+                      }`}
+                      initial={false}
+                      style={{ left: "6px" }}
+                      animate={{
+                        x:
+                          subKategori === "Standar"
+                            ? "0%"
+                            : subKategori === "Transmisi"
+                              ? "100%"
+                              : "200%",
+                        width: "calc(33.33% - 4px)",
+                      }}
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    />
+                    {[
+                      { id: "Standar", label: "Standar", icon: ShieldCheck },
+                      { id: "Transmisi", label: "Transmisi", icon: ShieldAlert },
+                      { id: "Monitoring", label: "Monitoring", icon: Activity },
+                    ].map((tab) => {
+                      const isSubActive = subKategori === tab.id;
+                      const Icon = tab.icon;
+                      return (
+                        <button
+                          key={tab.id}
+                          id={`sub-tab-${tab.id.toLowerCase()}`}
+                          onClick={() => setSubKategori(tab.id)}
+                          className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-3.5 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-full transition-colors relative z-10 cursor-pointer whitespace-nowrap shrink-0 select-none ${
+                            isSubActive
+                              ? "text-white font-black"
+                              : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white"
+                          }`}
+                        >
+                          <Icon
+                            className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-300 ${isSubActive ? "text-white scale-110" : "text-slate-500 group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-white"}`}
+                          />
+                          <span>{tab.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Indicator Grid or Unified Report */}
             <div className="pt-4">
-              {kategori === 'Surveilans HAIs' ? (
-                 <UnifiedSurveilansHaisReport />
-              ) : loading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {[1,2,3,4,5,6].map(n => <div key={n} className="h-56 bg-white dark:bg-white/5 rounded-3xl animate-pulse"></div>)}
+              {isCategoryTransitioning || loading ? (
+                <div id="reports-skeleton-container" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map(n => (
+                    <div key={n} id={`skeleton-indicator-${n}`} className="h-56 bg-white/50 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 rounded-3xl p-6 flex flex-col justify-between animate-pulse">
+                      <div className="flex justify-between items-start">
+                        <div className="w-12 h-12 bg-slate-200 dark:bg-white/10 rounded-2xl" />
+                        <div className="w-16 h-8 bg-slate-200 dark:bg-white/10 rounded-xl" />
+                      </div>
+                      <div className="space-y-3">
+                        <div className="h-4 bg-slate-200 dark:bg-white/10 rounded w-3/4" />
+                        <div className="h-3 bg-slate-200 dark:bg-white/10 rounded w-1/2" />
+                      </div>
+                      <div className="border-t border-slate-100 dark:border-white/5 pt-4 flex justify-between">
+                        <div className="h-3 bg-slate-200 dark:bg-white/10 rounded w-1/4" />
+                        <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-white/10" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
+              ) : kategori === 'Surveilans HAIs' ? (
+                 <UnifiedSurveilansHaisReport />
               ) : displayedIndicators.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-20 text-center bg-white/50 dark:bg-[#111827]/50 rounded-3xl border border-slate-200 dark:border-white/5">
                   <Filter className="w-12 h-12 text-slate-400 dark:text-slate-600 mb-4" />
@@ -727,6 +906,18 @@ export default function ReportsPage() {
                  <HandHygieneReport filters={{ searchQuery: '', periode: startDateISO, type: periode, unitFilter: selectedUnit } as any} />
               ) : selectedIndicator === 'audit_apd' ? (
                  <ApdReport filters={{ searchQuery: '', periode: startDateISO, type: periode, unitFilter: selectedUnit } as any} />
+              ) : selectedIndicator === 'etika_batuk' ? (
+                 <EtikaBatukReport 
+                    tableName={selectedIndicator}
+                    title={selectedData?.title || 'Laporan Edukasi'}
+                    filters={{ searchQuery: '', periode: startDateISO, type: periode, unitFilter: selectedUnit } as any}
+                  />
+              ) : selectedIndicator === 'diklat_ppi' ? (
+                 <DiklatReport 
+                    tableName={selectedIndicator}
+                    title={selectedData?.title || 'Laporan Pelatihan'}
+                    filters={{ searchQuery: '', periode: startDateISO, type: periode, unitFilter: selectedUnit } as any}
+                  />
               ) : (
                  <GenericAuditReport 
                     tableName={selectedIndicator}

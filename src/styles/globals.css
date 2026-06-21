@@ -465,3 +465,13 @@ video {
   pointer-events: none;
 }
 
+/* Hide scrollbars elegantly for horizontal navigation flows */
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+}
+.scrollbar-none {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}
+
+

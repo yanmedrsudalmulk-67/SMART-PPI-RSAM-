@@ -278,10 +278,7 @@ export default function InputPengendalianLingkunganPage() {
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.statusText,
-        dokumentasi: uploadedImages,
-        tanda_tangan_pj: pjSig,
-        tanda_tangan_spv: spvSig,
-        nama_pj: pjName,
+                tanda_tangan_spv: spvSig,
       };
 
       const { data: sessionData, error: sessionError } = await supabase

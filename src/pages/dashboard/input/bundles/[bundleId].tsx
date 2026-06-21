@@ -201,13 +201,7 @@ export default function BundlesInputForm() {
         jumlah_patuh: yesCount,
         persentase: compliance,
         status_kepatuhan: compliance >= 85 ? 'Patuh' : 'Perlu Perbaikan',
-        temuan, rekomendasi,
-        nama_pj: pjName,
-        nama_pj_ruangan: pjName,
-        ttd_pj_ruangan: ttd_pj,
-        ttd_ipcn: ttd_ipcn,
-        dokumentasi: uploadedUrls,
-        data_indikator: checklist
+                data_indikator: checklist
       };
 
       const { data: sessionData, error: sessionError } = await supabase.from('audit_sessions').insert([sessionPayload]).select('*').single();

@@ -35,6 +35,7 @@ export {
   ComposedChart, 
   BarChart, 
   AreaChart, 
+  LineChart,
   PieChart, 
   Bar, 
   Area, 

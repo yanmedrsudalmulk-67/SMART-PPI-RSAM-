@@ -23,7 +23,7 @@ const KATEGORI_RUANGAN = [
   "ICU",
 ];
 
-const KATEGORI_HAIS = ["Phlebitis", "ISK", "IDO", "VAP", "Decubitus"];
+const KATEGORI_HAIS = ["Phlebitis", "ISK", "IDO", "VAP", "Decubitus", "IADP", "HAP"];
 
 const STANDARD_HAIS: Record<string, string> = {
   Phlebitis: "< 1 ‰",
@@ -31,6 +31,8 @@ const STANDARD_HAIS: Record<string, string> = {
   IDO: "< 2 %",
   VAP: "< 5.8 ‰",
   Decubitus: "< 1.5 ‰",
+  IADP: "< 1 ‰",
+  HAP: "< 1 ‰",
 };
 
 interface AggregateRow {

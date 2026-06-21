@@ -255,11 +255,7 @@ export default function InputPenempatanPasienPage() {
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.statusText,
-        dokumentasi: uploadedImages,
-        tanda_tangan_pj: pjSig,
-        tanda_tangan_ipcn: ipcnSig,
-        nama_pj_ruangan: pjName.trim(),
-      };
+              };
 
       let sessionError;
       if (isEditMode && editId) {
@@ -269,8 +265,6 @@ export default function InputPenempatanPasienPage() {
             tanggal_waktu: payload.tanggal_waktu,
             observer,
             unit,
-            temuan,
-            rekomendasi,
             jumlah_dinilai: stats.dinilai,
             jumlah_patuh: stats.patuh,
             persentase: stats.persentase,
@@ -284,10 +278,7 @@ export default function InputPenempatanPasienPage() {
               tanda_tangan_ipcn: ipcnSig,
               nama_pj_ruangan: pjName.trim(),
             },
-            nama_pj_ruangan: pjName.trim(),
-            ttd_pj_ruangan: pjSig,
-            ttd_ipcn: ipcnSig,
-          })
+                      })
           .eq("id", editId);
         sessionError = error;
       } else {
@@ -315,10 +306,7 @@ export default function InputPenempatanPasienPage() {
                 tanda_tangan_ipcn: ipcnSig,
                 nama_pj_ruangan: pjName.trim(),
               },
-              nama_pj_ruangan: pjName.trim(),
-              ttd_pj_ruangan: pjSig,
-              ttd_ipcn: ipcnSig,
-            },
+                          },
           ]);
         sessionError = error;
       }

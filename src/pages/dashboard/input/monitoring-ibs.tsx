@@ -224,6 +224,28 @@ export default function MonitoringIBSPage() {
         .from(tableName || "audit_ruangan_ibs")
         .insert([sessionPayload]);
 
+      // Integrate with audit_sessions for realtime and reports
+      await supabase.from("audit_sessions").insert([{
+        indikator_id: "monitoring_ibs",
+        nama_indikator: "MONITORING IBS",
+        tanggal_waktu: sessionPayload.waktu,
+        observer: observer,
+        unit: "Instalasi Bedah Sentral",
+        jenis_tindakan: "Bedah",
+        jumlah_dinilai: stats.dinilai,
+        jumlah_patuh: stats.patuh,
+        persentase: stats.persentase,
+        status_kepatuhan: stats.status,
+        data_indikator: {
+          ...payloadIndikator,
+          temuan,
+          rekomendasi,
+          dokumentasi: uploadedUrls,
+          ttd_pj_ruangan: ttd_pj,
+          ttd_ipcn: ttd_ipcn
+        }
+      }]);
+
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);

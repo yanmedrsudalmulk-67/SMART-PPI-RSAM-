@@ -204,13 +204,7 @@ export default function MonitoringAirbornePage() {
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.status,
-        temuan,
-        rekomendasi,
-        nama_pj_ruangan: pjName.trim(),
-        ttd_pj_ruangan: ttd_pj,
-        ttd_ipcn: ttd_ipcn,
-        dokumentasi: uploadedUrls,
-        data_indikator: data,
+                data_indikator: data,
       };
 
       const { data: sessionData, error: sessionError } = await supabase
@@ -235,11 +229,11 @@ export default function MonitoringAirbornePage() {
           supervisor: sessionPayload.observer,
           checklist_json: sessionPayload.data_indikator,
           persentase: sessionPayload.persentase,
-          temuan: sessionPayload.temuan,
-          rekomendasi: sessionPayload.rekomendasi,
-          foto: sessionPayload.dokumentasi,
-          ttd_pj: sessionPayload.ttd_pj_ruangan,
-          ttd_ipcn: sessionPayload.ttd_ipcn,
+          temuan: temuan,
+          rekomendasi: rekomendasi,
+          foto: uploadedUrls,
+          ttd_pj: ttd_pj,
+          ttd_ipcn: ttd_ipcn,
           created_at: new Date().toISOString(),
         },
       ]);

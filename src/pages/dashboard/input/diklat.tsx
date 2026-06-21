@@ -1,42 +1,50 @@
-import { ReactElement, useState, useRef } from "react";
+import { ReactElement, useState, useEffect } from "react";
 import Head from "next/head";
 import DashboardLayout from "@/components/DashboardLayout";
 import {
   ArrowLeft,
   Save,
-  Upload,
   X,
-  CheckCircle2,
   RefreshCw,
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabase";
 import {
   DocumentationUploader,
   DocImage,
 } from "@/components/DocumentationUploader";
+import { MateriUploader } from "@/components/MateriUploader";
 
 export interface TrainingMaterial {
   id: string;
-  url: string;
-  file: File;
-  type: 'pdf' | 'pptx' | 'other';
-  name: string;
+  kegiatan_id: string;
+  nama_file: string;
+  jenis_file: string;
+  ukuran_file: number;
+  storage_path: string;
+  public_url: string;
+  uploaded_by: string;
+  created_at?: string;
 }
 
-const MateriUploader = dynamic(
-  () => import("@/components/MateriUploader").then((mod) => mod.MateriUploader),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="h-40 w-full animate-pulse bg-white/5 rounded-2xl" />
-    ),
-  },
-);
+function generateUUID() {
+  if (typeof window !== "undefined" && window.crypto) {
+    return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c: any) =>
+      (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+    );
+  }
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+}
 
 export default function DiklatPage() {
+  // Pre-generate a stable activity ID (UUID style) on mount to tie materials and audit together!
+  const [activityId, setActivityId] = useState("");
+  
+  useEffect(() => {
+    setActivityId(generateUUID());
+  }, []);
+
   const [judulPendidikan, setJudulPendidikan] = useState("");
   const [jenisPendidikan, setJenisPendidikan] = useState("sosialisasi");
   const [waktu, setWaktu] = useState(new Date().toISOString().slice(0, 16));
@@ -47,27 +55,7 @@ export default function DiklatPage() {
   const [images, setImages] = useState<DocImage[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const pesertaOptions = [
-    "Dokter",
-    "Dokter Spesialis",
-    "Perawat",
-    "Bidan",
-    "Analis Laboratorium",
-    "Radiografer",
-    "Farmasi",
-    "Pramusaji",
-    "Pegawai Baru",
-    "Cleaning Service",
-    "Mahasiswa PKL",
-  ];
-
   const [isPesertaDropdownOpen, setIsPesertaDropdownOpen] = useState(false);
-
-  const togglePeserta = (p: string) => {
-    setPeserta((prev) =>
-      prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p],
-    );
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,31 +70,66 @@ export default function DiklatPage() {
 
     setIsSubmitting(true);
     try {
+      // 1. Upload documentation images if any
+      const uploadedUrls: string[] = [];
+      const newImages = images.filter(img => img.file !== null && img.file !== undefined);
+      
+      for (let i = 0; i < newImages.length; i++) {
+        const fileExt = newImages[i].file!.name.split(".").pop();
+        const fileName = `${activityId}_${i}_${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from("audit_images")
+          .upload(`images/${fileName}`, newImages[i].file!);
+
+        if (!uploadError) {
+          const { data: publicUrlData } = supabase.storage
+            .from("audit_images")
+            .getPublicUrl(`images/${fileName}`);
+          if (publicUrlData) {
+            uploadedUrls.push(publicUrlData.publicUrl);
+          }
+        }
+      }
+
+      // Combine existing and newly uploaded images
+      const existingUrls = images.filter(img => img.url && !img.file).map(img => img.url);
+      const finalImageUrls = [...existingUrls, ...uploadedUrls];
+
+      // 2. Build insertion payload
       const payload = {
+        id: activityId,
         indikator_id: "diklat_ppi",
         nama_indikator: "PENDIDIKAN DAN PELATIHAN PPI",
         tanggal_waktu: new Date(waktu).toISOString(),
         observer: narasumber,
         unit: tempat,
         jenis_tindakan: jenisPendidikan,
-        jumlah_dinilai: peserta.length, // Let's simplify and assume 1 class = 1 dinilai, 1 patuh for tracking completion
+        jumlah_dinilai: peserta.length, // Assume 1 person = 1 unit dinilai
         jumlah_patuh: peserta.length,
         persentase: 100,
         status_kepatuhan: "Terlaksana",
+        kategori: "Pendidikan dan Pelatihan",
         data_indikator: {
           judul: judulPendidikan,
           peserta: peserta,
+          materials: materials, // To render directly in Reports without fetching secondary table
+          images: finalImageUrls, // Documentation photos
         },
       };
 
       const { error } = await supabase.from("audit_sessions").insert([payload]);
       if (error) throw error;
 
-      alert("Data pelatihan berhasil disimpan!");
+      alert("Data pelatihan dan materi berhasil disimpan!");
+      
+      // Reset form & state and generate a fresh UUID for the next entry
       setJudulPendidikan("");
       setPeserta([]);
       setNarasumber("");
       setTempat("");
+      setMaterials([]);
+      setImages([]);
+      setActivityId(generateUUID());
     } catch (err: any) {
       console.error(err);
       alert("Gagal menyimpan: " + err.message);
@@ -158,6 +181,7 @@ export default function DiklatPage() {
                   className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 transition-colors [color-scheme:dark]"
                 />
               </div>
+
               <div>
                 <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">
                   Tempat
@@ -173,18 +197,34 @@ export default function DiklatPage() {
               </div>
             </div>
 
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">
-                Narasumber
-              </label>
-              <input
-                type="text"
-                value={narasumber}
-                onChange={(e) => setNarasumber(e.target.value)}
-                required
-                className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 transition-colors"
-                placeholder="Masukkan nama narasumber..."
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">
+                  Nama Kegiatan / Pelatihan
+                </label>
+                <input
+                  type="text"
+                  value={judulPendidikan}
+                  onChange={(e) => setJudulPendidikan(e.target.value)}
+                  required
+                  className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 transition-colors"
+                  placeholder="Nama pelatihan..."
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">
+                  Narasumber / Instruktur
+                </label>
+                <input
+                  type="text"
+                  value={narasumber}
+                  onChange={(e) => setNarasumber(e.target.value)}
+                  required
+                  className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 transition-colors"
+                  placeholder="Nama narasumber..."
+                />
+              </div>
             </div>
 
             <div>
@@ -281,12 +321,17 @@ export default function DiklatPage() {
               )}
             </div>
 
-            <div>
-              <MateriUploader
-                materials={materials}
-                setMaterials={setMaterials}
-              />
-            </div>
+            {/* Premium Upload Dokumen Materi Pelatihan Card */}
+            {activityId && (
+              <div>
+                <MateriUploader
+                  materials={materials}
+                  setMaterials={setMaterials}
+                  activityId={activityId}
+                  uploadedBy={narasumber || "Assessor Staff"}
+                />
+              </div>
+            )}
 
             <div>
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">
@@ -304,14 +349,14 @@ export default function DiklatPage() {
                 !narasumber ||
                 peserta.length === 0
               }
-              className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg disabled:opacity-50 mt-8"
+              className="w-full flex justify-center items-center gap-4 py-5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 mt-8"
             >
               {isSubmitting ? (
                 <RefreshCw className="w-5 h-5 animate-spin" />
               ) : (
                 <Save className="w-5 h-5" />
               )}
-              <span>Simpan Data Audit</span>
+              <span>Simpan Pelatihan & Materi</span>
             </button>
           </form>
         </motion.div>

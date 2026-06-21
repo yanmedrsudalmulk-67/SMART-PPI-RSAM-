@@ -3,10 +3,10 @@ export const genericAuditConfigs: Record<string, { tableName: string; extraFilte
     tableName: 'audit_hand_hygiene',
     items: [
       { id: 'm1', label: 'Momen 1: Sebelum kontak dengan pasien', key: 'm1', section: '5 Momen Kebersihan Tangan' },
-      { id: 'm2', label: 'Momen 2: Sebelum tindakan aseptik', key: 'm2', section: '5 Momen Kebersihan Tangan' },
-      { id: 'm3', label: 'Momen 3: Setelah kontak cairan tubuh', key: 'm3', section: '5 Momen Kebersihan Tangan' },
-      { id: 'm4', label: 'Momen 4: Setelah kontak dengan pasien', key: 'm4', section: '5 Momen Kebersihan Tangan' },
-      { id: 'm5', label: 'Momen 5: Setelah kontak lingkungan pasien', key: 'm5', section: '5 Momen Kebersihan Tangan' }
+      { id: 'm2', label: 'Momen 2: Sebelum melakukan tindakan aseptik', key: 'm2', section: '5 Momen Kebersihan Tangan' },
+      { id: 'm3', label: 'Momen 3: Sesudah menyentuh cairan tubuh pasien', key: 'm3', section: '5 Momen Kebersihan Tangan' },
+      { id: 'm4', label: 'Momen 4: Sesudah kontak dengan pasien', key: 'm4', section: '5 Momen Kebersihan Tangan' },
+      { id: 'm5', label: 'Momen 5: Sesudah menyentuh lingkungan pasien', key: 'm5', section: '5 Momen Kebersihan Tangan' }
     ]
   },
   audit_apd: {
@@ -24,44 +24,49 @@ export const genericAuditConfigs: Record<string, { tableName: string; extraFilte
   dekontaminasi_alat: {
     tableName: 'audit_dekontaminasi_alat',
     items: [
-      { id: 'peralatan_tersedia', label: '1. Peralatan tersedia dan tersusun baik di meja dan lemari', key: 'peralatan_tersedia' },
-      { id: 'peralatan_berkarat', label: '2. Adakah peralatan sarana dan prasarana kesehatan yang berkarat', key: 'peralatan_berkarat' },
-      { id: 'sterilisasi_tersentral', label: '3. Sterilisasi tersentral', key: 'sterilisasi_tersentral' },
-      { id: 'alat_reused', label: '4. Alat used reused sesuai aturan', key: 'alat_reused' },
-      { id: 'metode_dekontaminasi', label: '5. Petugas dapat menjelaskan metoda dekontaminasi peralatan yang biasa digunakan pasien', key: 'metode_dekontaminasi' },
-      { id: 'dekontaminasi_lokal', label: '6. Dekontaminasi lokal dari instrumen bedah tidak dilakukan di area klinis', key: 'dekontaminasi_lokal' },
-      { id: 'expired_date', label: '7. Tanggal kadaluarsa peralatan steril belum terlewati', key: 'expired_date' },
-      { id: 'instrumen_bekas', label: '8. Tidak terlihat debu / darah tertinggal di instrumen bekas pakai', key: 'instrumen_bekas' }
+      { id: 'peralatan_tersedia', label: 'Peralatan tersedia dan tersusun baik di meja dan lemari', key: 'peralatan_tersedia' },
+      { id: 'peralatan_berkarat', label: 'Adakah peralatan sarana dan prasarana kesehatan yang berkarat', key: 'peralatan_berkarat', isNegative: true },
+      { id: 'sterilisasi_tersentral', label: 'Sterilisasi tersentral', key: 'sterilisasi_tersentral' },
+      { id: 'alat_reused', label: 'Alat used reused sesuai aturan', key: 'alat_reused' },
+      { id: 'metode_dekontaminasi', label: 'Petugas dapat menjelaskan metoda dekontaminasi peralatan yang biasa digunakan pasien', key: 'metode_dekontaminasi' },
+      { id: 'dekontaminasi_lokal', label: 'Dekontaminasi lokal dari instrumen bedah tidak dilakukan di area klinis', key: 'dekontaminasi_lokal' },
+      { id: 'expired_date', label: 'Tanggal kadaluarsa peralatan steril belum terlewati', key: 'expired_date' },
+      { id: 'instrumen_bekas', label: 'Tidak terlihat debu / darah tertinggal di instrumen bekas pakai', key: 'instrumen_bekas' }
     ]
   },
   pengendalian_lingkungan: {
     tableName: 'audit_pengendalian_lingkungan',
     items: [
-      { id: 'item_1', label: 'Kursi/meja/dan loker tampak bersih', key: 'item_1' },
+      { id: 'item_1', label: 'Kursi/meja/dan loker tampak bersih dan dalam kondisi baik', key: 'item_1' },
       { id: 'item_2', label: 'Troli tindakan tampak bersih', key: 'item_2' },
-      { id: 'item_3', label: 'Troli tindakan dibersihkan dan didesinfeksi', key: 'item_3' },
+      { id: 'item_3', label: 'Troli tindakan dibersihkan dan didesinfeksi setiap hari', key: 'item_3' },
       { id: 'item_4', label: 'Lantai bersih dan dalam kondisi baik', key: 'item_4' },
       { id: 'item_5', label: 'Ditemukan debu di permukaan kerja', key: 'item_5', isNegative: true },
-      { id: 'item_6', label: 'Tirai pemisah bersih', key: 'item_6' },
+      { id: 'item_6', label: 'Tirai pemisah dan tirai jendela bersih dalam kondisi baik', key: 'item_6' },
       { id: 'item_7', label: 'Kipas angin dan AC bersih', key: 'item_7' },
-      { id: 'item_8', label: 'Dinding bebas jamur', key: 'item_8' },
+      { id: 'item_8', label: 'Dinding dan langit-langit bebas jamur', key: 'item_8' },
       { id: 'item_9', label: 'Ventilasi/jendela bersih', key: 'item_9' },
-      { id: 'item_10', label: 'Area tunggu bersih', key: 'item_10' }
+      { id: 'item_10', label: 'Area tunggu/publik bersih', key: 'item_10' },
+      { id: 'item_11', label: 'Terdapat tanaman hidup di dalam ruang rawat inap', key: 'item_11', isNegative: true },
+      { id: 'item_12', label: 'Area WC/toilet bebas dari benda-benda yang tidak seharusnya ada', key: 'item_12' },
+      { id: 'item_13', label: 'Perlengkapan WC/toilet dalam kondisi baik dan tidak bau', key: 'item_13' },
+      { id: 'item_14', label: 'Tersedia fasilitas pembuangan sampah', key: 'item_14' },
+      { id: 'item_15', label: 'Dinding dan langit-langit WC/toilet bebas jamur', key: 'item_15' }
     ]
   },
   pengelolaan_limbah_medis: {
     tableName: 'audit_pengelolaan_limbah_medis',
     items: [
       { id: 'item_1', label: 'Tersedia fasilitas pembuangan sampah', key: 'item_1' },
-      { id: 'item_2', label: 'Tempat sampah pedal kaki', key: 'item_2' },
-      { id: 'item_3', label: 'Tempat sampah berlabel', key: 'item_3' },
-      { id: 'item_4', label: 'Plastik kuning limbah infeksius', key: 'item_4' },
-      { id: 'item_5', label: 'Tempat sampah memadai', key: 'item_5' },
-      { id: 'item_6', label: 'Sampah diikat', key: 'item_6' },
-      { id: 'item_7', label: 'Sampah tidak lebih 3/4', key: 'item_7' },
-      { id: 'item_8', label: 'Disimpan di TPS', key: 'item_8' },
-      { id: 'item_9', label: 'Tahu cara tumpahan', key: 'item_9' },
-      { id: 'item_10', label: 'Spill kit tersedia', key: 'item_10' }
+      { id: 'item_2', label: 'Tempat sampah menggunakan pedal kaki', key: 'item_2' },
+      { id: 'item_3', label: 'Tempat sampah diberi label sesuai peruntukannya: infeksius dan non infeksius', key: 'item_3' },
+      { id: 'item_4', label: 'Tersedia kantung plastik kuning untuk limbah medis/infeksius', key: 'item_4' },
+      { id: 'item_5', label: 'Jumlah tempat sampah memadai dan dalam kondisi baik', key: 'item_5' },
+      { id: 'item_6', label: 'Sampah yang akan dibuang diikat dengan baik', key: 'item_6' },
+      { id: 'item_7', label: 'Sampah tidak lebih dari 3/4 penuh', key: 'item_7' },
+      { id: 'item_8', label: 'Sampah disimpan/ditempatkan di area yang disediakan sebelum dibawa ke pembuangan/TPS', key: 'item_8' },
+      { id: 'item_9', label: 'Petugas mengetahui cara penanganan tumpahan cairan infeksius', key: 'item_9' },
+      { id: 'item_10', label: 'Spill kit tersedia dan petugas mengetahui lokasi penyimpanannya', key: 'item_10' }
     ]
   },
   pengelolaan_limbah_tajam: {
@@ -80,11 +85,11 @@ export const genericAuditConfigs: Record<string, { tableName: string; extraFilte
   penatalaksanaan_linen: {
     tableName: 'audit_penatalaksanaan_linen',
     items: [
-      { id: '1', label: 'Linen bersih disimpan di lemari tertutup dengan jarak setidaknya dari lantai 30 cm, dinding 20 cm, langit-langit 60 cm, di area bersih terlindung dari kontaminasi', key: '1' },
-      { id: '2', label: 'Tersedia troli/tempat linen kotor dalam kondisi baik dan tertutup', key: '2' },
-      { id: '3', label: 'Tersedia kantung linen berwarna kuning untuk linen infeksius / tercemar / basah', key: '3' },
-      { id: '4', label: 'Linen kotor dipisahkan sesuai dengan SPO', key: '4' },
-      { id: '5', label: 'Petugas menggunakan APD saat menangani linen infeksius / tercemar / basah', key: '5' }
+      { id: 'c1', label: 'Linen bersih disimpan di lemari tertutup dengan jarak setidaknya dari lantai 30 cm, dinding 20 cm, langit-langit 60 cm, di area bersih terlindung dari kontaminasi', key: 'c1' },
+      { id: 'c2', label: 'Tersedia troli/tempat linen kotor dalam kondisi baik dan tertutup', key: 'c2' },
+      { id: 'c3', label: 'Tersedia kantung linen berwarna kuning untuk linen infeksius / tercemar / basah', key: 'c3' },
+      { id: 'c4', label: 'Linen kotor dipisahkan sesuai dengan SPO', key: 'c4' },
+      { id: 'c5', label: 'Petugas menggunakan APD saat menangani linen infeksius / tercemar / basah', key: 'c5' }
     ]
   },
   monitoring_airborne: {
@@ -112,31 +117,29 @@ export const genericAuditConfigs: Record<string, { tableName: string; extraFilte
     tableName: 'audit_monitoring_ppi',
     extraFilter: { kategori: 'ppi_isolasi' },
     items: [
-      { id: 'tekanan_negatif', label: 'Tekanan Udara Negatif', key: 'tekanan_negatif' },
-      { id: 'tekanan_positif', label: 'Tekanan Udara Positif', key: 'tekanan_positif' },
-      { id: 'penggunaan_apd', label: 'Penggunaan APD yang sesuai', key: 'penggunaan_apd' },
-      { id: 'ketersediaan_apd', label: 'Ketersediaan APD yang sesuai', key: 'ketersediaan_apd' },
-      { id: 'fasilitas_hh', label: 'Kelengkapan Fasilitas Kebersihan Tangan', key: 'fasilitas_hh' },
-      { id: 'edukasi_batuk', label: 'Edukasi Etika Batuk / Pembuangan Sputum', key: 'edukasi_batuk' },
-      { id: 'edukasi_hh', label: 'Edukasi Kebersihan Tangan', key: 'edukasi_hh' }
+      { id: 'ppi_1', label: 'Penggunaan APD yang sesuai', key: 'ppi_1' },
+      { id: 'ppi_2', label: 'Ketersediaan APD yang sesuai', key: 'ppi_2' },
+      { id: 'ppi_3', label: 'Kelengkapan Fasilitas Hand Hygiene', key: 'ppi_3' },
+      { id: 'ppi_4', label: 'Edukasi Etika Batuk / Pembuangan Sputum', key: 'ppi_4' },
+      { id: 'ppi_5', label: 'Edukasi Hand Hygiene', key: 'ppi_5' }
     ]
   },
   monitoring_immuno: {
     tableName: 'penempatan_pasien_immunocompromised',
     items: [
-      { id: 'ruang_terpisah', label: 'Ruangan terpisah (sendiri) / cohorting jarak > 1 meter', key: 'ruang_terpisah' },
-      { id: 'pintu_tertutup', label: 'Pintu ruangan selalu tertutup', key: 'pintu_tertutup' },
-      { id: 'transport_perlu', label: 'Transport pasien bila diperlukan saja', key: 'transport_perlu' },
-      { id: 'pasien_masker', label: 'Pasien memakai masker saat keluar ruangan', key: 'pasien_masker' },
-      { id: 'fasilitas_ct', label: 'Tersedia fasilitas cuci tangan', key: 'fasilitas_ct' },
-      { id: 'petugas_5momen', label: 'Petugas melakukan cuci tangan sesuai 5 momen', key: 'petugas_5momen' },
-      { id: 'masker_kontak', label: 'Menggunakan masker saat kontak dengan pasien', key: 'masker_kontak' },
-      { id: 'sarungtangan_cairan', label: 'Memakai sarung tangan bila akan kontak dengan cairan tubuh', key: 'sarungtangan_cairan' },
-      { id: 'goggle_perlu', label: 'Memakai kacamata goggle bila perlu', key: 'goggle_perlu' },
-      { id: 'gaun_perlu', label: 'Memakai gaun pelindung bila perlu', key: 'gaun_perlu' },
-      { id: 'edukasi_pasien', label: 'Memberikan edukasi kepada pasien', key: 'edukasi_pasien' },
-      { id: 'edukasi_keluarga', label: 'Memberikan edukasi kepada keluarga pasien', key: 'edukasi_keluarga' },
-      { id: 'bersih_desinfektan', label: 'Setelah pasien pulang, bersihkan ruangan', key: 'bersih_desinfektan' }
+      { id: 'im_1', label: 'Ruangan terpisah (sendiri) / cohorting jarak > 1 meter', key: 'im_1' },
+      { id: 'im_2', label: 'Pintu ruangan selalu tertutup', key: 'im_2' },
+      { id: 'im_3', label: 'Transport pasien bila diperlukan saja', key: 'im_3' },
+      { id: 'im_4', label: 'Pasien memakai masker saat keluar ruangan', key: 'im_4' },
+      { id: 'im_5', label: 'Tersedia fasilitas cuci tangan', key: 'im_5' },
+      { id: 'im_6', label: 'Petugas melakukan cuci tangan sesuai 5 momen', key: 'im_6' },
+      { id: 'im_7', label: 'Menggunakan masker saat kontak dengan pasien', key: 'im_7' },
+      { id: 'im_8', label: 'Memakai sarung tangan bila akan kontak dengan cairan tubuh', key: 'im_8' },
+      { id: 'im_9', label: 'Memakai kacamata goggle bila perlu', key: 'im_9' },
+      { id: 'im_10', label: 'Memakai gaun pelindung bila perlu', key: 'im_10' },
+      { id: 'im_11', label: 'Memberikan edukasi kepada pasien', key: 'im_11' },
+      { id: 'im_12', label: 'Memberikan edukasi kepada keluarga pasien', key: 'im_12' },
+      { id: 'im_13', label: 'Setelah pasien pulang, bersihkan ruangan dengan cairan desinfektan sesuai standar', key: 'im_13' }
     ]
   },
   penempatan_pasien: {
@@ -156,15 +159,15 @@ export const genericAuditConfigs: Record<string, { tableName: string; extraFilte
     tableName: 'audit_penyuntikan_aman',
     items: [
       { id: 'hh', label: 'Kebersihan tangan', key: 'hh' },
-      { id: 'apd', label: 'APD indikasi', key: 'apd' },
-      { id: 'disposable', label: 'Spuit sekali pakai', key: 'disposable' },
-      { id: 'no_reuse', label: 'Spuit no reuse', key: 'no_reuse' },
-      { id: 'no_touch_sterile', label: 'No touch steril', key: 'no_touch_sterile' },
-      { id: 'area_disinfection', label: 'Desinfeksi area', key: 'area_disinfection' },
-      { id: 'antiseptic_standard', label: 'Antiseptik standar', key: 'antiseptic_standard' },
-      { id: 'no_recapping', label: 'No recapping', key: 'no_recapping' },
-      { id: 'safety_box', label: 'Safety box langsung', key: 'safety_box' },
-      { id: 'no_bending', label: 'No bending jarum', key: 'no_bending' }
+      { id: 'apd', label: 'APD sesuai indikasi', key: 'apd' },
+      { id: 'disposable', label: 'Spuit sekali pakai (disposable) dan steril', key: 'disposable' },
+      { id: 'no_reuse', label: 'Spuit tidak digunakan berulang', key: 'no_reuse' },
+      { id: 'no_touch_sterile', label: 'Tidak menyentuh bagian steril jarum', key: 'no_touch_sterile' },
+      { id: 'area_disinfection', label: 'Desinfeksi area penyuntikan', key: 'area_disinfection' },
+      { id: 'antiseptic_standard', label: 'Menggunakan antiseptik sesuai standar', key: 'antiseptic_standard' },
+      { id: 'no_recapping', label: 'Tidak menutup kembali jarum (no recapping)', key: 'no_recapping' },
+      { id: 'safety_box', label: 'Jarum langsung dibuang ke safety box', key: 'safety_box' },
+      { id: 'no_bending', label: 'Tidak membengkokkan atau mematahkan jarum', key: 'no_bending' }
     ]
   },
   etika_batuk: {
@@ -180,8 +183,8 @@ export const genericAuditConfigs: Record<string, { tableName: string; extraFilte
   perlindungan_petugas: {
     tableName: 'audit_perlindungan_petugas',
     items: [
-      { id: 'item_1', label: 'Vaksinasi HepB & Covid', key: 'item_1' },
-      { id: 'item_2', label: 'Pemeriksaan 1x/thn', key: 'item_2' }
+      { id: 'item_1', label: 'Imunisasi diberikan kepada seluruh petugas kesehatan, minimal vaksinasi Hepatitis B dan Covid-19', key: 'item_1' },
+      { id: 'item_2', label: 'Pemeriksaan kesehatan minimal 1x/tahun', key: 'item_2' }
     ]
   },
   monitoring_fasilitas_hand_hygiene: {

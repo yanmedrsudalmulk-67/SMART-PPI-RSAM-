@@ -130,24 +130,79 @@ export default function InputPengelolaanLimbahTajamPage() {
         setEditId(id);
 
         const loadEditData = async () => {
-          const { data: ed, error } = await supabase
+          let { data: ed, error } = await supabase
             .from("audit_sessions")
             .select("*")
             .eq("id", id)
             .single();
 
+          if (error || !ed) {
+            const { data: edFallback, error: errFallback } = await supabase
+              .from("audit_pengelolaan_limbah_tajam")
+              .select("*")
+              .eq("id", id)
+              .single();
+            if (edFallback) {
+              ed = edFallback;
+              error = null as any;
+            } else {
+              const { data: oldFallback } = await supabase
+                .from("pengelolaan_limbah_tajam")
+                .select("*")
+                .eq("id", id)
+                .single();
+              if (oldFallback) {
+                ed = oldFallback;
+                error = null as any;
+              }
+            }
+          }
+
           if (ed && !error) {
             if (ed.tanggal_waktu) setStartTime(new Date(ed.tanggal_waktu));
-            if (ed.observer) { /* // @ts-ignore */ setObserver?.(ed.observer); }
-            if (ed.unit) { /* // @ts-ignore */ try{setUnit?.(ed.unit)}catch(e){} }
-            if (ed.temuan) { /* // @ts-ignore */ try{setTemuan(ed.temuan)}catch(e){} }
-            if (ed.rekomendasi) { /* // @ts-ignore */ try{setRekomendasi(ed.rekomendasi)}catch(e){} }
-            if (ed.nama_pj_ruangan) { /* // @ts-ignore */ try{setPjName(ed.nama_pj_ruangan)}catch(e){} }
-            if (ed.ttd_pj_ruangan) { /* // @ts-ignore */ try{setPreloadedPjSignature(ed.ttd_pj_ruangan)}catch(e){} }
-            if (ed.ttd_ipcn) { /* // @ts-ignore */ try{setPreloadedIpcnSignature(ed.ttd_ipcn)}catch(e){} }
-
-            const indicatorsData = ed.data_indikator || ed.checklist_json || {};
+            if (ed.observer) setObserver(ed.observer);
+            if (ed.unit) setUnit(ed.unit);
             
+            let indicatorsData = typeof ed.data_indikator === 'string' ? JSON.parse(ed.data_indikator) : ed.data_indikator;
+            let checklistJson = typeof ed.checklist_json === 'string' ? JSON.parse(ed.checklist_json) : ed.checklist_json;
+
+            if (!indicatorsData && !checklistJson && ed.indikator_id) {
+               let { data: specData } = await supabase.from("audit_pengelolaan_limbah_tajam").select("*").eq("id", id).single();
+               if (!specData) {
+                  const { data: specOldData } = await supabase.from("pengelolaan_limbah_tajam").select("*").eq("id", id).single();
+                  specData = specOldData;
+               }
+               indicatorsData = specData;
+            }
+
+            indicatorsData = indicatorsData || checklistJson || ed;
+            
+            if (indicatorsData) {
+              if (indicatorsData.temuan) setTemuan(indicatorsData.temuan);
+              if (indicatorsData.rekomendasi) setRekomendasi(indicatorsData.rekomendasi);
+              if (indicatorsData.nama_pj_ruangan) setPjName(indicatorsData.nama_pj_ruangan);
+              
+              if (indicatorsData.tanda_tangan_pj || ed.ttd_pj_ruangan) {
+                const sig = indicatorsData.tanda_tangan_pj || ed.ttd_pj_ruangan;
+                setPreloadedPjSignature(sig);
+                if (sigRef.current?.setPjSignature) {
+                  setTimeout(() => sigRef.current?.setPjSignature?.(sig), 400);
+                }
+              }
+              if (indicatorsData.tanda_tangan_ipcn || ed.ttd_ipcn) {
+                const sig = indicatorsData.tanda_tangan_ipcn || ed.ttd_ipcn;
+                setPreloadedIpcnSignature(sig);
+                if (sigRef.current?.setSupervisorSignature) {
+                  setTimeout(() => sigRef.current?.setSupervisorSignature?.(sig), 400);
+                }
+              }
+
+              setAuditData(prev => ({ ...prev, ...indicatorsData }));
+            }
+            
+            if (indicatorsData.dokumentasi && Array.isArray(indicatorsData.dokumentasi)) {
+              setImages(indicatorsData.dokumentasi);
+            }
           }
         };
         loadEditData();
@@ -265,10 +320,7 @@ export default function InputPengelolaanLimbahTajamPage() {
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.statusText,
-        nama_pj_ruangan: pjName.trim(),
-        ttd_pj_ruangan: ttd_pj,
-        ttd_ipcn: ttd_ipcn,
-      };
+              };
 
       const { data: sessionData, error: sessionError } = await supabase
         .from("audit_sessions")
@@ -293,12 +345,7 @@ export default function InputPengelolaanLimbahTajamPage() {
               tanda_tangan_ipcn: ttd_ipcn,
               nama_pj_ruangan: pjName.trim(),
             },
-            temuan,
-            rekomendasi,
-            nama_pj_ruangan: pjName.trim(),
-            ttd_pj_ruangan: ttd_pj,
-            ttd_ipcn: ttd_ipcn,
-          },
+                      },
         ])
         .select("id")
         .single();

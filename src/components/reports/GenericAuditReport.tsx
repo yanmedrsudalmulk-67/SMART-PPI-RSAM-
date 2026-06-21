@@ -188,24 +188,48 @@ export default function GenericAuditReport({
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
+      const config = genericAuditConfigs[tableName];
+      const configExtraFilter = config?.extraFilter;
+      const finalExtraFilter = extraFilter || configExtraFilter;
+
       let sessionQuery = supabase
         .from("audit_sessions")
-        .select("*")
-        .eq("indikator_id", tableName);
-      if (extraFilter) sessionQuery = sessionQuery.match(extraFilter);
+        .select("*");
+
+      if (config && config.tableName === "audit_bundles_hais") {
+        sessionQuery = sessionQuery.eq("indikator_id", "audit_bundles_hais");
+        if (configExtraFilter && configExtraFilter.bundle_id) {
+          sessionQuery = sessionQuery.eq("jenis_tindakan", configExtraFilter.bundle_id);
+        }
+      } else {
+        sessionQuery = sessionQuery.eq("indikator_id", tableName);
+        if (extraFilter) sessionQuery = sessionQuery.match(extraFilter);
+      }
+
       const { data: sessionData } = await sessionQuery.order("tanggal_waktu", {
         ascending: false,
       });
 
       let tableData: any[] = [];
       try {
-        const actualTable = genericAuditConfigs[tableName]?.tableName || tableName;
+        const actualTable = config?.tableName || tableName;
         let tableQuery = supabase.from(actualTable).select("*");
-        if (extraFilter) tableQuery = tableQuery.match(extraFilter);
+        if (finalExtraFilter) tableQuery = tableQuery.match(finalExtraFilter);
         const { data: tData } = await tableQuery.order("tanggal_waktu", {
           ascending: false,
         });
         if (tData) tableData = tData;
+        
+        if (tableName && actualTable !== tableName) {
+          let oldQuery = supabase.from(tableName).select("*");
+          if (finalExtraFilter) oldQuery = oldQuery.match(finalExtraFilter);
+          const { data: tOldData } = await oldQuery.order("tanggal_waktu", {
+            ascending: false,
+          });
+          if (tOldData) {
+            tableData = [...tableData, ...tOldData];
+          }
+        }
       } catch (e) {}
 
       const rawData = [...(sessionData || []), ...tableData];
@@ -275,27 +299,47 @@ export default function GenericAuditReport({
     if (!deleteConfirmId) return;
     setIsDeleting(true);
     try {
-      // 1. Delete from audit_sessions
-      const { error: err1 } = await supabase
+      // 1. Delete from audit_details first because it has foreign keys referencing audit_sessions(id)
+      const { error: errDetails } = await supabase
+        .from("audit_details")
+        .delete()
+        .eq("session_id", deleteConfirmId);
+      if (errDetails) {
+        console.warn("Detail deletion returned error:", errDetails);
+      }
+
+      // 2. Delete from specific indicator table if applicable
+      if (tableName && tableName !== "audit_sessions" && tableName !== "audit_hand_hygiene" && tableName !== "audit_apd") {
+        const tableToDelete = genericAuditConfigs[tableName]?.tableName || tableName;
+        
+        const { error: errSpec1 } = await supabase
+          .from(tableToDelete)
+          .delete()
+          .eq("id", deleteConfirmId);
+        if (errSpec1) {
+          console.warn(`Deleting from ${tableToDelete} returned error:`, errSpec1);
+        }
+
+        if (tableToDelete !== tableName) {
+          const { error: errSpec2 } = await supabase
+            .from(tableName)
+            .delete()
+            .eq("id", deleteConfirmId);
+          if (errSpec2) {
+            console.warn(`Deleting from ${tableName} returned error:`, errSpec2);
+          }
+        }
+      }
+
+      // 3. Delete from audit_sessions finally
+      const { error: errSession } = await supabase
         .from("audit_sessions")
         .delete()
         .eq("id", deleteConfirmId);
-        
-      if (err1) throw err1;
-
-      // 2. Also delete from specific table if applicable
-      if (tableName && tableName !== "audit_sessions" && tableName !== "audit_hand_hygiene" && tableName !== "audit_apd") {
-        try {
-          await supabase.from(tableName).delete().eq("id", deleteConfirmId);
-        } catch (e) {
-          console.error("Error deleting from specific indicator table:", e);
-        }
-      }
       
-      // 3. Delete from details
-      try {
-        await supabase.from("audit_details").delete().eq("session_id", deleteConfirmId);
-      } catch (e) {}
+      if (errSession) {
+        throw new Error(errSession.message);
+      }
 
       // Success toast
       setShowDeleteSuccess(true);
@@ -310,7 +354,7 @@ export default function GenericAuditReport({
       }
     } catch (err: any) {
       console.error(err);
-      alert(`Gagal menghapus data: ${err.message}`);
+      alert(`Gagal menghapus data: ${err.message || err}`);
     } finally {
       setIsDeleting(false);
       setDeleteConfirmId(null);
@@ -367,28 +411,28 @@ export default function GenericAuditReport({
 
           if (type === "Bulanan") {
             if (
-              itemDate.getMonth() !== filterDate.getMonth() ||
-              itemDate.getFullYear() !== filterDate.getFullYear()
+              itemDate.getUTCMonth() !== filterDate.getUTCMonth() ||
+              itemDate.getUTCFullYear() !== filterDate.getUTCFullYear()
             )
               return false;
           } else if (type === "Triwulan") {
-            const qtItem = Math.floor(itemDate.getMonth() / 3);
-            const qtFilter = Math.floor(filterDate.getMonth() / 3);
+            const qtItem = Math.floor(itemDate.getUTCMonth() / 3);
+            const qtFilter = Math.floor(filterDate.getUTCMonth() / 3);
             if (
               qtItem !== qtFilter ||
-              itemDate.getFullYear() !== filterDate.getFullYear()
+              itemDate.getUTCFullYear() !== filterDate.getUTCFullYear()
             )
               return false;
           } else if (type === "Semester") {
-            const sItem = Math.floor(itemDate.getMonth() / 6);
-            const sFilter = Math.floor(filterDate.getMonth() / 6);
+            const sItem = Math.floor(itemDate.getUTCMonth() / 6);
+            const sFilter = Math.floor(filterDate.getUTCMonth() / 6);
             if (
               sItem !== sFilter ||
-              itemDate.getFullYear() !== filterDate.getFullYear()
+              itemDate.getUTCFullYear() !== filterDate.getUTCFullYear()
             )
               return false;
           } else if (type === "Tahunan") {
-            if (itemDate.getFullYear() !== filterDate.getFullYear())
+            if (itemDate.getUTCFullYear() !== filterDate.getUTCFullYear())
               return false;
           }
         }

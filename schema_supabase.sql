@@ -521,8 +521,24 @@ CREATE TABLE IF NOT EXISTS audit_details (
     jawaban TEXT
 );
 
+CREATE TABLE IF NOT EXISTS public.training_materials (
+    id TEXT PRIMARY KEY,
+    kegiatan_id TEXT,
+    nama_file TEXT,
+    jenis_file TEXT,
+    ukuran_file INTEGER,
+    storage_path TEXT,
+    public_url TEXT,
+    uploaded_by TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 ALTER TABLE IF EXISTS audit_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS audit_details ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.training_materials ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public access for compatibility on training_materials" ON public.training_materials;
+CREATE POLICY "Public access for compatibility on training_materials" ON public.training_materials FOR ALL TO public USING (true) WITH CHECK (true);
 
 -- Ensure audit_sessions has all required columns (fix for existing table)
 DO $$

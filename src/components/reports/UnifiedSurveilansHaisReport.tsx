@@ -5,7 +5,7 @@ import { id as idLocale } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Activity, ArrowDown, ArrowUp, BarChart, LineChart, Table2, TrendingUp,
-  AlertCircle, Calendar, Building2, Filter, CheckCircle2
+  AlertCircle, Calendar, Building2, Filter, CheckCircle2, RefreshCw, LayoutGrid
 } from 'lucide-react';
 import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -15,21 +15,13 @@ import {
 import { useAppContext } from '@/components/Providers';
 import { ReportSkeleton } from '@/components/SkeletonLoading';
 
-const STANDARDS: Record<string, number> = {
-  phlebitis: 1,
-  isk: 4.7,
-  vap: 5.8,
-  ido: 2,
-  decubitus: 1.5,
-};
-
-const KATEGORI_HAIS = [
-  "Semua HAIs",
-  "Phlebitis",
-  "ISK",
-  "IDO",
-  "VAP",
-  "Decubitus",
+// Standard clinical indicators for HAIs
+const INDICATORS = [
+  { id: 'phlebitis', name: 'Phlebitis', label: 'Phlebitis', labelLines: ['Phlebitis'], unit: '‰', multiplier: 1000, target: 1, targetLabel: '≤ 1‰' },
+  { id: 'isk', name: 'ISK', label: 'ISK Terkait Kateter (CAUTI)', labelLines: ['ISK Terkait', 'Kateter (CAUTI)'], unit: '‰', multiplier: 1000, target: 4.7, targetLabel: '≤ 4.7‰' },
+  { id: 'decubitus', name: 'Decubitus', label: 'Decubitus', labelLines: ['Decubitus'], unit: '‰', multiplier: 1000, target: 1.5, targetLabel: '≤ 1.5‰' },
+  { id: 'ido', name: 'IDO', label: 'Infeksi Daerah Operasi (IDO)', labelLines: ['Infeksi Daerah', 'Operasi (IDO)'], unit: '%', multiplier: 100, target: 2, targetLabel: '≤ 2%' },
+  { id: 'vap', name: 'VAP', label: 'Ventilator Associated Pneumonia (VAP)', labelLines: ['Ventilator Associated', 'Pneumonia (VAP)'], unit: '‰', multiplier: 1000, target: 5.8, targetLabel: '≤ 5.8‰' },
 ];
 
 const COLORS: Record<string, string> = {
@@ -40,13 +32,23 @@ const COLORS: Record<string, string> = {
   Decubitus: "#f43f5e", // Rose/Pink
 };
 
+const ROOMS_BASE = ["Ranap Anak", "Ranap Dewasa", "Ranap Bedah", "Ranap Kebidanan"];
+
+const KATEGORI_HAIS = [
+  "Semua HAIs",
+  "Phlebitis",
+  "ISK",
+  "IDO",
+  "VAP",
+  "Decubitus"
+];
+
 const RUANGAN_LIST = [
   "Semua Ruangan",
   "Ranap Anak",
   "Ranap Dewasa",
   "Ranap Bedah",
   "Ranap Kebidanan",
-  "ICU",
 ];
 
 export default function UnifiedSurveilansHaisReport() {
@@ -102,7 +104,6 @@ export default function UnifiedSurveilansHaisReport() {
     setLoading(true);
     try {
       const yearStart = new Date(selectedYear, 0, 1).toISOString();
-      // fetch more to allow comparison with previous period and trend analysis within year
       let query = supabase
         .from("audit_sessions")
         .select("*")
@@ -115,8 +116,8 @@ export default function UnifiedSurveilansHaisReport() {
       }
       
       const { data: resData } = await query;
-      
       let filteredDb = resData || [];
+      
       if (selectedHais !== "Semua HAIs") {
         const key = selectedHais.toLowerCase();
         filteredDb = filteredDb.filter(r => r.indikator_id === key || r.nama_indikator === selectedHais);
@@ -169,67 +170,148 @@ export default function UnifiedSurveilansHaisReport() {
     };
   }, [data, startDateISO, endDateISO, prevStartDateISO]);
 
-  const { summarized, overallStats } = useMemo(() => {
-    const sum = (arr: any[]) => {
-      let num = 0, den = 0;
-      arr.forEach(d => { num += d.jumlah_patuh || 0; den += d.jumlah_dinilai || 0; });
-      return { num, den, rate: den ? (num / den) * 1000 : 0 };
-    };
+  // Derive rooms to display in rows
+  const roomsToDisplay = useMemo(() => {
+    if (selectedRuangan !== "Semua Ruangan") {
+      return [selectedRuangan].filter(r => r !== "ICU");
+    }
+    const activeUnits = new Set<string>();
+    currentData.forEach(d => {
+      if (d.unit && d.unit !== "ICU") activeUnits.add(d.unit);
+    });
+    ROOMS_BASE.forEach(r => {
+      if (r !== "ICU") activeUnits.add(r);
+    });
+    return Array.from(activeUnits);
+  }, [currentData, selectedRuangan]);
 
-    const grouped: any = {};
-    KATEGORI_HAIS.filter(k => k !== "Semua HAIs").forEach(k => {
-      grouped[k] = { num: 0, den: 0, count: 0, rate: 0, prevRate: 0 };
+  // Utility to fetch specific indicator values for a room
+  const getIndicatorDataForRoom = React.useCallback((room: string, indicatorId: string) => {
+    const filtered = currentData.filter(d => {
+      if (d.unit !== room) return false;
+      
+      const dbId = (d.indikator_id || "").toLowerCase();
+      const dbName = (d.nama_indikator || "").toLowerCase();
+      
+      return dbId === indicatorId || 
+             dbName === indicatorId || 
+             dbName === indicatorId.replace('_', ' ') ||
+             (indicatorId === 'isk' && (dbId === 'isk' || dbName === 'isk' || dbName.includes('saluran kemih'))) ||
+             (indicatorId === 'phlebitis' && (dbId === 'phlebitis' || dbName === 'phlebitis' || dbName.includes('plebitis'))) ||
+             (indicatorId === 'vap' && (dbId === 'vap' || dbName === 'vap' || dbName.includes('ventilator'))) ||
+             (indicatorId === 'ido' && (dbId === 'ido' || dbName === 'ido' || dbName.includes('operasi'))) ||
+             (indicatorId === 'decubitus' && (dbId === 'decubitus' || dbName === 'decubitus' || dbName.includes('dekubitus'))) ||
+             (indicatorId === 'iadp' && (dbId === 'iadp' || dbName === 'iadp' || dbName.includes('iadp') || dbName.includes('aliran darah'))) ||
+             (indicatorId === 'hap' && (dbId === 'hap' || dbName === 'hap' || dbName.includes('hap') || dbName.includes('pneumonia')));
     });
 
-    data.forEach(d => {
-      const isCur = d.tanggal_waktu >= startDateISO && d.tanggal_waktu <= endDateISO;
-      const isPrev = d.tanggal_waktu >= prevStartDateISO && d.tanggal_waktu < startDateISO;
-      if (!isCur && !isPrev) return;
-
-      const key = d.nama_indikator || (d.indikator_id === 'ido' ? 'IDO' : 
-                   d.indikator_id === 'isk' ? 'ISK' : 
-                   d.indikator_id === 'vap' ? 'VAP' : 
-                   d.indikator_id === 'phlebitis' ? 'Phlebitis' : 'Decubitus');
-      
-      if (!grouped[key]) return;
-      
-      if (isCur) {
-        grouped[key].num += d.jumlah_patuh || 0;
-        grouped[key].den += d.jumlah_dinilai || 0;
-        grouped[key].count++;
-      } else if (isPrev) {
-        // prev not stored in grouped easily
-      }
-    });
-
-    // recalculate rate
-    Object.keys(grouped).forEach(k => {
-      const mult = k === 'IDO' ? 100 : 1000;
-      grouped[k].rate = grouped[k].den > 0 ? (grouped[k].num / grouped[k].den) * mult : 0;
-      
-      const prevDataArr = previousData.filter(d => (d.nama_indikator || "").toUpperCase() === k.toUpperCase() || (d.indikator_id || "").toUpperCase() === k.toUpperCase());
-      const pStats = sum(prevDataArr);
-      grouped[k].prevRate = pStats.den > 0 ? (pStats.num / pStats.den) * mult : 0;
-    });
-
-    const oNum = currentData.reduce((a, b) => a + (b.jumlah_patuh || 0), 0);
-    const oDen = currentData.reduce((a, b) => a + (b.jumlah_dinilai || 0), 0);
+    const n = filtered.reduce((sum, item) => sum + (item.jumlah_patuh || 0), 0);
+    const d = filtered.reduce((sum, item) => sum + (item.jumlah_dinilai || 0), 0);
     
-    const poNum = previousData.reduce((a, b) => a + (b.jumlah_patuh || 0), 0);
-    const poDen = previousData.reduce((a, b) => a + (b.jumlah_dinilai || 0), 0);
+    const indicatorObj = INDICATORS.find(ind => ind.id === indicatorId);
+    const multiplier = indicatorObj ? indicatorObj.multiplier : 1000;
+    const rate = d > 0 ? (n / d) * multiplier : 0;
+    const hasData = d > 0;
 
-    return { 
-      summarized: grouped, 
-      overallStats: { 
-        count: currentData.length,
-        num: oNum,
-        den: oDen,
-        rate: oDen > 0 ? (oNum / oDen) * 1000 : 0,
-        prevRate: poDen > 0 ? (poNum / poDen) * 1000 : 0
-      } 
-    };
-  }, [currentData, previousData, data, startDateISO, endDateISO, prevStartDateISO]);
+    return { n, d, rate, hasData };
+  }, [currentData]);
 
+  // Aggregate values for bottom row (TOTAL)
+  const getIndicatorTotal = React.useCallback((indicatorId: string) => {
+    let totalN = 0;
+    let totalD = 0;
+    
+    roomsToDisplay.forEach(room => {
+      const { n, d } = getIndicatorDataForRoom(room, indicatorId);
+      totalN += n;
+      totalD += d;
+    });
+
+    const indicatorObj = INDICATORS.find(ind => ind.id === indicatorId);
+    const multiplier = indicatorObj ? indicatorObj.multiplier : 1000;
+    const rate = totalD > 0 ? (totalN / totalD) * multiplier : 0;
+    const hasData = totalD > 0;
+
+    return { n: totalN, d: totalD, rate, hasData };
+  }, [roomsToDisplay, getIndicatorDataForRoom]);
+
+  // --- COMPACT SUMMARY STATS ---
+  const totalRuanganTerpantau = useMemo(() => {
+    const monitored = new Set<string>();
+    currentData.forEach(d => {
+      if (d.unit) monitored.add(d.unit);
+    });
+    return monitored.size;
+  }, [currentData]);
+
+  const totalKasusHais = useMemo(() => {
+    return currentData.reduce((acc, d) => acc + (d.jumlah_patuh || 0), 0);
+  }, [currentData]);
+
+  const totalDeviceDays = useMemo(() => {
+    return currentData.reduce((acc, d) => acc + (d.jumlah_dinilai || 0), 0);
+  }, [currentData]);
+
+  const indicatorStats = useMemo(() => {
+    const results = INDICATORS.map(ind => {
+      let totalN = 0;
+      let totalD = 0;
+      currentData.forEach(d => {
+        const dbId = (d.indikator_id || "").toLowerCase();
+        const dbName = (d.nama_indikator || "").toLowerCase();
+        if (dbId === ind.id || 
+            dbName === ind.id || 
+            dbName === ind.id.replace('_', ' ') || 
+            dbName.includes(ind.id) ||
+            (ind.id === 'isk' && dbName.includes('saluran kemih')) ||
+            (ind.id === 'phlebitis' && dbName.includes('plebitis')) ||
+            (ind.id === 'vap' && dbName.includes('ventilator')) ||
+            (ind.id === 'ido' && dbName.includes('operasi')) ||
+            (ind.id === 'decubitus' && dbName.includes('dekubitus')) ||
+            (ind.id === 'iadp' && (dbName.includes('iadp') || dbName.includes('aliran darah'))) ||
+            (ind.id === 'hap' && (dbName.includes('hap') || dbName.includes('pneumonia')))) {
+          totalN += d.jumlah_patuh || 0;
+          totalD += d.jumlah_dinilai || 0;
+        }
+      });
+      const rate = totalD > 0 ? (totalN / totalD) * ind.multiplier : 0;
+      return { id: ind.id, name: ind.name, n: totalN, d: totalD, rate, hasData: totalD > 0 };
+    }).filter(r => r.hasData);
+    
+    if (results.length === 0) {
+      return { highest: "-", lowest: "-" };
+    }
+    
+    const sorted = [...results].sort((a, b) => b.rate - a.rate);
+    const highest = sorted[0];
+    const lowest = sorted[sorted.length - 1];
+    
+    const highestLabel = `${highest.name} (${highest.rate.toFixed(1)}${highest.id === 'ido' ? '%' : '‰'})`;
+    const lowestLabel = `${lowest.name} (${lowest.rate.toFixed(1)}${lowest.id === 'ido' ? '%' : '‰'})`;
+    
+    return { highest: highestLabel, lowest: lowestLabel };
+  }, [currentData]);
+
+  const capaianTargetKeseluruhan = useMemo(() => {
+    let totalCells = 0;
+    let compliantCells = 0;
+    
+    roomsToDisplay.forEach(room => {
+      INDICATORS.forEach(ind => {
+        const { d, rate } = getIndicatorDataForRoom(room, ind.id);
+        if (d > 0) {
+          totalCells++;
+          if (rate <= ind.target) {
+            compliantCells++;
+          }
+        }
+      });
+    });
+    
+    return totalCells > 0 ? Math.round((compliantCells / totalCells) * 100) : 0;
+  }, [roomsToDisplay, getIndicatorDataForRoom]);
+
+  // Dynamic Charting Data setup
   const chartData = useMemo(() => {
     const byPeriodAndType: any = {};
     
@@ -364,8 +446,10 @@ export default function UnifiedSurveilansHaisReport() {
         <ReportSkeleton />
       ) : (
         <>
-          {/* TABLE SECTION */}
+          {/* MAIN CONTAINER AND SUMMARY CARDS */}
           <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-sm rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm transition-all mt-4">
+            
+            {/* Logo, Header Laporan */}
             <div className="p-8 border-b border-slate-100 dark:border-white/5 bg-white dark:bg-[#0f172a]">
                <div className="flex flex-col md:flex-row items-center gap-6">
                  {hospitalLogoUrl && (
@@ -382,81 +466,142 @@ export default function UnifiedSurveilansHaisReport() {
                  </div>
                </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse whitespace-nowrap min-w-[700px]">
+            <div className="overflow-x-auto relative max-w-full scrollbar-thin">
+              <table className="w-full text-left border-collapse min-w-full">
                 <thead>
-                  <tr className="bg-slate-100/50 dark:bg-slate-800/50 text-[10px] sm:text-[11px] uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                    <th className="py-3 px-4 font-black w-12 text-center">No</th>
-                    <th className="py-3 px-4 font-black">Waktu Input</th>
-                    <th className="py-3 px-4 font-black">Ruangan</th>
-                    <th className="py-3 px-4 font-black">
-                      Insiden Rate<br />
-                      HAIs
-                    </th>
-                    <th className="py-3 px-4 font-black text-right">Numerator</th>
-                    <th className="py-3 px-4 font-black text-right">Denominator</th>
-                    <th className="py-3 px-4 font-black text-right">Rate</th>
-                    <th className="py-3 px-4 font-black text-center">Status</th>
+                  
+                  {/* Super Header Row */}
+                  <tr className="bg-slate-100/80 dark:bg-[#1e293b]/70 border-b border-slate-200 dark:border-white/10">
+                    <th className="py-2 px-1 text-[11px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[3%] text-center bg-slate-100 dark:bg-[#1e293b] border-r border-slate-300 dark:border-white/20" rowSpan={2}>No</th>
+                    <th className="py-2 px-2 text-[11px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[11%] bg-slate-100 dark:bg-[#1e293b] border-r border-slate-300 dark:border-white/20" rowSpan={2}>Ruangan</th>
+                    
+                    {INDICATORS.map(ind => (
+                      <th key={ind.id} className="py-1.5 px-1.5 text-center text-[10px] font-black uppercase tracking-wider text-white border-r border-slate-300 dark:border-white/20 leading-tight" colSpan={4} style={{ backgroundColor: COLORS[ind.name] + 'dd' }}>
+                        <div className="flex flex-col justify-center items-center">
+                          {ind.labelLines.map((line, lIdx) => (
+                            <span key={lIdx} className="block whitespace-normal">{line}</span>
+                          ))}
+                        </div>
+                      </th>
+                    ))}
                   </tr>
+
+                  {/* Sub Header Row */}
+                  <tr className="bg-slate-50 dark:bg-[#0f172a]/90 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-white/10">
+                    {INDICATORS.map(ind => (
+                      <React.Fragment key={`${ind.id}-sub`}>
+                        <th className="py-1 px-1 text-center font-black w-[4%] bg-slate-50/70 dark:bg-slate-900 border-r border-slate-150 dark:border-slate-800">N</th>
+                        <th className="py-1 px-1 text-center font-black w-[4%] bg-slate-50/70 dark:bg-slate-900 border-r border-slate-150 dark:border-slate-800">D</th>
+                        <th className="py-1 px-1.5 text-center font-black w-[6%] bg-slate-50/70 dark:bg-slate-900 border-r border-slate-150 dark:border-slate-800">%</th>
+                        <th className="py-1 px-1.5 text-center font-black w-[6%] bg-slate-100/50 dark:bg-slate-800/80 border-r-2 border-slate-300 dark:border-white/20">Target</th>
+                      </React.Fragment>
+                    ))}
+                  </tr>
+
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-[13px] sm:text-sm">
-                  {currentData.length === 0 ? (
-                    <tr>
-                      <td colSpan={8} className="py-12 text-center text-slate-500 bg-slate-50 dark:bg-transparent">
-                         <div className="flex flex-col items-center justify-center opacity-70">
-                           <AlertCircle className="w-8 h-8 mb-3" />
-                           <p className="font-semibold">Belum ada data untuk filter yang dipilih.</p>
-                         </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    currentData.map((row, idx) => {
-                      const iden = row.nama_indikator || (row.indikator_id === 'ido' ? 'IDO' : row.indikator_id === 'isk' ? 'ISK' : row.indikator_id === 'vap' ? 'VAP' : row.indikator_id === 'phlebitis' ? 'Phlebitis' : 'Decubitus');
-                      const indColor = COLORS[iden] || '#10b981';
-                      const mult = iden === 'IDO' ? 100 : 1000;
-                      const symb = iden === 'IDO' ? '%' : '‰';
-                      const vRate = row.jumlah_dinilai > 0 ? (row.jumlah_patuh / row.jumlah_dinilai) * mult : 0;
-                      const cStandard = STANDARDS[iden.toLowerCase()] || 0;
-                      const cSesuai = vRate <= cStandard;
+                <tbody className="divide-y divide-slate-150 dark:divide-white/5 text-[12px]">
+                  
+                  {/* Rows for Rooms */}
+                  {roomsToDisplay.map((room, idx) => (
+                    <tr key={room} className="hover:bg-slate-100/40 dark:hover:bg-white/5 transition-colors group">
                       
+                      {/* Column "No" */}
+                      <td className="py-1.5 px-1 text-center font-bold text-slate-400 group-hover:bg-slate-100 dark:group-hover:bg-slate-800/40 bg-white dark:bg-[#0f172a] border-r border-slate-300 dark:border-white/20 transition-colors">
+                        {idx + 1}
+                      </td>
+
+                      {/* Column "Ruangan" */}
+                      <td className="py-1.5 px-2 font-bold text-slate-900 dark:text-white group-hover:bg-slate-100 dark:group-hover:bg-slate-800/40 bg-white dark:bg-[#0f172a] border-r border-slate-300 dark:border-white/20 transition-colors">
+                        {room}
+                      </td>
+
+                      {/* Render each of the indicators */}
+                      {INDICATORS.map(ind => {
+                        const { n, d, rate, hasData } = getIndicatorDataForRoom(room, ind.id);
+                        const isCompliant = rate <= ind.target;
+                        const badgeColorText = isCompliant 
+                          ? "text-emerald-600 dark:text-emerald-400" 
+                          : "text-red-600 dark:text-red-400 font-black";
+
+                        return (
+                          <React.Fragment key={`${room}-${ind.id}`}>
+                            <td className="py-1.5 px-1 text-center font-semibold font-mono text-slate-500 border-r border-slate-150 dark:border-slate-800">{n}</td>
+                            <td className="py-1.5 px-1 text-center font-semibold font-mono text-slate-500 border-r border-slate-150 dark:border-slate-800">{d}</td>
+                            
+                            {/* Rate (%) */}
+                            <td className={`py-1.5 px-1.5 text-center font-mono font-bold border-r border-slate-150 dark:border-slate-800 transition-colors ${d > 0 ? (isCompliant ? 'bg-emerald-500/5' : 'bg-red-500/5') : ''}`}>
+                              {d > 0 ? (
+                                <span className={badgeColorText}>
+                                  {rate.toFixed(1)}{ind.unit}
+                                </span>
+                              ) : (
+                                <span className="text-slate-300 dark:text-slate-700">0.0{ind.unit}</span>
+                              )}
+                            </td>
+
+                            {/* Target value */}
+                            <td className="py-1.5 px-1 text-center font-mono font-bold text-[10px] text-slate-400 bg-slate-50/40 dark:bg-slate-800/20 border-r-2 border-slate-300 dark:border-white/20">
+                              {ind.targetLabel}
+                            </td>
+                          </React.Fragment>
+                        );
+                      })}
+                    </tr>
+                  ))}
+
+                  {/* TOTAL (JUMLAH) ROW AT THE BOTTOM */}
+                  <tr className="bg-slate-100/90 dark:bg-[#1e293b]/80 border-t-2 border-slate-300 dark:border-white/30 text-slate-900 dark:text-white font-black text-[12px]">
+                    <td className="py-2 px-1 text-center bg-slate-100 dark:bg-[#1e293b] border-r border-slate-300 dark:border-white/20" colSpan={1}>
+                    </td>
+                    <td className="py-2 px-2 uppercase tracking-wider bg-slate-100 dark:bg-[#1e293b] border-r border-slate-300 dark:border-white/20">
+                      JUMLAH
+                    </td>
+
+                    {/* Aggregate calculations for the bottom row */}
+                    {INDICATORS.map(ind => {
+                      const { n, d, rate, hasData } = getIndicatorTotal(ind.id);
+                      const isCompliant = rate <= ind.target;
+                      const textColorClass = isCompliant 
+                        ? "text-emerald-700 dark:text-emerald-400" 
+                        : "text-red-700 dark:text-red-400";
+
                       return (
-                        <tr key={row.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                          <td className="py-3 px-4 text-center font-bold text-slate-400">{idx + 1}</td>
-                          <td className="py-3 px-4 text-slate-700 dark:text-slate-300 font-medium">
-                            {format(parseISO(row.tanggal_waktu || row.created_at), "dd MMM yyyy HH:mm", { locale: idLocale })}
-                          </td>
-                          <td className="py-3 px-4 font-semibold text-slate-900 dark:text-white">{row.unit}</td>
-                          <td className="py-3 px-4">
-                             <span className="font-bold px-2 py-0.5 rounded text-[11px]" style={{ color: indColor, backgroundColor: indColor + '22' }}>
-                               {iden}
-                             </span>
-                          </td>
-                          <td className="py-3 px-4 text-right font-mono text-slate-500">{row.jumlah_patuh}</td>
-                          <td className="py-3 px-4 text-right font-mono text-slate-500">{row.jumlah_dinilai}</td>
-                          <td className="py-3 px-4 text-right font-mono font-bold" style={{ color: indColor }}>
-                            {vRate.toFixed(2)}{symb}
-                          </td>
-                          <td className="py-3 px-4 text-center">
-                            {cSesuai ? (
-                              <span className="px-2 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold rounded-lg uppercase tracking-widest border border-emerald-500/20">Sesuai</span>
+                        <React.Fragment key={`total-${ind.id}`}>
+                          <td className="py-2 px-1 text-center font-mono text-slate-700 dark:text-slate-300">{n}</td>
+                          <td className="py-2 px-1 text-center font-mono text-slate-700 dark:text-slate-300">{d}</td>
+                          
+                          {/* Aggregate Rate */}
+                          <td className={`py-2 px-1 text-center font-mono font-extrabold border-r border-slate-200 dark:border-slate-800 ${d > 0 ? (isCompliant ? 'bg-emerald-500/10' : 'bg-red-500/10') : ''}`}>
+                            {d > 0 ? (
+                              <span className={textColorClass}>
+                                {rate.toFixed(1)}{ind.unit}
+                              </span>
                             ) : (
-                              <span className="px-2 py-1 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-[10px] font-bold rounded-lg uppercase tracking-widest border border-red-500/20">Warning</span>
+                              <span className="text-slate-300 dark:text-slate-700">0.0{ind.unit}</span>
                             )}
                           </td>
-                        </tr>
+
+                          {/* Static Target info */}
+                          <td className="py-2 px-1 text-center font-mono font-black text-[10px] text-[#475569] bg-slate-150 dark:bg-slate-800/40 border-r-2 border-slate-300 dark:border-white/20">
+                            {ind.targetLabel}
+                          </td>
+                        </React.Fragment>
                       );
-                    })
-                  )}
+                    })}
+
+                  </tr>
+
                 </tbody>
               </table>
             </div>
+
           </div>
 
           {/* CHART SECTION */}
           <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/5 rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden mt-4">
              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                 <div>
-                  <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 whitespace-nowrap">
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 whitespace-nowrap font-sans">
                     <TrendingUp className="w-5 h-5 text-blue-500" />
                     Grafik Monitoring Surveilans HAIs
                   </h3>
@@ -475,49 +620,50 @@ export default function UnifiedSurveilansHaisReport() {
              
              <div className="h-[350px] w-full">
                {chartData.length > 0 ? (
-                 <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
-                       <CartesianGrid strokeDasharray="3 3" stroke="#94a3b833" vertical={false} />
-                       <XAxis dataKey="period" stroke="#64748b" fontSize={9} tickMargin={10} axisLine={false} tickLine={false} interval={0} angle={-45} textAnchor="end" height={40} />
-                       <YAxis stroke="#64748b" fontSize={11} axisLine={false} tickLine={false} />
-                       <Tooltip 
-                         contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.95)', borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)', color: '#fff' }}
-                         itemStyle={{ fontSize: '13px', fontWeight: 'bold' }}
-                         labelStyle={{ color: '#94a3b8', fontSize: '11px', fontWeight: 'bold', marginBottom: '8px', textTransform: 'uppercase' }}
-                       />
-                       <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }} iconType="circle" />
-                       
-                       {selectedHais === "Semua HAIs" ? (
-                         KATEGORI_HAIS.filter(k => k !== "Semua HAIs").map((k) => (
-                           chartMode === "bar" ? 
-                             <Bar key={k} dataKey={k} fill={COLORS[k]} radius={[4, 4, 0, 0]} maxBarSize={30} /> :
-                             <Line key={k} type="monotone" dataKey={k} stroke={COLORS[k]} strokeWidth={3} dot={{ r: 4, fill: '#fff', strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                         ))
-                       ) : (
-                         chartMode === "bar" ? 
-                             <Bar dataKey={selectedHais} fill={COLORS[selectedHais]} radius={[6, 6, 0, 0]} maxBarSize={50} /> :
-                             <Line type="monotone" dataKey={selectedHais} stroke={COLORS[selectedHais]} strokeWidth={4} dot={{ r: 5, fill: '#fff', strokeWidth: 2 }} activeDot={{ r: 7 }} />
-                       )}
+                  <ResponsiveContainer width="100%" height="100%">
+                     <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#94a3b833" vertical={false} />
+                        <XAxis dataKey="period" stroke="#64748b" fontSize={9} tickMargin={10} axisLine={false} tickLine={false} interval={0} angle={-45} textAnchor="end" height={40} />
+                        <YAxis stroke="#64748b" fontSize={11} axisLine={false} tickLine={false} />
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.95)', borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)', color: '#fff' }}
+                          itemStyle={{ fontSize: '13px', fontWeight: 'bold' }}
+                          labelStyle={{ color: '#94a3b8', fontSize: '11px', fontWeight: 'bold', marginBottom: '8px', textTransform: 'uppercase' }}
+                        />
+                        <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }} iconType="circle" />
+                        
+                        {selectedHais === "Semua HAIs" ? (
+                          KATEGORI_HAIS.filter(k => k !== "Semua HAIs").map((k) => (
+                            chartMode === "bar" ? 
+                              <Bar key={k} dataKey={k} fill={COLORS[k]} radius={[4, 4, 0, 0]} maxBarSize={30} /> :
+                              <Line key={k} type="monotone" dataKey={k} stroke={COLORS[k]} strokeWidth={3} dot={{ r: 4, fill: '#fff', strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                          ))
+                        ) : (
+                          chartMode === "bar" ? 
+                              <Bar dataKey={selectedHais} fill={COLORS[selectedHais]} radius={[6, 6, 0, 0]} maxBarSize={50} /> :
+                              <Line type="monotone" dataKey={selectedHais} stroke={COLORS[selectedHais]} strokeWidth={4} dot={{ r: 5, fill: '#fff', strokeWidth: 2 }} activeDot={{ r: 7 }} />
+                        )}
+                        
                         {selectedHais !== "Semua HAIs" && (
                           <ReferenceLine
-                            y={STANDARDS[selectedHais.toLowerCase()]}
+                            y={INDICATORS.find(ind => ind.name.toLowerCase() === selectedHais.toLowerCase())?.target || 1}
                             stroke="#06b6d4"
                             strokeDasharray="5 5"
                             label={{
                               position: "top",
-                              value: `Standar ${STANDARDS[selectedHais.toLowerCase()]}${selectedHais === 'IDO' ? '%' : '‰'}`,
+                              value: `Standar ${INDICATORS.find(ind => ind.name.toLowerCase() === selectedHais.toLowerCase())?.target || 1}${selectedHais === 'IDO' ? '%' : '‰'}`,
                               fill: "#06b6d4",
                               fontSize: 10,
                             }}
                           />
                         )}
-                    </ComposedChart>
-                 </ResponsiveContainer>
+                     </ComposedChart>
+                  </ResponsiveContainer>
                ) : (
-                 <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 dark:bg-white/5 rounded-2xl border border-dashed border-slate-200 dark:border-white/10">
-                   <Activity className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
-                   <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Belum ada data untuk grafik</span>
-                 </div>
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 dark:bg-white/5 rounded-2xl border border-dashed border-slate-200 dark:border-white/10">
+                    <Activity className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
+                    <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Belum ada data untuk grafik</span>
+                  </div>
                )}
              </div>
           </div>

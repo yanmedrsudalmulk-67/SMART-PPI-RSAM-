@@ -460,18 +460,20 @@ export default function MonitoringGiziPage() {
         nama_indikator: "MONITORING GIZI",
         tanggal_waktu: payload.waktu,
         observer,
-        ruangan: ruangan,
+        unit: ruangan,
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.status,
-        temuan,
-        rekomendasi,
-        nama_pj_ruangan: pjName.trim(),
-        ttd_pj_ruangan: ttd_pj,
-        ttd_ipcn: ttd_ipcn,
-        dokumentasi: uploadedUrls,
-        data_indikator: data,
+        data_indikator: {
+          ...data,
+          temuan,
+          rekomendasi,
+          nama_pj_ruangan: pjName.trim(),
+          ttd_pj_ruangan: ttd_pj,
+          ttd_ipcn: ttd_ipcn,
+          dokumentasi: uploadedUrls,
+        },
       };
 
       const { data: sessionData, error: sessionError } = await supabase

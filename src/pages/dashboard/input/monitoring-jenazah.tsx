@@ -241,13 +241,7 @@ export default function MonitoringJenazahPage() {
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.status,
-        temuan,
-        rekomendasi,
-        nama_pj_ruangan: pjName.trim(),
-        ttd_pj_ruangan: ttd_pj,
-        ttd_ipcn: ttd_ipcn,
-        dokumentasi: uploadedUrls,
-        data_indikator: data,
+                data_indikator: data,
       };
 
       const { data: sessionData, error: sessionError } = await supabase

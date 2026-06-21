@@ -132,10 +132,7 @@ export default function InputPPIRuangIsolasiPage() {
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         status_kepatuhan: stats.statusText,
-        nama_pj_ruangan: pjName.trim(),
-        ttd_pj_ruangan: ttd_pj,
-        ttd_ipcn: ttd_ipcn,
-      };
+              };
 
       const { data: sessionData, error } = await supabase
         .from("ppi_ruang_isolasi")
@@ -154,11 +151,6 @@ export default function InputPPIRuangIsolasiPage() {
           jumlah_patuh: stats.patuh,
           persentase: stats.persentase,
           status_kepatuhan: stats.statusText,
-          temuan,
-          rekomendasi,
-          nama_pj_ruangan: pjName.trim(),
-          ttd_pj_ruangan: ttd_pj,
-          ttd_ipcn: ttd_ipcn,
           data_indikator: {
             ...payload.checklist_json,
             nama_pasien: payload.nama_pasien,

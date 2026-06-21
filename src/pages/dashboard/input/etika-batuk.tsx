@@ -18,6 +18,8 @@ import {
   DocumentationUploader,
   DocImage,
 } from "@/components/DocumentationUploader";
+import DigitalSignature, { DigitalSignatureRef } from "@/components/DigitalSignatureSection";
+import { useRef } from "react";
 
 const units = [
   "IGD",
@@ -47,13 +49,65 @@ export default function InputEtikaBatukPage() {
 
   const [selectedMateri, setSelectedMateri] = useState<string[]>([]);
   const [selectedSasaran, setSelectedSasaran] = useState<string[]>([]);
+  const [pjName, setPjName] = useState("");
+  const sigRef = useRef<DigitalSignatureRef>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+
   useEffect(() => {
-    const d = new Date();
-    setStartTime(d);
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+      const mode = params.get("mode");
+      if (id && mode === "edit") {
+        setIsEditMode(true);
+        setEditId(id);
+
+        const loadEditData = async () => {
+          const { data, error } = await supabase
+            .from("audit_sessions")
+            .select("*")
+            .eq("id", id)
+            .single();
+
+          if (data && !error) {
+            if (data.tanggal_waktu) setStartTime(new Date(data.tanggal_waktu));
+            if (data.observer) setObserver(data.observer);
+            if (data.unit) setUnit(data.unit);
+            
+            const indicatorsData = data.data_indikator || {};
+            if (indicatorsData.materi_edukasi) setSelectedMateri(indicatorsData.materi_edukasi);
+            if (indicatorsData.sasaran_edukasi) setSelectedSasaran(indicatorsData.sasaran_edukasi);
+            
+            const displayPjName = indicatorsData.nama_pj_ruangan || data.nama_pj_ruangan || "";
+            setPjName(displayPjName);
+            
+            // Prefill signatures to signature pads
+            setTimeout(() => {
+              if (data.ttd_pj_ruangan && sigRef.current?.setPjSignature) {
+                sigRef.current.setPjSignature(data.ttd_pj_ruangan);
+              }
+              if (data.ttd_ipcn && sigRef.current?.setSupervisorSignature) {
+                sigRef.current.setSupervisorSignature(data.ttd_ipcn);
+              }
+            }, 800);
+            
+            // Prefill documentation
+            if (indicatorsData.dokumentasi) {
+              setImages(indicatorsData.dokumentasi.map((url: string) => ({ url, file: null as any })));
+            }
+          }
+        };
+        loadEditData();
+      } else {
+        const d = new Date();
+        setStartTime(d);
+      }
+    }
   }, []);
 
   const handleError = (err: any) => {
@@ -108,39 +162,106 @@ export default function InputEtikaBatukPage() {
     setIsSubmitting(true);
 
     try {
-      const payload = {
+      let ttd_pj = null;
+      let ttd_ipcn = null;
+
+      if (sigRef.current) {
+        ttd_pj = sigRef.current.getPjSignature();
+        ttd_ipcn = sigRef.current.getSupervisorSignature();
+      }
+
+      const existingUrls = images.filter(img => img.url && !img.file).map(img => img.url);
+
+      const payload: any = {
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
         observer,
         unit,
         materi_edukasi: selectedMateri,
         sasaran_edukasi: selectedSasaran,
+        dokumentasi: existingUrls,
+        ttd_pj_ruangan: ttd_pj,
+        ttd_ipcn: ttd_ipcn,
+        nama_pj_ruangan: pjName.trim(),
       };
 
-      const { data: sessionData, error: sessionError } = await supabase
-        .from("audit_sessions")
-        .insert([
-          {
-            indikator_id: "etika_batuk",
-            nama_indikator: "ETIKA BATUK",
+      const newImages = images.filter(img => img.file !== null && img.file !== undefined);
+      const uploadedUrls: string[] = [];
+      const idForUpload = editId || "etika_batuk_temp";
+
+      for (let i = 0; i < newImages.length; i++) {
+        const fileExt = newImages[i].file!.name.split(".").pop();
+        const fileName = `${idForUpload}_${i}_${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from("audit_images")
+          .upload(`images/${fileName}`, newImages[i].file!);
+
+        if (!uploadError) {
+          const { data: publicUrlData } = supabase.storage
+            .from("audit_images")
+            .getPublicUrl(`images/${fileName}`);
+          uploadedUrls.push(publicUrlData.publicUrl);
+        }
+      }
+
+      payload.dokumentasi = [...existingUrls, ...uploadedUrls];
+
+      let sessionError;
+      if (isEditMode && editId) {
+        const { error } = await supabase
+          .from("audit_sessions")
+          .update({
             tanggal_waktu: payload.tanggal_waktu,
             observer,
             unit,
-            data_indikator: {
-              materi_edukasi: selectedMateri,
-              sasaran_edukasi: selectedSasaran,
+            jumlah_dinilai: 1,
+            jumlah_patuh: 1,
+            persentase: 100,
+            status_kepatuhan: "Patuh",
+            kategori: "Kewaspadaan Isolasi",
+            ttd_pj_ruangan: ttd_pj,
+            ttd_ipcn: ttd_ipcn,
+            nama_pj_ruangan: pjName.trim(),
+            data_indikator: { ...payload },
+          })
+          .eq("id", editId);
+        sessionError = error;
+      } else {
+        const { data: sessionData, error: insertError } = await supabase
+          .from("audit_sessions")
+          .insert([
+            {
+              indikator_id: "etika_batuk",
+              nama_indikator: "ETIKA BATUK",
+              tanggal_waktu: payload.tanggal_waktu,
+              observer,
+              unit,
+              jumlah_dinilai: 1,
+              jumlah_patuh: 1,
+              persentase: 100,
+              status_kepatuhan: "Patuh",
+              kategori: "Kewaspadaan Isolasi",
+              ttd_pj_ruangan: ttd_pj,
+              ttd_ipcn: ttd_ipcn,
+              nama_pj_ruangan: pjName.trim(),
+              data_indikator: { ...payload },
             },
-          },
-        ])
-        .select("id")
-        .single();
+          ])
+          .select("id")
+          .single();
+
+        sessionError = insertError;
+
+        if (!insertError && sessionData && uploadedUrls.length > 0) {
+           await supabase.from("audit_sessions").update({
+             data_indikator: {
+               ...payload,
+               dokumentasi: uploadedUrls
+             }
+           }).eq('id', sessionData.id);
+        }
+      }
 
       if (sessionError) throw sessionError;
-
-      for (let i = 0; i < images.length; i++) {
-        await supabase.storage
-          .from("audit_images")
-          .upload(`images/${sessionData.id}_${i}.jpg`, images[i].file);
-      }
 
       setShowToast(true);
       setTimeout(() => {
@@ -309,6 +430,14 @@ export default function InputEtikaBatukPage() {
 
         <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
           <DocumentationUploader images={images} setImages={setImages} />
+        </div>
+
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+          <DigitalSignature
+            ref={sigRef}
+            pjName={pjName}
+            setPjName={setPjName}
+          />
         </div>
 
         <button

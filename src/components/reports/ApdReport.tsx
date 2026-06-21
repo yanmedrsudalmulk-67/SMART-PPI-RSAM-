@@ -120,8 +120,8 @@ export default function ApdReport({
         const filterDate = new Date(filters.periode);
         
         if (filters.type === 'Bulanan') {
-          return itemDate.getMonth() === filterDate.getMonth() && 
-                 itemDate.getFullYear() === filterDate.getFullYear();
+          return itemDate.getUTCMonth() === filterDate.getUTCMonth() && 
+                 itemDate.getUTCFullYear() === filterDate.getUTCFullYear();
         }
         
         if (itemDate < filterDate) return false;

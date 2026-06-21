@@ -278,10 +278,8 @@ export default function InputDekontaminasiAlatPage() {
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.statusText,
-        dokumentasi: uploadedImages,
-        tanda_tangan_pj: ttd_pj,
+                tanda_tangan_pj: ttd_pj,
         tanda_tangan_ipcn: ttd_ipcn,
-        nama_pj_ruangan: pjName.trim(),
       };
 
       let sessionError;
@@ -305,12 +303,7 @@ export default function InputDekontaminasiAlatPage() {
               tanda_tangan_ipcn: ttd_ipcn,
               nama_pj_ruangan: pjName.trim(),
             },
-            temuan,
-            rekomendasi,
-            nama_pj_ruangan: pjName.trim(),
-            ttd_pj_ruangan: ttd_pj,
-            ttd_ipcn: ttd_ipcn,
-          })
+                      })
           .eq("id", editId);
         sessionError = error;
       } else {
@@ -337,12 +330,7 @@ export default function InputDekontaminasiAlatPage() {
                 tanda_tangan_ipcn: ttd_ipcn,
                 nama_pj_ruangan: pjName.trim(),
               },
-              temuan,
-              rekomendasi,
-              nama_pj_ruangan: pjName.trim(),
-              ttd_pj_ruangan: ttd_pj,
-              ttd_ipcn: ttd_ipcn,
-            },
+                          },
           ]);
         sessionError = error;
       }

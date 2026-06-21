@@ -228,12 +228,7 @@ export default function InputMonitoringRuangTungguPage() {
           jumlah_patuh: stats.patuh,
           persentase: stats.persentase,
           status_kepatuhan: stats.statusText,
-          temuan,
-          rekomendasi,
-          nama_pj_ruangan: pjName.trim(),
-          ttd_pj_ruangan: ttd_pj,
-          ttd_ipcn: ttd_ipcn,
-          data_indikator: payload.checklist_json,
+                    data_indikator: payload.checklist_json,
         };
         const { data: fallbackData, error: fbError } = await supabase
           .from("audit_sessions")
