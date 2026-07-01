@@ -115,6 +115,14 @@ export default function InputPPIRuangIsolasiPage() {
     try {
       const ttd_pj = sigRef.current?.getPjSignature();
       const ttd_ipcn = sigRef.current?.getSupervisorSignature();
+      
+      const { uploadImagesToSupabase } = await import("@/lib/upload");
+      const uploadedUrls = images.length > 0 ? await uploadImagesToSupabase(
+        supabase,
+        images.map(f => ({ file: f })),
+        "audit_images",
+        "ppi_ruang_isolasi",
+      ) : [];
 
       const payload = {
         waktu: startTime?.toISOString() || new Date().toISOString(),
@@ -132,44 +140,75 @@ export default function InputPPIRuangIsolasiPage() {
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         status_kepatuhan: stats.statusText,
-              };
+        foto: uploadedUrls,
+        ttd_pj,
+        ttd_ipcn
+      };
 
-      const { data: sessionData, error } = await supabase
-        .from("ppi_ruang_isolasi")
-        .insert([payload])
+      const sessionPayload = {
+        indikator_id: "ppi_ruang_isolasi",
+        nama_indikator: "PPI DI RUANG ISOLASI",
+        tanggal_waktu: payload.waktu,
+        observer: payload.supervisor,
+        ruangan: payload.ruangan,
+        jumlah_dinilai: stats.dinilai,
+        jumlah_patuh: stats.patuh,
+        persentase: stats.persentase,
+        status_kepatuhan: stats.statusText,
+        data_indikator: {
+          ...payload.checklist_json,
+          nama_pasien: payload.nama_pasien,
+          umur: payload.umur,
+          no_rm: payload.no_rm,
+          tekanan_udara: payload.tekanan_udara,
+          keterangan: payload.keterangan,
+          temuan: payload.temuan,
+          rekomendasi: payload.rekomendasi,
+          dokumentasi: uploadedUrls,
+          tanda_tangan: [ttd_pj, ttd_ipcn].filter(Boolean),
+        },
+      };
+
+      const { data: sessionData, error: sessionError } = await supabase
+        .from("audit_sessions")
+        .insert([sessionPayload])
         .select("id")
         .single();
-      if (error) {
-        console.error("Error direct insert", error);
-        const fallbackPayload = {
-          indikator_id: "ppi_ruang_isolasi",
-          nama_indikator: "PPI DI RUANG ISOLASI",
-          tanggal_waktu: payload.waktu,
-          observer: payload.supervisor,
-          ruangan: payload.ruangan,
-          jumlah_dinilai: stats.dinilai,
-          jumlah_patuh: stats.patuh,
-          persentase: stats.persentase,
-          status_kepatuhan: stats.statusText,
-          data_indikator: {
-            ...payload.checklist_json,
-            nama_pasien: payload.nama_pasien,
-            umur: payload.umur,
-            no_rm: payload.no_rm,
-            tekanan_udara: payload.tekanan_udara,
-            keterangan: payload.keterangan,
-          },
+      if (sessionError) throw sessionError;
+
+      const detailPayloads = Object.keys(data).map((key) => {
+        let label = key;
+        const found = checklistItems.find(i => i.id === key);
+        if (found) label = found.label;
+        return {
+          session_id: sessionData.id,
+          pertanyaan_id: key,
+          pertanyaan: label,
+          jawaban: String(data[key]),
         };
-        const { data: fallbackData, error: fbError } = await supabase
-          .from("audit_sessions")
-          .insert([fallbackPayload])
+      });
+      await supabase.from("audit_details").insert(detailPayloads);
+
+      try {
+        await supabase
+          .from("ppi_ruang_isolasi")
+          .insert([{ ...payload, ttd_pj, ttd_ipcn }])
           .select("id")
           .single();
-        if (fbError) throw fbError;
-        await uploadAssets(fallbackData.id);
-      } else {
-        await uploadAssets(sessionData.id);
+      } catch (err) {
+        console.warn("Failed to insert into native table, but saved to generic session.", err);
       }
+
+      const ch = supabase.channel('changes_ppi_ruang_isolasi');
+      ch.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          ch.send({
+            type: 'broadcast',
+            event: 'audit_submitted',
+            payload: { tableName: 'ppi_ruang_isolasi' }
+          }).then(() => supabase.removeChannel(ch));
+        }
+      });
 
       setShowToast(true);
       setTimeout(() => {
@@ -181,14 +220,6 @@ export default function InputPPIRuangIsolasiPage() {
       alert(`Error: ${err.message || "Gagal menyimpan data"}`);
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const uploadAssets = async (id: string) => {
-    for (let i = 0; i < images.length; i++) {
-      await supabase.storage
-        .from("audit_images")
-        .upload(`images/ppi_iso_${id}_${i}.jpg`, images[i]);
     }
   };
 

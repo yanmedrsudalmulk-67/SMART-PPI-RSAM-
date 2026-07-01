@@ -13,7 +13,10 @@ import {
   LogOut,
   Sun,
   Moon,
-  ShieldCheck
+  ShieldCheck,
+  PanelLeftClose,
+  PanelLeftOpen,
+  ChevronLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppContext } from '@/components/Providers';
@@ -227,18 +230,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <motion.aside 
         initial={false}
         animate={{ 
-          x: isSidebarOpen ? 0 : -360,
-          opacity: isSidebarOpen ? 1 : 0
+          x: isSidebarOpen ? 0 : (isMobile ? -360 : -280),
+          opacity: (isSidebarOpen || !isMobile) ? 1 : 0
         }}
         transition={{ 
           type: "spring",
-          stiffness: 420,
-          damping: 36,
+          stiffness: 450,
+          damping: 40,
           mass: 0.8
         }}
-        className={`backdrop-blur-md border-r flex flex-col fixed inset-y-4 left-4 z-50 w-[280px] rounded-[24px] overflow-hidden transition-colors duration-500 print:hidden transform-gpu will-change-transform ${isLightMode ? 'bg-[linear-gradient(180deg,#10b981_0%,#059669_55%,#047857_100%)] text-white border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.15)]' : 'bg-[#0a0f1c]/95 border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.5)]'}`}
+        className={`backdrop-blur-md border-r flex flex-col fixed inset-y-4 left-4 z-50 w-[280px] rounded-[24px] transition-colors duration-500 print:hidden transform-gpu will-change-transform ${isLightMode ? 'bg-[linear-gradient(180deg,#10b981_0%,#059669_55%,#047857_100%)] text-white border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.15)]' : 'bg-[#0a0f1c]/95 border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.5)]'}`}
       >
-        <div className={`flex flex-col items-center justify-center pt-5 pb-4 border-b shrink-0 px-4 ${isLightMode ? 'border-white/5' : 'border-white/5'}`}>
+        {/* New Elegant Toggle Button on the Right Border */}
+        <button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className={`absolute -right-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center border shadow-md transition-all duration-300 z-50 group hidden md:flex ${
+            isLightMode 
+              ? 'bg-white border-slate-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-200' 
+              : 'bg-[#151f32] border-white/10 text-emerald-400 hover:bg-[#1e2c45] hover:border-emerald-400/40'
+          }`}
+          title={isSidebarOpen ? "Minimize Sidebar" : "Expand Sidebar"}
+        >
+          <ChevronLeft className={`w-4 h-4 transition-transform duration-500 ${isSidebarOpen ? 'rotate-0' : 'rotate-180'}`} />
+        </button>
+
+        <div className={`flex flex-col items-center justify-center pt-5 pb-4 border-b shrink-0 px-4 relative ${isLightMode ? 'border-white/5' : 'border-white/5'}`}>
           <div className="flex items-center justify-center w-[56px] h-[56px] rounded-[18px] shadow-sm bg-white/5 mb-3 border border-white/10 relative group">
             <AppLogo className="w-full h-full text-white group-hover:text-emerald-100 transition-colors" iconClassName="w-6 h-6 text-emerald-600 dark:text-[#0a0f1c]" />
           </div>
@@ -283,7 +299,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </motion.aside>
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col h-full min-w-0 overflow-hidden transition-[margin-left] duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] print:ml-0 ${!isMobile && isSidebarOpen ? 'ml-[312px]' : 'ml-0'}`}>
+      <div className={`flex-1 flex flex-col h-full min-w-0 overflow-hidden transition-[margin-left] duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] print:ml-0 ${
+        !isMobile ? (isSidebarOpen ? 'ml-[312px]' : 'ml-[40px]') : 'ml-0'
+      }`}>
         {/* Top Header */}
         <header className={`min-h-[64px] sm:h-20 shrink-0 border-b flex items-center justify-between px-4 sm:px-8 sticky top-0 z-[45] backdrop-blur-md transition-all duration-500 print:hidden ${
           isLightMode 
@@ -291,14 +309,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             : 'bg-[#0a0f1c]/80 border-white/5 shadow-[0_4px_20px_rgba(59,130,246,0.08)]'
         }`}>
           <div className="flex items-center gap-2 sm:gap-4">
-            <button 
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className={`p-2 rounded-xl transition-colors hidden md:block ${isLightMode ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'}`}
-              title="Toggle Sidebar"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
             
+            {/* Mobile Hamburger Menu Toggle */}
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className={`md:hidden p-2 -ml-2 rounded-lg transition-colors ${
+                isLightMode ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'
+              }`}
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+
             {/* Clock Widget */}
             <ClockWidget isLightMode={isLightMode} />
 

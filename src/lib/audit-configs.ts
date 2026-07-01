@@ -114,8 +114,33 @@ export const genericAuditConfigs: Record<string, { tableName: string; extraFilte
     ]
   },
   monitoring_ppi_ruang_isolasi: {
-    tableName: 'audit_monitoring_ppi',
-    extraFilter: { kategori: 'ppi_isolasi' },
+    tableName: 'audit_ruang_isolasi',
+    items: [
+      { id: 'iso_1', label: 'Tekanan Negatif', key: 'iso_1' },
+      { id: 'iso_2', label: 'Pertukaran udara > 12 kali/jam', key: 'iso_2' },
+      { id: 'iso_3', label: 'Suhu ruangan 22°C – 25°C', key: 'iso_3' },
+      { id: 'iso_4', label: 'Kelembaban 40–60%', key: 'iso_4' },
+      { id: 'iso_5', label: 'Kondisi pintu selalu tertutup', key: 'iso_5' },
+      { id: 'hh_1', label: 'Tersedia wastafel', key: 'hh_1' },
+      { id: 'hh_2', label: 'Tersedia sabun cuci tangan', key: 'hh_2' },
+      { id: 'hh_3', label: 'Tersedia tissue', key: 'hh_3' },
+      { id: 'hh_4', label: 'Tersedia handrub', key: 'hh_4' },
+      { id: 'apd_1', label: 'Tersedia sarung tangan', key: 'apd_1' },
+      { id: 'apd_2', label: 'Tersedia masker bedah', key: 'apd_2' },
+      { id: 'apd_3', label: 'Tersedia masker N-95', key: 'apd_3' },
+      { id: 'apd_4', label: 'Tersedia kaca mata pelindung', key: 'apd_4' },
+      { id: 'apd_5', label: 'Tersedia apron', key: 'apd_5' },
+      { id: 'apd_6', label: 'Tersedia sepatu boot', key: 'apd_6' },
+      { id: 'apd_7', label: 'Tersedia penutup kepala', key: 'apd_7' },
+      { id: 'pet_1', label: 'Melakukan kebersihan tangan 5 momen', key: 'pet_1' },
+      { id: 'pet_2', label: 'Menggunakan APD saat melakukan tindakan di ruang isolasi', key: 'pet_2' },
+      { id: 'pet_3', label: 'Membuang limbah sesuai standar', key: 'pet_3' },
+      { id: 'pet_4', label: 'Menempatkan linen kotor pada tempatnya', key: 'pet_4' },
+      { id: 'pet_5', label: 'Memberikan edukasi pada pasien dan keluarga pasien', key: 'pet_5' },
+    ]
+  },
+  ppi_ruang_isolasi: {
+    tableName: 'ppi_ruang_isolasi',
     items: [
       { id: 'ppi_1', label: 'Penggunaan APD yang sesuai', key: 'ppi_1' },
       { id: 'ppi_2', label: 'Ketersediaan APD yang sesuai', key: 'ppi_2' },
@@ -479,13 +504,16 @@ export const genericAuditConfigs: Record<string, { tableName: string; extraFilte
   monitoring_ambulance: {
     tableName: 'audit_ambulance',
     items: [
-      { id: 'ambul_a', label: 'Tersedia spill kit', key: 'ambul_a' },
-      { id: 'ambul_b', label: 'Ambulance bersih', key: 'ambul_b' },
-      { id: 'ambul_c', label: 'Tidak ada sarang laba-laba', key: 'ambul_c' },
-      { id: 'ambul_d', label: 'Kaca bersih', key: 'ambul_d' },
-      { id: 'ambul_e', label: 'Tersedia APD', key: 'ambul_e' },
-      { id: 'ambul_f', label: 'Tersedia handrub', key: 'ambul_f' },
-      { id: 'ambul_g', label: 'Tempat sampah tertutup', key: 'ambul_g' }
+      { id: 'amb_1', label: 'Kebersihan lantai, dinding dan langit-langit', key: 'amb_1' },
+      { id: 'amb_2', label: 'Kebersihan stretcher / tempat tidur pasien', key: 'amb_2' },
+      { id: 'amb_3', label: 'Tersedia handrub untuk kebersihan tangan', key: 'amb_3' },
+      { id: 'amb_4', label: 'Tersedia tisu dan tempat sampah tertutup', key: 'amb_4' },
+      { id: 'amb_5', label: 'Tersedia APD minimal masker dan sarung tangan', key: 'amb_5' },
+      { id: 'amb_6', label: 'Peralatan medis bersih dan tidak berdebu', key: 'amb_6' },
+      { id: 'amb_7', label: 'Tersedia wadah limbah benda tajam (safety box)', key: 'amb_7' },
+      { id: 'amb_8', label: 'Ambilance didekontaminasi setelah digunakan', key: 'amb_8' },
+      { id: 'amb_9', label: 'Tidak ada makanan dan minuman di ambulance', key: 'amb_9' },
+      { id: 'amb_10', label: 'Suhu AC terjaga dan dingin', key: 'amb_10' }
     ]
   },
   monitoring_tunggu: {

@@ -90,6 +90,7 @@ const INDICATOR_TO_FORM_PATH: Record<string, string> = {
   'monitoring_laboratorium': '/dashboard/input/monitoring-laboratorium',
   'monitoring_radiologi': '/dashboard/input/monitoring-radiologi',
   'monitoring_ppi_ruang_isolasi': '/dashboard/input/monitoring-ruang_isolasi',
+  'ppi_ruang_isolasi': '/dashboard/input/ppi-ruang-isolasi',
   'monitoring_immuno': '/dashboard/input/monitoring-immuno',
   'monitoring_fasilitas_hand_hygiene': '/dashboard/input/monitoring-fasilitas_hh',
   'monitoring_fasilitas_apd': '/dashboard/input/monitoring-fasilitas_apd',
@@ -142,11 +143,17 @@ export default function GenericAuditReport({
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
 
   const normalizeItem = useCallback((item: any) => {
-    const jsonFallback =
+    let jsonFallback =
       item.checklist_json ||
       item.data_indikator ||
       item.checklist_data ||
       {};
+      
+    // Handle nested data structures like { data: { iso_1: 'ya' }, keterangan: ... }
+    if (jsonFallback.data && typeof jsonFallback.data === 'object' && !Array.isArray(jsonFallback.data)) {
+      jsonFallback = { ...jsonFallback.data, ...jsonFallback };
+    }
+
     return {
       ...item,
       waktu: item.tanggal_waktu || item.waktu || item.created_at,
@@ -162,15 +169,21 @@ export default function GenericAuditReport({
         item.ttd_pj ||
         item.tanda_tangan_1 ||
         jsonFallback.tanda_tangan_pj ||
+        jsonFallback.ttd_pj ||
+        jsonFallback.tanda_tangan?.[0] ||
         item.tanda_tangan?.[0],
       tanda_tangan_2:
         item.ttd_ipcn ||
         item.tanda_tangan_2 ||
         jsonFallback.tanda_tangan_ipcn ||
         jsonFallback.tanda_tangan_spv ||
+        jsonFallback.ttd_ipcn ||
+        jsonFallback.tanda_tangan?.[1] ||
         item.tanda_tangan?.[1],
       foto:
-        item.dokumentasi || item.foto || jsonFallback.dokumentasi || [],
+        (Array.isArray(item.dokumentasi) ? item.dokumentasi : typeof item.dokumentasi === 'string' && item.dokumentasi.length > 0 ? [item.dokumentasi] : null) || 
+        (Array.isArray(item.foto) ? item.foto : typeof item.foto === 'string' && item.foto.length > 0 ? [item.foto] : null) || 
+        (Array.isArray(jsonFallback.dokumentasi) ? jsonFallback.dokumentasi : typeof jsonFallback.dokumentasi === 'string' && jsonFallback.dokumentasi.length > 0 ? [jsonFallback.dokumentasi] : []) || [],
       nama_pj_ruangan:
         item.nama_pj_ruangan ||
         item.nama_pj ||
@@ -215,22 +228,20 @@ export default function GenericAuditReport({
         const actualTable = config?.tableName || tableName;
         let tableQuery = supabase.from(actualTable).select("*");
         if (finalExtraFilter) tableQuery = tableQuery.match(finalExtraFilter);
-        const { data: tData } = await tableQuery.order("tanggal_waktu", {
-          ascending: false,
-        });
+        const { data: tData } = await tableQuery;
         if (tData) tableData = tData;
         
         if (tableName && actualTable !== tableName) {
           let oldQuery = supabase.from(tableName).select("*");
           if (finalExtraFilter) oldQuery = oldQuery.match(finalExtraFilter);
-          const { data: tOldData } = await oldQuery.order("tanggal_waktu", {
-            ascending: false,
-          });
+          const { data: tOldData } = await oldQuery;
           if (tOldData) {
             tableData = [...tableData, ...tOldData];
           }
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error("Error fetching native table", e);
+      }
 
       const rawData = [...(sessionData || []), ...tableData];
       const ids = new Set();
@@ -279,6 +290,11 @@ export default function GenericAuditReport({
       .channel(`changes_${tableName}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "audit_sessions", filter: `indikator_id=eq.${tableName}` }, handlePayload)
       .on("postgres_changes", { event: "*", schema: "public", table: actualTable }, handlePayload)
+      .on("broadcast", { event: "audit_submitted" }, (payload) => {
+        if (payload.payload?.indikator_id === tableName || payload.payload?.tableName === tableName) {
+          fetchData(); // Bypassing table publications by forcing a refresh on broadcast match
+        }
+      })
       .subscribe();
 
     return () => {
@@ -557,6 +573,13 @@ export default function GenericAuditReport({
 
   const getKeterangan = (itemId: string) => {
     if (!selectedRecord) return "";
+    
+    // Check if there is a flat keterangan object mapping from itemId
+    if (selectedRecord.checklist_json?.keterangan && typeof selectedRecord.checklist_json.keterangan === 'object') {
+       const ketVal = (selectedRecord.checklist_json.keterangan as any)[itemId];
+       if (ketVal && typeof ketVal === "string") return ketVal;
+    }
+    
     const val: any = selectedRecord.checklist_json?.[itemId];
     if (
       val &&

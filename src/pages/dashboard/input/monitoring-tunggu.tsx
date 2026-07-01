@@ -12,6 +12,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { uploadImagesToSupabase } from "@/lib/upload";
 import DashboardLayout from "@/components/DashboardLayout";
 import { LiveStatisticsCard } from "@/components/LiveStatisticsCard";
 import DigitalSignatureSection, {
@@ -192,53 +193,81 @@ export default function InputMonitoringRuangTungguPage() {
       const ttd_pj = sigRef.current?.getPjSignature();
       const ttd_ipcn = sigRef.current?.getSupervisorSignature();
 
-      const payload = {
-        waktu: startTime?.toISOString() || new Date().toISOString(),
+      // Upload images
+      const uploadedUrls = await uploadImagesToSupabase(
+        supabase,
+        images,
+        "audit_images",
+        "monitoring_tunggu",
+      );
+
+      const sessionPayload = {
+        indikator_id: "monitoring_tunggu",
+        nama_indikator: "MONITORING RUANG TUNGGU",
+        tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
+        observer,
+        unit: "Ruang Tunggu",
         ruangan: "Ruang Tunggu",
-        supervisor: observer,
-        checklist_json: {
-          data,
-        },
-        keterangan_json: {
-          data: keterangan,
-        },
+        jumlah_dinilai: stats.dinilai,
+        jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
-        status: stats.statusText,
-        temuan,
-        rekomendasi,
-        nama_pj: pjName.trim(),
-        ttd_pj: ttd_pj,
-        ttd_ipcn: ttd_ipcn,
+        status_kepatuhan: stats.statusText,
+        data_indikator: {
+          ...data,
+          temuan,
+          rekomendasi,
+          nama_pj: pjName.trim(),
+          ttd_pj,
+          ttd_ipcn,
+          dokumentasi: uploadedUrls,
+        },
       };
 
-      const { data: sessionData, error } = await supabase
-        .from("audit_ruang_tunggu")
-        .insert([payload])
+      const { data: sessionData, error: sessionError } = await supabase
+        .from("audit_sessions")
+        .insert([sessionPayload])
         .select("id")
         .single();
-      if (error) {
-        console.error("Error direct insert", error);
-        const fallbackPayload = {
-          indikator_id: "monitoring_ruang_tunggu",
-          nama_indikator: "MONITORING RUANG TUNGGU",
-          tanggal_waktu: payload.waktu,
-          observer: payload.supervisor,
-          unit: payload.ruangan,
-          jumlah_dinilai: stats.dinilai,
-          jumlah_patuh: stats.patuh,
+      if (sessionError) throw sessionError;
+
+      // detail entries
+      const detailPayloads: any[] = [];
+      checklistGroups.forEach((group) => {
+        group.items.forEach((item) => {
+          detailPayloads.push({
+            session_id: sessionData.id,
+            pertanyaan_id: item.id,
+            pertanyaan: item.label,
+            jawaban: String(data[item.id]),
+          });
+        });
+      });
+      await supabase.from("audit_details").insert(detailPayloads);
+
+      // optional custom table insert
+      try {
+        const payload = {
+          waktu: startTime?.toISOString() || new Date().toISOString(),
+          ruangan: "Ruang Tunggu",
+          supervisor: observer,
+          checklist_json: {
+            data,
+          },
+          keterangan_json: {
+            data: keterangan,
+          },
           persentase: stats.persentase,
-          status_kepatuhan: stats.statusText,
-                    data_indikator: payload.checklist_json,
+          status: stats.statusText,
+          temuan,
+          rekomendasi,
+          nama_pj: pjName.trim(),
+          ttd_pj: ttd_pj,
+          ttd_ipcn: ttd_ipcn,
+          dokumentasi: uploadedUrls,
         };
-        const { data: fallbackData, error: fbError } = await supabase
-          .from("audit_sessions")
-          .insert([fallbackPayload])
-          .select("id")
-          .single();
-        if (fbError) throw fbError;
-        await uploadAssets(fallbackData.id, true);
-      } else {
-        await uploadAssets(sessionData.id, false);
+        await supabase.from("audit_ruang_tunggu").insert([payload]);
+      } catch (err) {
+        console.warn("Failed to insert into native table audit_ruang_tunggu, but saved to generic session.", err);
       }
 
       setShowToast(true);
@@ -251,15 +280,6 @@ export default function InputMonitoringRuangTungguPage() {
       alert(`Error: ${err.message || "Gagal menyimpan data"}`);
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const uploadAssets = async (id: string, isFallback: boolean) => {
-    const prefix = isFallback ? "ruang_tunggu_" : "tunggu_";
-    for (let i = 0; i < images.length; i++) {
-      await supabase.storage
-        .from("audit_images")
-        .upload(`images/${prefix}${id}_${i}.jpg`, images[i].file);
     }
   };
 

@@ -127,6 +127,14 @@ export default function InputMonitoringImmunoPage() {
       const ttd_pj = sigRef.current?.getPjSignature();
       const ttd_ipcn = sigRef.current?.getSupervisorSignature();
 
+      const { uploadImagesToSupabase } = await import("@/lib/upload");
+      const uploadedUrls = images.length > 0 ? await uploadImagesToSupabase(
+        supabase,
+        images.map(f => ({ file: f })),
+        "audit_images",
+        "monitoring_immuno",
+      ) : [];
+
       const payload = {
         waktu: startTime?.toISOString() || new Date().toISOString(),
         ruangan: "Ruang Isolasi",
@@ -138,37 +146,70 @@ export default function InputMonitoringImmunoPage() {
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         status_kepatuhan: stats.statusText,
-              };
+        foto: uploadedUrls,
+        ttd_pj,
+        ttd_ipcn
+      };
 
-      const { data: sessionData, error } = await supabase
-        .from("penempatan_pasien_immunocompromised")
-        .insert([payload])
+      const sessionPayload = {
+        indikator_id: "monitoring_immuno",
+        nama_indikator: "PENEMPATAN PASIEN IMMUNOCOMPROMISED",
+        tanggal_waktu: payload.waktu,
+        observer: payload.supervisor,
+        ruangan: payload.ruangan,
+        jumlah_dinilai: stats.dinilai,
+        jumlah_patuh: stats.patuh,
+        persentase: stats.persentase,
+        status_kepatuhan: stats.statusText,
+        data_indikator: {
+          ...payload.checklist_json,
+          temuan: payload.temuan,
+          rekomendasi: payload.rekomendasi,
+          dokumentasi: uploadedUrls,
+          tanda_tangan: [ttd_pj, ttd_ipcn].filter(Boolean),
+        },
+      };
+
+      const { data: sessionData, error: sessionError } = await supabase
+        .from("audit_sessions")
+        .insert([sessionPayload])
         .select("id")
         .single();
-      if (error) {
-        console.error("Error direct insert", error);
-        const fallbackPayload = {
-          indikator_id: "monitoring_immuno",
-          nama_indikator: "PENEMPATAN PASIEN IMMUNOCOMPROMISED",
-          tanggal_waktu: payload.waktu,
-          observer: payload.supervisor,
-          ruangan: payload.ruangan,
-          jumlah_dinilai: stats.dinilai,
-          jumlah_patuh: stats.patuh,
-          persentase: stats.persentase,
-          status_kepatuhan: stats.statusText,
-          data_indikator: payload.checklist_json,
+      if (sessionError) throw sessionError;
+
+      const detailPayloads = Object.keys(data).map((key) => {
+        let label = key;
+        const found = checklistItems.find(i => i.id === key);
+        if (found) label = found.label;
+        return {
+          session_id: sessionData.id,
+          pertanyaan_id: key,
+          pertanyaan: label,
+          jawaban: String(data[key]),
         };
-        const { data: fallbackData, error: fbError } = await supabase
-          .from("audit_sessions")
-          .insert([fallbackPayload])
+      });
+      await supabase.from("audit_details").insert(detailPayloads);
+
+      try {
+        await supabase
+          .from("penempatan_pasien_immunocompromised")
+          .insert([{ ...payload, ttd_pj, ttd_ipcn }])
           .select("id")
           .single();
-        if (fbError) throw fbError;
-        await uploadAssets(fallbackData.id);
-      } else {
-        await uploadAssets(sessionData.id);
+      } catch (err) {
+        console.warn("Failed to insert into native table, but saved to generic session.", err);
       }
+
+      const ch = supabase.channel('changes_monitoring_immuno');
+      ch.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          ch.send({
+            type: 'broadcast',
+            event: 'audit_submitted',
+            payload: { tableName: 'monitoring_immuno' }
+          }).then(() => supabase.removeChannel(ch));
+        }
+      });
 
       setShowToast(true);
       setTimeout(() => {
@@ -180,14 +221,6 @@ export default function InputMonitoringImmunoPage() {
       alert(`Error: ${err.message || "Gagal menyimpan data"}`);
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const uploadAssets = async (id: string) => {
-    for (let i = 0; i < images.length; i++) {
-      await supabase.storage
-        .from("audit_images")
-        .upload(`images/im_${id}_${i}.jpg`, images[i]);
     }
   };
 

@@ -187,12 +187,12 @@ export default function MonitoringAirbornePage() {
     try {
       const ttd_pj = sigRef.current?.getPjSignature();
       const ttd_ipcn = sigRef.current?.getSupervisorSignature();
-      const uploadedUrls = await uploadImagesToSupabase(
+      const uploadedUrls = images.length > 0 ? await uploadImagesToSupabase(
         supabase,
         images,
-        "logos",
-        "audit",
-      );
+        "audit_images",
+        "monitoring_airborne",
+      ) : [];
 
       const sessionPayload = {
         indikator_id: "monitoring_airborne",
@@ -204,7 +204,13 @@ export default function MonitoringAirbornePage() {
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.status,
-                data_indikator: data,
+        data_indikator: {
+          ...data,
+          temuan,
+          rekomendasi,
+          dokumentasi: uploadedUrls,
+          tanda_tangan: [ttd_pj, ttd_ipcn].filter(Boolean),
+        },
       };
 
       const { data: sessionData, error: sessionError } = await supabase
@@ -222,21 +228,36 @@ export default function MonitoringAirbornePage() {
       }));
       await supabase.from("audit_details").insert(detailPayloads);
 
-      await supabase.from(tableName || "penempatan_pasien_airbone").insert([
-        {
-          waktu: sessionPayload.tanggal_waktu,
-          ruangan: sessionPayload.ruangan,
-          supervisor: sessionPayload.observer,
-          checklist_json: sessionPayload.data_indikator,
-          persentase: sessionPayload.persentase,
-          temuan: temuan,
-          rekomendasi: rekomendasi,
-          foto: uploadedUrls,
-          ttd_pj: ttd_pj,
-          ttd_ipcn: ttd_ipcn,
-          created_at: new Date().toISOString(),
-        },
-      ]);
+      try {
+        await supabase.from(tableName || "penempatan_pasien_airbone").insert([
+          {
+            waktu: sessionPayload.tanggal_waktu,
+            ruangan: sessionPayload.ruangan,
+            supervisor: sessionPayload.observer,
+            checklist_json: sessionPayload.data_indikator,
+            persentase: sessionPayload.persentase,
+            temuan: temuan,
+            rekomendasi: rekomendasi,
+            foto: uploadedUrls,
+            ttd_pj: ttd_pj,
+            ttd_ipcn: ttd_ipcn,
+            created_at: new Date().toISOString(),
+          },
+        ]);
+      } catch (tableErr) {
+        console.warn("Failed to insert into native table, but session was saved:", tableErr);
+      }
+
+      const ch = supabase.channel('changes_monitoring_airborne');
+      ch.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          ch.send({
+            type: 'broadcast',
+            event: 'audit_submitted',
+            payload: { tableName: 'monitoring_airborne' }
+          }).then(() => supabase.removeChannel(ch));
+        }
+      });
 
       setShowToast(true);
       setTimeout(() => {

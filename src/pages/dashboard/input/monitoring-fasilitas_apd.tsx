@@ -169,20 +169,40 @@ export default function MonitoringFasilitasAPDPage() {
 
       await supabase.from(tableName).insert([sessionPayload]);
 
+      // insert to audit_details
+      const detailPayloads = Object.keys(data).map((key) => ({
+        session_id: recordId,
+        pertanyaan_id: key,
+        pertanyaan: checklistItems.find((i) => i.id === key)?.label || key,
+        jawaban: String(data[key] || ""),
+      }));
+      await supabase.from("audit_details").insert(detailPayloads);
+
       const payloadStats = {
         id: recordId,
         indikator_id: tableName,
         kategori_id: "monitoring",
+        nama_indikator: "MONITORING FASILITAS APD",
         ruangan: unit,
+        unit: unit,
         supervisor: observer,
+        observer: observer,
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
         persentase: stats.persentase,
         jumlah_patuh: stats.patuh,
+        jumlah_dinilai: stats.dinilai,
         jumlah_tindakan: stats.dinilai,
+        status_kepatuhan: stats.status,
         ttd_pj_ruangan: ttd_pj,
         ttd_ipcn: ttd_ipcn,
         dokumentasi: uploadedUrls,
-        data_indikator: data,
+        data_indikator: {
+          ...data,
+          temuan,
+          rekomendasi,
+          dokumentasi: uploadedUrls,
+          tanda_tangan: [ttd_pj || null, ttd_ipcn || null],
+        },
       };
 
       await supabase.from("audit_sessions").insert([payloadStats]);

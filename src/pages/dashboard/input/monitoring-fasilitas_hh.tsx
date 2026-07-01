@@ -127,12 +127,14 @@ export default function FasilitasHandHygienePage() {
     try {
       const ttd_pj = sigRef.current?.getPjSignature();
       const ttd_ipcn = sigRef.current?.getSupervisorSignature();
-      const uploadedUrls = await uploadImagesToSupabase(
+      
+      const { uploadImagesToSupabase } = await import("@/lib/upload");
+      const uploadedUrls = images.length > 0 ? await uploadImagesToSupabase(
         supabase,
         images,
-        "logos",
-        "audit",
-      ); // Bucket logic varies, logos used as example from settings
+        "audit_images",
+        "monitoring_fasilitas_hh",
+      ) : [];
 
       const sessionPayload = {
         indikator_id: "monitoring_fasilitas_hand_hygiene",
@@ -144,13 +146,19 @@ export default function FasilitasHandHygienePage() {
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.status,
-                data_indikator: data,
+        data_indikator: {
+          ...data,
+          temuan,
+          rekomendasi,
+          dokumentasi: uploadedUrls,
+          tanda_tangan: [ttd_pj || null, ttd_ipcn || null],
+        },
       };
 
       const { data: sessionData, error: sessionError } = await supabase
         .from("audit_sessions")
         .insert([sessionPayload])
-        .select("*")
+        .select("id")
         .single();
       if (sessionError) throw sessionError;
 
@@ -164,9 +172,32 @@ export default function FasilitasHandHygienePage() {
       await supabase.from("audit_details").insert(detailPayloads);
 
       // Fallback
-      await supabase
-        .from("monitoring_fasilitas_hand_hygiene")
-        .insert([{ ...sessionPayload, created_at: new Date().toISOString() }]);
+      try {
+        await supabase
+          .from("monitoring_fasilitas_hand_hygiene")
+          .insert([{ 
+             ...sessionPayload, 
+             created_at: new Date().toISOString(),
+             ttd_pj,
+             ttd_ipcn,
+             foto: uploadedUrls,
+             temuan,
+             rekomendasi,
+          }]);
+      } catch (err) {
+        console.warn("Failed to insert native table", err);
+      }
+
+      const ch = supabase.channel('changes_monitoring_fasilitas_hand_hygiene');
+      ch.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          ch.send({
+            type: 'broadcast',
+            event: 'audit_submitted',
+            payload: { tableName: 'monitoring_fasilitas_hand_hygiene' }
+          }).then(() => supabase.removeChannel(ch));
+        }
+      });
 
       setShowToast(true);
       setTimeout(() => {

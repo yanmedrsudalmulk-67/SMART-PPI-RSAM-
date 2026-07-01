@@ -36,7 +36,10 @@ const INDICATORS_MAP: Record<string, { cat: string, subcat?: string, title: stri
   'penyuntikan_aman': { cat: 'Kewaspadaan Isolasi', subcat: 'Standar', title: 'Penyuntikan Aman', id: 'penyuntikan_aman', icon: ShieldAlert },
 
   // Kewaspadaan Isolasi - Transmisi
-  'monitoring_airborne': { cat: 'Kewaspadaan Isolasi', subcat: 'Transmisi', title: 'Transmisi Airborne', id: 'monitoring_airborne', icon: Wind },
+  'monitoring_ppi_ruang_isolasi': { cat: 'Kewaspadaan Isolasi', subcat: 'Transmisi', title: 'Ruang Isolasi', id: 'monitoring_ppi_ruang_isolasi', icon: Users },
+  'ppi_ruang_isolasi': { cat: 'Kewaspadaan Isolasi', subcat: 'Transmisi', title: 'PPI di Ruang Isolasi', id: 'ppi_ruang_isolasi', icon: ShieldAlert },
+  'monitoring_airborne': { cat: 'Kewaspadaan Isolasi', subcat: 'Transmisi', title: 'Penempatan Pasien Airborne', id: 'monitoring_airborne', icon: Wind },
+  'monitoring_immuno': { cat: 'Kewaspadaan Isolasi', subcat: 'Transmisi', title: 'Penempatan Pasien Immunocompromised', id: 'monitoring_immuno', icon: ShieldCheck },
 
   // Kewaspadaan Isolasi - Monitoring
   'monitoring_fasilitas_hand_hygiene': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Fasilitas Hand Hygiene', id: 'monitoring_fasilitas_hand_hygiene', icon: Activity },
@@ -51,8 +54,6 @@ const INDICATORS_MAP: Record<string, { cat: string, subcat?: string, title: stri
   'monitoring_ambulance': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Ambulance', id: 'monitoring_ambulance', icon: Truck },
   'monitoring_tps': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'TPS Limbah', id: 'monitoring_tps', icon: AlertTriangle },
   'monitoring_tunggu': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Ruang Tunggu', id: 'monitoring_tunggu', icon: Users },
-  'monitoring_ppi_ruang_isolasi': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Ruang Isolasi', id: 'monitoring_ppi_ruang_isolasi', icon: Users },
-  'monitoring_immuno': { cat: 'Kewaspadaan Isolasi', subcat: 'Monitoring', title: 'Immunocompromised', id: 'monitoring_immuno', icon: ShieldAlert },
   
   // Surveilans HAIs
   'isk': { cat: 'Surveilans HAIs', title: 'Infeksi Saluran Kemih (ISK)', id: 'isk', icon: Activity },
@@ -363,16 +364,16 @@ export default function ReportsPage() {
 
   const startDateISO = useMemo(() => {
     if (periode === 'Bulanan') {
-      return new Date(selectedYear, selectedMonth, 1).toISOString();
+      return new Date(Date.UTC(selectedYear, selectedMonth, 1)).toISOString();
     }
     if (periode === 'Triwulan') {
-      return new Date(selectedYear, selectedQuarter * 3, 1).toISOString();
+      return new Date(Date.UTC(selectedYear, selectedQuarter * 3, 1)).toISOString();
     }
     if (periode === 'Semester') {
-      return new Date(selectedYear, selectedSemester * 6, 1).toISOString();
+      return new Date(Date.UTC(selectedYear, selectedSemester * 6, 1)).toISOString();
     }
     if (periode === 'Tahunan') {
-      return new Date(selectedYear, 0, 1).toISOString();
+      return new Date(Date.UTC(selectedYear, 0, 1)).toISOString();
     }
     
     return new Date().toISOString();
@@ -381,10 +382,10 @@ export default function ReportsPage() {
   // Calculate previous period for trend comparison
   const prevPeriodStartISO = useMemo(() => {
     const d = new Date(startDateISO);
-    if (periode === 'Bulanan') d.setMonth(d.getMonth() - 1);
-    else if (periode === 'Triwulan') d.setMonth(d.getMonth() - 3);
-    else if (periode === 'Semester') d.setMonth(d.getMonth() - 6);
-    else if (periode === 'Tahunan') d.setFullYear(d.getFullYear() - 1);
+    if (periode === 'Bulanan') d.setUTCMonth(d.getUTCMonth() - 1);
+    else if (periode === 'Triwulan') d.setUTCMonth(d.getUTCMonth() - 3);
+    else if (periode === 'Semester') d.setUTCMonth(d.getUTCMonth() - 6);
+    else if (periode === 'Tahunan') d.setUTCFullYear(d.getUTCFullYear() - 1);
     return d.toISOString();
   }, [startDateISO, periode]);
 
@@ -656,7 +657,7 @@ export default function ReportsPage() {
                   className="mt-4 mb-2 max-w-2xl mx-auto w-full"
                 >
                   <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2.5 px-3">Klasifikasi Indikator</p>
-                  <div className="relative flex p-1.5 bg-white/80 dark:bg-[#0B1120]/80 backdrop-blur-md rounded-full border border-slate-200 dark:border-white/10 shadow-[inset_0_1px_4px_rgba(0,0,0,0.05)] w-full">
+                  <div className="relative flex p-1.5 bg-white/80 dark:bg-[#0B1120]/80 backdrop-blur-sm rounded-full mb-4 border border-white/20 dark:border-white/10 shadow-[inset_0_1px_4px_rgba(0,0,0,0.05)] w-full">
                     <motion.div
                       className={`absolute top-1.5 bottom-1.5 rounded-full transition-colors duration-500 border ${
                         subKategori === "Standar"
@@ -690,16 +691,16 @@ export default function ReportsPage() {
                           key={tab.id}
                           id={`sub-tab-${tab.id.toLowerCase()}`}
                           onClick={() => setSubKategori(tab.id)}
-                          className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-3.5 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-full transition-colors relative z-10 cursor-pointer whitespace-nowrap shrink-0 select-none ${
+                          className={`flex-1 flex items-center justify-center gap-2 py-3 text-[10px] sm:text-xs font-bold uppercase tracking-widest rounded-full transition-colors relative z-10 whitespace-nowrap shrink-0 overflow-hidden text-ellipsis ${
                             isSubActive
-                              ? "text-white font-black"
+                              ? "text-white"
                               : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white"
                           }`}
                         >
                           <Icon
-                            className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-300 ${isSubActive ? "text-white scale-110" : "text-slate-500 group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-white"}`}
+                            className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform duration-300 ${isSubActive ? "text-white" : "text-slate-500 group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-white"}`}
                           />
-                          <span>{tab.label}</span>
+                          <span className="truncate">{tab.label}</span>
                         </button>
                       );
                     })}
@@ -923,7 +924,8 @@ export default function ReportsPage() {
                     tableName={selectedIndicator}
                     indicatorItems={genericAuditConfigs[selectedIndicator]?.items || []}
                     title={selectedData?.title || 'Laporan'}
-                    filters={{ searchQuery: '', periode: startDateISO, type: periode }}
+                    extraFilter={genericAuditConfigs[selectedIndicator]?.extraFilter}
+                    filters={{ searchQuery: '', periode: startDateISO, type: periode, unitFilter: selectedUnit } as any}
                   />
               )}
             </div>

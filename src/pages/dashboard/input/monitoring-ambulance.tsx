@@ -107,24 +107,77 @@ export default function MonitoringAmbulancePage() {
     if (!observer || !ambulanceId || stats.dinilai === 0) return;
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from("monitoring_ambulance").insert([
-        {
-          observer,
-          ambulance_id: ambulanceId,
-          start_time: startTime?.toISOString(),
-          end_time: new Date().toISOString(),
-          data_json: data,
-          patuh: stats.patuh,
-          dinilai: stats.dinilai,
-          persentase: stats.persentase,
-        },
-      ]);
-      if (error) throw error;
+      const sessionPayload = {
+        indikator_id: "monitoring_ambulance",
+        nama_indikator: "MONITORING AMBULANCE",
+        tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
+        observer,
+        unit: "Ambulance",
+        ruangan: ambulanceId,
+        jumlah_dinilai: stats.dinilai,
+        jumlah_patuh: stats.patuh,
+        persentase: stats.persentase,
+        status_kepatuhan: stats.statusText,
+        data_indikator: data,
+      };
+
+      const { data: sessionData, error: sessionError } = await supabase
+        .from("audit_sessions")
+        .insert([sessionPayload])
+        .select("id")
+        .single();
+      if (sessionError) throw sessionError;
+
+      // detail entries
+      const detailPayloads = checklistItems.map((item) => ({
+        session_id: sessionData.id,
+        pertanyaan_id: item.id,
+        pertanyaan: item.label,
+        jawaban: String(data[item.id] || ""),
+      }));
+      await supabase.from("audit_details").insert(detailPayloads);
+
+      // optional custom tables insert
+      try {
+        await supabase.from("monitoring_ambulance").insert([
+          {
+            observer,
+            ambulance_id: ambulanceId,
+            start_time: startTime?.toISOString(),
+            end_time: new Date().toISOString(),
+            data_json: data,
+            patuh: stats.patuh,
+            dinilai: stats.dinilai,
+            persentase: stats.persentase,
+          },
+        ]);
+      } catch (err) {
+        console.warn("Failed to insert into monitoring_ambulance, but saved to generic session.", err);
+      }
+
+      try {
+        await supabase.from("audit_ambulance").insert([
+          {
+            waktu: startTime?.toISOString(),
+            ruangan: ambulanceId,
+            supervisor: observer,
+            checklist_json: data,
+            persentase: stats.persentase,
+            status: stats.statusText,
+          },
+        ]);
+      } catch (err) {
+        // Safe to ignore if audit_ambulance table isn't fully set up with this exact schema
+      }
+
       setShowToast(true);
-      setTimeout(() => router.push("/dashboard/input"), 2000);
-    } catch (err) {
+      setTimeout(() => {
+        setShowToast(false);
+        router.push("/dashboard/input/isolasi");
+      }, 2000);
+    } catch (err: any) {
       console.error(err);
-      alert("Gagal menyimpan data");
+      alert(`Gagal menyimpan data: ${err.message || ""}`);
     } finally {
       setIsSubmitting(false);
     }
