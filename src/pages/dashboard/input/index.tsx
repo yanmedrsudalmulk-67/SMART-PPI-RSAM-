@@ -16,6 +16,8 @@ import {
   ArrowDown,
   Calendar,
   Filter,
+  ShieldCheck,
+  ShieldAlert,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -27,7 +29,7 @@ const STATIC_MODULES = [
   {
     id: "kewaspadaan-isolasi",
     title: "Kewaspadaan Isolasi",
-    desc: "Audit Kewaspadaan Standar & Transmisi",
+    desc: "Audit Kewaspadaan Standar, Transmisi & Monitoring lainnya",
     icon: Shield,
     colorTheme: {
       bgActive: "bg-[#2563EB]",
@@ -87,7 +89,7 @@ const STATIC_MODULES = [
   {
     id: "diklat",
     title: "Pendidikan & Pelatihan Staff",
-    desc: "Input pelatihan & edukasi petugas kesehatan",
+    desc: "Input dokumentasi Pendidikan & Pelatihan Staff",
     icon: GraduationCap,
     colorTheme: {
       bgActive: "bg-[#F59E0B]",
@@ -260,36 +262,70 @@ export default function InputIndexPage() {
     };
 
     return STATIC_MODULES.map((mod) => {
-      let curr = {
+      let curr: any = {
         records: 0,
         totalDinilai: 0,
         totalPatuh: 0,
         persentase: 0,
         avgPersentase: 0,
+        standarFilled: 0,
+        transmisiFilled: 0,
+        monitoringFilled: 0,
       };
-      let prev = {
+      let prev: any = {
         records: 0,
         totalDinilai: 0,
         totalPatuh: 0,
         persentase: 0,
         avgPersentase: 0,
+        standarFilled: 0,
+        transmisiFilled: 0,
+        monitoringFilled: 0,
       };
 
       if (mod.id === "kewaspadaan-isolasi") {
-        curr = calculateStats(currSessions, [
-          "audit_hand_hygiene",
-          "audit_apd",
-          "audit_ruang_isolasi",
-          "audit_tps",
-          "audit_ruang_tunggu",
-        ]);
-        prev = calculateStats(prevSessions, [
-          "audit_hand_hygiene",
-          "audit_apd",
-          "audit_ruang_isolasi",
-          "audit_tps",
-          "audit_ruang_tunggu",
-        ]);
+        const standarIds = [
+          "audit_hand_hygiene", "audit_apd", "dekontaminasi_alat", 
+          "pengendalian_lingkungan", "pengelolaan_limbah_medis", 
+          "pengelolaan_limbah_tajam", "penatalaksanaan_linen", 
+          "perlindungan_petugas", "penempatan_pasien", 
+          "etika_batuk", "penyuntikan_aman"
+        ];
+        const transmisiIds = [
+          "monitoring_ppi_ruang_isolasi", "ppi_ruang_isolasi", 
+          "monitoring_airborne", "monitoring_immuno"
+        ];
+        const monitoringIds = [
+          "monitoring_fasilitas_hand_hygiene", "monitoring_fasilitas_apd", 
+          "monitoring_ibs", "monitoring_cssd", "monitoring_laboratorium", 
+          "monitoring_radiologi", "monitoring_farmasi", "monitoring_gizi", 
+          "monitoring_jenazah", "monitoring_ambulance", "monitoring_tps", 
+          "monitoring_tunggu"
+        ];
+        
+        const calcIso = (data: any[]) => {
+            const standarSet = new Set(data.filter(d => standarIds.some(id => d.indikator_id?.includes(id))).map(d => standarIds.find(id => d.indikator_id?.includes(id))));
+            const transmisiSet = new Set(data.filter(d => transmisiIds.some(id => d.indikator_id?.includes(id))).map(d => transmisiIds.find(id => d.indikator_id?.includes(id))));
+            const monitoringSet = new Set(data.filter(d => monitoringIds.some(id => d.indikator_id?.includes(id))).map(d => monitoringIds.find(id => d.indikator_id?.includes(id))));
+            
+            const standarSize = Math.min(standarSet.size, 10);
+            const totalFilled = standarSize + transmisiSet.size + monitoringSet.size;
+            const totalExpected = 10 + 4 + 12; // 26
+            
+            return {
+                records: data.length,
+                totalDinilai: totalExpected,
+                totalPatuh: totalFilled,
+                persentase: (totalFilled / totalExpected) * 100,
+                avgPersentase: 0,
+                standarFilled: standarSize,
+                transmisiFilled: transmisiSet.size,
+                monitoringFilled: monitoringSet.size,
+            };
+        };
+
+        curr = calcIso(currSessions);
+        prev = calcIso(prevSessions);
       } else if (mod.id === "surveilans-hais") {
         curr = calculateStats(currSessions, ["surveilans"]);
         prev = calculateStats(prevSessions, ["surveilans"]);
@@ -310,8 +346,12 @@ export default function InputIndexPage() {
       let statCountVal = curr.totalDinilai.toString();
       let statPatuhLabel = "Patuh";
       let statPatuhVal = curr.totalPatuh.toString();
+      let isTerpenuhi = false;
 
-      if (mod.id === "surveilans-hais") {
+      if (mod.id === "kewaspadaan-isolasi") {
+        valLabel = "TERPENUHI";
+        isTerpenuhi = curr.totalPatuh >= curr.totalDinilai;
+      } else if (mod.id === "surveilans-hais") {
         finalPersentase = curr.avgPersentase;
         finalPrevPersentase = prev.avgPersentase;
         diff = finalPersentase - finalPrevPersentase;
@@ -362,18 +402,66 @@ export default function InputIndexPage() {
 
       // Format count text
       let mainCount = curr.totalDinilai.toString();
+      if (mod.id === "kewaspadaan-isolasi")
+        mainCount = curr.totalPatuh.toString();
       if (mod.id === "surveilans-hais")
         mainCount = (curr.totalDinilai - curr.totalPatuh).toString();
       if (mod.id === "diklat") mainCount = curr.records.toString();
 
+      let subStatsArray = [
+        {
+          label: statCountLabel,
+          value: statCountVal,
+          icon: mod.icon,
+          iconColor: mod.colorTheme.colIconBox,
+        },
+        {
+          label: statPatuhLabel,
+          value: statPatuhVal,
+          icon: CheckCircle2,
+          iconColor: passStandard 
+            ? "bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400" 
+            : "bg-red-500/5 dark:bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400",
+        },
+        {
+          label: "Trend",
+          value: `${diff > 0 ? "+" : ""}${diff.toFixed(1)}%`,
+          icon: isTrendUp ? TrendingUp : TrendingDown,
+          iconColor: mod.colorTheme.colIconBox,
+        },
+      ];
+
+      if (mod.id === "kewaspadaan-isolasi") {
+        subStatsArray = [
+          {
+            label: "Standar",
+            value: `${curr.standarFilled}/10`,
+            icon: ShieldCheck,
+            iconColor: mod.colorTheme.colIconBox,
+          },
+          {
+            label: "Transmisi",
+            value: `${curr.transmisiFilled}/4`,
+            icon: ShieldAlert,
+            iconColor: mod.colorTheme.colIconBox,
+          },
+          {
+            label: "Monitoring",
+            value: `${curr.monitoringFilled}/12`,
+            icon: Activity,
+            iconColor: mod.colorTheme.colIconBox,
+          },
+        ];
+      }
+
       return {
         ...mod,
-        passStandard,
+        passStandard: mod.id === "kewaspadaan-isolasi" ? isTerpenuhi : passStandard,
         computed: {
+          standardLabel: mod.id === "kewaspadaan-isolasi" ? (isTerpenuhi ? "SUDAH TERPENUHI" : "BELUM TERPENUHI") : (passStandard ? "DI ATAS STANDAR" : "DI BAWAH STANDAR"),
           mainCount,
           mainLabel: `${finalPersentase.toFixed(1)}% ${valLabel}`,
           trendUp: isTrendUp,
-          // Up is good except for HAIs
           trendColor:
             mod.id === "surveilans-hais"
               ? isTrendUp
@@ -385,28 +473,7 @@ export default function InputIndexPage() {
           trendText,
           progress: Math.min(Math.max(finalPersentase, 0), 100),
           progressColor,
-          subStats: [
-            {
-              label: statCountLabel,
-              value: statCountVal,
-              icon: mod.icon,
-              iconColor: mod.colorTheme.colIconBox,
-            },
-            {
-              label: statPatuhLabel,
-              value: statPatuhVal,
-              icon: CheckCircle2,
-              iconColor: passStandard 
-                ? "bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400" 
-                : "bg-red-500/5 dark:bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400",
-            },
-            {
-              label: "Trend",
-              value: `${diff > 0 ? "+" : ""}${diff.toFixed(1)}%`,
-              icon: isTrendUp ? TrendingUp : TrendingDown,
-              iconColor: mod.colorTheme.colIconBox,
-            },
-          ],
+          subStats: subStatsArray,
         },
       };
     });
@@ -579,7 +646,7 @@ export default function InputIndexPage() {
                 <div
                   className={`inline-flex max-w-fit px-3 py-1.5 border border-current rounded-full items-center justify-center gap-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.1em] ${mod.passStandard ? "text-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.2)]" : "text-red-500 shadow-[0_0_10px_rgba(239,68,68,0.2)]"}`}
                 >
-                  {mod.passStandard ? "DI ATAS STANDAR" : "DI BAWAH STANDAR"}
+                  {mod.computed.standardLabel || (mod.passStandard ? "DI ATAS STANDAR" : "DI BAWAH STANDAR")}
                 </div>
               </div>
 

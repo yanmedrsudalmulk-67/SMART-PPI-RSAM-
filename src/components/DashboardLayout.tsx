@@ -212,7 +212,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!mounted) return null;
 
   return (
-    <div className={`h-[100dvh] w-screen overflow-hidden flex ${isLightMode ? 'bg-white text-slate-900' : 'bg-[#0a0f1c] text-slate-200'}`}>
+    <div className={`h-[100dvh] w-screen overflow-hidden flex ${isLightMode ? 'bg-white text-slate-900' : 'bg-gradient-to-br from-[#130b29] via-[#0a0f1c] to-[#09152b] text-slate-200'}`}>
       {/* Mobile Backdrop Overlay */}
       <AnimatePresence>
         {isMobile && isSidebarOpen && (
@@ -239,7 +239,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           damping: 40,
           mass: 0.8
         }}
-        className={`backdrop-blur-md border-r flex flex-col fixed inset-y-4 left-4 z-50 w-[280px] rounded-[24px] transition-colors duration-500 print:hidden transform-gpu will-change-transform ${isLightMode ? 'bg-[linear-gradient(180deg,#10b981_0%,#059669_55%,#047857_100%)] text-white border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.15)]' : 'bg-[#0a0f1c]/95 border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.5)]'}`}
+        className={`border-r flex flex-col fixed inset-y-4 left-4 z-50 w-[280px] rounded-[24px] transition-colors duration-500 print:hidden transform-gpu will-change-transform ${isLightMode ? 'backdrop-blur-md bg-[linear-gradient(180deg,#10b981_0%,#059669_55%,#047857_100%)] text-white border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.15)]' : 'backdrop-blur-[40px] bg-white/[0.02] border border-white/[0.08] shadow-[0_8px_32px_0_rgba(0,0,0,0.4),inset_0_1px_0_0_rgba(255,255,255,0.1)]'}`}
       >
         {/* New Elegant Toggle Button on the Right Border */}
         <button
@@ -303,15 +303,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         !isMobile ? (isSidebarOpen ? 'ml-[312px]' : 'ml-[40px]') : 'ml-0'
       }`}>
         {/* Top Header */}
-        <header className={`min-h-[64px] sm:h-20 shrink-0 border-b flex items-center justify-between px-4 sm:px-8 sticky top-0 z-[45] backdrop-blur-md transition-all duration-500 print:hidden ${
+        <header className={`min-h-[64px] sm:h-20 shrink-0 border-b flex items-center justify-between px-4 sm:px-8 sticky top-0 z-[45] transition-all duration-500 print:hidden ${
           isLightMode 
-            ? 'bg-white/80 border-slate-200/60 shadow-sm' 
-            : 'bg-[#0a0f1c]/80 border-white/5 shadow-[0_4px_20px_rgba(59,130,246,0.08)]'
+            ? 'backdrop-blur-md bg-white/80 border-slate-200/60 shadow-sm' 
+            : 'backdrop-blur-[40px] bg-white/[0.02] border-white/[0.08] shadow-[0_4px_30px_rgba(0,0,0,0.2)]'
         }`}>
           <div className="flex items-center gap-2 sm:gap-4">
             
             {/* Mobile Hamburger Menu Toggle */}
-            {!navItems.some(item => item.href === pathname) && (
+            {!navItems.some(item => item.href === pathname) && !pathname.startsWith('/dashboard/input') && (
               <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                 className={`md:hidden p-2 -ml-2 rounded-lg transition-colors ${
