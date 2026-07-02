@@ -15,7 +15,6 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { LiveStatisticsCard } from "@/components/LiveStatisticsCard";
 import { EditableSelect } from "@/components/EditableSelect";
 import { useAppContext } from "@/components/Providers";
-
 const checklistItems = [
   { id: "amb_1", label: "Kebersihan lantai, dinding dan langit-langit" },
   { id: "amb_2", label: "Kebersihan stretcher / tempat tidur pasien" },
@@ -28,7 +27,6 @@ const checklistItems = [
   { id: "amb_9", label: "Tidak ada makanan dan minuman di ambulance" },
   { id: "amb_10", label: "Suhu AC terjaga dan dingin" },
 ];
-
 export default function MonitoringAmbulancePage() {
   const router = useRouter();
   const { userRole } = useAppContext();
@@ -41,12 +39,10 @@ export default function MonitoringAmbulancePage() {
   >({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
-
   const [isEditMode, setIsEditMode] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [preloadedPjSignature, setPreloadedPjSignature] = useState<string | null>(null);
   const [preloadedIpcnSignature, setPreloadedIpcnSignature] = useState<string | null>(null);
-
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -55,14 +51,12 @@ export default function MonitoringAmbulancePage() {
       if (id && mode === "edit") {
         setIsEditMode(true);
         setEditId(id);
-
         const loadEditData = async () => {
           const { data: ed, error } = await supabase
             .from("audit_sessions")
             .select("*")
             .eq("id", id)
             .single();
-
           if (ed && !error) {
             if (ed.tanggal_waktu) setStartTime(new Date(ed.tanggal_waktu));
             const indicatorsData = ed.data_indikator || ed.checklist_json || {};
@@ -84,11 +78,9 @@ export default function MonitoringAmbulancePage() {
       setStartTime(new Date());
     }
   }, []);
-
   const handleActionClick = (id: string, val: "ya" | "tidak" | "na") => {
     setData((prev) => ({ ...prev, [id]: val }));
   };
-
   const stats = useMemo(() => {
     const dinilai = Object.values(data).filter((v) => v !== null).length;
     const patuh = Object.values(data).filter((v) => v === "ya").length;
@@ -101,7 +93,6 @@ export default function MonitoringAmbulancePage() {
     }
     return { dinilai, patuh, persentase, statusText };
   }, [data]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!observer || !ambulanceId || stats.dinilai === 0) return;
@@ -109,25 +100,23 @@ export default function MonitoringAmbulancePage() {
     try {
       const sessionPayload = {
         indikator_id: "monitoring_ambulance",
+        kategori: "Kewaspadaan Isolasi",
         nama_indikator: "MONITORING AMBULANCE",
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
         observer,
         unit: "Ambulance",
-        ruangan: ambulanceId,
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.statusText,
         data_indikator: data,
       };
-
       const { data: sessionData, error: sessionError } = await supabase
         .from("audit_sessions")
         .insert([sessionPayload])
         .select("id")
         .single();
       if (sessionError) throw sessionError;
-
       // detail entries
       const detailPayloads = checklistItems.map((item) => ({
         session_id: sessionData.id,
@@ -136,7 +125,6 @@ export default function MonitoringAmbulancePage() {
         jawaban: String(data[item.id] || ""),
       }));
       await supabase.from("audit_details").insert(detailPayloads);
-
       // optional custom tables insert
       try {
         await supabase.from("monitoring_ambulance").insert([
@@ -154,7 +142,6 @@ export default function MonitoringAmbulancePage() {
       } catch (err) {
         console.warn("Failed to insert into monitoring_ambulance, but saved to generic session.", err);
       }
-
       try {
         await supabase.from("audit_ambulance").insert([
           {
@@ -169,7 +156,6 @@ export default function MonitoringAmbulancePage() {
       } catch (err) {
         // Safe to ignore if audit_ambulance table isn't fully set up with this exact schema
       }
-
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
@@ -182,7 +168,6 @@ export default function MonitoringAmbulancePage() {
       setIsSubmitting(false);
     }
   };
-
   return (
     <div className="max-w-7xl mx-auto pb-32">
       <AnimatePresence>
@@ -198,7 +183,6 @@ export default function MonitoringAmbulancePage() {
           </motion.div>
         )}
       </AnimatePresence>
-
       <div className="flex items-center gap-6 mb-8 py-6 border-b border-white/5">
         <Link
           href="/dashboard/input"
@@ -215,7 +199,6 @@ export default function MonitoringAmbulancePage() {
           </p>
         </div>
       </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
         <div className="space-y-6">
           <div className="bg-white/5 p-8 rounded-[32px] border border-white/5">
@@ -239,7 +222,6 @@ export default function MonitoringAmbulancePage() {
               />
             </div>
           </div>
-
           <div className="space-y-4">
             {checklistItems.map((item) => {
               const val = data[item.id];
@@ -285,7 +267,6 @@ export default function MonitoringAmbulancePage() {
             })}
           </div>
         </div>
-
         <LiveStatisticsCard
           totalDinilai={stats.dinilai}
           totalPatuh={stats.patuh}
@@ -293,7 +274,6 @@ export default function MonitoringAmbulancePage() {
           persentase={stats.persentase}
           statusText={stats.statusText}
         />
-
         <button
           onClick={handleSubmit}
           disabled={
@@ -312,7 +292,6 @@ export default function MonitoringAmbulancePage() {
     </div>
   );
 }
-
 MonitoringAmbulancePage.getLayout = function getLayout(page: ReactElement) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };

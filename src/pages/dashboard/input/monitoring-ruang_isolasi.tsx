@@ -21,7 +21,6 @@ import DigitalSignatureSection, {
 } from "@/components/DigitalSignatureSection";
 import { EditableSelect } from "@/components/EditableSelect";
 import { useAppContext } from "@/components/Providers";
-
 const checklistGroups = [
   {
     title: "A: RUANG ISOLASI",
@@ -71,32 +70,25 @@ const checklistGroups = [
     ],
   },
 ];
-
 type AuditStatus = "ya" | "tidak" | "na" | null;
-
 export default function InputMonitoringRuangIsolasiPage() {
   const router = useRouter();
   const [isEditMode, setIsEditMode] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const { userRole } = useAppContext();
   const isIPCN = userRole === "IPCN" || userRole === "Admin";
-
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [observer, setObserver] = useState("");
-
   const [data, setData] = useState<Record<string, AuditStatus>>({});
   const [keteranganData, setKeteranganData] = useState<Record<string, string>>(
     {},
   );
-
   const [temuan, setTemuan] = useState("");
   const [rekomendasi, setRekomendasi] = useState("");
   const [images, setImages] = useState<File[]>([]);
   const [pjName, setPjName] = useState("");
-
   const sigRef = useRef<DigitalSignatureRef>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
@@ -107,7 +99,6 @@ export default function InputMonitoringRuangIsolasiPage() {
       "D: PETUGAS ISOLASI": true,
     },
   );
-
   useEffect(() => {
     setStartTime(new Date());
     const initialData: Record<string, AuditStatus> = {};
@@ -121,29 +112,23 @@ export default function InputMonitoringRuangIsolasiPage() {
     setData(initialData);
     setKeteranganData(initialKet);
   }, []);
-
   const toggleGroup = (title: string) => {
     setExpandedGroups((prev) => ({ ...prev, [title]: !prev[title] }));
   };
-
   const handleActionClick = (id: string, stat: AuditStatus) => {
     setData((prev) => ({ ...prev, [id]: stat }));
   };
-
   const handleKeteranganChange = (id: string, val: string) => {
     setKeteranganData((prev) => ({ ...prev, [id]: val }));
   };
-
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setImages((prev) => [...prev, ...Array.from(e.target.files!)]);
     }
   };
-
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
-
   const stats = useMemo(() => {
     let patuh = 0;
     let dinilai = 0;
@@ -164,11 +149,9 @@ export default function InputMonitoringRuangIsolasiPage() {
     }
     return { patuh, dinilai, persentase, statusText };
   }, [data]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!observer) return alert("Pilih Supervisor terlebih dahulu");
-
     setIsSubmitting(true);
     try {
       const ttd_pj = sigRef.current?.getPjSignature();
@@ -181,10 +164,8 @@ export default function InputMonitoringRuangIsolasiPage() {
         "audit_images",
         "monitoring_ruang_isolasi",
       ) : [];
-
       const payload = {
         waktu: startTime?.toISOString() || new Date().toISOString(),
-        supervisor: observer,
         checklist_json: {
           data,
           keterangan: keteranganData,
@@ -199,12 +180,11 @@ export default function InputMonitoringRuangIsolasiPage() {
         ttd_pj,
         ttd_ipcn
       };
-
       const sessionPayload = {
         indikator_id: "monitoring_ppi_ruang_isolasi",
         nama_indikator: "MONITORING RUANG ISOLASI",
         tanggal_waktu: payload.waktu,
-        observer: payload.supervisor,
+        observer: observer,
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
@@ -217,14 +197,12 @@ export default function InputMonitoringRuangIsolasiPage() {
           tanda_tangan: [ttd_pj, ttd_ipcn].filter(Boolean),
         },
       };
-
       const { data: sessionData, error: sessionError } = await supabase
         .from("audit_sessions")
         .insert([sessionPayload])
         .select("id")
         .single();
       if (sessionError) throw sessionError;
-
       const detailPayloads = Object.keys(data).map((key) => {
         let label = key;
         checklistGroups.forEach(g => {
@@ -239,7 +217,6 @@ export default function InputMonitoringRuangIsolasiPage() {
         };
       });
       await supabase.from("audit_details").insert(detailPayloads);
-
       try {
         await supabase
           .from("audit_ruang_isolasi")
@@ -249,7 +226,6 @@ export default function InputMonitoringRuangIsolasiPage() {
       } catch (err) {
         console.warn("Failed to insert into native table, but saved to generic session.", err);
       }
-
       const ch = supabase.channel('changes_monitoring_ppi_ruang_isolasi');
       ch.subscribe((status) => {
         if (status === 'SUBSCRIBED') {
@@ -260,7 +236,6 @@ export default function InputMonitoringRuangIsolasiPage() {
           }).then(() => supabase.removeChannel(ch));
         }
       });
-
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
@@ -273,7 +248,6 @@ export default function InputMonitoringRuangIsolasiPage() {
       setIsSubmitting(false);
     }
   };
-
   return (
     <div className="max-w-4xl mx-auto pb-32">
       <AnimatePresence>
@@ -289,7 +263,6 @@ export default function InputMonitoringRuangIsolasiPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
       <div className="flex items-center gap-6 mb-8 py-6 border-b border-white/5">
         <Link
           href="/dashboard/input/isolasi"
@@ -307,7 +280,6 @@ export default function InputMonitoringRuangIsolasiPage() {
           </p>
         </div>
       </div>
-
       <div className="space-y-6">
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -345,7 +317,6 @@ export default function InputMonitoringRuangIsolasiPage() {
             />
           </div>
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
             📋 Checklist Audit Ruang Isolasi
@@ -447,7 +418,6 @@ export default function InputMonitoringRuangIsolasiPage() {
             ))}
           </div>
         </div>
-
         <LiveStatisticsCard
           totalDinilai={stats.dinilai}
           totalPatuh={stats.patuh}
@@ -456,7 +426,6 @@ export default function InputMonitoringRuangIsolasiPage() {
           statusText={stats.statusText}
           title="KEPATUHAN RUANG ISOLASI"
         />
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
             <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -481,7 +450,6 @@ export default function InputMonitoringRuangIsolasiPage() {
             />
           </div>
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
             📷 DOKUMENTASI
@@ -526,7 +494,6 @@ export default function InputMonitoringRuangIsolasiPage() {
             />
           </div>
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
             ✍️ TANDA TANGAN DIGITAL
@@ -538,7 +505,6 @@ export default function InputMonitoringRuangIsolasiPage() {
             pjLabel="PJ RUANGAN"
           />
         </div>
-
         <button
           onClick={handleSubmit}
           disabled={isSubmitting || !observer || stats.dinilai === 0}
@@ -555,7 +521,6 @@ export default function InputMonitoringRuangIsolasiPage() {
     </div>
   );
 }
-
 InputMonitoringRuangIsolasiPage.getLayout = function getLayout(
   page: ReactElement,
 ) {

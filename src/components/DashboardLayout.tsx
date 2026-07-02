@@ -311,14 +311,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex items-center gap-2 sm:gap-4">
             
             {/* Mobile Hamburger Menu Toggle */}
-            <button
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className={`md:hidden p-2 -ml-2 rounded-lg transition-colors ${
-                isLightMode ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'
-              }`}
-            >
-              <Menu className="w-6 h-6" />
-            </button>
+            {!navItems.some(item => item.href === pathname) && (
+              <button
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className={`md:hidden p-2 -ml-2 rounded-lg transition-colors ${
+                  isLightMode ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'
+                }`}
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+            )}
 
             {/* Clock Widget */}
             <ClockWidget isLightMode={isLightMode} />
@@ -385,7 +387,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Page Content */}
-        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 pb-32 sm:p-6 sm:pb-8 lg:p-8 relative overscroll-y-none [transform:translateZ(0)] will-change-scroll">
+        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 pb-56 sm:p-6 sm:pb-8 lg:p-8 relative overscroll-y-none [transform:translateZ(0)] will-change-scroll">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={pathname}

@@ -31,7 +31,6 @@ import DigitalSignatureSection, {
   DigitalSignatureRef,
 } from "@/components/DigitalSignatureSection";
 import { EditableSelect } from "@/components/EditableSelect";
-
 const units = [
   "IGD",
   "ICU",
@@ -47,7 +46,6 @@ const units = [
   "Rekam Medis",
   "Pantry",
 ];
-
 const checklistItems = [
   { id: "1", label: "Tersedia Handrub di koridor ruang perawatan" },
   { id: "2", label: "Tersedia Handrub di tempat tidur pasien" },
@@ -59,17 +57,14 @@ const checklistItems = [
   { id: "8", label: "Tersedia poster handrub dan hand hygiene" },
   { id: "9", label: "Wastafel dalam kondisi bersih" },
 ];
-
 type AuditStatus = "ya" | "tidak" | "na" | null;
 type Observer = { id: string; nama: string };
-
 export default function FasilitasHandHygienePage() {
   const router = useRouter();
   const [isEditMode, setIsEditMode] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const { userRole } = useAppContext();
   const isIPCN = userRole === "admin" || userRole === "ipcn";
-
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [observer, setObserver] = useState("");
   const [unit, setUnit] = useState("");
@@ -81,18 +76,15 @@ export default function FasilitasHandHygienePage() {
   const sigRef = useRef<DigitalSignatureRef>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
-
   useEffect(() => {
     const initialData: Record<string, AuditStatus> = {};
     checklistItems.forEach((item) => (initialData[item.id] = null));
     setStartTime(new Date());
     setData(initialData);
   }, []);
-
   const toggleItem = (id: string, stat: AuditStatus) => {
     setData((prev) => ({ ...prev, [id]: stat }));
   };
-
   const stats = useMemo(() => {
     let patuh = 0;
     let dinilai = 0;
@@ -111,7 +103,6 @@ export default function FasilitasHandHygienePage() {
         persentase >= 80 ? "Patuh" : persentase >= 60 ? "Cukup" : "Tidak Patuh";
     return { patuh, dinilai, persentase, status };
   }, [data]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!observer || !unit) {
@@ -122,7 +113,6 @@ export default function FasilitasHandHygienePage() {
       alert("Harap isi semua checklist!");
       return;
     }
-
     setIsSubmitting(true);
     try {
       const ttd_pj = sigRef.current?.getPjSignature();
@@ -135,9 +125,9 @@ export default function FasilitasHandHygienePage() {
         "audit_images",
         "monitoring_fasilitas_hh",
       ) : [];
-
       const sessionPayload = {
         indikator_id: "monitoring_fasilitas_hand_hygiene",
+        kategori: "Kewaspadaan Isolasi",
         nama_indikator: "MONITORING FASILITAS KEBERSIHAN TANGAN",
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
         observer,
@@ -152,16 +142,16 @@ export default function FasilitasHandHygienePage() {
           rekomendasi,
           dokumentasi: uploadedUrls,
           tanda_tangan: [ttd_pj || null, ttd_ipcn || null],
+          nama_pj: pjName,
+          nama_pj_ruangan: pjName,
         },
       };
-
       const { data: sessionData, error: sessionError } = await supabase
         .from("audit_sessions")
         .insert([sessionPayload])
         .select("id")
         .single();
       if (sessionError) throw sessionError;
-
       // detail entries
       const detailPayloads = Object.keys(data).map((key) => ({
         session_id: sessionData.id,
@@ -170,7 +160,6 @@ export default function FasilitasHandHygienePage() {
         jawaban: String(data[key]),
       }));
       await supabase.from("audit_details").insert(detailPayloads);
-
       // Fallback
       try {
         await supabase
@@ -179,15 +168,17 @@ export default function FasilitasHandHygienePage() {
              ...sessionPayload, 
              created_at: new Date().toISOString(),
              ttd_pj,
+             ttd_pj_ruangan: ttd_pj,
              ttd_ipcn,
              foto: uploadedUrls,
              temuan,
              rekomendasi,
+             nama_pj: pjName,
+             nama_pj_ruangan: pjName,
           }]);
       } catch (err) {
         console.warn("Failed to insert native table", err);
       }
-
       const ch = supabase.channel('changes_monitoring_fasilitas_hand_hygiene');
       ch.subscribe((status) => {
         if (status === 'SUBSCRIBED') {
@@ -198,7 +189,6 @@ export default function FasilitasHandHygienePage() {
           }).then(() => supabase.removeChannel(ch));
         }
       });
-
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
@@ -211,7 +201,6 @@ export default function FasilitasHandHygienePage() {
       setIsSubmitting(false);
     }
   };
-
   return (
     <div className="max-w-3xl mx-auto pb-32">
       <AnimatePresence>
@@ -227,7 +216,6 @@ export default function FasilitasHandHygienePage() {
           </motion.div>
         )}
       </AnimatePresence>
-
       <div className="flex items-center gap-6 py-6 border-b border-white/5">
         <Link
           href="/dashboard/input/isolasi"
@@ -244,7 +232,6 @@ export default function FasilitasHandHygienePage() {
           </p>
         </div>
       </div>
-
       <form onSubmit={handleSubmit} className="mt-8 space-y-8">
         <div className="bg-white/5 backdrop-blur-sm p-8 rounded-[2rem] border border-white/5 space-y-6">
           <div className="grid sm:grid-cols-2 gap-6">
@@ -268,7 +255,6 @@ export default function FasilitasHandHygienePage() {
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 [color-scheme:dark]"
               />
             </div>
-
             <EditableSelect
               label="Supervisor"
               value={observer}
@@ -278,7 +264,6 @@ export default function FasilitasHandHygienePage() {
               table="master_observers"
               placeholder="Pilih Supervisor..."
             />
-
             <EditableSelect
               label="Ruangan / Unit"
               value={unit}
@@ -290,7 +275,6 @@ export default function FasilitasHandHygienePage() {
             />
           </div>
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
           <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
             📋 Indikator Kepatuhan
@@ -330,7 +314,6 @@ export default function FasilitasHandHygienePage() {
                       ? "border-l-blue-500"
                       : "border-l-red-500";
               }
-
               return (
                 <div
                   key={item.id}
@@ -347,7 +330,6 @@ export default function FasilitasHandHygienePage() {
                         </h3>
                       </div>
                     </div>
-
                     <div className="flex p-1.5 bg-white/5 rounded-2xl border border-white/5 w-fit self-end md:self-center">
                       {["ya", "tidak", "na"].map((choice) => {
                         let activeClass = "";
@@ -365,7 +347,6 @@ export default function FasilitasHandHygienePage() {
                               ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] transform scale-105"
                               : "bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)] transform scale-105";
                         }
-
                         return (
                           <button
                             key={choice}
@@ -388,7 +369,6 @@ export default function FasilitasHandHygienePage() {
             })}
           </div>
         </div>
-
         <LiveStatisticsCard
           totalDinilai={stats.dinilai}
           totalPatuh={stats.patuh}
@@ -396,7 +376,6 @@ export default function FasilitasHandHygienePage() {
           persentase={stats.persentase}
           statusText={stats.status}
         />
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
             <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -421,11 +400,9 @@ export default function FasilitasHandHygienePage() {
             />
           </div>
         </div>
-
         <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
           <DocumentationUploader images={images} setImages={setImages} />
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
             ✍️ TANDA TANGAN DIGITAL
@@ -437,7 +414,6 @@ export default function FasilitasHandHygienePage() {
             pjLabel="PJ RUANGAN"
           />
         </div>
-
         <button
           type="submit"
           disabled={isSubmitting || !observer || stats.dinilai === 0}
@@ -454,7 +430,6 @@ export default function FasilitasHandHygienePage() {
     </div>
   );
 }
-
 FasilitasHandHygienePage.getLayout = function getLayout(
   page: React.ReactElement,
 ) {

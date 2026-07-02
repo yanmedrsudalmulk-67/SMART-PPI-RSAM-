@@ -20,7 +20,6 @@ import DigitalSignatureSection, {
 } from "@/components/DigitalSignatureSection";
 import { EditableSelect } from "@/components/EditableSelect";
 import { useAppContext } from "@/components/Providers";
-
 const checklistItems = [
   { id: "ppi_1", label: "Penggunaan APD yang sesuai" },
   { id: "ppi_2", label: "Ketersediaan APD yang sesuai" },
@@ -28,41 +27,31 @@ const checklistItems = [
   { id: "ppi_4", label: "Edukasi Etika Batuk / Pembuangan Sputum" },
   { id: "ppi_5", label: "Edukasi Hand Hygiene" },
 ];
-
 type AuditStatus = "ya" | "tidak" | "na" | null;
 type TekananUdara = "negatif" | "positif" | null;
-
 export default function InputPPIRuangIsolasiPage() {
   const router = useRouter();
   const [isEditMode, setIsEditMode] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const { userRole } = useAppContext();
   const isIPCN = userRole === "IPCN" || userRole === "Admin";
-
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [observer, setObserver] = useState("");
-
   // Patient Data
   const [namaPasien, setNamaPasien] = useState("");
   const [umur, setUmur] = useState("");
   const [noRm, setNoRm] = useState("");
-
   const [tekananUdara, setTekananUdara] = useState<TekananUdara>(null);
-
   const [data, setData] = useState<Record<string, AuditStatus>>({});
-
   const [keterangan, setKeterangan] = useState("");
   const [temuan, setTemuan] = useState("");
   const [rekomendasi, setRekomendasi] = useState("");
   const [images, setImages] = useState<File[]>([]);
   const [pjName, setPjName] = useState("");
-
   const sigRef = useRef<DigitalSignatureRef>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
-
   useEffect(() => {
     setStartTime(new Date());
     const initialData: Record<string, AuditStatus> = {};
@@ -71,21 +60,17 @@ export default function InputPPIRuangIsolasiPage() {
     });
     setData(initialData);
   }, []);
-
   const handleActionClick = (id: string, stat: AuditStatus) => {
     setData((prev) => ({ ...prev, [id]: stat }));
   };
-
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setImages((prev) => [...prev, ...Array.from(e.target.files!)]);
     }
   };
-
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
-
   const stats = useMemo(() => {
     let patuh = 0;
     let dinilai = 0;
@@ -106,11 +91,9 @@ export default function InputPPIRuangIsolasiPage() {
     }
     return { patuh, dinilai, persentase, statusText };
   }, [data]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!observer) return alert("Pilih Supervisor terlebih dahulu");
-
     setIsSubmitting(true);
     try {
       const ttd_pj = sigRef.current?.getPjSignature();
@@ -123,11 +106,8 @@ export default function InputPPIRuangIsolasiPage() {
         "audit_images",
         "ppi_ruang_isolasi",
       ) : [];
-
       const payload = {
         waktu: startTime?.toISOString() || new Date().toISOString(),
-        ruangan: "Ruang Isolasi",
-        supervisor: observer,
         nama_pasien: namaPasien,
         umur: umur,
         no_rm: noRm,
@@ -144,13 +124,11 @@ export default function InputPPIRuangIsolasiPage() {
         ttd_pj,
         ttd_ipcn
       };
-
       const sessionPayload = {
         indikator_id: "ppi_ruang_isolasi",
         nama_indikator: "PPI DI RUANG ISOLASI",
         tanggal_waktu: payload.waktu,
-        observer: payload.supervisor,
-        ruangan: payload.ruangan,
+        observer: observer,
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
@@ -168,14 +146,12 @@ export default function InputPPIRuangIsolasiPage() {
           tanda_tangan: [ttd_pj, ttd_ipcn].filter(Boolean),
         },
       };
-
       const { data: sessionData, error: sessionError } = await supabase
         .from("audit_sessions")
         .insert([sessionPayload])
         .select("id")
         .single();
       if (sessionError) throw sessionError;
-
       const detailPayloads = Object.keys(data).map((key) => {
         let label = key;
         const found = checklistItems.find(i => i.id === key);
@@ -188,7 +164,6 @@ export default function InputPPIRuangIsolasiPage() {
         };
       });
       await supabase.from("audit_details").insert(detailPayloads);
-
       try {
         await supabase
           .from("ppi_ruang_isolasi")
@@ -198,7 +173,6 @@ export default function InputPPIRuangIsolasiPage() {
       } catch (err) {
         console.warn("Failed to insert into native table, but saved to generic session.", err);
       }
-
       const ch = supabase.channel('changes_ppi_ruang_isolasi');
       ch.subscribe((status) => {
         if (status === 'SUBSCRIBED') {
@@ -209,7 +183,6 @@ export default function InputPPIRuangIsolasiPage() {
           }).then(() => supabase.removeChannel(ch));
         }
       });
-
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
@@ -222,7 +195,6 @@ export default function InputPPIRuangIsolasiPage() {
       setIsSubmitting(false);
     }
   };
-
   return (
     <div className="max-w-4xl mx-auto pb-32">
       <AnimatePresence>
@@ -238,7 +210,6 @@ export default function InputPPIRuangIsolasiPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
       <div className="flex items-center gap-6 mb-8 py-6 border-b border-white/5">
         <Link
           href="/dashboard/input/isolasi"
@@ -256,7 +227,6 @@ export default function InputPPIRuangIsolasiPage() {
           </p>
         </div>
       </div>
-
       <div className="space-y-6">
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -284,7 +254,6 @@ export default function InputPPIRuangIsolasiPage() {
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 [color-scheme:dark]"
               />
             </div>
-
             <div className="space-y-3">
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
                 Ruangan
@@ -293,7 +262,6 @@ export default function InputPPIRuangIsolasiPage() {
                 Ruang Isolasi
               </div>
             </div>
-
             <EditableSelect
               label="Supervisor"
               value={observer}
@@ -305,7 +273,6 @@ export default function InputPPIRuangIsolasiPage() {
             />
           </div>
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
             👤 Data Pasien
@@ -353,7 +320,6 @@ export default function InputPPIRuangIsolasiPage() {
               />
             </div>
           </div>
-
           <div className="mt-8 border-t border-white/5 pt-8">
             <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
               🌬️ Tekanan Udara Ruangan
@@ -376,12 +342,10 @@ export default function InputPPIRuangIsolasiPage() {
             </div>
           </div>
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
             🛡️ Checklist PPI
           </h2>
-
           <div className="space-y-4">
             {checklistItems.map((item, idx) => {
               const selected = data[item.id];
@@ -417,7 +381,6 @@ export default function InputPPIRuangIsolasiPage() {
                       ? "border-l-blue-500"
                       : "border-l-red-500";
               }
-
               return (
                 <div
                   key={item.id}
@@ -434,7 +397,6 @@ export default function InputPPIRuangIsolasiPage() {
                         </h3>
                       </div>
                     </div>
-
                     <div className="flex p-1.5 bg-white/5 rounded-2xl border border-white/5 w-fit self-end md:self-center">
                       {["ya", "tidak", "na"].map((choice) => {
                         let activeClass = "";
@@ -452,7 +414,6 @@ export default function InputPPIRuangIsolasiPage() {
                               ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] transform scale-105"
                               : "bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)] transform scale-105";
                         }
-
                         return (
                           <button
                             key={choice}
@@ -477,7 +438,6 @@ export default function InputPPIRuangIsolasiPage() {
             })}
           </div>
         </div>
-
         <LiveStatisticsCard
           totalDinilai={stats.dinilai}
           totalPatuh={stats.patuh}
@@ -486,7 +446,6 @@ export default function InputPPIRuangIsolasiPage() {
           statusText={stats.statusText}
           title="KEPATUHAN PPI RUANG ISOLASI"
         />
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
             <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -511,7 +470,6 @@ export default function InputPPIRuangIsolasiPage() {
             />
           </div>
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
             📷 DOKUMENTASI
@@ -556,7 +514,6 @@ export default function InputPPIRuangIsolasiPage() {
             />
           </div>
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
             ✍️ TANDA TANGAN DIGITAL
@@ -568,7 +525,6 @@ export default function InputPPIRuangIsolasiPage() {
             pjLabel="PJ RUANGAN"
           />
         </div>
-
         <button
           onClick={handleSubmit}
           disabled={isSubmitting || !observer || stats.dinilai === 0}
@@ -585,7 +541,6 @@ export default function InputPPIRuangIsolasiPage() {
     </div>
   );
 }
-
 InputPPIRuangIsolasiPage.getLayout = function getLayout(page: ReactElement) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };

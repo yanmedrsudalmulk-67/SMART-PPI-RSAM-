@@ -12,12 +12,10 @@ import { DocumentationUploader, DocImage } from '@/components/DocumentationUploa
 import DigitalSignatureSection, { DigitalSignatureRef } from '@/components/DigitalSignatureSection';
 import DashboardLayout from '@/components/DashboardLayout';
 import { LiveStatisticsCard } from '@/components/LiveStatisticsCard';
-
 const units = [
   'IGD', 'ICU', 'IBS', 'Ranap Aisyah', 'Ranap Fatimah', 
   'Ranap Khadijah', 'Ranap Usman', 'Poli Bedah'
 ];
-
 const bundleConfigs: Record<string, { title: string, checklists: string[] }> = {
   'plabsi-insersi': {
     title: 'Bundles PLABSI Insersi',
@@ -107,15 +105,12 @@ const bundleConfigs: Record<string, { title: string, checklists: string[] }> = {
     ]
   }
 };
-
 type ChecklistOption = 'ya' | 'tidak' | 'na' | null;
-
 export default function BundlesInputForm() {
   const router = useRouter();
   const { bundleId } = router.query;
   const bundleIdStr = typeof bundleId === 'string' ? bundleId : '';
   const config = bundleConfigs[bundleIdStr];
-
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [unit, setUnit] = useState('');
   const [observer, setObserver] = useState('');
@@ -130,14 +125,12 @@ export default function BundlesInputForm() {
   const sigRef = useRef<DigitalSignatureRef>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
-
   useEffect(() => {
     setStartTime(new Date());
     if (bundleId && !bundleConfigs[bundleIdStr]) {
       router.push('/dashboard/input/bundles');
     }
   }, [bundleId, bundleIdStr, router]);
-
   const stats = useMemo(() => {
     let yes = 0;
     let valid = 0;
@@ -151,10 +144,8 @@ export default function BundlesInputForm() {
     const cp = valid === 0 ? 0 : Math.round((yes / valid) * 100);
     return { yesCount: yes, validCount: valid, compliance: cp };
   }, [checklist, config]);
-
   if (!bundleId || !config) return <div className="p-8 text-white">Loading bundle config...</div>;
   const { yesCount, validCount, compliance } = stats;
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!unit || !petugasPemasang || !namaPasien || !noRm) {
@@ -166,13 +157,11 @@ export default function BundlesInputForm() {
       alert('Harap isi semua checklist (Ya/Tidak/NA).');
       return;
     }
-
     setIsSubmitting(true);
     try {
       const ttd_pj = sigRef.current?.getPjSignature();
       const ttd_ipcn = sigRef.current?.getSupervisorSignature();
       const uploadedUrls = await uploadImagesToSupabase(supabase, images, 'logos', 'audit');
-
       const payload = {
         bundle_id: bundleIdStr,
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
@@ -182,14 +171,9 @@ export default function BundlesInputForm() {
         no_rm: noRm,
         checklist_data: checklist,
         compliance_score: compliance,
-        nama_pj_ruangan: pjName,
-        ttd_pj_ruangan: ttd_pj,
-        ttd_ipcn: ttd_ipcn,
         temuan, rekomendasi,
         created_at: new Date().toISOString(),
-        dokumentasi: uploadedUrls
       };
-
       const sessionPayload = {
         indikator_id: 'audit_bundles_hais',
         nama_indikator: 'AUDIT BUNDLES HAIS - ' + config.title,
@@ -203,10 +187,8 @@ export default function BundlesInputForm() {
         status_kepatuhan: compliance >= 85 ? 'Patuh' : 'Perlu Perbaikan',
                 data_indikator: checklist
       };
-
       const { data: sessionData, error: sessionError } = await supabase.from('audit_sessions').insert([sessionPayload]).select('*').single();
       if (sessionError) throw sessionError;
-
       const detailPayloads = Object.keys(checklist).map(key => ({
         session_id: sessionData.id,
         pertanyaan_id: key,
@@ -214,7 +196,6 @@ export default function BundlesInputForm() {
         jawaban: String(checklist[parseInt(key)])
       }));
       await supabase.from('audit_details').insert(detailPayloads);
-
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
@@ -227,7 +208,6 @@ export default function BundlesInputForm() {
       setIsSubmitting(false);
     }
   };
-
   return (
     <div className="max-w-2xl mx-auto pb-32">
        <AnimatePresence>
@@ -240,7 +220,6 @@ export default function BundlesInputForm() {
           </motion.div>
         )}
       </AnimatePresence>
-
       <div className="flex items-center gap-6 py-6 border-b border-white/5">
         <Link href="/dashboard/input/bundles" className="p-3 bg-white/5 rounded-2xl border border-white/10 text-slate-400 hover:text-white transition-all">
           <ArrowLeft className="w-5 h-5" />
@@ -250,7 +229,6 @@ export default function BundlesInputForm() {
           <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400 mt-1">Audit Kepatuhan Bundles HAIs</p>
         </div>
       </div>
-
       <form onSubmit={handleSubmit} className="mt-8 space-y-8">
         <div className="bg-white/5 backdrop-blur-sm p-8 rounded-[2rem] border border-white/5 space-y-6">
           <div className="grid sm:grid-cols-2 gap-6">
@@ -283,7 +261,6 @@ export default function BundlesInputForm() {
             </div>
           </div>
         </div>
-
         <div className="bg-white/5 backdrop-blur-sm p-8 rounded-[2rem] border border-white/5 space-y-4">
           <h2 className="text-xs font-bold uppercase tracking-widest text-blue-400 border-b border-white/5 pb-4">Indikator Kepatuhan</h2>
           {config.checklists.map((text, idx) => (
@@ -305,7 +282,6 @@ export default function BundlesInputForm() {
             </div>
           ))}
         </div>
-
         <button type="submit" disabled={isSubmitting || !observer || !unit || stats.validCount === 0}
           className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg disabled:opacity-50"
         >
@@ -316,7 +292,6 @@ export default function BundlesInputForm() {
     </div>
   );
 }
-
 BundlesInputForm.getLayout = function getLayout(page: ReactElement) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };

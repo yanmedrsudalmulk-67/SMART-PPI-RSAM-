@@ -5,7 +5,6 @@ import { AppProvider } from '@/components/Providers';
 import { NextPage } from 'next';
 import { ReactElement, ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useRouter } from 'next/router';
 
 const poppins = Poppins({ 
   subsets: ['latin'], 
@@ -22,7 +21,6 @@ type AppPropsWithLayout = AppProps & {
 };
 
 export default function App({ Component, pageProps }: AppPropsWithLayout) {
-  const router = useRouter();
   // Use the layout defined at the page level, if available
   const getLayout = Component.getLayout ?? ((page) => page);
 

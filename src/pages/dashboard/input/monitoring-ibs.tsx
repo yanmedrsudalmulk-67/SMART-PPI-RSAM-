@@ -28,25 +28,20 @@ import DigitalSignatureSection, {
   DigitalSignatureRef,
 } from "@/components/DigitalSignatureSection";
 import { genericAuditConfigs } from "@/lib/audit-configs";
-
 const checklistItems = genericAuditConfigs.monitoring_ibs?.items || [];
 const tableName =
   genericAuditConfigs.monitoring_ibs?.tableName || "audit_ruangan_ibs";
-
 type AuditStatus = "ya" | "tidak" | "na" | null;
 type Observer = { id: string; nama: string };
-
 export default function MonitoringIBSPage() {
   const router = useRouter();
   const [isEditMode, setIsEditMode] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const { userRole } = useAppContext();
-
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [observer, setObserver] = useState("");
   const [data, setData] = useState<Record<string, AuditStatus>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
-
   const [temuan, setTemuan] = useState("");
   const [rekomendasi, setRekomendasi] = useState("");
   const [pjName, setPjName] = useState("");
@@ -56,11 +51,9 @@ export default function MonitoringIBSPage() {
   const [newObserverName, setNewObserverName] = useState("");
   const [editObserverId, setEditObserverId] = useState<string | null>(null);
   const [isChecklistOpen, setIsChecklistOpen] = useState(true);
-
   const sigRef = useRef<DigitalSignatureRef>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
-
   useEffect(() => {
     fetchObservers();
     const initialData: Record<string, AuditStatus> = {};
@@ -73,7 +66,6 @@ export default function MonitoringIBSPage() {
     setData(initialData);
     setNotes(initialNotes);
   }, []);
-
   const fetchObservers = async () => {
     try {
       const { data, error } = await supabase
@@ -89,7 +81,6 @@ export default function MonitoringIBSPage() {
       setObservers([fallback]);
     }
   };
-
   const saveObserver = async () => {
     if (!newObserverName.trim()) return;
     try {
@@ -131,7 +122,6 @@ export default function MonitoringIBSPage() {
       console.error(err);
     }
   };
-
   const deleteObserver = async (id: string) => {
     if (!confirm("Hapus supervisor ini?")) return;
     try {
@@ -144,15 +134,12 @@ export default function MonitoringIBSPage() {
       console.error(err);
     }
   };
-
   const toggleItem = (id: string, stat: AuditStatus) => {
     setData((prev) => ({ ...prev, [id]: stat }));
   };
-
   const handleNoteChange = (id: string, val: string) => {
     setNotes((prev) => ({ ...prev, [id]: val }));
   };
-
   const stats = useMemo(() => {
     let patuh = 0;
     let dinilai = 0;
@@ -176,7 +163,6 @@ export default function MonitoringIBSPage() {
     }
     return { patuh, dinilai, persentase, status };
   }, [data]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!observer) {
@@ -187,7 +173,6 @@ export default function MonitoringIBSPage() {
       alert("Harap isi semua checklist!");
       return;
     }
-
     setIsSubmitting(true);
     try {
       const ttd_pj = sigRef.current?.getPjSignature();
@@ -198,7 +183,6 @@ export default function MonitoringIBSPage() {
         "logos",
         "audit",
       );
-
       const payloadIndikator: Record<string, any> = {};
       Object.keys(data).forEach((key) => {
         payloadIndikator[key] = {
@@ -206,29 +190,13 @@ export default function MonitoringIBSPage() {
           keterangan: notes[key] || "",
         };
       });
-
-      const sessionPayload = {
-        waktu: startTime?.toISOString() || new Date().toISOString(),
-        supervisor: observer,
-        checklist_json: payloadIndikator,
-        persentase: stats.persentase,
-        temuan,
-        rekomendasi,
-        ttd_pj,
-        ttd_ipcn,
-        foto: uploadedUrls,
-        created_at: new Date().toISOString(),
-      };
-
-      await supabase
-        .from(tableName || "audit_ruangan_ibs")
-        .insert([sessionPayload]);
-
-      // Integrate with audit_sessions for realtime and reports
-      await supabase.from("audit_sessions").insert([{
+      const recordId = crypto.randomUUID();
+      const sessionPayloadStats = {
+        id: recordId,
         indikator_id: "monitoring_ibs",
+        kategori: "Kewaspadaan Isolasi",
         nama_indikator: "MONITORING IBS",
-        tanggal_waktu: sessionPayload.waktu,
+        tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
         observer: observer,
         unit: "Instalasi Bedah Sentral",
         jenis_tindakan: "Bedah",
@@ -237,15 +205,44 @@ export default function MonitoringIBSPage() {
         persentase: stats.persentase,
         status_kepatuhan: stats.status,
         data_indikator: {
-          ...payloadIndikator,
+          ...data,
           temuan,
           rekomendasi,
           dokumentasi: uploadedUrls,
-          ttd_pj_ruangan: ttd_pj,
-          ttd_ipcn: ttd_ipcn
+          tanda_tangan: [ttd_pj || null, ttd_ipcn || null],
+          nama_pj: pjName,
+          nama_pj_ruangan: pjName,
         }
-      }]);
-
+      };
+      const { error: sessionError } = await supabase.from("audit_sessions").insert([sessionPayloadStats]);
+      if (sessionError) throw sessionError;
+      // insert to audit_details
+      const detailPayloads = Object.keys(data).map((key) => ({
+        session_id: recordId,
+        pertanyaan_id: key,
+        pertanyaan: checklistItems.find((i) => i.id === key)?.label || key,
+        jawaban: String(data[key] || ""),
+      }));
+      await supabase.from("audit_details").insert(detailPayloads);
+      // Safe native table insert
+      try {
+        const sessionPayload = {
+          waktu: startTime?.toISOString() || new Date().toISOString(),
+          checklist_json: payloadIndikator,
+          persentase: stats.persentase,
+          temuan,
+          rekomendasi,
+          ttd_pj,
+          ttd_ipcn,
+          foto: uploadedUrls,
+          created_at: new Date().toISOString(),
+        };
+        await supabase
+          .from(tableName || "audit_ruangan_ibs")
+          .insert([sessionPayload]);
+      } catch (err) {
+        console.warn("Failed to insert native table", err);
+      }
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
@@ -258,7 +255,6 @@ export default function MonitoringIBSPage() {
       setIsSubmitting(false);
     }
   };
-
   // Group checklist items by section
   const sections = useMemo(() => {
     const grouped: Record<string, typeof checklistItems> = {};
@@ -269,9 +265,8 @@ export default function MonitoringIBSPage() {
     });
     return grouped;
   }, []);
-
   return (
-    <div className="max-w-3xl mx-auto pb-8">
+    <div className="max-w-3xl mx-auto pb-32">
       <AnimatePresence>
         {showToast && (
           <motion.div
@@ -285,7 +280,6 @@ export default function MonitoringIBSPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
       <div className="flex items-center gap-6 py-6 border-b border-white/5">
         <Link
           href="/dashboard/input/isolasi"
@@ -303,7 +297,6 @@ export default function MonitoringIBSPage() {
           </p>
         </div>
       </div>
-
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2rem] border border-white/5 space-y-6 shadow-sm">
           <div className="space-y-3">
@@ -353,7 +346,6 @@ export default function MonitoringIBSPage() {
             </div>
           </div>
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
           <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
             📋 Indikator Kepatuhan
@@ -393,7 +385,6 @@ export default function MonitoringIBSPage() {
                       ? "border-l-blue-500"
                       : "border-l-red-500";
               }
-
               return (
                 <div
                   key={item.id}
@@ -410,7 +401,6 @@ export default function MonitoringIBSPage() {
                         </h3>
                       </div>
                     </div>
-
                     <div className="flex p-1.5 bg-white/5 rounded-2xl border border-white/5 w-fit self-end md:self-center">
                       {["ya", "tidak", "na"].map((choice) => {
                         let activeClass = "";
@@ -428,7 +418,6 @@ export default function MonitoringIBSPage() {
                               ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] transform scale-105"
                               : "bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)] transform scale-105";
                         }
-
                         return (
                           <button
                             key={choice}
@@ -451,7 +440,6 @@ export default function MonitoringIBSPage() {
             })}
           </div>
         </div>
-
         <LiveStatisticsCard
           totalDinilai={stats.dinilai}
           totalPatuh={stats.patuh}
@@ -459,7 +447,6 @@ export default function MonitoringIBSPage() {
           persentase={stats.persentase}
           statusText={stats.status}
         />
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
             <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -484,11 +471,9 @@ export default function MonitoringIBSPage() {
             />
           </div>
         </div>
-
         <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
           <DocumentationUploader images={images} setImages={setImages} />
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
             ✍️ TANDA TANGAN DIGITAL
@@ -500,7 +485,6 @@ export default function MonitoringIBSPage() {
             pjLabel="PJ RUANGAN"
           />
         </div>
-
         <button
           type="submit"
           disabled={isSubmitting || !observer || stats.dinilai === 0}
@@ -514,7 +498,6 @@ export default function MonitoringIBSPage() {
           <span>{isEditMode ? 'Update Data Audit' : 'Simpan Data Audit'}</span>
         </button>
       </form>
-
       <AnimatePresence>
         {isObserverModalOpen && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
@@ -597,7 +580,6 @@ export default function MonitoringIBSPage() {
     </div>
   );
 }
-
 MonitoringIBSPage.getLayout = function getLayout(page: React.ReactElement) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };

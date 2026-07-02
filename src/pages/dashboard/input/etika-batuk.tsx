@@ -276,7 +276,7 @@ export default function InputEtikaBatukPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto pb-16">
+    <div className="max-w-4xl mx-auto pb-32">
       <AnimatePresence>
         {showToast && (
           <motion.div

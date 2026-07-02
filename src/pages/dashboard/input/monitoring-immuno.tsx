@@ -21,7 +21,6 @@ import DigitalSignatureSection, {
 } from "@/components/DigitalSignatureSection";
 import { EditableSelect } from "@/components/EditableSelect";
 import { useAppContext } from "@/components/Providers";
-
 const checklistItems = [
   {
     id: "im_1",
@@ -47,33 +46,25 @@ const checklistItems = [
       "Setelah pasien pulang, bersihkan ruangan dengan cairan desinfektan sesuai standar",
   },
 ];
-
 type AuditStatus = "ya" | "tidak" | "na" | null;
-
 export default function InputMonitoringImmunoPage() {
   const router = useRouter();
   const [isEditMode, setIsEditMode] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const { userRole } = useAppContext();
   const isIPCN = userRole === "IPCN" || userRole === "Admin";
-
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [observer, setObserver] = useState("");
-
   const [data, setData] = useState<Record<string, AuditStatus>>({});
-
   const [temuan, setTemuan] = useState("");
   const [rekomendasi, setRekomendasi] = useState("");
   const [images, setImages] = useState<File[]>([]);
   const [pjName, setPjName] = useState("");
-
   const sigRef = useRef<DigitalSignatureRef>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [isChecklistOpen, setIsChecklistOpen] = useState(true);
-
   useEffect(() => {
     setStartTime(new Date());
     const initialData: Record<string, AuditStatus> = {};
@@ -82,21 +73,17 @@ export default function InputMonitoringImmunoPage() {
     });
     setData(initialData);
   }, []);
-
   const handleActionClick = (id: string, stat: AuditStatus) => {
     setData((prev) => ({ ...prev, [id]: stat }));
   };
-
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setImages((prev) => [...prev, ...Array.from(e.target.files!)]);
     }
   };
-
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
-
   const stats = useMemo(() => {
     let patuh = 0;
     let dinilai = 0;
@@ -117,16 +104,13 @@ export default function InputMonitoringImmunoPage() {
     }
     return { patuh, dinilai, persentase, statusText };
   }, [data]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!observer) return alert("Pilih Supervisor terlebih dahulu");
-
     setIsSubmitting(true);
     try {
       const ttd_pj = sigRef.current?.getPjSignature();
       const ttd_ipcn = sigRef.current?.getSupervisorSignature();
-
       const { uploadImagesToSupabase } = await import("@/lib/upload");
       const uploadedUrls = images.length > 0 ? await uploadImagesToSupabase(
         supabase,
@@ -134,11 +118,8 @@ export default function InputMonitoringImmunoPage() {
         "audit_images",
         "monitoring_immuno",
       ) : [];
-
       const payload = {
         waktu: startTime?.toISOString() || new Date().toISOString(),
-        ruangan: "Ruang Isolasi",
-        supervisor: observer,
         checklist_json: { data },
         persentase: stats.persentase,
         temuan,
@@ -150,13 +131,11 @@ export default function InputMonitoringImmunoPage() {
         ttd_pj,
         ttd_ipcn
       };
-
       const sessionPayload = {
         indikator_id: "monitoring_immuno",
         nama_indikator: "PENEMPATAN PASIEN IMMUNOCOMPROMISED",
         tanggal_waktu: payload.waktu,
-        observer: payload.supervisor,
-        ruangan: payload.ruangan,
+        observer: observer,
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
@@ -169,14 +148,12 @@ export default function InputMonitoringImmunoPage() {
           tanda_tangan: [ttd_pj, ttd_ipcn].filter(Boolean),
         },
       };
-
       const { data: sessionData, error: sessionError } = await supabase
         .from("audit_sessions")
         .insert([sessionPayload])
         .select("id")
         .single();
       if (sessionError) throw sessionError;
-
       const detailPayloads = Object.keys(data).map((key) => {
         let label = key;
         const found = checklistItems.find(i => i.id === key);
@@ -189,7 +166,6 @@ export default function InputMonitoringImmunoPage() {
         };
       });
       await supabase.from("audit_details").insert(detailPayloads);
-
       try {
         await supabase
           .from("penempatan_pasien_immunocompromised")
@@ -199,7 +175,6 @@ export default function InputMonitoringImmunoPage() {
       } catch (err) {
         console.warn("Failed to insert into native table, but saved to generic session.", err);
       }
-
       const ch = supabase.channel('changes_monitoring_immuno');
       ch.subscribe((status) => {
         if (status === 'SUBSCRIBED') {
@@ -210,7 +185,6 @@ export default function InputMonitoringImmunoPage() {
           }).then(() => supabase.removeChannel(ch));
         }
       });
-
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
@@ -223,7 +197,6 @@ export default function InputMonitoringImmunoPage() {
       setIsSubmitting(false);
     }
   };
-
   return (
     <div className="max-w-4xl mx-auto pb-32">
       <AnimatePresence>
@@ -239,7 +212,6 @@ export default function InputMonitoringImmunoPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
       <div className="flex items-center gap-6 mb-8 py-6 border-b border-white/5">
         <Link
           href="/dashboard/input/isolasi"
@@ -257,7 +229,6 @@ export default function InputMonitoringImmunoPage() {
           </p>
         </div>
       </div>
-
       <div className="space-y-6">
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -285,7 +256,6 @@ export default function InputMonitoringImmunoPage() {
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 [color-scheme:dark]"
               />
             </div>
-
             <div className="space-y-3">
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
                 Ruangan
@@ -294,7 +264,6 @@ export default function InputMonitoringImmunoPage() {
                 Ruang Isolasi
               </div>
             </div>
-
             <EditableSelect
               label="Supervisor"
               value={observer}
@@ -306,12 +275,10 @@ export default function InputMonitoringImmunoPage() {
             />
           </div>
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
             📋 Checklist Penempatan Pasien Immunocompromised
           </h2>
-
           <div className="bg-slate-900/50 border border-white/5 rounded-2xl overflow-hidden">
             <button
               type="button"
@@ -370,7 +337,6 @@ export default function InputMonitoringImmunoPage() {
                               ? "border-l-blue-500"
                               : "border-l-red-500";
                       }
-
                       return (
                         <div
                           key={item.id}
@@ -388,7 +354,6 @@ export default function InputMonitoringImmunoPage() {
                               </h3>
                             </div>
                           </div>
-
                           <div className="flex p-1.5 bg-slate-900 rounded-2xl border border-white/5 w-fit shrink-0 self-end md:self-center z-10">
                             {["ya", "tidak", "na"].map((choice) => (
                               <button
@@ -420,7 +385,6 @@ export default function InputMonitoringImmunoPage() {
             </AnimatePresence>
           </div>
         </div>
-
         <LiveStatisticsCard
           totalDinilai={stats.dinilai}
           totalPatuh={stats.patuh}
@@ -429,7 +393,6 @@ export default function InputMonitoringImmunoPage() {
           statusText={stats.statusText}
           title="KEPATUHAN PENEMPATAN PASIEN IMMUNOCOMPROMISED"
         />
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
             <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -454,7 +417,6 @@ export default function InputMonitoringImmunoPage() {
             />
           </div>
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
             📷 DOKUMENTASI
@@ -499,7 +461,6 @@ export default function InputMonitoringImmunoPage() {
             />
           </div>
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
             ✍️ TANDA TANGAN DIGITAL
@@ -511,7 +472,6 @@ export default function InputMonitoringImmunoPage() {
             pjLabel="PJ RUANGAN"
           />
         </div>
-
         <button
           onClick={handleSubmit}
           disabled={isSubmitting || !observer || stats.dinilai === 0}
@@ -528,7 +488,6 @@ export default function InputMonitoringImmunoPage() {
     </div>
   );
 }
-
 InputMonitoringImmunoPage.getLayout = function getLayout(page: ReactElement) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };

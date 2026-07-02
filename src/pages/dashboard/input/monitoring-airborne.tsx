@@ -29,21 +29,17 @@ import DigitalSignatureSection, {
   DigitalSignatureRef,
 } from "@/components/DigitalSignatureSection";
 import { genericAuditConfigs } from "@/lib/audit-configs";
-
 const checklistItems = genericAuditConfigs.monitoring_airborne?.items || [];
 const tableName =
   genericAuditConfigs.monitoring_airborne?.tableName ||
   "penempatan_pasien_airbone";
-
 type AuditStatus = "ya" | "tidak" | "na" | null;
 type Observer = { id: string; nama: string };
-
 export default function MonitoringAirbornePage() {
   const router = useRouter();
   const [isEditMode, setIsEditMode] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const { userRole } = useAppContext();
-
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [observer, setObserver] = useState("");
   const [data, setData] = useState<Record<string, AuditStatus>>({});
@@ -59,7 +55,6 @@ export default function MonitoringAirbornePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [isChecklistOpen, setIsChecklistOpen] = useState(true);
-
   useEffect(() => {
     fetchObservers();
     const initialData: Record<string, AuditStatus> = {};
@@ -67,7 +62,6 @@ export default function MonitoringAirbornePage() {
     setStartTime(new Date());
     setData(initialData);
   }, []);
-
   const fetchObservers = async () => {
     try {
       const { data, error } = await supabase
@@ -83,7 +77,6 @@ export default function MonitoringAirbornePage() {
       setObservers([fallback]);
     }
   };
-
   const saveObserver = async () => {
     if (!newObserverName.trim()) return;
     try {
@@ -125,12 +118,10 @@ export default function MonitoringAirbornePage() {
       console.error(err);
     }
   };
-
   const editObserver = (o: any) => {
     setNewObserverName(o.nama);
     setEditObserverId(o.id);
   };
-
   const deleteObserver = async (id: string) => {
     if (!confirm("Hapus supervisor ini?")) return;
     try {
@@ -143,11 +134,9 @@ export default function MonitoringAirbornePage() {
       console.error(err);
     }
   };
-
   const toggleItem = (id: string, stat: AuditStatus) => {
     setData((prev) => ({ ...prev, [id]: stat }));
   };
-
   const stats = useMemo(() => {
     let patuh = 0;
     let dinilai = 0;
@@ -171,7 +160,6 @@ export default function MonitoringAirbornePage() {
     }
     return { patuh, dinilai, persentase, status };
   }, [data]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!observer) {
@@ -182,7 +170,6 @@ export default function MonitoringAirbornePage() {
       alert("Harap isi semua checklist!");
       return;
     }
-
     setIsSubmitting(true);
     try {
       const ttd_pj = sigRef.current?.getPjSignature();
@@ -193,13 +180,11 @@ export default function MonitoringAirbornePage() {
         "audit_images",
         "monitoring_airborne",
       ) : [];
-
       const sessionPayload = {
         indikator_id: "monitoring_airborne",
         nama_indikator: "MONITORING PENEMPATAN PASIEN AIRBORNE",
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
         observer,
-        ruangan: "Ruang Isolasi",
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
@@ -212,14 +197,12 @@ export default function MonitoringAirbornePage() {
           tanda_tangan: [ttd_pj, ttd_ipcn].filter(Boolean),
         },
       };
-
       const { data: sessionData, error: sessionError } = await supabase
         .from("audit_sessions")
         .insert([sessionPayload])
         .select("*")
         .single();
       if (sessionError) throw sessionError;
-
       const detailPayloads = Object.keys(data).map((key) => ({
         session_id: sessionData.id,
         pertanyaan_id: key,
@@ -227,12 +210,11 @@ export default function MonitoringAirbornePage() {
         jawaban: String(data[key]),
       }));
       await supabase.from("audit_details").insert(detailPayloads);
-
       try {
         await supabase.from(tableName || "penempatan_pasien_airbone").insert([
           {
             waktu: sessionPayload.tanggal_waktu,
-            ruangan: sessionPayload.ruangan,
+            ruangan: "Ruang Isolasi",
             supervisor: sessionPayload.observer,
             checklist_json: sessionPayload.data_indikator,
             persentase: sessionPayload.persentase,
@@ -247,7 +229,6 @@ export default function MonitoringAirbornePage() {
       } catch (tableErr) {
         console.warn("Failed to insert into native table, but session was saved:", tableErr);
       }
-
       const ch = supabase.channel('changes_monitoring_airborne');
       ch.subscribe((status) => {
         if (status === 'SUBSCRIBED') {
@@ -258,7 +239,6 @@ export default function MonitoringAirbornePage() {
           }).then(() => supabase.removeChannel(ch));
         }
       });
-
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
@@ -271,9 +251,8 @@ export default function MonitoringAirbornePage() {
       setIsSubmitting(false);
     }
   };
-
   return (
-    <div className="max-w-3xl mx-auto pb-8">
+    <div className="max-w-3xl mx-auto pb-32">
       <AnimatePresence>
         {showToast && (
           <motion.div
@@ -287,7 +266,6 @@ export default function MonitoringAirbornePage() {
           </motion.div>
         )}
       </AnimatePresence>
-
       <div className="flex items-center gap-6 py-6 border-b border-white/5">
         <Link
           href="/dashboard/input/isolasi"
@@ -305,7 +283,6 @@ export default function MonitoringAirbornePage() {
           </p>
         </div>
       </div>
-
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2rem] border border-white/5 space-y-6 shadow-sm">
           <div className="grid sm:grid-cols-2 gap-6">
@@ -338,7 +315,6 @@ export default function MonitoringAirbornePage() {
               </div>
             </div>
           </div>
-
           <div className="space-y-3 pt-2">
             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex justify-between items-center">
               Supervisor
@@ -366,7 +342,6 @@ export default function MonitoringAirbornePage() {
             </div>
           </div>
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
           <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
             📋 Indikator Kepatuhan
@@ -406,7 +381,6 @@ export default function MonitoringAirbornePage() {
                       ? "border-l-blue-500"
                       : "border-l-red-500";
               }
-
               return (
                 <div
                   key={item.id}
@@ -423,7 +397,6 @@ export default function MonitoringAirbornePage() {
                         </h3>
                       </div>
                     </div>
-
                     <div className="flex p-1.5 bg-white/5 rounded-2xl border border-white/5 w-fit self-end md:self-center">
                       {["ya", "tidak", "na"].map((choice) => {
                         let activeClass = "";
@@ -441,7 +414,6 @@ export default function MonitoringAirbornePage() {
                               ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] transform scale-105"
                               : "bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)] transform scale-105";
                         }
-
                         return (
                           <button
                             key={choice}
@@ -464,7 +436,6 @@ export default function MonitoringAirbornePage() {
             })}
           </div>
         </div>
-
         <LiveStatisticsCard
           totalDinilai={stats.dinilai}
           totalPatuh={stats.patuh}
@@ -472,7 +443,6 @@ export default function MonitoringAirbornePage() {
           persentase={stats.persentase}
           statusText={stats.status}
         />
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
             <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -497,11 +467,9 @@ export default function MonitoringAirbornePage() {
             />
           </div>
         </div>
-
         <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
           <DocumentationUploader images={images} setImages={setImages} />
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
             ✍️ TANDA TANGAN DIGITAL
@@ -513,7 +481,6 @@ export default function MonitoringAirbornePage() {
             pjLabel="PJ RUANGAN"
           />
         </div>
-
         <button
           type="submit"
           disabled={isSubmitting || !observer || stats.dinilai === 0}
@@ -527,7 +494,6 @@ export default function MonitoringAirbornePage() {
           <span>{isEditMode ? 'Update Data Audit' : 'Simpan Data Audit'}</span>
         </button>
       </form>
-
       <AnimatePresence>
         {isObserverModalOpen && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
@@ -607,7 +573,6 @@ export default function MonitoringAirbornePage() {
     </div>
   );
 }
-
 MonitoringAirbornePage.getLayout = function getLayout(
   page: React.ReactElement,
 ) {

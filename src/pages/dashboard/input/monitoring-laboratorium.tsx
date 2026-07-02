@@ -27,7 +27,6 @@ import { LiveStatisticsCard } from "@/components/LiveStatisticsCard";
 import DigitalSignatureSection, {
   DigitalSignatureRef,
 } from "@/components/DigitalSignatureSection";
-
 const checklistItems = [
   {
     section: "A. PERSONAL",
@@ -183,16 +182,13 @@ const checklistItems = [
     ],
   },
 ];
-
 type AuditStatus = "ya" | "tidak" | "na" | null;
 type Observer = { id: string; nama: string };
-
 export default function LaboratoriumInputPage() {
   const router = useRouter();
   const [isEditMode, setIsEditMode] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const { userRole } = useAppContext();
-
   const [waktu, setWaktu] = useState<Date | null>(null);
   const [ruangan, setRuangan] = useState("Laboratorium");
   const [observer, setObserver] = useState("");
@@ -208,7 +204,6 @@ export default function LaboratoriumInputPage() {
   const sigRef = useRef<DigitalSignatureRef>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
-
   useEffect(() => {
     fetchObservers();
     const initialData: Record<string, AuditStatus> = {};
@@ -218,7 +213,6 @@ export default function LaboratoriumInputPage() {
     setWaktu(new Date());
     setData(initialData);
   }, []);
-
   const fetchObservers = async () => {
     try {
       const { data, error } = await supabase
@@ -235,7 +229,6 @@ export default function LaboratoriumInputPage() {
       setObservers([{ id: "1", nama: "IPCN_Adi Tresa Purnama" }]);
     }
   };
-
   const saveObserver = async () => {
     if (!newObserverName.trim()) return;
     try {
@@ -277,7 +270,6 @@ export default function LaboratoriumInputPage() {
       console.error(err);
     }
   };
-
   const deleteObserver = async (id: string) => {
     if (!confirm("Hapus observer ini?")) return;
     try {
@@ -290,11 +282,9 @@ export default function LaboratoriumInputPage() {
       console.error(err);
     }
   };
-
   const toggleItem = (id: string, stat: AuditStatus) => {
     setData((prev) => ({ ...prev, [id]: stat }));
   };
-
   const stats = useMemo(() => {
     let patuh = 0;
     let dinilai = 0;
@@ -317,7 +307,6 @@ export default function LaboratoriumInputPage() {
             : "Perlu Tindak Lanjut";
     return { patuh, dinilai, persentase, status };
   }, [data]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!observer) {
@@ -328,7 +317,6 @@ export default function LaboratoriumInputPage() {
       alert("Harap lengkapi semua checklist!");
       return;
     }
-
     setIsSubmitting(true);
     try {
       const ttd_pj = sigRef.current?.getPjSignature();
@@ -339,32 +327,22 @@ export default function LaboratoriumInputPage() {
         "dokumentasi",
         "audit",
       );
-
       const payload = {
         waktu: waktu?.toISOString() || new Date().toISOString(),
         ruangan,
-        supervisor: observer,
         checklist_json: data,
         persentase: stats.persentase,
         status: stats.status,
         temuan,
         rekomendasi,
-        dokumentasi: uploadedUrls,
-        nama_pj: pjName.trim(),
         ttd_pj,
         ttd_ipcn,
         updated_at: new Date().toISOString(),
       };
-
-      // Save to main form table
-      const { error } = await supabase
-        .from("audit_laboratorium")
-        .insert([payload]);
-      if (error) throw error;
-
       // Save to audit_sessions for global dashboard
       const sessionPayload = {
         indikator_id: "monitoring_laboratorium",
+        kategori: "Kewaspadaan Isolasi",
         nama_indikator: "MONITORING LABORATORIUM",
         tanggal_waktu: payload.waktu,
         observer,
@@ -373,16 +351,22 @@ export default function LaboratoriumInputPage() {
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.status,
-                data_indikator: data,
+        data_indikator: {
+          ...data,
+          temuan,
+          rekomendasi,
+          dokumentasi: uploadedUrls,
+          tanda_tangan: [ttd_pj || null, ttd_ipcn || null],
+          nama_pj: pjName.trim(),
+          nama_pj_ruangan: pjName.trim(),
+        },
       };
-
       const { data: sessionData, error: sessionError } = await supabase
         .from("audit_sessions")
         .insert([sessionPayload])
         .select("*")
         .single();
       if (sessionError) throw sessionError;
-
       // Flatten details
       const detailPayloads: any[] = [];
       checklistItems.forEach((sec) => {
@@ -398,7 +382,14 @@ export default function LaboratoriumInputPage() {
         });
       });
       await supabase.from("audit_details").insert(detailPayloads);
-
+      // Safe native table insert
+      try {
+        await supabase
+          .from("audit_laboratorium")
+          .insert([payload]);
+      } catch (err) {
+        console.warn("Failed to insert native table", err);
+      }
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
@@ -411,7 +402,6 @@ export default function LaboratoriumInputPage() {
       setIsSubmitting(false);
     }
   };
-
   return (
     <div className="max-w-4xl mx-auto pb-40">
       <AnimatePresence>
@@ -427,7 +417,6 @@ export default function LaboratoriumInputPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
       <div className="flex items-center gap-6 py-6 border-b border-white/5">
         <Link
           href="/dashboard/input/isolasi"
@@ -445,7 +434,6 @@ export default function LaboratoriumInputPage() {
           </p>
         </div>
       </div>
-
       <form onSubmit={handleSubmit} className="mt-8 space-y-8">
         <div className="bg-white dark:bg-[#111827] shadow-sm dark:shadow-none p-6 lg:p-8 rounded-2xl border border-slate-200 dark:border-white/5 space-y-6">
           <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 border-b border-slate-200 dark:border-white/5 pb-4">
@@ -514,7 +502,6 @@ export default function LaboratoriumInputPage() {
             </div>
           </div>
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
           <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
             📋 Indikator Kepatuhan
@@ -557,7 +544,6 @@ export default function LaboratoriumInputPage() {
             ))}
           </div>
         </div>
-
         <LiveStatisticsCard
           totalDinilai={stats.dinilai}
           totalPatuh={stats.patuh}
@@ -565,7 +551,6 @@ export default function LaboratoriumInputPage() {
           persentase={stats.persentase}
           statusText={stats.status}
         />
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
             <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -590,11 +575,9 @@ export default function LaboratoriumInputPage() {
             />
           </div>
         </div>
-
         <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
           <DocumentationUploader images={images} setImages={setImages} />
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
             ✍️ TANDA TANGAN DIGITAL
@@ -606,7 +589,6 @@ export default function LaboratoriumInputPage() {
             pjLabel="PJ RUANGAN"
           />
         </div>
-
         <button
           type="submit"
           disabled={isSubmitting || !observer || stats.dinilai === 0}
@@ -620,7 +602,6 @@ export default function LaboratoriumInputPage() {
           <span>{isEditMode ? 'Update Data Audit' : 'Simpan Data Audit'}</span>
         </button>
       </form>
-
       <AnimatePresence>
         {isObserverModalOpen && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
@@ -703,7 +684,6 @@ export default function LaboratoriumInputPage() {
     </div>
   );
 }
-
 LaboratoriumInputPage.getLayout = function getLayout(page: React.ReactElement) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };

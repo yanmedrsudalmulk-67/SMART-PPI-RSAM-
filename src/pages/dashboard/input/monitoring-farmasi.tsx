@@ -21,7 +21,7 @@ import DigitalSignatureSection, {
 } from "@/components/DigitalSignatureSection";
 import { EditableSelect } from "@/components/EditableSelect";
 import { useAppContext } from "@/components/Providers";
-
+import { uploadImagesToSupabase } from "@/lib/upload";
 const checklistGroups = [
   {
     title: "A: LINGKUNGAN UMUM",
@@ -111,32 +111,24 @@ const checklistGroups = [
     ],
   },
 ];
-
 type AuditStatus = "ya" | "tidak" | "na" | null;
-
 export default function InputMonitoringFarmasiPage() {
   const router = useRouter();
   const [isEditMode, setIsEditMode] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const { userRole } = useAppContext();
   const isIPCN = userRole === "IPCN" || userRole === "Admin";
-
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [observer, setObserver] = useState("");
-
   const [data, setData] = useState<Record<string, AuditStatus>>({});
-
   const [temuan, setTemuan] = useState("");
   const [rekomendasi, setRekomendasi] = useState("");
   const [images, setImages] = useState<File[]>([]);
   const [pjName, setPjName] = useState("");
-
   const sigRef = useRef<DigitalSignatureRef>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
-
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
     {
       "A: LINGKUNGAN UMUM": true,
@@ -148,7 +140,6 @@ export default function InputMonitoringFarmasiPage() {
       "G: VENTILASI": false,
     },
   );
-
   useEffect(() => {
     setStartTime(new Date());
     const initialData: Record<string, AuditStatus> = {};
@@ -159,25 +150,20 @@ export default function InputMonitoringFarmasiPage() {
     });
     setData(initialData);
   }, []);
-
   const toggleGroup = (title: string) => {
     setExpandedGroups((prev) => ({ ...prev, [title]: !prev[title] }));
   };
-
   const handleActionClick = (id: string, stat: AuditStatus) => {
     setData((prev) => ({ ...prev, [id]: stat }));
   };
-
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setImages((prev) => [...prev, ...Array.from(e.target.files!)]);
     }
   };
-
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
-
   const stats = useMemo(() => {
     let patuh = 0;
     let dinilai = 0;
@@ -198,19 +184,22 @@ export default function InputMonitoringFarmasiPage() {
     }
     return { patuh, dinilai, persentase, statusText };
   }, [data]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!observer) return alert("Pilih Supervisor terlebih dahulu");
-
     setIsSubmitting(true);
     try {
       const ttd_pj = sigRef.current?.getPjSignature();
       const ttd_ipcn = sigRef.current?.getSupervisorSignature();
-
+      const uploadPayload = images.map((img) => ({ file: img }));
+      const uploadedUrls = images.length > 0 ? await uploadImagesToSupabase(
+        supabase,
+        uploadPayload,
+        "audit_images",
+        "monitoring_farmasi",
+      ) : [];
       const payload = {
         waktu: startTime?.toISOString() || new Date().toISOString(),
-        supervisor: observer,
         checklist_json: {
           data,
         },
@@ -220,38 +209,51 @@ export default function InputMonitoringFarmasiPage() {
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         status_kepatuhan: stats.statusText,
-              };
-
-      const { data: sessionData, error } = await supabase
-        .from("audit_farmasi")
-        .insert([payload])
+        ttd_pj,
+        ttd_ipcn,
+      };
+      const sessionPayload = {
+        indikator_id: "monitoring_farmasi",
+        kategori: "Kewaspadaan Isolasi",
+        nama_indikator: "MONITORING FARMASI",
+        tanggal_waktu: payload.waktu,
+        observer: observer,
+        unit: "Farmasi",
+        jumlah_dinilai: stats.dinilai,
+        jumlah_patuh: stats.patuh,
+        persentase: stats.persentase,
+        status_kepatuhan: stats.statusText,
+        data_indikator: {
+          ...data,
+          temuan,
+          rekomendasi,
+          nama_pj: pjName.trim(),
+          ttd_pj,
+          ttd_ipcn,
+          dokumentasi: uploadedUrls,
+        },
+      };
+      const { data: sessionData, error: sessionError } = await supabase
+        .from("audit_sessions")
+        .insert([sessionPayload])
         .select("id")
         .single();
-      if (error) {
-        // If table might not exist
-        console.error("Error direct insert", error);
-        const fallbackPayload = {
-          indikator_id: "monitoring_farmasi",
-          nama_indikator: "MONITORING FARMASI",
-          tanggal_waktu: payload.waktu,
-          observer: payload.supervisor,
-          jumlah_dinilai: stats.dinilai,
-          jumlah_patuh: stats.patuh,
-          persentase: stats.persentase,
-          status_kepatuhan: stats.statusText,
-          data_indikator: payload.checklist_json,
-        };
-        const { data: fallbackData, error: fbError } = await supabase
-          .from("audit_sessions")
-          .insert([fallbackPayload])
-          .select("id")
-          .single();
-        if (fbError) throw fbError;
-        await uploadAssets(fallbackData.id);
-      } else {
-        await uploadAssets(sessionData.id);
+      if (sessionError) throw sessionError;
+      // Insert into audit_details
+      const allChecklistItems = checklistGroups.flatMap((group) => group.items);
+      const detailPayloads = Object.keys(data).map((key) => ({
+        session_id: sessionData.id,
+        pertanyaan_id: key,
+        pertanyaan: allChecklistItems.find((i) => i.id === key)?.label || key,
+        jawaban: String(data[key]),
+      }));
+      await supabase.from("audit_details").insert(detailPayloads);
+      // Save to native audit_farmasi table (optional/fallback)
+      try {
+        await supabase.from("audit_farmasi").insert([payload]);
+      } catch (err) {
+        console.warn("Failed to insert native audit_farmasi table", err);
       }
-
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
@@ -264,15 +266,6 @@ export default function InputMonitoringFarmasiPage() {
       setIsSubmitting(false);
     }
   };
-
-  const uploadAssets = async (id: string) => {
-    for (let i = 0; i < images.length; i++) {
-      await supabase.storage
-        .from("audit_images")
-        .upload(`images/farmasi_${id}_${i}.jpg`, images[i]);
-    }
-  };
-
   return (
     <div className="max-w-4xl mx-auto pb-32">
       <AnimatePresence>
@@ -288,7 +281,6 @@ export default function InputMonitoringFarmasiPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
       <div className="flex items-center gap-6 mb-8 py-6 border-b border-white/5">
         <Link
           href="/dashboard/input/isolasi"
@@ -306,7 +298,6 @@ export default function InputMonitoringFarmasiPage() {
           </p>
         </div>
       </div>
-
       <div className="space-y-6">
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -344,7 +335,6 @@ export default function InputMonitoringFarmasiPage() {
             />
           </div>
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
             📋 Checklist Audit Farmasi
@@ -395,7 +385,6 @@ export default function InputMonitoringFarmasiPage() {
                                 </h3>
                               </div>
                             </div>
-
                             <div className="flex p-1.5 bg-slate-900 rounded-2xl border border-white/5 w-fit shrink-0 self-end md:self-center z-10">
                               {["ya", "tidak", "na"].map((choice) => (
                                 <button
@@ -428,7 +417,6 @@ export default function InputMonitoringFarmasiPage() {
             ))}
           </div>
         </div>
-
         <LiveStatisticsCard
           totalDinilai={stats.dinilai}
           totalPatuh={stats.patuh}
@@ -437,7 +425,6 @@ export default function InputMonitoringFarmasiPage() {
           statusText={stats.statusText}
           title="KEPATUHAN FARMASI"
         />
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
             <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -462,7 +449,6 @@ export default function InputMonitoringFarmasiPage() {
             />
           </div>
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
             📷 DOKUMENTASI
@@ -507,7 +493,6 @@ export default function InputMonitoringFarmasiPage() {
             />
           </div>
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
             ✍️ TANDA TANGAN DIGITAL
@@ -519,7 +504,6 @@ export default function InputMonitoringFarmasiPage() {
             pjLabel="PJ RUANGAN"
           />
         </div>
-
         <button
           onClick={handleSubmit}
           disabled={isSubmitting || !observer || stats.dinilai === 0}
@@ -536,7 +520,6 @@ export default function InputMonitoringFarmasiPage() {
     </div>
   );
 }
-
 InputMonitoringFarmasiPage.getLayout = function getLayout(page: ReactElement) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };

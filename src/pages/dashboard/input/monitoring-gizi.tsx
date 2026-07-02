@@ -27,7 +27,6 @@ import { LiveStatisticsCard } from "@/components/LiveStatisticsCard";
 import DigitalSignatureSection, {
   DigitalSignatureRef,
 } from "@/components/DigitalSignatureSection";
-
 const checklistItems = [
   {
     group: "A. PENGENDALIAN LINGKUNGAN - Lingkungan Umum",
@@ -72,7 +71,6 @@ const checklistItems = [
     label:
       "Pengecekan kontrol hama dilakukan regular (cek record), tersedia insect killer / pest control",
   },
-
   {
     group: "A. PENGENDALIAN LINGKUNGAN - Fasilitas Kebersihan Tangan",
     id: "gizi_a_2_1",
@@ -98,7 +96,6 @@ const checklistItems = [
     id: "gizi_a_2_5",
     label: "Cek kemampuan melakukan kebersihan tangan pada petugas",
   },
-
   {
     group: "A. PENGENDALIAN LINGKUNGAN - Peralatan",
     id: "gizi_a_3_1",
@@ -130,7 +127,6 @@ const checklistItems = [
     id: "gizi_a_3_6",
     label: "Temperatur mesin cuci piring diatur suhu 50–85°C",
   },
-
   {
     group: "A. PENGENDALIAN LINGKUNGAN - Penyimpanan Makanan",
     id: "gizi_a_4_1",
@@ -174,7 +170,6 @@ const checklistItems = [
     id: "gizi_a_4_8",
     label: "Pendingin dan freezer bersih dan bebas bau tidak sedap",
   },
-
   {
     group: "A. PENGENDALIAN LINGKUNGAN - Perpindahan Makanan",
     id: "gizi_a_5_1",
@@ -190,7 +185,6 @@ const checklistItems = [
     id: "gizi_a_5_3",
     label: "Staf memakai pakaian bersih dan alat bantu sesuai",
   },
-
   {
     group: "B. PENANGANAN LIMBAH",
     id: "gizi_b_1_1",
@@ -211,7 +205,6 @@ const checklistItems = [
     id: "gizi_b_1_4",
     label: "Area penyimpanan limbah dirancang baik dan dijaga kebersihannya",
   },
-
   {
     group: "C. PRAKTIK PENGENDALIAN INFEKSI - Personal / Staf",
     id: "gizi_c_1_1",
@@ -290,15 +283,12 @@ const checklistItems = [
       "Pengunjung area makanan memakai penutup kepala dan mematuhi kebersihan",
   },
 ];
-
 type AuditStatus = "ya" | "tidak" | "na" | null;
 type Observer = { id: string; nama: string };
-
 export default function MonitoringGiziPage() {
   const router = useRouter();
   const [isEditMode, setIsEditMode] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [ruangan, setRuangan] = useState("Gizi");
   const [observer, setObserver] = useState("");
@@ -314,7 +304,6 @@ export default function MonitoringGiziPage() {
   const sigRef = useRef<DigitalSignatureRef>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
-
   useEffect(() => {
     fetchObservers();
     const initialData: Record<string, AuditStatus> = {};
@@ -322,7 +311,6 @@ export default function MonitoringGiziPage() {
     setStartTime(new Date());
     setData(initialData);
   }, []);
-
   const fetchObservers = async () => {
     try {
       const { data, error } = await supabase
@@ -335,7 +323,6 @@ export default function MonitoringGiziPage() {
       setObservers([{ id: "1", nama: "IPCN_Adi Tresa Purnama" }]);
     }
   };
-
   const saveObserver = async () => {
     if (!newObserverName.trim()) return;
     try {
@@ -377,7 +364,6 @@ export default function MonitoringGiziPage() {
       console.error(err);
     }
   };
-
   const deleteObserver = async (id: string) => {
     if (!confirm("Hapus supervisor ini?")) return;
     try {
@@ -390,11 +376,9 @@ export default function MonitoringGiziPage() {
       console.error(err);
     }
   };
-
   const toggleItem = (id: string, stat: AuditStatus) => {
     setData((prev) => ({ ...prev, [id]: stat }));
   };
-
   const stats = useMemo(() => {
     let patuh = 0;
     let dinilai = 0;
@@ -417,7 +401,6 @@ export default function MonitoringGiziPage() {
             : "Perlu Tindak Lanjut";
     return { patuh, dinilai, persentase, status };
   }, [data]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!observer) {
@@ -428,7 +411,6 @@ export default function MonitoringGiziPage() {
       alert("Harap isi semua checklist!");
       return;
     }
-
     setIsSubmitting(true);
     try {
       const ttd_pj = sigRef.current?.getPjSignature();
@@ -439,24 +421,19 @@ export default function MonitoringGiziPage() {
         "logos",
         "audit",
       );
-
       const payload = {
         waktu: startTime?.toISOString() || new Date().toISOString(),
-        ruangan: ruangan,
-        supervisor: observer,
         checklist_json: data,
         persentase: stats.persentase,
         status: stats.status,
         temuan,
         rekomendasi,
-        nama_pj: pjName.trim(),
         ttd_pj,
         ttd_ipcn,
-        dokumentasi: uploadedUrls,
       };
-
       const sessionPayload = {
         indikator_id: "monitoring_gizi",
+        kategori: "Kewaspadaan Isolasi",
         nama_indikator: "MONITORING GIZI",
         tanggal_waktu: payload.waktu,
         observer,
@@ -475,14 +452,12 @@ export default function MonitoringGiziPage() {
           dokumentasi: uploadedUrls,
         },
       };
-
       const { data: sessionData, error: sessionError } = await supabase
         .from("audit_sessions")
         .insert([sessionPayload])
         .select("*")
         .single();
       if (sessionError) throw sessionError;
-
       const detailPayloads = Object.keys(data).map((key) => ({
         session_id: sessionData.id,
         pertanyaan_id: key,
@@ -490,15 +465,18 @@ export default function MonitoringGiziPage() {
         jawaban: String(data[key]),
       }));
       await supabase.from("audit_details").insert(detailPayloads);
-
-      await supabase.from("audit_gizi").insert([
-        {
-          ...payload,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-      ]);
-
+      // Safe native table insert
+      try {
+        await supabase.from("audit_gizi").insert([
+          {
+            ...payload,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        ]);
+      } catch (err) {
+        console.warn("Failed to insert native table", err);
+      }
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
@@ -511,7 +489,6 @@ export default function MonitoringGiziPage() {
       setIsSubmitting(false);
     }
   };
-
   const groupedChecklist = checklistItems.reduce(
     (acc, item) => {
       if (!acc[item.group]) acc[item.group] = [];
@@ -520,7 +497,6 @@ export default function MonitoringGiziPage() {
     },
     {} as Record<string, typeof checklistItems>,
   );
-
   return (
     <div className="max-w-7xl mx-auto pb-32">
       <AnimatePresence>
@@ -536,7 +512,6 @@ export default function MonitoringGiziPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
       <div className="flex items-center gap-6 py-6 border-b border-slate-200 dark:border-white/5">
         <Link
           href="/dashboard/input/isolasi"
@@ -553,7 +528,6 @@ export default function MonitoringGiziPage() {
           </p>
         </div>
       </div>
-
       <form
         onSubmit={handleSubmit}
         className="mt-8 grid xl:grid-cols-12 gap-8 items-start"
@@ -627,7 +601,6 @@ export default function MonitoringGiziPage() {
               </div>
             </div>
           </div>
-
           <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
             <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
               📋 Indikator Kepatuhan
@@ -667,7 +640,6 @@ export default function MonitoringGiziPage() {
                         ? "border-l-blue-500"
                         : "border-l-red-500";
                 }
-
                 return (
                   <div
                     key={item.id}
@@ -684,7 +656,6 @@ export default function MonitoringGiziPage() {
                           </h3>
                         </div>
                       </div>
-
                       <div className="flex p-1.5 bg-white/5 rounded-2xl border border-white/5 w-fit self-end md:self-center">
                         {["ya", "tidak", "na"].map((choice) => {
                           let activeClass = "";
@@ -702,7 +673,6 @@ export default function MonitoringGiziPage() {
                                 ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] transform scale-105"
                                 : "bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)] transform scale-105";
                           }
-
                           return (
                             <button
                               key={choice}
@@ -725,7 +695,6 @@ export default function MonitoringGiziPage() {
               })}
             </div>
           </div>
-
           <LiveStatisticsCard
             totalDinilai={stats.dinilai}
             totalPatuh={stats.patuh}
@@ -733,7 +702,6 @@ export default function MonitoringGiziPage() {
             persentase={stats.persentase}
             statusText={stats.status}
           />
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
               <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -758,11 +726,9 @@ export default function MonitoringGiziPage() {
               />
             </div>
           </div>
-
           <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
             <DocumentationUploader images={images} setImages={setImages} />
           </div>
-
           <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
             <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
               ✍️ TANDA TANGAN DIGITAL
@@ -774,7 +740,6 @@ export default function MonitoringGiziPage() {
               pjLabel="PJ RUANGAN"
             />
           </div>
-
           <button
             type="submit"
             disabled={isSubmitting || !observer || stats.dinilai === 0}
@@ -789,7 +754,6 @@ export default function MonitoringGiziPage() {
           </button>
         </div>
       </form>
-
       <AnimatePresence>
         {isObserverModalOpen && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
@@ -872,7 +836,6 @@ export default function MonitoringGiziPage() {
     </div>
   );
 }
-
 MonitoringGiziPage.getLayout = function getLayout(page: React.ReactElement) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };

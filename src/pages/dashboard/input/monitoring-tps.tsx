@@ -24,7 +24,6 @@ import {
   DocumentationUploader,
   DocImage,
 } from "@/components/DocumentationUploader";
-
 const checklistGroups = [
   {
     title: "A. Area TPS dan Bangunan",
@@ -112,32 +111,24 @@ const checklistGroups = [
     ],
   },
 ];
-
 type AuditStatus = "ya" | "tidak" | "na" | null;
-
 export default function InputMonitoringTPSPage() {
   const router = useRouter();
   const [isEditMode, setIsEditMode] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const { userRole } = useAppContext();
   const isIPCN = userRole === "ipcn" || userRole === "admin";
-
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [observer, setObserver] = useState("");
-
   const [data, setData] = useState<Record<string, AuditStatus>>({});
   const [keterangan, setKeterangan] = useState<Record<string, string>>({});
-
   const [temuan, setTemuan] = useState("");
   const [rekomendasi, setRekomendasi] = useState("");
   const [images, setImages] = useState<DocImage[]>([]);
   const [pjName, setPjName] = useState("");
-
   const sigRef = useRef<DigitalSignatureRef>(null);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
-
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
     {
       "A. Area TPS dan Bangunan": true,
@@ -148,7 +139,6 @@ export default function InputMonitoringTPSPage() {
       "F. Sarana Pendukung": false,
     },
   );
-
   useEffect(() => {
     setStartTime(new Date());
     const initialData: Record<string, AuditStatus> = {};
@@ -162,19 +152,15 @@ export default function InputMonitoringTPSPage() {
     setData(initialData);
     setKeterangan(initialKet);
   }, []);
-
   const toggleGroup = (title: string) => {
     setExpandedGroups((prev) => ({ ...prev, [title]: !prev[title] }));
   };
-
   const handleActionClick = (id: string, stat: AuditStatus) => {
     setData((prev) => ({ ...prev, [id]: stat }));
   };
-
   const handleKeteranganChange = (id: string, val: string) => {
     setKeterangan((prev) => ({ ...prev, [id]: val }));
   };
-
   const stats = useMemo(() => {
     let patuh = 0;
     let dinilai = 0;
@@ -195,16 +181,13 @@ export default function InputMonitoringTPSPage() {
     }
     return { patuh, dinilai, persentase, statusText };
   }, [data]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!observer) return alert("Pilih Supervisor terlebih dahulu");
-
     setIsSubmitting(true);
     try {
       const ttd_pj = sigRef.current?.getPjSignature();
       const ttd_ipcn = sigRef.current?.getSupervisorSignature();
-
       // Upload images
       const uploadedUrls = await uploadImagesToSupabase(
         supabase,
@@ -212,14 +195,13 @@ export default function InputMonitoringTPSPage() {
         "audit_images",
         "monitoring_tps",
       );
-
       const sessionPayload = {
         indikator_id: "monitoring_tps",
+        kategori: "Kewaspadaan Isolasi",
         nama_indikator: "MONITORING TPS",
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
         observer,
         unit: "TPS",
-        ruangan: "TPS",
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
@@ -234,14 +216,12 @@ export default function InputMonitoringTPSPage() {
           dokumentasi: uploadedUrls,
         },
       };
-
       const { data: sessionData, error: sessionError } = await supabase
         .from("audit_sessions")
         .insert([sessionPayload])
         .select("id")
         .single();
       if (sessionError) throw sessionError;
-
       // detail entries
       const detailPayloads: any[] = [];
       checklistGroups.forEach((group) => {
@@ -255,13 +235,10 @@ export default function InputMonitoringTPSPage() {
         });
       });
       await supabase.from("audit_details").insert(detailPayloads);
-
       // optional custom table insert
       try {
         const payload = {
           waktu: startTime?.toISOString() || new Date().toISOString(),
-          ruangan: "TPS",
-          supervisor: observer,
           checklist_json: {
             data,
           },
@@ -272,16 +249,11 @@ export default function InputMonitoringTPSPage() {
           status: stats.statusText,
           temuan,
           rekomendasi,
-          nama_pj: pjName.trim(),
-          ttd_pj: ttd_pj,
-          ttd_ipcn: ttd_ipcn,
-          dokumentasi: uploadedUrls,
         };
         await supabase.from("audit_tps").insert([payload]);
       } catch (err) {
         console.warn("Failed to insert into native table audit_tps, but saved to generic session.", err);
       }
-
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
@@ -294,7 +266,6 @@ export default function InputMonitoringTPSPage() {
       setIsSubmitting(false);
     }
   };
-
   return (
     <div className="max-w-4xl mx-auto pb-32">
       <AnimatePresence>
@@ -310,7 +281,6 @@ export default function InputMonitoringTPSPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
       <div className="flex items-center gap-6 mb-8 py-6 border-b border-white/5">
         <Link
           href="/dashboard/input/isolasi"
@@ -329,7 +299,6 @@ export default function InputMonitoringTPSPage() {
           </p>
         </div>
       </div>
-
       <div className="space-y-6">
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -381,7 +350,6 @@ export default function InputMonitoringTPSPage() {
             </div>
           </div>
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
             📋 Ceklist PPI Tempat Pembuangan Sampah (TPS)
@@ -433,7 +401,6 @@ export default function InputMonitoringTPSPage() {
                                   </h3>
                                 </div>
                               </div>
-
                               <div className="flex p-1.5 bg-slate-900 rounded-2xl border border-white/5 w-full md:w-fit shrink-0 relative z-10">
                                 {["ya", "tidak", "na"].map((choice) => (
                                   <button
@@ -481,7 +448,6 @@ export default function InputMonitoringTPSPage() {
             ))}
           </div>
         </div>
-
         <LiveStatisticsCard
           totalDinilai={stats.dinilai}
           totalPatuh={stats.patuh}
@@ -490,7 +456,6 @@ export default function InputMonitoringTPSPage() {
           statusText={stats.statusText}
           title="KEPATUHAN TPS"
         />
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
             <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -515,11 +480,9 @@ export default function InputMonitoringTPSPage() {
             />
           </div>
         </div>
-
         <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
           <DocumentationUploader images={images} setImages={setImages} />
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
             ✍️ TANDA TANGAN DIGITAL
@@ -531,7 +494,6 @@ export default function InputMonitoringTPSPage() {
             pjLabel="PJ TPS"
           />
         </div>
-
         <button
           onClick={handleSubmit}
           disabled={isSubmitting || !observer || stats.dinilai === 0}
@@ -548,7 +510,6 @@ export default function InputMonitoringTPSPage() {
     </div>
   );
 }
-
 InputMonitoringTPSPage.getLayout = function getLayout(page: ReactElement) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };

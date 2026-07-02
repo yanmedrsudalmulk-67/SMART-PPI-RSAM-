@@ -144,7 +144,7 @@ export default function DiklatPage() {
         <title>Pendidikan & Pelatihan - SMART PPI</title>
       </Head>
 
-      <div className="max-w-2xl mx-auto pb-16">
+      <div className="max-w-2xl mx-auto pb-32">
         <div className="flex items-center gap-4 mb-8">
           <Link
             href="/dashboard/input"

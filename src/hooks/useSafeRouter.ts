@@ -1,12 +1,12 @@
 import { useRouter as useNextRouter } from 'next/router';
 
 export function useSafeRouter() {
-  try {
-    const router = useNextRouter();
-    return router || mockRouter();
-  } catch (e) {
+  if (typeof window === 'undefined') {
     return mockRouter();
   }
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const router = useNextRouter();
+  return router || mockRouter();
 }
 
 function mockRouter() {

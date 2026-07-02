@@ -27,7 +27,6 @@ import {
   DocImage,
 } from "@/components/DocumentationUploader";
 import { EditableSelect } from "@/components/EditableSelect";
-
 const units = [
   "IGD",
   "ICU",
@@ -42,7 +41,6 @@ const units = [
   "Pantry",
   "Emergency Kebidanan",
 ];
-
 const auditItems = [
   { id: "item_1", label: "Tersedia fasilitas pembuangan sampah" },
   { id: "item_2", label: "Tempat sampah menggunakan pedal kaki" },
@@ -75,25 +73,19 @@ const auditItems = [
     label: "Spill kit tersedia dan petugas mengetahui lokasi penyimpanannya",
   },
 ] as const;
-
 type AuditStatus = "ya" | "tidak" | "na" | null;
-
 export default function InputPengelolaanLimbahMedisPage() {
   const router = useRouter();
   const { userRole } = useAppContext();
   const isIPCN = userRole === "IPCN" || userRole === "Admin";
-
   const [startTime, setStartTime] = useState<Date | null>(null);
-
   const [observer, setObserver] = useState("");
   const [unit, setUnit] = useState("");
   const [temuan, setTemuan] = useState("");
   const [rekomendasi, setRekomendasi] = useState("");
   const [images, setImages] = useState<DocImage[]>([]);
   const [pjName, setPjName] = useState("");
-
   const signatureRef = useRef<DigitalSignatureRef>(null);
-
   const [auditData, setAuditData] = useState<Record<string, AuditStatus>>({
     item_1: null,
     item_2: null,
@@ -106,15 +98,12 @@ export default function InputPengelolaanLimbahMedisPage() {
     item_9: null,
     item_10: null,
   });
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
-
   const [isEditMode, setIsEditMode] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [preloadedPjSignature, setPreloadedPjSignature] = useState<string | null>(null);
   const [preloadedIpcnSignature, setPreloadedIpcnSignature] = useState<string | null>(null);
-
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -123,14 +112,12 @@ export default function InputPengelolaanLimbahMedisPage() {
       if (id && mode === "edit") {
         setIsEditMode(true);
         setEditId(id);
-
         const loadEditData = async () => {
           let { data: ed, error } = await supabase
             .from("audit_sessions")
             .select("*")
             .eq("id", id)
             .single();
-
           if (error || !ed) {
             const { data: edFallback, error: errFallback } = await supabase
               .from("audit_pengelolaan_limbah_medis")
@@ -152,7 +139,6 @@ export default function InputPengelolaanLimbahMedisPage() {
               }
             }
           }
-
           if (ed && !error) {
             if (ed.tanggal_waktu) setStartTime(new Date(ed.tanggal_waktu));
             if (ed.observer) setObserver(ed.observer);
@@ -160,7 +146,6 @@ export default function InputPengelolaanLimbahMedisPage() {
             
             let indicatorsData = typeof ed.data_indikator === 'string' ? JSON.parse(ed.data_indikator) : ed.data_indikator;
             let checklistJson = typeof ed.checklist_json === 'string' ? JSON.parse(ed.checklist_json) : ed.checklist_json;
-
             if (!indicatorsData && !checklistJson && ed.indikator_id) {
                let { data: specData } = await supabase.from("audit_pengelolaan_limbah_medis").select("*").eq("id", id).single();
                if (!specData) {
@@ -169,7 +154,6 @@ export default function InputPengelolaanLimbahMedisPage() {
                }
                indicatorsData = specData;
             }
-
             indicatorsData = indicatorsData || checklistJson || ed;
             
             if (indicatorsData) {
@@ -191,7 +175,6 @@ export default function InputPengelolaanLimbahMedisPage() {
                   setTimeout(() => signatureRef.current?.setSupervisorSignature?.(sig), 400);
                 }
               }
-
               setAuditData(prev => ({ ...prev, ...indicatorsData }));
             }
             
@@ -210,11 +193,9 @@ export default function InputPengelolaanLimbahMedisPage() {
       setStartTime(new Date());
     }
   }, []);
-
   const handleActionClick = (id: string, stat: AuditStatus) => {
     setAuditData((prev) => ({ ...prev, [id]: stat }));
   };
-
   const formatDateForInput = (date: Date | null) => {
     if (!date) return "";
     try {
@@ -224,7 +205,6 @@ export default function InputPengelolaanLimbahMedisPage() {
       return "";
     }
   };
-
   const formatTimeForInput = (date: Date | null) => {
     if (!date) return "";
     try {
@@ -236,11 +216,9 @@ export default function InputPengelolaanLimbahMedisPage() {
       return "";
     }
   };
-
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const [year, month, day] = e.target.value.split("-").map(Number);
     if (!year) return;
-
     if (startTime) {
       const newD = new Date(startTime);
       newD.setFullYear(year, month - 1, day);
@@ -251,18 +229,15 @@ export default function InputPengelolaanLimbahMedisPage() {
       setStartTime(newD);
     }
   };
-
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const [hours, mins] = e.target.value.split(":").map(Number);
     const newD = startTime ? new Date(startTime) : new Date();
     newD.setHours(hours, mins);
     setStartTime(newD);
   };
-
   const stats = useMemo(() => {
     let patuh = 0;
     let dinilai = 0;
-
     Object.values(auditData).forEach((val) => {
       if (val === "ya") {
         patuh++;
@@ -271,7 +246,6 @@ export default function InputPengelolaanLimbahMedisPage() {
         dinilai++;
       }
     });
-
     const persentase = dinilai > 0 ? Math.round((patuh / dinilai) * 100) : 0;
     let statusText = "Belum Dinilai";
     if (dinilai > 0) {
@@ -281,34 +255,26 @@ export default function InputPengelolaanLimbahMedisPage() {
     }
     return { patuh, dinilai, persentase, statusText };
   }, [auditData]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
     try {
       const pjSig = signatureRef.current?.getPjSignature() || preloadedPjSignature;
       const ipcnSig = signatureRef.current?.getSupervisorSignature() || preloadedIpcnSignature;
-
       const uploadedImages = await uploadImagesToSupabase(
         supabase,
         images || [],
         "audit_images",
         "images",
       );
-
       const payload = {
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
         observer,
         unit,
         temuan,
         rekomendasi,
-        nama_pj_ruangan: pjName.trim(),
-        tanda_tangan_pj: pjSig,
-        tanda_tangan_ipcn: ipcnSig,
         ...auditData,
       };
-
       const sessionPayload = {
         indikator_id: "pengelolaan_limbah_medis",
         nama_indikator: "PENGELOLAAN LIMBAH MEDIS",
@@ -330,7 +296,6 @@ export default function InputPengelolaanLimbahMedisPage() {
           nama_pj_ruangan: pjName.trim(),
         },
       };
-
       if (isEditMode && editId) {
         const { error: sessionError } = await supabase
           .from("audit_sessions")
@@ -345,7 +310,6 @@ export default function InputPengelolaanLimbahMedisPage() {
           
         if (sessionError) throw sessionError;
       }
-
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
@@ -362,9 +326,8 @@ export default function InputPengelolaanLimbahMedisPage() {
       setIsSubmitting(false);
     }
   };
-
   return (
-    <div className="max-w-7xl mx-auto pb-12">
+    <div className="max-w-7xl mx-auto pb-32">
       <AnimatePresence>
         {showToast && (
           <motion.div
@@ -378,7 +341,6 @@ export default function InputPengelolaanLimbahMedisPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
       <div className="flex items-center gap-6 mb-8 py-6 border-b border-white/5">
         <Link
           href="/dashboard/input/isolasi"
@@ -396,7 +358,6 @@ export default function InputPengelolaanLimbahMedisPage() {
           </p>
         </div>
       </div>
-
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Waktu Observasi */}
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
@@ -418,7 +379,6 @@ export default function InputPengelolaanLimbahMedisPage() {
                 />
               </div>
             </div>
-
             <div className="relative group overflow-hidden bg-white/5 p-6 rounded-[24px] border border-white/5 hover:border-blue-500/30 transition-all duration-500 shadow-inner border-l-4 border-l-blue-500/30">
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-transparent rounded-bl-full pointer-events-none" />
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 mb-4 block flex items-center justify-between">
@@ -438,7 +398,6 @@ export default function InputPengelolaanLimbahMedisPage() {
             </div>
           </div>
         </div>
-
         {/* Observer & Unit */}
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -465,7 +424,6 @@ export default function InputPengelolaanLimbahMedisPage() {
             />
           </div>
         </div>
-
         {/* Checklist */}
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -506,7 +464,6 @@ export default function InputPengelolaanLimbahMedisPage() {
                       ? "border-l-blue-500"
                       : "border-l-red-500";
               }
-
               return (
                 <div
                   key={item.id}
@@ -523,7 +480,6 @@ export default function InputPengelolaanLimbahMedisPage() {
                         </h3>
                       </div>
                     </div>
-
                     <div className="flex p-1.5 bg-white/5 rounded-2xl border border-white/5 w-fit self-end md:self-center">
                       {["ya", "tidak", "na"].map((choice) => {
                         let activeClass = "";
@@ -541,7 +497,6 @@ export default function InputPengelolaanLimbahMedisPage() {
                               ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] transform scale-105"
                               : "bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)] transform scale-105";
                         }
-
                         return (
                           <button
                             key={choice}
@@ -566,7 +521,6 @@ export default function InputPengelolaanLimbahMedisPage() {
             })}
           </div>
         </div>
-
         <LiveStatisticsCard
           totalDinilai={stats.dinilai || 0}
           totalPatuh={stats.patuh || 0}
@@ -574,12 +528,10 @@ export default function InputPengelolaanLimbahMedisPage() {
           persentase={stats.persentase || 0}
           statusText={stats.statusText || "Belum Dinilai"}
         />
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 space-y-6">
           <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">
             Temuan dan Rekomendasi
           </h2>
-
           <div>
             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">
               Temuan Audit
@@ -591,7 +543,6 @@ export default function InputPengelolaanLimbahMedisPage() {
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none min-h-[100px]"
             />
           </div>
-
           <div>
             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">
               Rekomendasi
@@ -603,9 +554,7 @@ export default function InputPengelolaanLimbahMedisPage() {
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none min-h-[100px]"
             />
           </div>
-
           <DocumentationUploader images={images} setImages={setImages} />
-
           <DigitalSignatureSection
             ref={signatureRef}
             pjName={pjName}
@@ -613,7 +562,6 @@ export default function InputPengelolaanLimbahMedisPage() {
             pjLabel="PJ RUANGAN"
           />
         </div>
-
         <button
           type="submit"
           disabled={isSubmitting}
@@ -630,7 +578,6 @@ export default function InputPengelolaanLimbahMedisPage() {
     </div>
   );
 }
-
 InputPengelolaanLimbahMedisPage.getLayout = function getLayout(
   page: React.ReactElement,
 ) {

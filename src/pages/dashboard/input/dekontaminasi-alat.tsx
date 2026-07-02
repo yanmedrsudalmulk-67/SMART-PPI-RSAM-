@@ -30,7 +30,6 @@ import {
   DocImage,
 } from "@/components/DocumentationUploader";
 import { EditableSelect } from "@/components/EditableSelect";
-
 const units = [
   "IGD",
   "ICU",
@@ -45,7 +44,6 @@ const units = [
   "Pantry",
   "Emergency Kebidanan",
 ];
-
 const auditItems = [
   {
     id: "peralatan_tersedia",
@@ -98,14 +96,11 @@ const auditItems = [
     type: "positive",
   },
 ] as const;
-
 type AuditStatus = "ya" | "tidak" | "na" | null;
-
 export default function InputDekontaminasiAlatPage() {
   const router = useRouter();
   const { userRole } = useAppContext();
   const isIPCN = userRole === "IPCN" || userRole === "Admin";
-
   const [startTime, setStartTime] = useState<Date | null>(new Date());
   const [observer, setObserver] = useState("");
   const [unit, setUnit] = useState("");
@@ -115,14 +110,11 @@ export default function InputDekontaminasiAlatPage() {
   const [pjName, setPjName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
-
   const sigRef = useRef<DigitalSignatureRef>(null);
-
   const [isEditMode, setIsEditMode] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [preloadedPjSignature, setPreloadedPjSignature] = useState<string | null>(null);
   const [preloadedIpcnSignature, setPreloadedIpcnSignature] = useState<string | null>(null);
-
   const [auditData, setAuditData] = useState<Record<string, AuditStatus>>({
     peralatan_tersedia: null,
     peralatan_berkarat: null,
@@ -133,7 +125,6 @@ export default function InputDekontaminasiAlatPage() {
     expired_date: null,
     instrumen_bekas: null,
   });
-
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -142,14 +133,12 @@ export default function InputDekontaminasiAlatPage() {
       if (id && mode === "edit") {
         setIsEditMode(true);
         setEditId(id);
-
         const loadEditData = async () => {
           const { data, error } = await supabase
             .from("audit_sessions")
             .select("*")
             .eq("id", id)
             .single();
-
           if (data && !error) {
             if (data.tanggal_waktu) setStartTime(new Date(data.tanggal_waktu));
             if (data.observer) setObserver(data.observer);
@@ -159,7 +148,6 @@ export default function InputDekontaminasiAlatPage() {
             if (data.nama_pj_ruangan) setPjName(data.nama_pj_ruangan);
             if (data.ttd_pj_ruangan) setPreloadedPjSignature(data.ttd_pj_ruangan);
             if (data.ttd_ipcn) setPreloadedIpcnSignature(data.ttd_ipcn);
-
             // Populate checklist items
             const indicatorsData = data.data_indikator || data.checklist_json || {};
             setAuditData((prev) => {
@@ -171,7 +159,6 @@ export default function InputDekontaminasiAlatPage() {
               });
               return updated;
             });
-
             // Prefill signatures to signature pads
             if (data.ttd_pj_ruangan && sigRef.current?.setPjSignature) {
               setTimeout(() => {
@@ -192,44 +179,37 @@ export default function InputDekontaminasiAlatPage() {
             }
           }
         };
-
         loadEditData();
       }
     }
   }, []);
-
   const formatDateForInput = (date: Date | null) =>
     date ? date.toISOString().split("T")[0] : "";
   const formatTimeForInput = (date: Date | null) =>
     date
       ? `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`
       : "";
-
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const [year, month, day] = e.target.value.split("-").map(Number);
     const newD = new Date(startTime || new Date());
     newD.setFullYear(year, month - 1, day);
     setStartTime(newD);
   };
-
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const [hours, mins] = e.target.value.split(":").map(Number);
     const newD = new Date(startTime || new Date());
     newD.setHours(hours, mins);
     setStartTime(newD);
   };
-
   const handleActionClick = (id: string, stat: AuditStatus) =>
     setAuditData((prev) => ({ ...prev, [id]: stat }));
   const handleError = (err: any) => {
     console.error(err);
     alert(`Error: ${err.message}`);
   };
-
   const stats = useMemo(() => {
     let patuh = 0;
     let dinilai = 0;
-
     auditItems.forEach((item) => {
       const val = auditData[item.id];
       if (val === "ya" || val === "tidak") {
@@ -241,7 +221,6 @@ export default function InputDekontaminasiAlatPage() {
         }
       }
     });
-
     const persentase = dinilai > 0 ? Math.round((patuh / dinilai) * 100) : 0;
     let statusText = "Belum Dinilai";
     if (dinilai > 0) {
@@ -251,22 +230,18 @@ export default function InputDekontaminasiAlatPage() {
     }
     return { patuh, dinilai, persentase, statusText };
   }, [auditData]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
     try {
       const ttd_pj = sigRef.current?.getPjSignature() || preloadedPjSignature;
       const ttd_ipcn = sigRef.current?.getSupervisorSignature() || preloadedIpcnSignature;
-
       const uploadedImages = await uploadImagesToSupabase(
         supabase,
         images || [],
         "audit_images",
         "images",
       );
-
       const payload = {
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
         observer,
@@ -278,10 +253,7 @@ export default function InputDekontaminasiAlatPage() {
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.statusText,
-                tanda_tangan_pj: ttd_pj,
-        tanda_tangan_ipcn: ttd_ipcn,
       };
-
       let sessionError;
       if (isEditMode && editId) {
         const { error } = await supabase
@@ -334,9 +306,7 @@ export default function InputDekontaminasiAlatPage() {
           ]);
         sessionError = error;
       }
-
       if (sessionError) throw sessionError;
-
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
@@ -352,9 +322,8 @@ export default function InputDekontaminasiAlatPage() {
       setIsSubmitting(false);
     }
   };
-
   return (
-    <div className="max-w-7xl mx-auto pb-12">
+    <div className="max-w-7xl mx-auto pb-32">
       <AnimatePresence>
         {showToast && (
           <motion.div
@@ -368,7 +337,6 @@ export default function InputDekontaminasiAlatPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
       <div className="flex items-center gap-6 mb-8 py-6 border-b border-white/5">
         <Link
           href="/dashboard/input/isolasi"
@@ -392,7 +360,6 @@ export default function InputDekontaminasiAlatPage() {
           </p>
         </div>
       </div>
-
       <div className="space-y-6">
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -413,7 +380,6 @@ export default function InputDekontaminasiAlatPage() {
                 />
               </div>
             </div>
-
             <div className="relative group overflow-hidden bg-white/5 p-6 rounded-[24px] border border-white/5 hover:border-blue-500/30 transition-all duration-500 shadow-inner border-l-4 border-l-blue-500/30">
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-transparent rounded-bl-full pointer-events-none" />
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 mb-4 block flex items-center justify-between">
@@ -433,7 +399,6 @@ export default function InputDekontaminasiAlatPage() {
             </div>
           </div>
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
             <Activity className="w-4 h-4 text-purple-400" /> Data Subjek
@@ -459,7 +424,6 @@ export default function InputDekontaminasiAlatPage() {
             />
           </div>
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
             Checklist Dekontaminasi Alat
@@ -468,7 +432,6 @@ export default function InputDekontaminasiAlatPage() {
             {auditItems.map((item, idx) => {
               const selected = auditData[item.id];
               const isNegativeQuestion = item.id === "peralatan_berkarat";
-
               let borderLeftColor = "border-l-transparent";
               if (selected === "na") {
                 borderLeftColor = "border-l-slate-500";
@@ -485,7 +448,6 @@ export default function InputDekontaminasiAlatPage() {
                       : "border-l-red-500";
                 }
               }
-
               return (
                 <div
                   key={item.id}
@@ -504,7 +466,6 @@ export default function InputDekontaminasiAlatPage() {
                         </h3>
                       </div>
                     </div>
-
                     <div className="flex p-1.5 bg-white/5 rounded-2xl border border-white/5 w-fit self-end md:self-center">
                       {["ya", "tidak", "na"].map((choice) => {
                         let activeClass = "";
@@ -522,7 +483,6 @@ export default function InputDekontaminasiAlatPage() {
                               ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] transform scale-105"
                               : "bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)] transform scale-105";
                         }
-
                         return (
                           <button
                             key={choice}
@@ -547,7 +507,6 @@ export default function InputDekontaminasiAlatPage() {
             })}
           </div>
         </div>
-
         <LiveStatisticsCard
           totalDinilai={stats.dinilai}
           totalPatuh={stats.patuh}
@@ -556,12 +515,10 @@ export default function InputDekontaminasiAlatPage() {
           statusText={stats.statusText}
           title="KEPATUHAN DEKONTAMINASI ALAT"
         />
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 space-y-6">
           <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">
             Temuan dan Rekomendasi
           </h2>
-
           <div>
             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">
               Temuan Lapangan
@@ -573,7 +530,6 @@ export default function InputDekontaminasiAlatPage() {
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none min-h-[100px]"
             />
           </div>
-
           <div>
             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">
               Rekomendasi
@@ -585,9 +541,7 @@ export default function InputDekontaminasiAlatPage() {
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none min-h-[100px]"
             />
           </div>
-
           <DocumentationUploader images={images} setImages={setImages} />
-
           <DigitalSignatureSection
             ref={sigRef}
             pjName={pjName}
@@ -596,7 +550,6 @@ export default function InputDekontaminasiAlatPage() {
             supervisorLabel="TIM PPI"
           />
         </div>
-
         <button
           onClick={handleSubmit}
           disabled={isSubmitting || !observer || !unit || stats.dinilai === 0}
@@ -613,7 +566,6 @@ export default function InputDekontaminasiAlatPage() {
     </div>
   );
 }
-
 InputDekontaminasiAlatPage.getLayout = function getLayout(page: ReactElement) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };

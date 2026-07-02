@@ -371,7 +371,7 @@ export default function InputPenyuntikanAmanPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto pb-16">
+    <div className="max-w-4xl mx-auto pb-32">
       <AnimatePresence>
         {showToast && (
           <motion.div

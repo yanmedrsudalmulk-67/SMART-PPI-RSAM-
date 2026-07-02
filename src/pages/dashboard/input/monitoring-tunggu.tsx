@@ -24,7 +24,6 @@ import {
   DocumentationUploader,
   DocImage,
 } from "@/components/DocumentationUploader";
-
 const checklistGroups = [
   {
     title: "A. Kebersihan Lingkungan",
@@ -100,32 +99,24 @@ const checklistGroups = [
     ],
   },
 ];
-
 type AuditStatus = "ya" | "tidak" | "na" | null;
-
 export default function InputMonitoringRuangTungguPage() {
   const router = useRouter();
   const [isEditMode, setIsEditMode] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const { userRole } = useAppContext();
   const isIPCN = userRole === "ipcn" || userRole === "admin";
-
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [observer, setObserver] = useState("");
-
   const [data, setData] = useState<Record<string, AuditStatus>>({});
   const [keterangan, setKeterangan] = useState<Record<string, string>>({});
-
   const [temuan, setTemuan] = useState("");
   const [rekomendasi, setRekomendasi] = useState("");
   const [images, setImages] = useState<DocImage[]>([]);
   const [pjName, setPjName] = useState("");
-
   const sigRef = useRef<DigitalSignatureRef>(null);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
-
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
     {
       "A. Kebersihan Lingkungan": true,
@@ -136,7 +127,6 @@ export default function InputMonitoringRuangTungguPage() {
       "F. Kepatuhan Petugas Area Ruang Tunggu": false,
     },
   );
-
   useEffect(() => {
     setStartTime(new Date());
     const initialData: Record<string, AuditStatus> = {};
@@ -150,19 +140,15 @@ export default function InputMonitoringRuangTungguPage() {
     setData(initialData);
     setKeterangan(initialKet);
   }, []);
-
   const toggleGroup = (title: string) => {
     setExpandedGroups((prev) => ({ ...prev, [title]: !prev[title] }));
   };
-
   const handleActionClick = (id: string, stat: AuditStatus) => {
     setData((prev) => ({ ...prev, [id]: stat }));
   };
-
   const handleKeteranganChange = (id: string, val: string) => {
     setKeterangan((prev) => ({ ...prev, [id]: val }));
   };
-
   const stats = useMemo(() => {
     let patuh = 0;
     let dinilai = 0;
@@ -183,16 +169,13 @@ export default function InputMonitoringRuangTungguPage() {
     }
     return { patuh, dinilai, persentase, statusText };
   }, [data]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!observer) return alert("Pilih Supervisor terlebih dahulu");
-
     setIsSubmitting(true);
     try {
       const ttd_pj = sigRef.current?.getPjSignature();
       const ttd_ipcn = sigRef.current?.getSupervisorSignature();
-
       // Upload images
       const uploadedUrls = await uploadImagesToSupabase(
         supabase,
@@ -200,14 +183,13 @@ export default function InputMonitoringRuangTungguPage() {
         "audit_images",
         "monitoring_tunggu",
       );
-
       const sessionPayload = {
         indikator_id: "monitoring_tunggu",
+        kategori: "Kewaspadaan Isolasi",
         nama_indikator: "MONITORING RUANG TUNGGU",
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
         observer,
         unit: "Ruang Tunggu",
-        ruangan: "Ruang Tunggu",
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
@@ -222,14 +204,12 @@ export default function InputMonitoringRuangTungguPage() {
           dokumentasi: uploadedUrls,
         },
       };
-
       const { data: sessionData, error: sessionError } = await supabase
         .from("audit_sessions")
         .insert([sessionPayload])
         .select("id")
         .single();
       if (sessionError) throw sessionError;
-
       // detail entries
       const detailPayloads: any[] = [];
       checklistGroups.forEach((group) => {
@@ -243,13 +223,10 @@ export default function InputMonitoringRuangTungguPage() {
         });
       });
       await supabase.from("audit_details").insert(detailPayloads);
-
       // optional custom table insert
       try {
         const payload = {
           waktu: startTime?.toISOString() || new Date().toISOString(),
-          ruangan: "Ruang Tunggu",
-          supervisor: observer,
           checklist_json: {
             data,
           },
@@ -260,16 +237,11 @@ export default function InputMonitoringRuangTungguPage() {
           status: stats.statusText,
           temuan,
           rekomendasi,
-          nama_pj: pjName.trim(),
-          ttd_pj: ttd_pj,
-          ttd_ipcn: ttd_ipcn,
-          dokumentasi: uploadedUrls,
         };
         await supabase.from("audit_ruang_tunggu").insert([payload]);
       } catch (err) {
         console.warn("Failed to insert into native table audit_ruang_tunggu, but saved to generic session.", err);
       }
-
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
@@ -282,7 +254,6 @@ export default function InputMonitoringRuangTungguPage() {
       setIsSubmitting(false);
     }
   };
-
   return (
     <div className="max-w-4xl mx-auto pb-32">
       <AnimatePresence>
@@ -298,7 +269,6 @@ export default function InputMonitoringRuangTungguPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
       <div className="flex items-center gap-6 mb-8 py-6 border-b border-white/5">
         <Link
           href="/dashboard/input/isolasi"
@@ -317,7 +287,6 @@ export default function InputMonitoringRuangTungguPage() {
           </p>
         </div>
       </div>
-
       <div className="space-y-6">
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -369,7 +338,6 @@ export default function InputMonitoringRuangTungguPage() {
             </div>
           </div>
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
             📋 Ceklist PPI Ruang Tunggu
@@ -421,7 +389,6 @@ export default function InputMonitoringRuangTungguPage() {
                                   </h3>
                                 </div>
                               </div>
-
                               <div className="flex p-1.5 bg-slate-900 rounded-2xl border border-white/5 w-full md:w-fit shrink-0 relative z-10">
                                 {["ya", "tidak", "na"].map((choice) => (
                                   <button
@@ -469,7 +436,6 @@ export default function InputMonitoringRuangTungguPage() {
             ))}
           </div>
         </div>
-
         <LiveStatisticsCard
           totalDinilai={stats.dinilai}
           totalPatuh={stats.patuh}
@@ -478,7 +444,6 @@ export default function InputMonitoringRuangTungguPage() {
           statusText={stats.statusText}
           title="KEPATUHAN RUANG TUNGGU"
         />
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
             <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -503,11 +468,9 @@ export default function InputMonitoringRuangTungguPage() {
             />
           </div>
         </div>
-
         <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
           <DocumentationUploader images={images} setImages={setImages} />
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
             ✍️ TANDA TANGAN DIGITAL
@@ -519,7 +482,6 @@ export default function InputMonitoringRuangTungguPage() {
             pjLabel="PJ RUANGAN"
           />
         </div>
-
         <button
           onClick={handleSubmit}
           disabled={isSubmitting || !observer || stats.dinilai === 0}
@@ -536,7 +498,6 @@ export default function InputMonitoringRuangTungguPage() {
     </div>
   );
 }
-
 InputMonitoringRuangTungguPage.getLayout = function getLayout(
   page: ReactElement,
 ) {

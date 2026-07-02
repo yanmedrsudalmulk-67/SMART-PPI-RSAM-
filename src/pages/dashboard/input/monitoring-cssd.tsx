@@ -27,7 +27,6 @@ import { LiveStatisticsCard } from "@/components/LiveStatisticsCard";
 import DigitalSignatureSection, {
   DigitalSignatureRef,
 } from "@/components/DigitalSignatureSection";
-
 const checklistItems = [
   {
     group: "PENERIMAAN ALAT",
@@ -44,7 +43,6 @@ const checklistItems = [
     id: "cssd_penerimaan_3",
     label: "Container alat kotor dibersihkan secara rutin",
   },
-
   {
     group: "PRE CLEANING",
     id: "cssd_precleaning_1",
@@ -61,7 +59,6 @@ const checklistItems = [
     id: "cssd_precleaning_3",
     label: "Buang / ganti larutan enzymatic setelah dipakai",
   },
-
   {
     group: "PEMBERSIHAN",
     id: "cssd_pembersihan_1",
@@ -73,14 +70,12 @@ const checklistItems = [
     label:
       "Petugas menggunakan APD (kacamata google, sarung tangan, sepatu/alas kaki, apron)",
   },
-
   { group: "VENTILASI", id: "cssd_ventilasi_1", label: "House fan tersedia" },
   {
     group: "VENTILASI",
     id: "cssd_ventilasi_2",
     label: "Pertukaran udara 10 x/jam",
   },
-
   { group: "SUHU DAN KELEMBABAN", id: "cssd_suhu_1", label: "Suhu 18 – 22 °C" },
   {
     group: "SUHU DAN KELEMBABAN",
@@ -92,7 +87,6 @@ const checklistItems = [
     id: "cssd_suhu_3",
     label: "Tersedia alur pasca pajanan / SOP",
   },
-
   {
     group: "PENGELOLAAN LIMBAH",
     id: "cssd_limbah_1",
@@ -108,7 +102,6 @@ const checklistItems = [
     id: "cssd_limbah_3",
     label: "Tidak melebihi ¾ penuh atau 3 hari",
   },
-
   {
     group: "PENGEMASAN DAN STERILISASI",
     id: "cssd_pengemasan_1",
@@ -125,7 +118,6 @@ const checklistItems = [
     label:
       "Pemantauan indikator sterilisasi: mekanik, kimia eksternal, kimia internal, biological",
   },
-
   {
     group: "PENYIMPANAN BARANG STERIL",
     id: "cssd_penyimpanan_1",
@@ -141,7 +133,6 @@ const checklistItems = [
     id: "cssd_penyimpanan_3",
     label: "Ruangan bertekanan positif (+)",
   },
-
   {
     group: "RAK PENYIMPANAN",
     id: "cssd_rak_1",
@@ -153,7 +144,6 @@ const checklistItems = [
     id: "cssd_rak_2",
     label: "Petugas menggunakan APD",
   },
-
   {
     group: "PENGAMBILAN ALAT STERIL",
     id: "cssd_pengambilan_1",
@@ -165,15 +155,12 @@ const checklistItems = [
     label: "Kondisi container bersih",
   },
 ];
-
 type AuditStatus = "ya" | "tidak" | "na" | null;
 type Observer = { id: string; nama: string };
-
 export default function MonitoringCSSDPage() {
   const router = useRouter();
   const [isEditMode, setIsEditMode] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [observer, setObserver] = useState("");
   const [data, setData] = useState<Record<string, AuditStatus>>({});
@@ -188,7 +175,6 @@ export default function MonitoringCSSDPage() {
   const sigRef = useRef<DigitalSignatureRef>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
-
   useEffect(() => {
     fetchObservers();
     const initialData: Record<string, AuditStatus> = {};
@@ -196,7 +182,6 @@ export default function MonitoringCSSDPage() {
     setStartTime(new Date());
     setData(initialData);
   }, []);
-
   const fetchObservers = async () => {
     try {
       const { data, error } = await supabase
@@ -209,7 +194,6 @@ export default function MonitoringCSSDPage() {
       setObservers([{ id: "1", nama: "IPCN_Adi Tresa Purnama" }]);
     }
   };
-
   const saveObserver = async () => {
     if (!newObserverName.trim()) return;
     try {
@@ -251,7 +235,6 @@ export default function MonitoringCSSDPage() {
       console.error(err);
     }
   };
-
   const deleteObserver = async (id: string) => {
     if (!confirm("Hapus observer ini?")) return;
     try {
@@ -264,11 +247,9 @@ export default function MonitoringCSSDPage() {
       console.error(err);
     }
   };
-
   const toggleItem = (id: string, stat: AuditStatus) => {
     setData((prev) => ({ ...prev, [id]: stat }));
   };
-
   const stats = useMemo(() => {
     let patuh = 0;
     let dinilai = 0;
@@ -287,7 +268,6 @@ export default function MonitoringCSSDPage() {
         persentase >= 85 ? "Patuh" : persentase >= 70 ? "Cukup" : "Tidak Patuh";
     return { patuh, dinilai, persentase, status };
   }, [data]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!observer) {
@@ -298,7 +278,6 @@ export default function MonitoringCSSDPage() {
       alert("Harap isi semua checklist!");
       return;
     }
-
     setIsSubmitting(true);
     try {
       const ttd_pj = sigRef.current?.getPjSignature();
@@ -309,41 +288,41 @@ export default function MonitoringCSSDPage() {
         "logos",
         "audit",
       );
-
       const payload = {
         waktu: startTime?.toISOString() || new Date().toISOString(),
-        ruangan: "CSSD",
-        supervisor: observer,
         checklist_json: data,
         persentase: stats.persentase,
         temuan,
         rekomendasi,
-        nama_pj: pjName.trim(),
         ttd_pj,
         ttd_ipcn,
-        dokumentasi: uploadedUrls,
       };
-
       const sessionPayload = {
         indikator_id: "monitoring_cssd",
+        kategori: "Kewaspadaan Isolasi",
         nama_indikator: "MONITORING CSSD",
         tanggal_waktu: payload.waktu,
         observer,
-        ruangan: "CSSD",
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.status,
-                data_indikator: data,
+        data_indikator: {
+          ...data,
+          temuan,
+          rekomendasi,
+          dokumentasi: uploadedUrls,
+          tanda_tangan: [ttd_pj || null, ttd_ipcn || null],
+          nama_pj: pjName.trim(),
+          nama_pj_ruangan: pjName.trim(),
+        },
       };
-
       const { data: sessionData, error: sessionError } = await supabase
         .from("audit_sessions")
         .insert([sessionPayload])
         .select("*")
         .single();
       if (sessionError) throw sessionError;
-
       const detailPayloads = Object.keys(data).map((key) => ({
         session_id: sessionData.id,
         pertanyaan_id: key,
@@ -351,11 +330,14 @@ export default function MonitoringCSSDPage() {
         jawaban: String(data[key]),
       }));
       await supabase.from("audit_details").insert(detailPayloads);
-
-      await supabase
-        .from("audit_cssd_monitoring")
-        .insert([{ ...payload, created_at: new Date().toISOString() }]);
-
+      // Safe native table insert
+      try {
+        await supabase
+          .from("audit_cssd_monitoring")
+          .insert([{ ...payload, created_at: new Date().toISOString() }]);
+      } catch (err) {
+        console.warn("Failed to insert native table", err);
+      }
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
@@ -368,7 +350,6 @@ export default function MonitoringCSSDPage() {
       setIsSubmitting(false);
     }
   };
-
   const groupedChecklist = checklistItems.reduce(
     (acc, item) => {
       if (!acc[item.group]) acc[item.group] = [];
@@ -377,7 +358,6 @@ export default function MonitoringCSSDPage() {
     },
     {} as Record<string, typeof checklistItems>,
   );
-
   return (
     <div className="max-w-7xl mx-auto pb-32">
       <AnimatePresence>
@@ -393,7 +373,6 @@ export default function MonitoringCSSDPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
       <div className="flex items-center gap-6 py-6 border-b border-slate-200 dark:border-white/5">
         <Link
           href="/dashboard/input/isolasi"
@@ -410,7 +389,6 @@ export default function MonitoringCSSDPage() {
           </p>
         </div>
       </div>
-
       <form
         onSubmit={handleSubmit}
         className="mt-8 grid xl:grid-cols-12 gap-8 items-start"
@@ -477,7 +455,6 @@ export default function MonitoringCSSDPage() {
               </div>
             </div>
           </div>
-
           <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
             <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
               📋 Indikator Kepatuhan
@@ -517,7 +494,6 @@ export default function MonitoringCSSDPage() {
                         ? "border-l-blue-500"
                         : "border-l-red-500";
                 }
-
                 return (
                   <div
                     key={item.id}
@@ -534,7 +510,6 @@ export default function MonitoringCSSDPage() {
                           </h3>
                         </div>
                       </div>
-
                       <div className="flex p-1.5 bg-white/5 rounded-2xl border border-white/5 w-fit self-end md:self-center">
                         {["ya", "tidak", "na"].map((choice) => {
                           let activeClass = "";
@@ -552,7 +527,6 @@ export default function MonitoringCSSDPage() {
                                 ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] transform scale-105"
                                 : "bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)] transform scale-105";
                           }
-
                           return (
                             <button
                               key={choice}
@@ -575,7 +549,6 @@ export default function MonitoringCSSDPage() {
               })}
             </div>
           </div>
-
           <LiveStatisticsCard
             totalDinilai={stats.dinilai}
             totalPatuh={stats.patuh}
@@ -583,7 +556,6 @@ export default function MonitoringCSSDPage() {
             persentase={stats.persentase}
             statusText={stats.status}
           />
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
               <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -608,11 +580,9 @@ export default function MonitoringCSSDPage() {
               />
             </div>
           </div>
-
           <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
             <DocumentationUploader images={images} setImages={setImages} />
           </div>
-
           <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
             <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
               ✍️ TANDA TANGAN DIGITAL
@@ -624,7 +594,6 @@ export default function MonitoringCSSDPage() {
               pjLabel="PJ RUANGAN"
             />
           </div>
-
           <button
             type="submit"
             disabled={isSubmitting || !observer || stats.dinilai === 0}
@@ -639,7 +608,6 @@ export default function MonitoringCSSDPage() {
           </button>
         </div>
       </form>
-
       <AnimatePresence>
         {isObserverModalOpen && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
@@ -722,7 +690,6 @@ export default function MonitoringCSSDPage() {
     </div>
   );
 }
-
 MonitoringCSSDPage.getLayout = function getLayout(page: ReactElement) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };

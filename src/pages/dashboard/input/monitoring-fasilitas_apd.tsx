@@ -29,7 +29,6 @@ import DigitalSignatureSection, {
 } from "@/components/DigitalSignatureSection";
 import { EditableSelect } from "@/components/EditableSelect";
 import { genericAuditConfigs } from "@/lib/audit-configs";
-
 const unitList = [
   "IGD",
   "ICU",
@@ -45,37 +44,30 @@ const unitList = [
   "Rekam Medis",
   "Pantry",
 ];
-
 const checklistItems =
   genericAuditConfigs.monitoring_fasilitas_apd?.items || [];
 const tableName =
   genericAuditConfigs.monitoring_fasilitas_apd?.tableName ||
   "monitoring_fasilitas_apd";
-
 type AuditStatus = "ya" | "tidak" | "na" | null;
-
 export default function MonitoringFasilitasAPDPage() {
   const router = useRouter();
   const [isEditMode, setIsEditMode] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const { userRole } = useAppContext();
   const isIPCN = userRole === "admin" || userRole === "ipcn";
-
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [observer, setObserver] = useState("");
   const [unit, setUnit] = useState("");
   const [data, setData] = useState<Record<string, AuditStatus>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
-
   const [temuan, setTemuan] = useState("");
   const [rekomendasi, setRekomendasi] = useState("");
   const [pjName, setPjName] = useState("");
   const [images, setImages] = useState<DocImage[]>([]);
-
   const sigRef = useRef<DigitalSignatureRef>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
-
   useEffect(() => {
     const initialData: Record<string, AuditStatus> = {};
     const initialNotes: Record<string, string> = {};
@@ -87,15 +79,12 @@ export default function MonitoringFasilitasAPDPage() {
     setData(initialData);
     setNotes(initialNotes);
   }, []);
-
   const toggleItem = (id: string, stat: AuditStatus) => {
     setData((prev) => ({ ...prev, [id]: stat }));
   };
-
   const handleNoteChange = (id: string, val: string) => {
     setNotes((prev) => ({ ...prev, [id]: val }));
   };
-
   const stats = useMemo(() => {
     let patuh = 0;
     let dinilai = 0;
@@ -119,7 +108,6 @@ export default function MonitoringFasilitasAPDPage() {
     }
     return { patuh, dinilai, persentase, status };
   }, [data]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!observer) {
@@ -130,7 +118,6 @@ export default function MonitoringFasilitasAPDPage() {
       alert("Harap isi semua checklist!");
       return;
     }
-
     setIsSubmitting(true);
     try {
       const ttd_pj = sigRef.current?.getPjSignature();
@@ -141,9 +128,7 @@ export default function MonitoringFasilitasAPDPage() {
         "logos",
         "audit",
       );
-
       const recordId = crypto.randomUUID();
-
       const payloadIndikator: Record<string, any> = {};
       Object.keys(data).forEach((key) => {
         payloadIndikator[key] = {
@@ -151,24 +136,30 @@ export default function MonitoringFasilitasAPDPage() {
           keterangan: notes[key] || "",
         };
       });
-
-      const sessionPayload = {
+      const payloadStats = {
         id: recordId,
-        waktu: startTime?.toISOString() || new Date().toISOString(),
-        supervisor: observer,
+        indikator_id: tableName,
+        kategori: "Kewaspadaan Isolasi",
+        nama_indikator: "MONITORING FASILITAS APD",
         unit: unit,
-        checklist_json: payloadIndikator,
+        observer: observer,
+        tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
         persentase: stats.persentase,
-        temuan,
-        rekomendasi,
-        ttd_pj,
-        ttd_ipcn,
-        foto: uploadedUrls,
-        created_at: new Date().toISOString(),
+        jumlah_patuh: stats.patuh,
+        jumlah_dinilai: stats.dinilai,
+        status_kepatuhan: stats.status,
+        data_indikator: {
+          ...data,
+          temuan,
+          rekomendasi,
+          dokumentasi: uploadedUrls,
+          tanda_tangan: [ttd_pj || null, ttd_ipcn || null],
+          nama_pj: pjName,
+          nama_pj_ruangan: pjName,
+        },
       };
-
-      await supabase.from(tableName).insert([sessionPayload]);
-
+      const { error: sessionError } = await supabase.from("audit_sessions").insert([payloadStats]);
+      if (sessionError) throw sessionError;
       // insert to audit_details
       const detailPayloads = Object.keys(data).map((key) => ({
         session_id: recordId,
@@ -177,36 +168,29 @@ export default function MonitoringFasilitasAPDPage() {
         jawaban: String(data[key] || ""),
       }));
       await supabase.from("audit_details").insert(detailPayloads);
-
-      const payloadStats = {
-        id: recordId,
-        indikator_id: tableName,
-        kategori_id: "monitoring",
-        nama_indikator: "MONITORING FASILITAS APD",
-        ruangan: unit,
-        unit: unit,
-        supervisor: observer,
-        observer: observer,
-        tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
-        persentase: stats.persentase,
-        jumlah_patuh: stats.patuh,
-        jumlah_dinilai: stats.dinilai,
-        jumlah_tindakan: stats.dinilai,
-        status_kepatuhan: stats.status,
-        ttd_pj_ruangan: ttd_pj,
-        ttd_ipcn: ttd_ipcn,
-        dokumentasi: uploadedUrls,
-        data_indikator: {
-          ...data,
+      // Safe native table insert
+      try {
+        const sessionPayload = {
+          id: recordId,
+          waktu: startTime?.toISOString() || new Date().toISOString(),
+          supervisor: observer,
+          unit: unit,
+          checklist_json: payloadIndikator,
+          persentase: stats.persentase,
           temuan,
           rekomendasi,
-          dokumentasi: uploadedUrls,
-          tanda_tangan: [ttd_pj || null, ttd_ipcn || null],
-        },
-      };
-
-      await supabase.from("audit_sessions").insert([payloadStats]);
-
+          ttd_pj,
+          ttd_pj_ruangan: ttd_pj,
+          ttd_ipcn,
+          foto: uploadedUrls,
+          nama_pj: pjName,
+          nama_pj_ruangan: pjName,
+          created_at: new Date().toISOString(),
+        };
+        await supabase.from(tableName).insert([sessionPayload]);
+      } catch (err) {
+        console.warn("Failed to insert native table", err);
+      }
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
@@ -219,9 +203,8 @@ export default function MonitoringFasilitasAPDPage() {
       setIsSubmitting(false);
     }
   };
-
   return (
-    <div className="max-w-3xl mx-auto pb-8">
+    <div className="max-w-3xl mx-auto pb-32">
       <AnimatePresence>
         {showToast && (
           <motion.div
@@ -235,7 +218,6 @@ export default function MonitoringFasilitasAPDPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
       <div className="flex items-center gap-6 py-6 border-b border-white/5">
         <Link
           href="/dashboard/input/isolasi"
@@ -253,7 +235,6 @@ export default function MonitoringFasilitasAPDPage() {
           </p>
         </div>
       </div>
-
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2rem] border border-white/5 shadow-sm space-y-6">
           <div className="grid sm:grid-cols-2 gap-6">
@@ -277,7 +258,6 @@ export default function MonitoringFasilitasAPDPage() {
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 [color-scheme:dark] transition-colors"
               />
             </div>
-
             <EditableSelect
               label="Supervisor"
               value={observer}
@@ -287,7 +267,6 @@ export default function MonitoringFasilitasAPDPage() {
               table="master_observers"
               placeholder="Pilih Supervisor..."
             />
-
             <EditableSelect
               label="Ruangan / Unit"
               value={unit}
@@ -299,7 +278,6 @@ export default function MonitoringFasilitasAPDPage() {
             />
           </div>
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
           <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
             📋 Indikator Kepatuhan
@@ -339,7 +317,6 @@ export default function MonitoringFasilitasAPDPage() {
                       ? "border-l-blue-500"
                       : "border-l-red-500";
               }
-
               return (
                 <div
                   key={item.id}
@@ -356,7 +333,6 @@ export default function MonitoringFasilitasAPDPage() {
                         </h3>
                       </div>
                     </div>
-
                     <div className="flex p-1.5 bg-white/5 rounded-2xl border border-white/5 w-fit self-end md:self-center">
                       {["ya", "tidak", "na"].map((choice) => {
                         let activeClass = "";
@@ -374,7 +350,6 @@ export default function MonitoringFasilitasAPDPage() {
                               ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] transform scale-105"
                               : "bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)] transform scale-105";
                         }
-
                         return (
                           <button
                             key={choice}
@@ -397,7 +372,6 @@ export default function MonitoringFasilitasAPDPage() {
             })}
           </div>
         </div>
-
         <LiveStatisticsCard
           totalDinilai={stats.dinilai}
           totalPatuh={stats.patuh}
@@ -405,7 +379,6 @@ export default function MonitoringFasilitasAPDPage() {
           persentase={stats.persentase}
           statusText={stats.status}
         />
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
             <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -430,11 +403,9 @@ export default function MonitoringFasilitasAPDPage() {
             />
           </div>
         </div>
-
         <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
           <DocumentationUploader images={images} setImages={setImages} />
         </div>
-
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
             ✍️ TANDA TANGAN DIGITAL
@@ -446,7 +417,6 @@ export default function MonitoringFasilitasAPDPage() {
             pjLabel="PJ RUANGAN"
           />
         </div>
-
         <button
           type="submit"
           disabled={isSubmitting || !observer || stats.dinilai === 0}
@@ -463,7 +433,6 @@ export default function MonitoringFasilitasAPDPage() {
     </div>
   );
 }
-
 MonitoringFasilitasAPDPage.getLayout = function getLayout(
   page: React.ReactElement,
 ) {

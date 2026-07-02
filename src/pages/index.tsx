@@ -16,7 +16,7 @@ export default function WelcomePage() {
   const [isDark, setIsDark] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [activeBackground, setActiveBackground] = useState<{ url: string; type: string } | null>({
-    url: 'https://labs.google/fx/api/og-video/shared/c011686b-71a2-4cb1-909a-f47eb46eeb28',
+    url: 'https://assets.mixkit.co/videos/preview/mixkit-stethoscopes-on-a-table-in-a-medical-clinic-40097-large.mp4',
     type: 'video/mp4'
   });
 
@@ -33,8 +33,8 @@ export default function WelcomePage() {
           .eq('is_active', true)
           .limit(1)
           .single();
-        if (data && !error) {
-          setActiveBackground({ url: data.public_url, type: data.file_type });
+        if (data && !error && data.public_url) {
+          setActiveBackground({ url: data.public_url, type: data.file_type || 'video/mp4' });
         }
       } catch (err) {
         // Table might not exist yet, fallback gracefully
@@ -78,13 +78,13 @@ export default function WelcomePage() {
   return (
     <div className={`h-screen w-full transition-colors duration-700 ease-in-out relative flex flex-col items-center justify-center overflow-hidden font-sans ${isDark ? 'bg-[#0a0f1c] text-white' : 'bg-gradient-to-br from-white via-emerald-50 to-emerald-100 text-[#0A2F1D]'}`}>
       <Head>
-        <link rel="preload" as="video" href="https://labs.google/fx/api/og-video/shared/c011686b-71a2-4cb1-909a-f47eb46eeb28" type="video/mp4" />
+        <link rel="preload" as="video" href="https://assets.mixkit.co/videos/preview/mixkit-stethoscopes-on-a-table-in-a-medical-clinic-40097-large.mp4" type="video/mp4" />
       </Head>
       {/* Background Media */}
       {isDark && (
         <>
           {activeBackground ? (
-            activeBackground.type.startsWith('image/') ? (
+            activeBackground.type && activeBackground.type.startsWith('image/') ? (
               <div 
                 className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none z-0 bg-no-repeat bg-cover bg-center transition-opacity duration-1000"
                 style={{ backgroundImage: `url(${activeBackground.url})` }}
@@ -118,7 +118,7 @@ export default function WelcomePage() {
                   oncontextmenu="return false;"
                   class="absolute inset-0 w-full h-full object-cover opacity-50 pointer-events-none z-0"
                 >
-                  <source src="https://labs.google/fx/api/og-video/shared/c011686b-71a2-4cb1-909a-f47eb46eeb28" type="video/mp4">
+                  <source src="https://assets.mixkit.co/videos/preview/mixkit-stethoscopes-on-a-table-in-a-medical-clinic-40097-large.mp4" type="video/mp4">
                 </video>
               ` }}
             />
@@ -335,7 +335,7 @@ export default function WelcomePage() {
                 initial={{ y: 20, opacity: 0 }} 
                 animate={{ y: 0, opacity: 1 }} 
                 transition={{ duration: 0.8, delay: 0.6 }}
-                className={`block text-transparent bg-clip-text bg-gradient-to-r bg-[length:200%_auto] animate-gradient ${isDark ? 'from-blue-400 via-purple-500 to-blue-400' : 'from-blue-500 via-emerald-500 to-blue-500'}`}
+                className={`block text-transparent bg-clip-text bg-gradient-to-r bg-[length:200%_auto] animate-gradient drop-shadow-[1.5px_1.5px_1.5px_rgba(0,0,0,0.9)] ${isDark ? 'from-blue-400 via-purple-500 to-blue-400' : 'from-blue-500 via-emerald-500 to-blue-500'}`}
               >
                 SMART PPI
               </motion.span>

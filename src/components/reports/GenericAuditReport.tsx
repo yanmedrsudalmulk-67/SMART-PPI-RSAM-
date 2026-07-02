@@ -635,10 +635,10 @@ export default function GenericAuditReport({
   }, [selectedRecordId]);
 
   const checklistItems =
-    dynamicChecklist && dynamicChecklist.length > 0
-      ? dynamicChecklist
-      : indicatorItems && indicatorItems.length > 0
-        ? indicatorItems.map((i) => ({ id: i.key, label: i.label }))
+    indicatorItems && indicatorItems.length > 0
+      ? indicatorItems.map((i) => ({ id: i.key, label: i.label }))
+      : dynamicChecklist && dynamicChecklist.length > 0
+        ? dynamicChecklist
         : Object.keys(selectedRecord?.checklist_json || {}).map((k) => ({
             id: k,
             label: toSentenceCase(k),
