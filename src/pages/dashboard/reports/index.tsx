@@ -505,74 +505,80 @@ export default function ReportsPage() {
                      Pusat analisis data pencegahan dan pengendalian infeksi terintegrasi.
                   </p>
                 </div>
-                
-                <div className="flex flex-wrap items-center justify-center lg:justify-end gap-3 w-full lg:w-auto">
-                  <div className="flex flex-wrap justify-center items-center gap-3 bg-white/60 dark:bg-[#111827]/60 backdrop-blur-sm border border-slate-200 dark:border-white/10 rounded-2xl p-2 shadow-sm w-full sm:w-auto">
-                     <select 
-                       value={periode} 
-                       onChange={(e) => setPeriode(e.target.value)}
-                       className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
-                     >
-                       {['Bulanan', 'Triwulan', 'Semester', 'Tahunan'].map(p => (
-                         <option key={p} value={p} className="bg-white dark:bg-slate-900">{p}</option>
-                       ))}
-                     </select>
-  
-                     {periode === 'Bulanan' && (
-                       <>
-                         <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
-                         <select 
-                           value={selectedMonth} 
-                           onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                           className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
-                         >
-                           {["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"].map((m, i) => (
-                             <option key={m} value={i} className="bg-white dark:bg-slate-900">{m}</option>
-                           ))}
-                         </select>
-                       </>
-                     )}
-  
-                     {periode === 'Triwulan' && (
-                       <>
-                         <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
-                         <select 
-                           value={selectedQuarter} 
-                           onChange={(e) => setSelectedQuarter(parseInt(e.target.value))}
-                           className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
-                         >
-                           {["Triwulan 1", "Triwulan 2", "Triwulan 3", "Triwulan 4"].map((q, i) => (
-                             <option key={q} value={i} className="bg-white dark:bg-slate-900">{q}</option>
-                           ))}
-                         </select>
-                       </>
-                     )}
-  
-                     {periode === 'Semester' && (
-                       <>
-                         <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
-                         <select 
-                           value={selectedSemester} 
-                           onChange={(e) => setSelectedSemester(parseInt(e.target.value))}
-                           className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
-                         >
-                           {["Semester 1", "Semester 2"].map((s, i) => (
-                             <option key={s} value={i} className="bg-white dark:bg-slate-900">{s}</option>
-                           ))}
-                         </select>
-                       </>
-                     )}
-  
-                     <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
-                     <select 
-                       value={selectedYear} 
-                       onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                       className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
-                     >
-                       {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => (
-                         <option key={y} value={y} className="bg-white dark:bg-slate-900">{y}</option>
-                       ))}
-                     </select>
+                 <div className="flex flex-wrap items-center justify-center lg:justify-end gap-3 w-full lg:w-auto">
+                  <div className="glowing-border-container w-full sm:w-auto">
+                    {/* Spinning gradient layer */}
+                    <div className="glowing-border-bg" />
+                    {/* Glowing shadow layer underneath */}
+                    <div className="glowing-border-shadow" />
+
+                    <div className="glowing-border-inner flex flex-wrap justify-center items-center gap-3 rounded-[14px] p-2 w-full sm:w-auto">
+                      <select 
+                        value={periode} 
+                        onChange={(e) => setPeriode(e.target.value)}
+                        className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
+                      >
+                        {['Bulanan', 'Triwulan', 'Semester', 'Tahunan'].map(p => (
+                          <option key={p} value={p} className="bg-white dark:bg-slate-900">{p}</option>
+                        ))}
+                      </select>
+   
+                      {periode === 'Bulanan' && (
+                        <>
+                          <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
+                          <select 
+                            value={selectedMonth} 
+                            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                            className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
+                          >
+                            {["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"].map((m, i) => (
+                              <option key={m} value={i} className="bg-white dark:bg-slate-900">{m}</option>
+                            ))}
+                          </select>
+                        </>
+                      )}
+   
+                      {periode === 'Triwulan' && (
+                        <>
+                          <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
+                          <select 
+                            value={selectedQuarter} 
+                            onChange={(e) => setSelectedQuarter(parseInt(e.target.value))}
+                            className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
+                          >
+                            {["Triwulan 1", "Triwulan 2", "Triwulan 3", "Triwulan 4"].map((q, i) => (
+                              <option key={q} value={i} className="bg-white dark:bg-slate-900">{q}</option>
+                            ))}
+                          </select>
+                        </>
+                      )}
+   
+                      {periode === 'Semester' && (
+                        <>
+                          <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
+                          <select 
+                            value={selectedSemester} 
+                            onChange={(e) => setSelectedSemester(parseInt(e.target.value))}
+                            className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
+                          >
+                            {["Semester 1", "Semester 2"].map((s, i) => (
+                              <option key={s} value={i} className="bg-white dark:bg-slate-900">{s}</option>
+                            ))}
+                          </select>
+                        </>
+                      )}
+   
+                      <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
+                      <select 
+                        value={selectedYear} 
+                        onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                        className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
+                      >
+                        {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => (
+                          <option key={y} value={y} className="bg-white dark:bg-slate-900">{y}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -617,13 +623,6 @@ export default function ReportsPage() {
                         }`}>
                           {detail.subtitle}
                         </p>
-                      </div>
-                      <div className={`p-2.5 rounded-xl ${
-                        isActive 
-                          ? 'bg-white/20 text-white shadow-inner scale-105' 
-                          : `bg-slate-100 dark:bg-white/5 ${detail.iconColor}`
-                      } transition-all duration-300`}>
-                        <Icon className="w-5 h-5" />
                       </div>
                     </div>
 
@@ -798,7 +797,12 @@ export default function ReportsPage() {
                </div>
                
                <div className="flex flex-wrap justify-center items-center gap-3 self-center md:self-auto w-full md:w-auto mt-4 md:mt-0">
-                 <div className="flex flex-wrap justify-center items-center gap-2 bg-white/60 dark:bg-[#111827]/60 backdrop-blur-sm border border-slate-200 dark:border-white/10 rounded-xl p-1 shadow-sm w-full sm:w-auto">
+                  <div className="glowing-border-container w-full sm:w-auto">
+                    {/* Spinning gradient layer */}
+                    <div className="glowing-border-bg" />
+                    {/* Glowing shadow layer underneath */}
+                    <div className="glowing-border-shadow" />
+                 <div className="glowing-border-inner flex flex-wrap justify-center items-center gap-2 rounded-[14px] p-1 shadow-sm w-full sm:w-auto">
                    
                    <select 
                      value={periode} 
@@ -854,7 +858,9 @@ export default function ReportsPage() {
                    )}
                  </div>
 
-                 <div className="flex items-center gap-2 bg-white/60 dark:bg-[#111827]/60 backdrop-blur-sm border border-slate-200 dark:border-white/10 rounded-xl p-1 shadow-sm">
+                 </div>
+
+                  <div className="flex items-center gap-2 bg-white/60 dark:bg-[#111827]/60 backdrop-blur-sm border border-slate-200 dark:border-white/10 rounded-xl p-1 shadow-sm">
                    <div className="p-1.5 bg-amber-50 dark:bg-amber-500/10 rounded-lg text-amber-600 dark:text-amber-400">
                      <Building2 className="w-4 h-4" />
                    </div>

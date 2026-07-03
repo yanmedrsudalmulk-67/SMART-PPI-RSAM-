@@ -393,35 +393,42 @@ export default function UnifiedSurveilansHaisReport() {
       <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-lg flex flex-col md:flex-row gap-4 justify-between items-center w-full">
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           {/* Periode */}
-          <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 rounded-xl p-1 px-2 flex-grow sm:flex-grow-0 min-w-max">
-            <select value={periodeType} onChange={(e) => setPeriodeType(e.target.value)} className="bg-transparent border-none text-xs sm:text-sm font-bold text-slate-900 dark:text-white outline-none cursor-pointer">
-              {['Bulanan', 'Triwulan', 'Semester', 'Tahunan'].map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
+          <div className="glowing-border-container w-full sm:w-auto">
+            {/* Spinning gradient layer */}
+            <div className="glowing-border-bg" />
+            {/* Glowing shadow layer underneath */}
+            <div className="glowing-border-shadow" />
             
-            {(periodeType === 'Bulanan' || periodeType === 'Triwulan' || periodeType === 'Semester') && (
-               <div className="w-px h-4 bg-slate-300 dark:bg-slate-700 mx-1" />
-            )}
+            <div className="glowing-border-inner flex flex-wrap justify-center items-center gap-2 rounded-[14px] p-1 shadow-sm w-full sm:w-auto">
+              <select value={periodeType} onChange={(e) => setPeriodeType(e.target.value)} className="bg-transparent border-none text-xs sm:text-sm font-bold text-slate-900 dark:text-white outline-none cursor-pointer">
+                {['Bulanan', 'Triwulan', 'Semester', 'Tahunan'].map(p => <option key={p} value={p} className="bg-white dark:bg-slate-900">{p}</option>)}
+              </select>
+              
+              {(periodeType === 'Bulanan' || periodeType === 'Triwulan' || periodeType === 'Semester') && (
+                 <div className="w-px h-4 bg-slate-300 dark:bg-slate-700 mx-1" />
+              )}
 
-            {periodeType === 'Bulanan' && (
-              <select value={selectedMonth} onChange={(e) => setSelectedMonth(parseInt(e.target.value))} className="bg-transparent border-none text-xs sm:text-sm font-bold text-slate-900 dark:text-white outline-none cursor-pointer">
-                {["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"].map((m, i) => <option key={m} value={i}>{m}</option>)}
-              </select>
-            )}
-            {periodeType === 'Triwulan' && (
-              <select value={selectedQuarter} onChange={(e) => setSelectedQuarter(parseInt(e.target.value))} className="bg-transparent border-none text-xs sm:text-sm font-bold text-slate-900 dark:text-white outline-none cursor-pointer">
-                {["Q1", "Q2", "Q3", "Q4"].map((q, i) => <option key={q} value={i}>{q}</option>)}
-              </select>
-            )}
-            {periodeType === 'Semester' && (
-              <select value={selectedSemester} onChange={(e) => setSelectedSemester(parseInt(e.target.value))} className="bg-transparent border-none text-xs sm:text-sm font-bold text-slate-900 dark:text-white outline-none cursor-pointer">
-                {["S1", "S2"].map((s, i) => <option key={s} value={i}>{s}</option>)}
-              </select>
-            )}
+              {periodeType === 'Bulanan' && (
+                <select value={selectedMonth} onChange={(e) => setSelectedMonth(parseInt(e.target.value))} className="bg-transparent border-none text-xs sm:text-sm font-bold text-slate-900 dark:text-white outline-none cursor-pointer">
+                  {["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"].map((m, i) => <option key={m} value={i} className="bg-white dark:bg-slate-900">{m}</option>)}
+                </select>
+              )}
+              {periodeType === 'Triwulan' && (
+                <select value={selectedQuarter} onChange={(e) => setSelectedQuarter(parseInt(e.target.value))} className="bg-transparent border-none text-xs sm:text-sm font-bold text-slate-900 dark:text-white outline-none cursor-pointer">
+                  {["Q1", "Q2", "Q3", "Q4"].map((q, i) => <option key={q} value={i} className="bg-white dark:bg-slate-900">{q}</option>)}
+                </select>
+              )}
+              {periodeType === 'Semester' && (
+                <select value={selectedSemester} onChange={(e) => setSelectedSemester(parseInt(e.target.value))} className="bg-transparent border-none text-xs sm:text-sm font-bold text-slate-900 dark:text-white outline-none cursor-pointer">
+                  {["S1", "S2"].map((s, i) => <option key={s} value={i} className="bg-white dark:bg-slate-900">{s}</option>)}
+                </select>
+              )}
 
-            <div className="w-px h-4 bg-slate-300 dark:bg-slate-700 mx-1" />
-            <select value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.target.value))} className="bg-transparent border-none text-xs sm:text-sm font-bold text-slate-900 dark:text-white outline-none cursor-pointer">
-              {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
+              <div className="w-px h-4 bg-slate-300 dark:bg-slate-700 mx-1" />
+              <select value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.target.value))} className="bg-transparent border-none text-xs sm:text-sm font-bold text-slate-900 dark:text-white outline-none cursor-pointer">
+                {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => <option key={y} value={y} className="bg-white dark:bg-slate-900">{y}</option>)}
+              </select>
+            </div>
           </div>
 
           {/* Ruangan */}

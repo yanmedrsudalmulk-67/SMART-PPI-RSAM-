@@ -1096,132 +1096,141 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full md:w-auto lg:min-w-[600px]">
-              {/* Select Period Type */}
-              <div className="relative group/select">
-                <label className="absolute -top-2 left-3 px-1 bg-white dark:bg-[#111827] text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest z-10">
-                  Tipe
-                </label>
-                <select
-                  value={filterPeriodType}
-                  onChange={(e) => setFilterPeriodType(e.target.value as any)}
-                  className="w-full bg-slate-50/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 transition-all appearance-none cursor-pointer"
-                >
-                  <option value="bulanan" className="dark:bg-slate-900">
-                    BULANAN
-                  </option>
-                  <option value="triwulan" className="dark:bg-slate-900">
-                    TRIWULAN
-                  </option>
-                  <option value="semester" className="dark:bg-slate-900">
-                    SEMESTER
-                  </option>
-                  <option value="tahunan" className="dark:bg-slate-900">
-                    TAHUNAN
-                  </option>
-                </select>
-              </div>
+            <div className="glowing-border-container w-full md:w-auto lg:min-w-[600px]">
+              {/* Spinning gradient layer */}
+              <div className="glowing-border-bg" />
+              {/* Glowing shadow layer underneath */}
+              <div className="glowing-border-shadow" />
 
-              {/* Select Detail Period */}
-              <div className="relative group/select">
-                <label className="absolute -top-2 left-3 px-1 bg-white dark:bg-[#111827] text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest z-10">
-                  {filterPeriodType === "bulanan"
-                    ? "Bulan"
-                    : filterPeriodType === "triwulan"
-                      ? "Triwulan"
-                      : filterPeriodType === "semester"
-                        ? "Semester"
-                        : "Detail"}
-                </label>
-                <div className="relative">
-                  {filterPeriodType === "bulanan" && (
+              <div className="glowing-border-inner rounded-[14px] p-2.5 w-full">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
+                  {/* Select Period Type */}
+                  <div className="relative group/select">
+                    <label className="absolute -top-2 left-3 px-1 bg-white dark:bg-[#111827] text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest z-10">
+                      Tipe
+                    </label>
                     <select
-                      value={filterMonth}
-                      onChange={(e) => setFilterMonth(parseInt(e.target.value))}
-                      className="w-full bg-slate-50/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 transition-all appearance-none cursor-pointer disabled:opacity-50"
+                      value={filterPeriodType}
+                      onChange={(e) => setFilterPeriodType(e.target.value as any)}
+                      className="w-full bg-slate-50/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 transition-all appearance-none cursor-pointer"
                     >
-                      {[
-                        "Januari",
-                        "Februari",
-                        "Maret",
-                        "April",
-                        "Mei",
-                        "Juni",
-                        "Juli",
-                        "Agustus",
-                        "September",
-                        "Oktober",
-                        "November",
-                        "Desember",
-                      ].map((m, i) => (
-                        <option key={i} value={i} className="dark:bg-slate-900">
-                          {m}
+                      <option value="bulanan" className="dark:bg-slate-900">
+                        BULANAN
+                      </option>
+                      <option value="triwulan" className="dark:bg-slate-900">
+                        TRIWULAN
+                      </option>
+                      <option value="semester" className="dark:bg-slate-900">
+                        SEMESTER
+                      </option>
+                      <option value="tahunan" className="dark:bg-slate-900">
+                        TAHUNAN
+                      </option>
+                    </select>
+                  </div>
+
+                  {/* Select Detail Period */}
+                  <div className="relative group/select">
+                    <label className="absolute -top-2 left-3 px-1 bg-white dark:bg-[#111827] text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest z-10">
+                      {filterPeriodType === "bulanan"
+                        ? "Bulan"
+                        : filterPeriodType === "triwulan"
+                          ? "Triwulan"
+                          : filterPeriodType === "semester"
+                            ? "Semester"
+                            : "Detail"}
+                    </label>
+                    <div className="relative">
+                      {filterPeriodType === "bulanan" && (
+                        <select
+                          value={filterMonth}
+                          onChange={(e) => setFilterMonth(parseInt(e.target.value))}
+                          className="w-full bg-slate-50/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 transition-all appearance-none cursor-pointer disabled:opacity-50"
+                        >
+                          {[
+                            "Januari",
+                            "Februari",
+                            "Maret",
+                            "April",
+                            "Mei",
+                            "Juni",
+                            "Juli",
+                            "Agustus",
+                            "September",
+                            "Oktober",
+                            "November",
+                            "Desember",
+                          ].map((m, i) => (
+                            <option key={i} value={i} className="dark:bg-slate-900">
+                              {m}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                      {filterPeriodType === "triwulan" && (
+                        <select
+                          value={filterQuarter}
+                          onChange={(e) =>
+                            setFilterQuarter(parseInt(e.target.value))
+                          }
+                          className="w-full bg-slate-50/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 transition-all appearance-none cursor-pointer"
+                        >
+                          <option value={0} className="dark:bg-slate-900">
+                            TW 1 (Jan-Mar)
+                          </option>
+                          <option value={1} className="dark:bg-slate-900">
+                            TW 2 (Apr-Jun)
+                          </option>
+                          <option value={2} className="dark:bg-slate-900">
+                            TW 3 (Jul-Sep)
+                          </option>
+                          <option value={3} className="dark:bg-slate-900">
+                            TW 4 (Okt-Des)
+                          </option>
+                        </select>
+                      )}
+                      {filterPeriodType === "semester" && (
+                        <select
+                          value={filterSemester}
+                          onChange={(e) =>
+                            setFilterSemester(parseInt(e.target.value))
+                          }
+                          className="w-full bg-slate-50/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 transition-all appearance-none cursor-pointer"
+                        >
+                          <option value={0} className="dark:bg-slate-900">
+                            SM 1 (Jan-Jun)
+                          </option>
+                          <option value={1} className="dark:bg-slate-900">
+                            SM 2 (Jul-Des)
+                          </option>
+                        </select>
+                      )}
+                      {filterPeriodType === "tahunan" && (
+                        <div className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 dark:text-slate-500 text-sm font-bold rounded-2xl px-4 py-4">
+                          Tahun Penuh
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Select Year */}
+                  <div className="relative group/select">
+                    <label className="absolute -top-2 left-3 px-1 bg-white dark:bg-[#111827] text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest z-10">
+                      Tahun
+                    </label>
+                    <select
+                      value={filterYear}
+                      onChange={(e) => setFilterYear(parseInt(e.target.value))}
+                      className="w-full bg-slate-50/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 transition-all appearance-none cursor-pointer"
+                    >
+                      {[2024, 2025, 2026, 2027].map((y) => (
+                        <option key={y} value={y} className="dark:bg-slate-900">
+                          {y}
                         </option>
                       ))}
                     </select>
-                  )}
-                  {filterPeriodType === "triwulan" && (
-                    <select
-                      value={filterQuarter}
-                      onChange={(e) =>
-                        setFilterQuarter(parseInt(e.target.value))
-                      }
-                      className="w-full bg-slate-50/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 transition-all appearance-none cursor-pointer"
-                    >
-                      <option value={0} className="dark:bg-slate-900">
-                        TW 1 (Jan-Mar)
-                      </option>
-                      <option value={1} className="dark:bg-slate-900">
-                        TW 2 (Apr-Jun)
-                      </option>
-                      <option value={2} className="dark:bg-slate-900">
-                        TW 3 (Jul-Sep)
-                      </option>
-                      <option value={3} className="dark:bg-slate-900">
-                        TW 4 (Okt-Des)
-                      </option>
-                    </select>
-                  )}
-                  {filterPeriodType === "semester" && (
-                    <select
-                      value={filterSemester}
-                      onChange={(e) =>
-                        setFilterSemester(parseInt(e.target.value))
-                      }
-                      className="w-full bg-slate-50/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 transition-all appearance-none cursor-pointer"
-                    >
-                      <option value={0} className="dark:bg-slate-900">
-                        SM 1 (Jan-Jun)
-                      </option>
-                      <option value={1} className="dark:bg-slate-900">
-                        SM 2 (Jul-Des)
-                      </option>
-                    </select>
-                  )}
-                  {filterPeriodType === "tahunan" && (
-                    <div className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 dark:text-slate-500 text-sm font-bold rounded-2xl px-4 py-4">
-                      Tahun Penuh
-                    </div>
-                  )}
+                  </div>
                 </div>
-              </div>
-
-              {/* Select Year */}
-              <div className="relative group/select">
-                <label className="absolute -top-2 left-3 px-1 bg-white dark:bg-[#111827] text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest z-10">
-                  Tahun
-                </label>
-                <select
-                  value={filterYear}
-                  onChange={(e) => setFilterYear(parseInt(e.target.value))}
-                  className="w-full bg-slate-50/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 transition-all appearance-none cursor-pointer"
-                >
-                  {[2024, 2025, 2026, 2027].map((y) => (
-                    <option key={y} value={y} className="dark:bg-slate-900">
-                      {y}
-                    </option>
-                  ))}
-                </select>
               </div>
             </div>
           </div>
