@@ -40,8 +40,8 @@ const NavItem = memo(({ item, isActive, onClick }: { item: any, isActive: boolea
         <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-emerald-400 rounded-r-full shadow-[0_0_10px_rgba(52,211,153,0.8)]" />
       )}
       <motion.div 
-        animate={isActive ? { y: [-2, 2, -2] } : { y: 0 }}
-        transition={isActive ? { repeat: Infinity, duration: 3, ease: "easeInOut" } : { duration: 0.3 }}
+        animate={isActive ? { scale: 1.1 } : { scale: 1 }}
+        transition={{ duration: 0.2 }}
         className={`relative z-10 flex items-center justify-center transition-transform duration-300 ${isActive ? 'scale-110 drop-shadow-lg' : 'group-hover:scale-110'}`}
       >
         <item.icon className={`${iconBase} ${isActive ? iconActive : iconInactive}`} strokeWidth={isActive ? 2.5 : 2} />
@@ -212,7 +212,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           damping: 40,
           mass: 0.8
         }}
-        className="border-r flex flex-col fixed inset-y-4 left-4 z-50 w-[280px] rounded-[24px] transition-colors duration-500 print:hidden transform-gpu will-change-transform backdrop-blur-[40px] bg-white/[0.02] border border-white/[0.08] shadow-[0_8px_32px_0_rgba(0,0,0,0.4),inset_0_1px_0_0_rgba(255,255,255,0.1)]"
+        className="border-r flex flex-col fixed inset-y-4 left-4 z-50 w-[280px] rounded-[24px] transition-colors duration-500 print:hidden transform-gpu will-change-transform backdrop-blur-md bg-[#0a0f1d]/90 border border-white/5 shadow-[0_8px_32px_0_rgba(0,0,0,0.4),inset_0_1px_0_0_rgba(255,255,255,0.1)]"
       >
         {/* New Elegant Toggle Button on the Right Border */}
         <button
@@ -271,7 +271,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         !isMobile ? (isSidebarOpen ? 'ml-[312px]' : 'ml-[40px]') : 'ml-0'
       }`}>
         {/* Top Header */}
-        <header className="min-h-[64px] sm:h-20 shrink-0 border-b flex items-center justify-between px-4 sm:px-8 sticky top-0 z-[45] transition-all duration-500 print:hidden backdrop-blur-[40px] bg-white/[0.02] border-white/[0.08] shadow-[0_4px_30px_rgba(0,0,0,0.2)]">
+        <header className="min-h-[64px] sm:h-20 shrink-0 border-b flex items-center justify-between px-4 sm:px-8 sticky top-0 z-[45] transition-all duration-500 print:hidden backdrop-blur-md bg-[#0a0f1d]/90 border-white/5 shadow-[0_4px_30px_rgba(0,0,0,0.2)]">
           <div className="flex items-center gap-2 sm:gap-4">
             
             {/* Mobile Hamburger Menu Toggle */}
@@ -320,11 +320,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={pathname}
-              initial={{ opacity: 0, scale: 0.98, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.98, y: -10 }}
-              transition={{ type: "spring", stiffness: 450, damping: 30, mass: 0.8 }}
-              className="w-full h-full"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+              className="w-full h-full transform-gpu"
             >
               {children}
             </motion.div>
@@ -334,7 +334,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Mobile Bottom Navigation */}
       <div className="fixed bottom-5 inset-x-5 z-50 flex justify-center md:hidden pb-[env(safe-area-inset-bottom)]">
-        <nav className="w-full max-w-md flex justify-around items-center h-[72px] px-2 rounded-[36px] border backdrop-blur-xl transition-all duration-300 bg-[#0a0f1c]/40 border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15),_0_0_25px_rgba(16,185,129,0.05)]">
+        <nav className="w-full max-w-md flex justify-around items-center h-[72px] px-2 rounded-[36px] border backdrop-blur-md transition-all duration-300 bg-[#0a0f1c]/90 border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15),_0_0_25px_rgba(16,185,129,0.05)]">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -346,7 +346,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {isActive && (
                   <motion.div
                     layoutId="mobileNavIndicator"
-                    className="absolute inset-x-1.5 inset-y-1.5 rounded-[22px] bg-gradient-to-br from-emerald-500/80 to-teal-600/80 backdrop-blur-md border border-emerald-400/30 shadow-[0_4px_16px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.25)]"
+                    className="absolute inset-x-1.5 inset-y-1.5 rounded-[22px] bg-gradient-to-br from-emerald-500 to-teal-600 border border-emerald-400/30 shadow-[0_4px_16px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.25)]"
                     transition={{ type: "spring", stiffness: 380, damping: 30 }}
                   />
                 )}

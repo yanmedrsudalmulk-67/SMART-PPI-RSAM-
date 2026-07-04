@@ -140,7 +140,6 @@ export default function InputMonitoringTPSPage() {
     },
   );
   useEffect(() => {
-    setStartTime(new Date());
     const initialData: Record<string, AuditStatus> = {};
     const initialKet: Record<string, string> = {};
     checklistGroups.forEach((group) => {
@@ -151,6 +150,87 @@ export default function InputMonitoringTPSPage() {
     });
     setData(initialData);
     setKeterangan(initialKet);
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+      const mode = params.get("mode");
+      if (id && mode === "edit") {
+        setIsEditMode(true);
+        setEditId(id);
+        const loadEditData = async () => {
+          const { data: ed, error } = await supabase
+            .from("audit_sessions")
+            .select("*")
+            .eq("id", id)
+            .single();
+          if (ed && !error) {
+            if (ed.tanggal_waktu) setStartTime(new Date(ed.tanggal_waktu));
+            if (ed.observer) setObserver(ed.observer);
+            
+            const indicatorsData = ed.data_indikator || ed.checklist_json || {};
+            if (indicatorsData.temuan) setTemuan(indicatorsData.temuan);
+            if (indicatorsData.rekomendasi) setRekomendasi(indicatorsData.rekomendasi);
+            
+            const displayPjName = indicatorsData.nama_pj || indicatorsData.nama_pj_ruangan || ed.nama_pj_ruangan || "";
+            setPjName(displayPjName);
+
+            try {
+              setData((prev: any) => {
+                const updated = { ...prev };
+                Object.keys(updated).forEach((key) => {
+                  if (indicatorsData[key] !== undefined) {
+                    updated[key] = indicatorsData[key];
+                  }
+                });
+                return updated;
+              });
+            } catch (err) {}
+
+            // Prefill item-level keterangan (descriptions)
+            try {
+              setKeterangan((prev: any) => {
+                const updated = { ...prev };
+                const savedKeterangan = indicatorsData.keterangan || indicatorsData.keterangan_json?.data || indicatorsData.keterangan_json || {};
+                Object.keys(updated).forEach((key) => {
+                  if (savedKeterangan[key] !== undefined) {
+                    updated[key] = savedKeterangan[key];
+                  }
+                });
+                return updated;
+              });
+            } catch (err) {}
+
+            // Prefill signatures
+            setTimeout(() => {
+              const t1 = ed.ttd_pj_ruangan || indicatorsData.ttd_pj || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
+              const t2 = ed.ttd_ipcn || indicatorsData.ttd_ipcn || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
+              if (t1 && sigRef.current?.setPjSignature) {
+                sigRef.current.setPjSignature(t1);
+              }
+              if (t2 && sigRef.current?.setSupervisorSignature) {
+                sigRef.current.setSupervisorSignature(t2);
+              }
+            }, 800);
+
+            // Prefill documentation
+            if (indicatorsData.dokumentasi) {
+              setImages(
+                indicatorsData.dokumentasi.map((url: string) => ({
+                  url,
+                  file: null as any,
+                }))
+              );
+            }
+          }
+        };
+        loadEditData();
+      } else {
+        setStartTime(new Date());
+      }
+    } else {
+      setStartTime(new Date());
+    }
   }, []);
   const toggleGroup = (title: string) => {
     setExpandedGroups((prev) => ({ ...prev, [title]: !prev[title] }));
@@ -186,15 +266,17 @@ export default function InputMonitoringTPSPage() {
     if (!observer) return alert("Pilih Supervisor terlebih dahulu");
     setIsSubmitting(true);
     try {
-      const ttd_pj = sigRef.current?.getPjSignature();
-      const ttd_ipcn = sigRef.current?.getSupervisorSignature();
-      // Upload images
-      const uploadedUrls = await uploadImagesToSupabase(
-        supabase,
-        images,
-        "audit_images",
-        "monitoring_tps",
-      );
+      const ttd_pj = sigRef.current?.getPjSignature() || null;
+      const ttd_ipcn = sigRef.current?.getSupervisorSignature() || null;
+      
+      // Handle images upload
+      const existingUrls = images.filter((img) => !img.file).map((img) => img.url);
+      const newFiles = images.filter((img) => img.file).map((img) => ({ file: img.file }));
+      const newlyUploadedUrls = newFiles.length > 0 
+        ? await uploadImagesToSupabase(supabase, newFiles, "dokumentasi", "audit") 
+        : [];
+      const uploadedUrls = [...existingUrls, ...newlyUploadedUrls];
+
       const sessionPayload = {
         indikator_id: "monitoring_tps",
         kategori: "Kewaspadaan Isolasi",
@@ -214,27 +296,51 @@ export default function InputMonitoringTPSPage() {
           ttd_pj,
           ttd_ipcn,
           dokumentasi: uploadedUrls,
+          keterangan, // Store item-level notes/keterangan here
         },
       };
-      const { data: sessionData, error: sessionError } = await supabase
-        .from("audit_sessions")
-        .insert([sessionPayload])
-        .select("id")
-        .single();
-      if (sessionError) throw sessionError;
+
+      let sessionId = editId;
+
+      if (isEditMode && editId) {
+        // Update existing session
+        const { error: sessionError } = await supabase
+          .from("audit_sessions")
+          .update(sessionPayload)
+          .eq("id", editId);
+        if (sessionError) throw sessionError;
+
+        // Clean up detail entries for update
+        await supabase.from("audit_details").delete().eq("session_id", editId);
+      } else {
+        // Insert new session
+        const { data: sessionData, error: sessionError } = await supabase
+          .from("audit_sessions")
+          .insert([sessionPayload])
+          .select("id")
+          .single();
+        if (sessionError) throw sessionError;
+        sessionId = sessionData.id;
+      }
+
       // detail entries
       const detailPayloads: any[] = [];
       checklistGroups.forEach((group) => {
         group.items.forEach((item) => {
-          detailPayloads.push({
-            session_id: sessionData.id,
-            pertanyaan_id: item.id,
-            pertanyaan: item.label,
-            jawaban: String(data[item.id]),
-          });
+          if (data[item.id] !== null) {
+            detailPayloads.push({
+              session_id: sessionId,
+              pertanyaan_id: item.id,
+              pertanyaan: item.label,
+              jawaban: String(data[item.id]),
+            });
+          }
         });
       });
-      await supabase.from("audit_details").insert(detailPayloads);
+      if (detailPayloads.length > 0) {
+        await supabase.from("audit_details").insert(detailPayloads);
+      }
+
       // optional custom table insert
       try {
         const payload = {
@@ -254,6 +360,7 @@ export default function InputMonitoringTPSPage() {
       } catch (err) {
         console.warn("Failed to insert into native table audit_tps, but saved to generic session.", err);
       }
+
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);

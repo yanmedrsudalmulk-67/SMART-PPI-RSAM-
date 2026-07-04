@@ -73,6 +73,8 @@ interface GenericAuditData {
   ttd_ipcn?: string;
   tanda_tangan?: string[];
   nama_pj_ruangan?: string;
+  keterangan_json?: any;
+  keterangan?: any;
 }
 
 const INDICATOR_TO_FORM_PATH: Record<string, string> = {
@@ -575,13 +577,34 @@ export default function GenericAuditReport({
   const getKeterangan = (itemId: string) => {
     if (!selectedRecord) return "";
     
-    // Check if there is a flat keterangan object mapping from itemId
-    if (selectedRecord.checklist_json?.keterangan && typeof selectedRecord.checklist_json.keterangan === 'object') {
-       const ketVal = (selectedRecord.checklist_json.keterangan as any)[itemId];
+    // Cast checklist_json to any for flexible nested object navigation
+    const checklistJson: any = selectedRecord.checklist_json || {};
+    
+    // Check if there is a flat keterangan object mapping from itemId inside checklist_json
+    if (checklistJson.keterangan && typeof checklistJson.keterangan === 'object') {
+       const ketVal = (checklistJson.keterangan as any)[itemId];
+       if (ketVal && typeof ketVal === "string") return ketVal;
+    }
+
+    // Check if there is keterangan nested as custom column keterangan_json (common in audit_tps)
+    if (selectedRecord.keterangan_json?.data && typeof selectedRecord.keterangan_json.data === 'object') {
+       const ketVal = (selectedRecord.keterangan_json.data as any)[itemId];
+       if (ketVal && typeof ketVal === "string") return ketVal;
+    } else if (selectedRecord.keterangan_json && typeof selectedRecord.keterangan_json === 'object') {
+       const ketVal = (selectedRecord.keterangan_json as any)[itemId];
+       if (ketVal && typeof ketVal === "string") return ketVal;
+    }
+
+    // Check if nested in checklist_json.keterangan_json
+    if (checklistJson.keterangan_json?.data && typeof checklistJson.keterangan_json.data === 'object') {
+       const ketVal = (checklistJson.keterangan_json.data as any)[itemId];
+       if (ketVal && typeof ketVal === "string") return ketVal;
+    } else if (checklistJson.keterangan_json && typeof checklistJson.keterangan_json === 'object') {
+       const ketVal = (checklistJson.keterangan_json as any)[itemId];
        if (ketVal && typeof ketVal === "string") return ketVal;
     }
     
-    const val: any = selectedRecord.checklist_json?.[itemId];
+    const val: any = checklistJson[itemId];
     if (
       val &&
       typeof val === "object" &&

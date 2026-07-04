@@ -47,7 +47,7 @@ html, body {
 
 @layer utilities {
   .glass-card, .sleek-card {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl;
+    @apply bg-white/5 backdrop-blur-md border border-white/10 shadow-2xl;
   }
   .sleek-card {
     @apply rounded-[24px] p-6 lg:p-8;
@@ -68,10 +68,10 @@ html, body {
 
 @keyframes spin-slow {
   from {
-    transform: translate(-50%, -50%) rotate(0deg);
+    transform: translate3d(-50%, -50%, 0) rotate(0deg);
   }
   to {
-    transform: translate(-50%, -50%) rotate(360deg);
+    transform: translate3d(-50%, -50%, 0) rotate(360deg);
   }
 }
 
@@ -102,9 +102,13 @@ html, body {
   aspect-ratio: 1 / 1;
   /* High contrast vibrant blue and purple conic gradient */
   background: conic-gradient(from 0deg, #2563eb, #3b82f6, #7c3aed, #a855f7, #ec4899, #2563eb);
-  animation: spin-slow 3s linear infinite;
+  animation: spin-slow 3.5s linear infinite;
   z-index: 0;
   transform-origin: center center;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translate3d(-50%, -50%, 0);
 }
 
 .glowing-border-shadow {
@@ -117,12 +121,16 @@ html, body {
   min-height: 600px;
   aspect-ratio: 1 / 1;
   background: conic-gradient(from 0deg, #2563eb, #3b82f6, #7c3aed, #a855f7, #ec4899, #2563eb);
-  animation: spin-slow 3s linear infinite;
-  filter: blur(14px);
-  opacity: 0.8;
+  animation: spin-slow 3.5s linear infinite;
+  filter: blur(10px);
+  opacity: 0.6;
   pointer-events: none;
   z-index: 0;
   transform-origin: center center;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translate3d(-50%, -50%, 0);
 }
 
 .glowing-border-inner {

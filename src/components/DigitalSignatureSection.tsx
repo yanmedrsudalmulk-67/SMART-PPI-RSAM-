@@ -59,7 +59,7 @@ const DigitalSignatureSection = forwardRef<DigitalSignatureRef, DigitalSignature
     if (!mounted) return <div className="h-[200px] bg-white/5 animate-pulse rounded-3xl" />;
 
     return (
-      <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2rem] border border-white/5 shadow-2xl space-y-8 relative overflow-hidden group">
+      <div className="bg-white/5 p-6 sm:p-8 rounded-[2rem] border border-white/5 shadow-2xl space-y-8 relative overflow-hidden group">
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/10 blur-[100px] rounded-full group-hover:bg-blue-500/20 transition-all duration-700" />
         
         <div className="relative z-10">
@@ -102,7 +102,7 @@ const DigitalSignatureSection = forwardRef<DigitalSignatureRef, DigitalSignature
                     CLEAR
                   </button>
                 </div>
-                <div className="relative rounded-[1.5rem] border border-white/10 bg-black/20 overflow-hidden h-[160px] group/pad hover:border-blue-500/30 transition-all shadow-inner backdrop-blur-md">
+                <div className="relative rounded-[1.5rem] border border-white/10 bg-black/20 overflow-hidden h-[160px] group/pad hover:border-blue-500/30 transition-all shadow-inner">
                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-[0.03]">
                     <span className="text-xl font-black uppercase tracking-tighter select-none">Tanda Tangan Di Sini</span>
                   </div>
@@ -131,7 +131,7 @@ const DigitalSignatureSection = forwardRef<DigitalSignatureRef, DigitalSignature
                     CLEAR
                   </button>
                 </div>
-                <div className="relative rounded-[1.5rem] border border-white/10 bg-black/20 overflow-hidden h-[160px] group/pad hover:border-blue-500/30 transition-all shadow-inner backdrop-blur-md">
+                <div className="relative rounded-[1.5rem] border border-white/10 bg-black/20 overflow-hidden h-[160px] group/pad hover:border-blue-500/30 transition-all shadow-inner">
                   <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-[0.03]">
                     <span className="text-xl font-black uppercase tracking-tighter select-none">Tanda Tangan Di Sini</span>
                   </div>

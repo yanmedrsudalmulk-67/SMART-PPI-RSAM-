@@ -17,14 +17,14 @@ export const ClockWidget = memo(() => {
   }, []);
 
   if (!mounted) return (
-    <div className="hidden sm:flex items-center gap-3 px-4 py-2 rounded-xl backdrop-blur-md border animate-pulse bg-white/5 border-white/10">
+    <div className="hidden sm:flex items-center gap-3 px-4 py-2 rounded-xl border animate-pulse bg-white/5 border-white/10">
       <Clock className="w-4 h-4 text-blue-400" />
       <div className="w-20 h-8 bg-white/10 rounded-lg"></div>
     </div>
   );
 
   return (
-    <div className="hidden sm:flex items-center gap-3 px-4 py-2 rounded-xl backdrop-blur-md border transition-all duration-500 shadow-lg bg-white/5 border-white/10 hover:bg-white/10">
+    <div className="hidden sm:flex items-center gap-3 px-4 py-2 rounded-xl border transition-all duration-500 shadow-lg bg-white/5 border-white/10 hover:bg-white/10">
       <div className="flex items-center justify-center transition-colors duration-500 drop-shadow-md">
         <Clock className="w-4 h-4 text-blue-400" />
       </div>
