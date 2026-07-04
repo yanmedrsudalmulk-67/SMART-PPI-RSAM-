@@ -387,32 +387,60 @@ export default function MonitoringJenazahPage() {
                     {section.section}
                   </h2>
                   <div className="grid gap-4">
-                    {section.items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="bg-white/5 p-6 rounded-[24px] border border-white/5 group hover:border-blue-500/30 transition-all duration-300"
-                      >
-                        <h3 className="text-sm font-bold text-white mb-4 group-hover:text-blue-400 transition-colors">
-                          {item.label}
-                        </h3>
-                        <div className="grid grid-cols-3 gap-3">
-                          {["ya", "tidak", "na"].map((choice) => (
-                            <button
-                              type="button"
-                              key={choice}
-                              onClick={() => toggleItem(item.id, choice as any)}
-                              className={`py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                                data[item.id] === choice
-                                  ? "bg-blue-600 text-white border-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.3)]"
-                                  : "bg-white/5 text-slate-400 border-transparent hover:bg-white/10"
-                              }`}
-                            >
-                              {choice === "na" ? "N/A" : choice}
-                            </button>
-                          ))}
+                    {section.items.map((item) => {
+                      const selectedOpt = data[item.id];
+                      const activeColorLine =
+                        selectedOpt === "ya"
+                          ? "border-l-blue-500 bg-blue-500/5"
+                          : selectedOpt === "tidak"
+                            ? "border-l-red-500 bg-red-500/5"
+                            : selectedOpt === "na"
+                              ? "border-l-slate-400 bg-slate-500/5"
+                              : "border-l-transparent";
+
+                      return (
+                        <div
+                          key={item.id}
+                          className={`bg-white/5 p-6 rounded-[24px] border border-white/5 group hover:border-blue-500/30 transition-all duration-300 border-l-4 relative overflow-hidden ${activeColorLine}`}
+                        >
+                          <h3 className="text-sm font-bold text-white mb-4 group-hover:text-blue-400 transition-colors">
+                            {item.label}
+                          </h3>
+                          <div className="grid grid-cols-3 gap-3">
+                            {[
+                              {
+                                id: "ya",
+                                label: "Ya",
+                                activeClass: "bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-500/20",
+                              },
+                              {
+                                id: "tidak",
+                                label: "Tidak",
+                                activeClass: "bg-red-600 text-white border-red-500 shadow-lg shadow-red-500/20",
+                              },
+                              {
+                                id: "na",
+                                label: "N/A",
+                                activeClass: "bg-slate-500 text-white border-slate-400 shadow-lg shadow-slate-500/20",
+                              },
+                            ].map((btn) => (
+                              <button
+                                type="button"
+                                key={btn.id}
+                                onClick={() => toggleItem(item.id, btn.id as any)}
+                                className={`py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                                  data[item.id] === btn.id
+                                    ? btn.activeClass
+                                    : "bg-white/5 text-slate-400 border-transparent hover:bg-white/10"
+                                }`}
+                              >
+                                {btn.label}
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ))}
