@@ -8,14 +8,9 @@ import {
   Activity, 
   FileText, 
   Settings, 
-  Bell, 
   Menu,
   LogOut,
-  Sun,
-  Moon,
   ShieldCheck,
-  PanelLeftClose,
-  PanelLeftOpen,
   ChevronLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,16 +20,11 @@ import { ClockWidget } from '@/components/ClockWidget';
 import { useDashboardStore } from '@/hooks/useDashboardStore';
 import { supabase } from '@/lib/supabase';
 
-const NavItem = memo(({ item, isActive, isLightMode, onClick }: { item: any, isActive: boolean, isLightMode?: boolean, onClick?: () => void }) => {
+const NavItem = memo(({ item, isActive, onClick }: { item: any, isActive: boolean, onClick?: () => void }) => {
   const baseClasses = "relative flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-300 ease-in-out group antialiased hover:scale-[1.02] active:scale-[0.98] transform-gpu will-change-transform";
   
-  const activeClasses = isLightMode 
-    ? "bg-white/20 border border-white/40 shadow-sm text-white font-bold ring-1 ring-white/50" 
-    : "bg-white/10 border border-white/20 shadow-sm text-white font-bold ring-1 ring-white/20";
-    
-  const inactiveClasses = isLightMode
-    ? "text-white/90 hover:bg-white/10 hover:text-white hover:shadow-md border border-transparent"
-    : "text-white/70 hover:bg-white/10 hover:text-white hover:shadow-md border border-transparent";
+  const activeClasses = "bg-white/10 border border-white/20 shadow-sm text-white font-bold ring-1 ring-white/20";
+  const inactiveClasses = "text-white/70 hover:bg-white/10 hover:text-white hover:shadow-md border border-transparent";
 
   const iconBase = "w-[22px] h-[22px]";
   const iconActive = "text-white drop-shadow-md";
@@ -46,10 +36,7 @@ const NavItem = memo(({ item, isActive, isLightMode, onClick }: { item: any, isA
       onClick={onClick}
       className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
     >
-      {isActive && isLightMode && (
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-white rounded-r-full shadow-[0_0_10px_rgba(255,255,255,0.8)]" />
-      )}
-      {isActive && !isLightMode && (
+      {isActive && (
         <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-emerald-400 rounded-r-full shadow-[0_0_10px_rgba(52,211,153,0.8)]" />
       )}
       <motion.div 
@@ -77,12 +64,11 @@ const navItems = [
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = router.pathname;
-  const { userRole, setUserRole, hospitalLogoUrl } = useAppContext();
+  const { setUserRole, hospitalLogoUrl } = useAppContext();
   const { isDashboardLoaded, setDashboardData, isGlobalLoading, setIsGlobalLoading } = useDashboardStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [isLightMode, setIsLightMode] = useState(false);
 
   const mainRef = useRef<HTMLElement>(null);
 
@@ -107,7 +93,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         setIsGlobalLoading(true);
         try {
           const currentYear = new Date().getFullYear();
-          const startDate = new Date(currentYear - 1, 0, 1).toISOString(); // last year and current year
           
           const [slidesRes, stdRes, hhRes, apdRes, haisRes, fapdRes, linenRes] = await Promise.all([
             supabase.from('dashboard_slider').select('*').order('sort_order', { ascending: true }),
@@ -123,7 +108,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           if (slidesRes.data && slidesRes.data.length > 0) {
             newSlides = slidesRes.data;
           } else {
-            // Fallback to DEFAULT_SLIDES if table is empty or doesn't exist
             newSlides = []; 
           }
 
@@ -178,11 +162,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     setMounted(true);
     
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'light') {
-      setIsLightMode(true);
-    }
-    
     const checkScreenSize = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
@@ -198,21 +177,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (!mounted) return;
-    if (isLightMode) {
-      document.documentElement.classList.add('light');
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    } else {
-      document.documentElement.classList.remove('light');
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    }
-  }, [isLightMode, mounted]);
+    document.documentElement.classList.remove('light');
+    document.documentElement.classList.add('dark');
+    localStorage.setItem('theme', 'dark');
+  }, [mounted]);
 
   if (!mounted) return null;
 
   return (
-    <div className={`h-[100dvh] w-screen overflow-hidden flex ${isLightMode ? 'bg-white text-slate-900' : 'bg-gradient-to-br from-[#130b29] via-[#0a0f1c] to-[#09152b] text-slate-200'}`}>
+    <div className="h-[100dvh] w-screen overflow-hidden flex bg-gradient-to-br from-[#130b29] via-[#0a0f1c] to-[#09152b] text-slate-200">
       {/* Mobile Backdrop Overlay */}
       <AnimatePresence>
         {isMobile && isSidebarOpen && (
@@ -239,22 +212,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           damping: 40,
           mass: 0.8
         }}
-        className={`border-r flex flex-col fixed inset-y-4 left-4 z-50 w-[280px] rounded-[24px] transition-colors duration-500 print:hidden transform-gpu will-change-transform ${isLightMode ? 'backdrop-blur-md bg-[linear-gradient(180deg,#10b981_0%,#059669_55%,#047857_100%)] text-white border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.15)]' : 'backdrop-blur-[40px] bg-white/[0.02] border border-white/[0.08] shadow-[0_8px_32px_0_rgba(0,0,0,0.4),inset_0_1px_0_0_rgba(255,255,255,0.1)]'}`}
+        className="border-r flex flex-col fixed inset-y-4 left-4 z-50 w-[280px] rounded-[24px] transition-colors duration-500 print:hidden transform-gpu will-change-transform backdrop-blur-[40px] bg-white/[0.02] border border-white/[0.08] shadow-[0_8px_32px_0_rgba(0,0,0,0.4),inset_0_1px_0_0_rgba(255,255,255,0.1)]"
       >
         {/* New Elegant Toggle Button on the Right Border */}
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className={`absolute -right-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center border shadow-md transition-all duration-300 z-50 group hidden md:flex ${
-            isLightMode 
-              ? 'bg-white border-slate-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-200' 
-              : 'bg-[#151f32] border-white/10 text-emerald-400 hover:bg-[#1e2c45] hover:border-emerald-400/40'
-          }`}
+          className="absolute -right-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center border shadow-md transition-all duration-300 z-50 group hidden md:flex bg-[#151f32] border-white/10 text-emerald-400 hover:bg-[#1e2c45] hover:border-emerald-400/40"
           title={isSidebarOpen ? "Minimize Sidebar" : "Expand Sidebar"}
         >
           <ChevronLeft className={`w-4 h-4 transition-transform duration-500 ${isSidebarOpen ? 'rotate-0' : 'rotate-180'}`} />
         </button>
 
-        <div className={`flex flex-col items-center justify-center pt-5 pb-4 border-b shrink-0 px-4 relative ${isLightMode ? 'border-white/5' : 'border-white/5'}`}>
+        <div className="flex flex-col items-center justify-center pt-5 pb-4 border-b shrink-0 px-4 relative border-white/5">
           <div className="flex items-center justify-center w-[56px] h-[56px] rounded-[18px] shadow-sm bg-white/5 mb-3 border border-white/10 relative group">
             <AppLogo className="w-full h-full text-white group-hover:text-emerald-100 transition-colors" iconClassName="w-6 h-6 text-emerald-600 dark:text-[#0a0f1c]" />
           </div>
@@ -262,7 +231,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <span className="font-heading font-[800] text-[18px] tracking-[1.5px] transition-all antialiased text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
               SMART PPI
             </span>
-            <span className={`text-[8px] whitespace-nowrap leading-[1.4] text-center mt-1 transition-all antialiased ${isLightMode ? 'text-white/80' : 'text-slate-400'}`}>
+            <span className="text-[8px] whitespace-nowrap leading-[1.4] text-center mt-1 transition-all antialiased text-slate-400">
               Sistem Monitoring, Audit dan Supervisi Terintegrasi
             </span>
           </div>
@@ -270,14 +239,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         
         <div className="flex-1 overflow-y-auto py-6 px-4 space-y-2 custom-sidebar-scrollbar">
           <div className="mb-5 px-1">
-            <p className={`text-[10px] font-bold uppercase tracking-[0.2em] antialiased ${isLightMode ? 'text-white/90 drop-shadow-sm' : 'text-slate-500'}`}>Menu Utama</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] antialiased text-slate-500">Menu Utama</p>
           </div>
           {navItems.map((item) => (
             <NavItem 
               key={item.name} 
               item={item} 
               isActive={pathname === item.href} 
-              isLightMode={isLightMode}
               onClick={() => { if (isMobile) setIsSidebarOpen(false); }}
             />
           ))}
@@ -303,46 +271,38 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         !isMobile ? (isSidebarOpen ? 'ml-[312px]' : 'ml-[40px]') : 'ml-0'
       }`}>
         {/* Top Header */}
-        <header className={`min-h-[64px] sm:h-20 shrink-0 border-b flex items-center justify-between px-4 sm:px-8 sticky top-0 z-[45] transition-all duration-500 print:hidden ${
-          isLightMode 
-            ? 'backdrop-blur-md bg-white/80 border-slate-200/60 shadow-sm' 
-            : 'backdrop-blur-[40px] bg-white/[0.02] border-white/[0.08] shadow-[0_4px_30px_rgba(0,0,0,0.2)]'
-        }`}>
+        <header className="min-h-[64px] sm:h-20 shrink-0 border-b flex items-center justify-between px-4 sm:px-8 sticky top-0 z-[45] transition-all duration-500 print:hidden backdrop-blur-[40px] bg-white/[0.02] border-white/[0.08] shadow-[0_4px_30px_rgba(0,0,0,0.2)]">
           <div className="flex items-center gap-2 sm:gap-4">
             
             {/* Mobile Hamburger Menu Toggle */}
             {!navItems.some(item => item.href === pathname) && !pathname.startsWith('/dashboard/input') && (
               <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className={`md:hidden p-2 -ml-2 rounded-lg transition-colors ${
-                  isLightMode ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'
-                }`}
+                className="md:hidden p-2 -ml-2 rounded-lg transition-colors text-slate-400 hover:bg-white/5"
               >
                 <Menu className="w-6 h-6" />
               </button>
             )}
 
             {/* Clock Widget */}
-            <ClockWidget isLightMode={isLightMode} />
+            <ClockWidget />
 
             {/* Mobile Hospital Identity */}
             {isMobile && (
               <div className="flex items-center gap-2 sm:hidden px-1">
-                <div className={`w-9 h-9 md:w-10 md:h-10 flex-shrink-0 rounded-[10px] flex items-center justify-center overflow-hidden relative border ${
-                  isLightMode ? 'bg-slate-50 border-slate-200/80' : 'bg-white/5 border-white/10'
-                }`}>
+                <div className="w-9 h-9 md:w-10 md:h-10 flex-shrink-0 rounded-[10px] flex items-center justify-center overflow-hidden relative border bg-white/5 border-white/10">
                   {hospitalLogoUrl ? (
                     <Image src={hospitalLogoUrl} alt="Logo RS" fill sizes="40px" priority className="object-contain p-1" referrerPolicy="no-referrer" />
                   ) : (
-                    <ShieldCheck className={`w-5 h-5 md:w-6 md:h-6 ${isLightMode ? 'text-emerald-600' : 'text-blue-400'}`} />
+                    <ShieldCheck className="w-5 h-5 md:w-6 md:h-6 text-blue-400" />
                   )}
                 </div>
                 
                 <div className="flex flex-col text-left">
-                  <span className={`font-heading font-bold text-xs sm:text-sm tracking-wide leading-tight ${isLightMode ? 'text-slate-900' : 'text-white'}`}>
+                  <span className="font-heading font-bold text-xs sm:text-sm tracking-wide leading-tight text-white">
                     UOBK RSUD AL-MULK
                   </span>
-                  <span className={`text-[8px] font-bold uppercase tracking-[0.2em] leading-tight mt-0.5 ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                  <span className="text-[8px] font-bold uppercase tracking-[0.2em] leading-tight mt-0.5 text-slate-400">
                     KOTA SUKABUMI
                   </span>
                 </div>
@@ -351,38 +311,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
 
           <div className="flex items-center gap-3 sm:gap-4 z-50">
-            <button
-              onClick={() => setIsLightMode(!isLightMode)}
-              className={`relative w-[84px] sm:w-[94px] h-[40px] sm:h-[48px] rounded-full p-1.5 flex items-center transition-all duration-500 ease-in-out cursor-pointer overflow-hidden ${
-                !isLightMode 
-                  ? 'bg-[#1e293b]/80 backdrop-blur-md shadow-inner border border-slate-700/50' 
-                  : 'bg-white/80 backdrop-blur-md shadow-inner border border-white/80'
-              }`}
-              title="Toggle Tema"
-            >
-              <div className="absolute inset-0 w-full h-full pointer-events-none rounded-full shadow-inner opacity-50 mix-blend-overlay"></div>
-              <div className={`absolute left-[12px] sm:left-[14px] top-1/2 -translate-y-1/2 transition-opacity duration-300 ${isLightMode ? 'opacity-100' : 'opacity-30'}`}>
-                <Sun className={`w-4 h-4 sm:w-5 sm:h-5 ${!isLightMode ? 'text-slate-400' : 'text-[#0F3D2E]/50'}`} />
-              </div>
-              <div className={`absolute right-[12px] sm:right-[14px] top-1/2 -translate-y-1/2 transition-opacity duration-300 ${!isLightMode ? 'opacity-100' : 'opacity-30'}`}>
-                <Moon className={`w-4 h-4 sm:w-5 sm:h-5 ${!isLightMode ? 'text-slate-600' : 'text-[#0F3D2E]'}`} />
-              </div>
-
-              <motion.div
-                animate={{ 
-                  x: !isLightMode ? (isMobile ? 44 : 46) : 0, 
-                }}
-                transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                className={`relative h-[28px] w-[28px] sm:h-[36px] sm:w-[36px] flex items-center justify-center rounded-full shadow-lg z-10 transition-colors duration-500 ${!isLightMode ? 'bg-blue-600' : 'bg-[#38C968]'}`}
-              >
-                  {!isLightMode ? <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" /> : <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />}
-              </motion.div>
-            </button>
-            
-            <button className={`hidden sm:block relative p-2 rounded-full transition-colors ${isLightMode ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'}`}>
-              <Bell className="w-5 h-5" />
-              <span className={`absolute top-2 right-2 w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full border-2 ${isLightMode ? 'border-white' : 'border-[#0a0f1c]'}`}></span>
-            </button>
+            {/* Theme toggle and notifications removed for clean dark design and optimal speed */}
           </div>
         </header>
 
@@ -405,11 +334,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Mobile Bottom Navigation */}
       <div className="fixed bottom-5 inset-x-5 z-50 flex justify-center md:hidden pb-[env(safe-area-inset-bottom)]">
-        <nav className={`w-full max-w-md flex justify-around items-center h-[72px] px-2 rounded-[36px] border backdrop-blur-xl transition-all duration-300 ${
-          isLightMode 
-            ? 'bg-white/40 border-white/60 shadow-[0_12px_40px_rgba(31,41,55,0.08),inset_0_1px_1px_rgba(255,255,255,0.7)]' 
-            : 'bg-[#0a0f1c]/40 border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15),_0_0_25px_rgba(16,185,129,0.05)]'
-        }`}>
+        <nav className="w-full max-w-md flex justify-around items-center h-[72px] px-2 rounded-[36px] border backdrop-blur-xl transition-all duration-300 bg-[#0a0f1c]/40 border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15),_0_0_25px_rgba(16,185,129,0.05)]">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -421,11 +346,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {isActive && (
                   <motion.div
                     layoutId="mobileNavIndicator"
-                    className={`absolute inset-x-1.5 inset-y-1.5 rounded-[22px] ${
-                      isLightMode 
-                        ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 border border-emerald-400/40 shadow-[0_4px_12px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.35)]' 
-                        : 'bg-gradient-to-br from-emerald-500/80 to-teal-600/80 backdrop-blur-md border border-emerald-400/30 shadow-[0_4px_16px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.25)]'
-                    }`}
+                    className="absolute inset-x-1.5 inset-y-1.5 rounded-[22px] bg-gradient-to-br from-emerald-500/80 to-teal-600/80 backdrop-blur-md border border-emerald-400/30 shadow-[0_4px_16px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.25)]"
                     transition={{ type: "spring", stiffness: 380, damping: 30 }}
                   />
                 )}
@@ -437,14 +358,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     className={`w-[20px] h-[20px] transition-colors duration-200 ${
                       isActive 
                         ? 'text-white drop-shadow-md' 
-                        : (isLightMode ? 'text-slate-600' : 'text-slate-300')
+                        : 'text-slate-300'
                     }`} 
                     strokeWidth={isActive ? 2.5 : 2} 
                   />
                   <span className={`text-[9px] font-semibold tracking-wide mt-1 transition-colors duration-200 ${
                     isActive 
                       ? 'text-white font-bold drop-shadow-sm' 
-                      : (isLightMode ? 'text-slate-500 font-medium' : 'text-slate-400 font-medium')
+                      : 'text-slate-400 font-medium'
                   }`}>
                     {item.name}
                   </span>

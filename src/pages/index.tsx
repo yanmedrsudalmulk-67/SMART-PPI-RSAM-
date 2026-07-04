@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useSafeRouter as useRouter } from '@/hooks/useSafeRouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppContext } from '@/components/Providers';
-import { ShieldCheck, Activity, Clock, Sun, Moon, BarChart3, TrendingUp } from 'lucide-react';
+import { ShieldCheck, Activity, Clock, BarChart3, TrendingUp } from 'lucide-react';
 
 import { supabase } from '@/lib/supabase';
 
@@ -13,7 +13,7 @@ export default function WelcomePage() {
   const { hospitalLogoUrl } = useAppContext();
   const [time, setTime] = useState<Date | null>(null);
   const [mounted, setMounted] = useState(false);
-  const [isDark, setIsDark] = useState(true);
+  const isDark = true;
   const [isMobile, setIsMobile] = useState(false);
   const [activeBackground, setActiveBackground] = useState<{ url: string; type: string } | null>({
     url: 'https://assets.mixkit.co/videos/preview/mixkit-stethoscopes-on-a-table-in-a-medical-clinic-40097-large.mp4',
@@ -42,13 +42,7 @@ export default function WelcomePage() {
     };
     fetchBackground();
     
-    // Resume correct theme from local storage if available
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'light') {
-      setIsDark(false);
-    } else {
-      setIsDark(true);
-    }
+    localStorage.setItem('theme', 'dark');
     setTime(new Date());
 
     const handleResize = () => setIsMobile(window.innerWidth < 640);
@@ -64,48 +58,33 @@ export default function WelcomePage() {
   // Sync theme changes with HTML root
   useEffect(() => {
     if (!mounted) return;
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.classList.add('light');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [isDark, mounted]);
+    document.documentElement.classList.remove('light');
+    document.documentElement.classList.add('dark');
+    localStorage.setItem('theme', 'dark');
+  }, [mounted]);
 
   return (
-    <div className={`h-screen w-full transition-colors duration-700 ease-in-out relative flex flex-col items-center justify-center overflow-hidden font-sans ${isDark ? 'bg-[#0a0f1c] text-white' : 'bg-gradient-to-br from-white via-emerald-50 to-emerald-100 text-[#0A2F1D]'}`}>
+    <div className="h-screen w-full transition-colors duration-700 ease-in-out relative flex flex-col items-center justify-center overflow-hidden font-sans bg-gradient-to-br from-[#060814] via-[#0b0e26] to-[#18092d] text-white">
       <Head>
         <link rel="preload" as="video" href="https://assets.mixkit.co/videos/preview/mixkit-stethoscopes-on-a-table-in-a-medical-clinic-40097-large.mp4" type="video/mp4" />
       </Head>
+
+      {/* Futuristic Ambient Glowing Orbs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/20 blur-[130px] animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[130px] animate-pulse" style={{ animationDuration: '10s' }} />
+        <div className="absolute top-[25%] left-[25%] w-[45%] h-[45%] rounded-full bg-[#4f46e5]/10 blur-[120px] animate-pulse" style={{ animationDuration: '12s' }} />
+        <div className="absolute top-[40%] right-[10%] w-[35%] h-[35%] rounded-full bg-fuchsia-600/10 blur-[110px] animate-pulse" style={{ animationDuration: '9s' }} />
+      </div>
+
       {/* Background Media */}
-      {isDark && (
-        <>
-          {activeBackground ? (
-            activeBackground.type && activeBackground.type.startsWith('image/') ? (
-              <div 
-                className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none z-0 bg-no-repeat bg-cover bg-center transition-opacity duration-1000"
-                style={{ backgroundImage: `url(${activeBackground.url})` }}
-              />
-            ) : (
-              <div 
-                dangerouslySetInnerHTML={{ __html: `
-                  <video
-                    autoplay
-                    muted
-                    playsinline
-                    loop
-                    preload="auto"
-                    oncontextmenu="return false;"
-                    class="absolute inset-0 w-full h-full object-cover opacity-50 pointer-events-none z-0"
-                  >
-                    <source src="${activeBackground.url}" type="${activeBackground.type || 'video/mp4'}">
-                  </video>
-                ` }}
-              />
-            )
+      <>
+        {activeBackground ? (
+          activeBackground.type && activeBackground.type.startsWith('image/') ? (
+            <div 
+              className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none z-0 bg-no-repeat bg-cover bg-center transition-opacity duration-1000 mix-blend-screen"
+              style={{ backgroundImage: `url(${activeBackground.url})` }}
+            />
           ) : (
             <div 
               dangerouslySetInnerHTML={{ __html: `
@@ -116,18 +95,34 @@ export default function WelcomePage() {
                   loop
                   preload="auto"
                   oncontextmenu="return false;"
-                  class="absolute inset-0 w-full h-full object-cover opacity-50 pointer-events-none z-0"
+                  class="absolute inset-0 w-full h-full object-cover opacity-[0.22] pointer-events-none z-0 mix-blend-screen"
                 >
-                  <source src="https://assets.mixkit.co/videos/preview/mixkit-stethoscopes-on-a-table-in-a-medical-clinic-40097-large.mp4" type="video/mp4">
+                  <source src="${activeBackground.url}" type="${activeBackground.type || 'video/mp4'}">
                 </video>
               ` }}
             />
-          )}
-          {/* Top / Bottom Black Shadow Gradients for Video */}
-          <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-black/90 to-transparent pointer-events-none z-0" />
-          <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-black/90 to-transparent pointer-events-none z-0" />
-        </>
-      )}
+          )
+        ) : (
+          <div 
+            dangerouslySetInnerHTML={{ __html: `
+              <video
+                autoplay
+                muted
+                playsinline
+                loop
+                preload="auto"
+                oncontextmenu="return false;"
+                class="absolute inset-0 w-full h-full object-cover opacity-[0.22] pointer-events-none z-0 mix-blend-screen"
+              >
+                <source src="https://assets.mixkit.co/videos/preview/mixkit-stethoscopes-on-a-table-in-a-medical-clinic-40097-large.mp4" type="video/mp4">
+              </video>
+            ` }}
+          />
+        )}
+        {/* Top / Bottom Black Shadow Gradients for Video */}
+        <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-black/80 to-transparent pointer-events-none z-0" />
+        <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-black/90 to-transparent pointer-events-none z-0" />
+      </>
 
       {/* Decorative Floating Glass UI Widgets */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden max-w-[1440px] mx-auto w-full z-10">
@@ -141,21 +136,21 @@ export default function WelcomePage() {
           <motion.div
             animate={{ y: [0, -12, 0] }}
             transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0 }}
-            className={`flex items-center gap-3 backdrop-blur-sm shadow-2xl pointer-events-auto transition-colors duration-500 p-3 sm:p-4 rounded-2xl border ${isDark ? 'bg-white/5 border-white/10 hover:bg-white/10' : 'bg-white/60 border-white/80 hover:bg-white/80 text-[#0F3D2E]'}`}
+            className="flex items-center gap-3 backdrop-blur-sm shadow-2xl pointer-events-auto transition-colors duration-500 p-3 sm:p-4 rounded-2xl border bg-white/5 border-white/10 hover:bg-white/10"
           >
-            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border transition-colors duration-500 drop-shadow flex-shrink-0 ${isDark ? 'bg-blue-500/20 border-blue-500/30' : 'bg-[#38C968]/20 border-[#38C968]/30'}`}>
-              <Clock className={`w-4 h-4 sm:w-5 sm:h-5 ${isDark ? 'text-blue-400' : 'text-[#0A2F1D]'}`} />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border transition-colors duration-500 drop-shadow flex-shrink-0 bg-blue-500/20 border-blue-500/30">
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
             </div>
             <div className="flex flex-col min-w-[70px]">
               <motion.span 
                  initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.2 }}
-                 className={`text-[8px] sm:text-[10px] uppercase tracking-wider font-bold transition-colors duration-500 ${isDark ? 'text-slate-400' : 'text-[#0F3D2E]/60'}`}
+                 className="text-[8px] sm:text-[10px] uppercase tracking-wider font-bold transition-colors duration-500 text-slate-400"
               >
                 Waktu Sistem
               </motion.span>
               <motion.span 
                  initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.3 }}
-                 className={`text-xs sm:text-sm font-bold font-mono tracking-widest leading-none mt-0.5 transition-colors duration-500 ${isDark ? 'text-white' : 'text-[#0A2F1D]'}`}
+                 className="text-xs sm:text-sm font-bold font-mono tracking-widest leading-none mt-0.5 transition-colors duration-500 text-white"
               >
                 {time ? time.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '00:00:00'}
               </motion.span>
@@ -173,21 +168,21 @@ export default function WelcomePage() {
           <motion.div
             animate={{ y: [0, -15, 0] }}
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-            className={`flex items-center gap-3 backdrop-blur-sm shadow-2xl pointer-events-auto transition-colors duration-500 p-3 sm:p-4 rounded-2xl border ${isDark ? 'bg-white/5 border-white/10 hover:bg-white/10' : 'bg-white/60 border-white/80 hover:bg-white/80 text-[#0F3D2E]'}`}
+            className="flex items-center gap-3 backdrop-blur-sm shadow-2xl pointer-events-auto transition-colors duration-500 p-3 sm:p-4 rounded-2xl border bg-white/5 border-white/10 hover:bg-white/10"
           >
-            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border transition-colors duration-500 drop-shadow flex-shrink-0 ${isDark ? 'bg-emerald-500/20 border-emerald-500/30' : 'bg-[#38C968]/20 border-[#38C968]/30'}`}>
-              <Activity className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors duration-500 ${isDark ? 'text-emerald-400' : 'text-[#0F3D2E]'}`} />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border transition-colors duration-500 drop-shadow flex-shrink-0 bg-emerald-500/20 border-emerald-500/30">
+              <Activity className="w-4 h-4 sm:w-5 sm:h-5 transition-colors duration-500 text-emerald-400" />
             </div>
             <div className="flex flex-col">
               <motion.span 
                  initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.4 }}
-                 className={`text-[8px] sm:text-[10px] uppercase tracking-wider font-bold text-right transition-colors duration-500 ${isDark ? 'text-slate-400' : 'text-[#0F3D2E]/60'}`}
+                 className="text-[8px] sm:text-[10px] uppercase tracking-wider font-bold text-right transition-colors duration-500 text-slate-400"
               >
                 Standar PPI
               </motion.span>
               <motion.span 
                  initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.5 }}
-                 className={`text-xs sm:text-sm font-bold text-right leading-none mt-0.5 transition-colors duration-500 ${isDark ? 'text-white' : 'text-[#0A2F1D]'}`}
+                 className="text-xs sm:text-sm font-bold text-right leading-none mt-0.5 transition-colors duration-500 text-white"
               >
                 Real-time
               </motion.span>
@@ -205,14 +200,14 @@ export default function WelcomePage() {
           <motion.div
             animate={{ y: [0, -10, 0] }}
             transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-            className={`flex items-center gap-3 backdrop-blur-sm shadow-2xl pointer-events-auto transition-colors duration-500 p-3 sm:p-4 rounded-2xl border ${isDark ? 'bg-white/5 border-white/10 hover:bg-white/10' : 'bg-white/60 border-white/80 hover:bg-white/80 text-[#0F3D2E]'}`}
+            className="flex items-center gap-3 backdrop-blur-sm shadow-2xl pointer-events-auto transition-colors duration-500 p-3 sm:p-4 rounded-2xl border bg-white/5 border-white/10 hover:bg-white/10"
           >
-            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border transition-colors duration-500 drop-shadow flex-shrink-0 ${isDark ? 'bg-blue-500/20 border-blue-500/30' : 'bg-[#38C968]/20 border-[#38C968]/30'}`}>
-              <TrendingUp className={`w-4 h-4 sm:w-5 sm:h-5 ${isDark ? 'text-blue-400' : 'text-[#0A2F1D]'}`} />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border transition-colors duration-500 drop-shadow flex-shrink-0 bg-blue-500/20 border-blue-500/30">
+              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
             </div>
             <div className="flex flex-col min-w-[60px]">
-              <span className={`text-[8px] sm:text-[10px] uppercase tracking-wider font-bold transition-colors duration-500 ${isDark ? 'text-slate-400' : 'text-[#0F3D2E]/60'}`}>CAPAIAN</span>
-              <span className={`text-sm sm:text-xl font-black tracking-tighter leading-none mt-0.5 transition-colors duration-500 ${isDark ? 'text-white' : 'text-[#0A2F1D]'}`}>98%</span>
+              <span className="text-[8px] sm:text-[10px] uppercase tracking-wider font-bold transition-colors duration-500 text-slate-400">CAPAIAN</span>
+              <span className="text-sm sm:text-xl font-black tracking-tighter leading-none mt-0.5 transition-colors duration-500 text-white">98%</span>
             </div>
           </motion.div>
         </motion.div>
@@ -227,20 +222,20 @@ export default function WelcomePage() {
           <motion.div
             animate={{ y: [0, -12, 0] }}
             transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-            className={`flex items-center gap-4 backdrop-blur-sm shadow-2xl pointer-events-auto transition-colors duration-500 p-3 sm:p-4 rounded-2xl border ${isDark ? 'bg-white/5 border-white/10 hover:bg-white/10' : 'bg-white/60 border-white/80 hover:bg-white/80 text-[#0F3D2E]'}`}
+            className="flex items-center gap-4 backdrop-blur-sm shadow-2xl pointer-events-auto transition-colors duration-500 p-3 sm:p-4 rounded-2xl border bg-white/5 border-white/10 hover:bg-white/10"
           >
-            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border transition-colors duration-500 drop-shadow flex-shrink-0 ${isDark ? 'bg-purple-500/20 border-purple-500/30' : 'bg-[#38C968]/20 border-[#38C968]/30'}`}>
-              <BarChart3 className={`w-4 h-4 sm:w-5 sm:h-5 ${isDark ? 'text-purple-400' : 'text-[#0A2F1D]'}`} />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border transition-colors duration-500 drop-shadow flex-shrink-0 bg-purple-500/20 border-purple-500/30">
+              <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
             </div>
             <div className="flex flex-col">
-              <span className={`text-[8px] sm:text-[10px] uppercase tracking-wider font-bold transition-colors duration-500 ${isDark ? 'text-slate-400' : 'text-[#0F3D2E]/60'}`}>GRAFIK</span>
+              <span className="text-[8px] sm:text-[10px] uppercase tracking-wider font-bold transition-colors duration-500 text-slate-400">GRAFIK</span>
               <div className="flex items-end gap-1 mt-1 h-3 sm:h-4">
                 {[40, 75, 55, 90, 60].map((h, i) => (
                   <motion.div
                     key={i}
                     animate={{ height: [`${h}%`, `${h+10}%`, `${h}%`] }}
                     transition={{ duration: 2, repeat: Infinity, delay: i * 0.3, ease: "easeInOut" }}
-                    className={`w-1.5 sm:w-2 rounded-t-[2px] ${isDark ? 'bg-purple-500/60' : 'bg-[#38C968]/60'}`}
+                    className="w-1.5 sm:w-2 rounded-t-[2px] bg-purple-500/60"
                   />
                 ))}
               </div>
@@ -257,69 +252,27 @@ export default function WelcomePage() {
           transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
           className="flex items-center gap-4"
         >
-          <div className={`w-12 h-12 flex-shrink-0 border rounded-xl flex items-center justify-center overflow-hidden backdrop-blur-md transition-colors duration-500 ${isDark ? 'bg-white/5 border-white/10' : 'bg-white/60 border-white/80 shadow-sm'}`}>
+          <div className="w-12 h-12 flex-shrink-0 border rounded-xl flex items-center justify-center overflow-hidden backdrop-blur-md transition-colors duration-500 bg-white/5 border-white/10">
             {hospitalLogoUrl ? (
               <img src={hospitalLogoUrl} alt="Logo RS" className="w-full h-full object-contain p-1" />
             ) : (
-              <ShieldCheck className={`w-6 h-6 transition-colors duration-500 ${isDark ? 'text-blue-500' : 'text-[#0F3D2E]'}`} />
+              <ShieldCheck className="w-6 h-6 transition-colors duration-500 text-blue-500" />
             )}
           </div>
           
           <div className="flex flex-col text-left transition-colors duration-500">
-            <span className={`font-heading font-bold text-sm md:text-base tracking-wide leading-tight transition-colors duration-500 ${isDark ? 'text-white' : 'text-[#0F3D2E]'}`}>
+            <span className="font-heading font-bold text-sm md:text-base tracking-wide leading-tight transition-colors duration-500 text-white">
               UOBK RSUD AL-MULK
             </span>
-            <span className={`text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] transition-colors duration-500 ${isDark ? 'text-slate-400' : 'text-[#0F3D2E]/60'}`}>
+            <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] transition-colors duration-500 text-slate-400">
               KOTA SUKABUMI
             </span>
           </div>
         </motion.div>
 
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut", delay: 0.4 }}
-          className="flex items-center gap-3 sm:gap-4"
-        >
-          <AnimatePresence mode="wait">
-            <motion.span 
-              key={isDark ? "dark" : "light"}
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -5 }}
-              className={`font-heading font-bold text-lg md:text-xl transition-colors duration-500 tracking-wide hidden sm:block ${isDark ? 'text-slate-400' : 'text-[#0F3D2E]/60'}`}
-            >
-              {isDark ? 'Dark' : 'Light'}
-            </motion.span>
-          </AnimatePresence>
-          
-          <button
-            onClick={() => setIsDark(!isDark)}
-            className={`relative w-[84px] sm:w-[94px] h-[40px] sm:h-[48px] rounded-full p-1.5 flex items-center transition-all duration-500 ease-in-out cursor-pointer overflow-hidden ${
-              isDark 
-                ? 'bg-[#1e293b]/80 backdrop-blur-md shadow-inner border border-slate-700/50' 
-                : 'bg-white/80 backdrop-blur-md shadow-inner border border-white/80'
-            }`}
-          >
-            <div className={`absolute left-[12px] sm:left-[14px] top-1/2 -translate-y-1/2 pointer-events-none transition-opacity duration-300 ${!isDark ? 'opacity-100' : 'opacity-30'}`}>
-              <Sun className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors duration-500 ${isDark ? 'text-slate-400' : 'text-[#0F3D2E]/50'}`} />
-            </div>
-            
-            <div className={`absolute right-[12px] sm:right-[14px] top-1/2 -translate-y-1/2 pointer-events-none transition-opacity duration-300 ${isDark ? 'opacity-100' : 'opacity-30'}`}>
-              <Moon className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors duration-500 ${isDark ? 'text-slate-600' : 'text-[#0F3D2E]'}`} />
-            </div>
-
-            <motion.div
-              animate={{ 
-                x: isDark ? (isMobile ? 44 : 46) : 0, 
-              }}
-              transition={{ type: "spring", stiffness: 400, damping: 25 }}
-              className={`relative h-[28px] w-[28px] sm:h-[36px] sm:w-[36px] flex items-center justify-center rounded-full shadow-lg z-10 transition-colors duration-500 ${isDark ? 'bg-blue-600' : 'bg-[#38C968]'}`}
-            >
-                {isDark ? <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" /> : <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />}
-            </motion.div>
-          </button>
-        </motion.div>
+        <div className="flex items-center gap-3 sm:gap-4">
+          {/* Theme toggles removed for consistent clean dark mode */}
+        </div>
       </header>
 
       {/* Main Hero Content */}
@@ -335,7 +288,7 @@ export default function WelcomePage() {
                 initial={{ y: 20, opacity: 0 }} 
                 animate={{ y: 0, opacity: 1 }} 
                 transition={{ duration: 0.8, delay: 0.6 }}
-                className={`block text-transparent bg-clip-text bg-gradient-to-r bg-[length:200%_auto] animate-gradient drop-shadow-[1.5px_1.5px_1.5px_rgba(0,0,0,0.9)] ${isDark ? 'from-blue-400 via-purple-500 to-blue-400' : 'from-blue-500 via-emerald-500 to-blue-500'}`}
+                className="block text-transparent bg-clip-text bg-gradient-to-r bg-[length:200%_auto] animate-gradient drop-shadow-[1.5px_1.5px_1.5px_rgba(0,0,0,0.9)] from-blue-400 via-purple-500 to-blue-400"
               >
                 SMART PPI
               </motion.span>
@@ -343,7 +296,7 @@ export default function WelcomePage() {
           
           <motion.div 
              initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.8, delay: 0.8 }}
-             className={`text-[14px] sm:text-[16px] md:text-2xl lg:text-[20px] max-w-3xl mx-auto mb-14 flex flex-col leading-relaxed text-center font-medium gap-1 transition-colors duration-500 ${isDark ? 'text-slate-300' : 'text-[#0F3D2E]/80'}`}
+             className="text-[14px] sm:text-[16px] md:text-2xl lg:text-[20px] max-w-3xl mx-auto mb-14 flex flex-col leading-relaxed text-center font-medium gap-1 transition-colors duration-500 text-slate-300"
           >
             <span>Sistem Monitoring, Audit dan Supervisi Terintegrasi</span>
             <span>Pencegahan dan Pengendalian Infeksi</span>
@@ -355,7 +308,7 @@ export default function WelcomePage() {
           >
             <Link 
               href="/login"
-              className={`group relative inline-flex items-center justify-center px-14 py-5 font-bold text-white text-lg rounded-full shadow-lg hover:-translate-y-1 w-full transition-all ${isDark ? 'bg-blue-600 hover:bg-blue-500' : 'bg-blue-600 hover:bg-blue-500'}`}
+              className="group relative inline-flex items-center justify-center px-14 py-5 font-bold text-white text-lg rounded-full shadow-lg hover:-translate-y-1 w-full transition-all bg-blue-600 hover:bg-blue-500"
             >
               <span className="relative z-10 flex items-center gap-3 tracking-wider">
                 Ayo Mulai

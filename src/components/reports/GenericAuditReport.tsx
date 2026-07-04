@@ -192,11 +192,12 @@ export default function GenericAuditReport({
         jsonFallback.nama_pj ||
         "",
       observer: item.observer || item.supervisor || item.ipcn || "",
-      unit: item.unit || item.ruangan || "",
+      unit: item.unit || item.ruangan || (tableName === "monitoring_jenazah" ? "Kamar Jenazah" : tableName === "monitoring_ambulance" ? "Ambulance" : ""),
+      ruangan: item.ruangan || item.unit || (tableName === "monitoring_jenazah" ? "Kamar Jenazah" : tableName === "monitoring_ambulance" ? "Ambulance" : ""),
       temuan: item.temuan || jsonFallback.temuan || "",
       rekomendasi: item.rekomendasi || jsonFallback.rekomendasi || "",
     };
-  }, []);
+  }, [tableName]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -634,15 +635,32 @@ export default function GenericAuditReport({
     fetchDetails();
   }, [selectedRecordId]);
 
-  const checklistItems =
-    dynamicChecklist && dynamicChecklist.length > 0
-      ? dynamicChecklist
-      : indicatorItems && indicatorItems.length > 0
-        ? indicatorItems.map((i) => ({ id: i.key, label: i.label }))
-        : Object.keys(selectedRecord?.checklist_json || {}).map((k) => ({
-            id: k,
-            label: toSentenceCase(k),
-          }));
+  const checklistItems = useMemo(() => {
+    let rawItems =
+      dynamicChecklist && dynamicChecklist.length > 0
+        ? dynamicChecklist
+        : indicatorItems && indicatorItems.length > 0
+          ? indicatorItems.map((i) => ({ id: i.key, label: i.label }))
+          : Object.keys(selectedRecord?.checklist_json || {}).map((k) => ({
+              id: k,
+              label: toSentenceCase(k),
+            }));
+
+    if (indicatorItems && indicatorItems.length > 0) {
+      const orderMap = new Map<string, number>();
+      indicatorItems.forEach((item, index) => {
+        orderMap.set(item.key || item.id, index);
+      });
+
+      rawItems = [...rawItems].sort((a, b) => {
+        const indexA = orderMap.has(a.id) ? orderMap.get(a.id)! : 9999;
+        const indexB = orderMap.has(b.id) ? orderMap.get(b.id)! : 9999;
+        return indexA - indexB;
+      });
+    }
+
+    return rawItems;
+  }, [dynamicChecklist, indicatorItems, selectedRecord]);
 
   useEffect(() => {
     window.dispatchEvent(

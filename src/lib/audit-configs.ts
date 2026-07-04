@@ -592,16 +592,14 @@ export const genericAuditConfigs: Record<string, { tableName: string; extraFilte
   monitoring_ambulance: {
     tableName: 'audit_ambulance',
     items: [
-      { id: 'amb_1', label: 'Kebersihan lantai, dinding dan langit-langit', key: 'amb_1' },
-      { id: 'amb_2', label: 'Kebersihan stretcher / tempat tidur pasien', key: 'amb_2' },
-      { id: 'amb_3', label: 'Tersedia handrub untuk kebersihan tangan', key: 'amb_3' },
-      { id: 'amb_4', label: 'Tersedia tisu dan tempat sampah tertutup', key: 'amb_4' },
-      { id: 'amb_5', label: 'Tersedia APD minimal masker dan sarung tangan', key: 'amb_5' },
-      { id: 'amb_6', label: 'Peralatan medis bersih dan tidak berdebu', key: 'amb_6' },
-      { id: 'amb_7', label: 'Tersedia wadah limbah benda tajam (safety box)', key: 'amb_7' },
-      { id: 'amb_8', label: 'Ambilance didekontaminasi setelah digunakan', key: 'amb_8' },
-      { id: 'amb_9', label: 'Tidak ada makanan dan minuman di ambulance', key: 'amb_9' },
-      { id: 'amb_10', label: 'Suhu AC terjaga dan dingin', key: 'amb_10' }
+      { id: 'amb_1', label: 'Tersedia spill kit tumpahan cairan tubuh', key: 'amb_1' },
+      { id: 'amb_2', label: 'Ambulance tampak bersih', key: 'amb_2' },
+      { id: 'amb_3', label: 'Tidak ada lawa-lawa di sudut Ambulance', key: 'amb_3' },
+      { id: 'amb_4', label: 'Jendela kaca tampak bersih', key: 'amb_4' },
+      { id: 'amb_5', label: 'Tidak ada debu', key: 'amb_5' },
+      { id: 'amb_6', label: 'Tersedia sarana APD', key: 'amb_6' },
+      { id: 'amb_7', label: 'Tersedia handrub di mobil ambulance', key: 'amb_7' },
+      { id: 'amb_8', label: 'Tersedia tempat sampah tertutup', key: 'amb_8' }
     ]
   },
   monitoring_tunggu: {

@@ -219,6 +219,7 @@ export default function MonitoringJenazahPage() {
         nama_indikator: "MONITORING KAMAR JENAZAH",
         tanggal_waktu: payload.waktu,
         observer,
+        unit: "Kamar Jenazah",
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
