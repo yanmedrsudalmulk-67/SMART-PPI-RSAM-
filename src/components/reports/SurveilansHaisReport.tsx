@@ -566,14 +566,11 @@ export default function SurveilansHaisReport({
         </div>
 
         <div className="mt-8 p-5 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-start gap-4">
-          <div className="p-2 bg-blue-500/20 rounded-full text-blue-400 mt-0.5">
-            <Activity className="w-5 h-5" />
-          </div>
-          <div>
+          <div className="flex-1">
             <h4 className="text-sm font-bold text-blue-300 uppercase tracking-widest mb-1">
-              Analisis Otomatis
+              Analisa Data
             </h4>
-            <p className="text-slate-300 text-sm leading-relaxed">{insight}</p>
+            <p className="text-slate-300 text-sm text-justify leading-relaxed">{insight}</p>
           </div>
         </div>
       </div>

@@ -638,12 +638,9 @@ export default function HandHygieneReport({
         {/* Auto Insight Card */}
         <div className="px-8 pb-8 pt-6">
             <div className="flex items-start gap-4 p-4 rounded-2xl bg-blue-50 dark:bg-[#1e293b]/50 border border-blue-100 dark:border-white/5">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-xl text-blue-600 dark:text-blue-400">
-                    <TrendingUp className="w-5 h-5" />
-                </div>
-                <div>
-                   <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">Analisis Otomatis</h4>
-                   <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{generateAutoInsight()}</p>
+                <div className="flex-1">
+                   <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">Analisa Data</h4>
+                   <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 text-justify leading-relaxed">{generateAutoInsight()}</p>
                 </div>
             </div>
          </div>

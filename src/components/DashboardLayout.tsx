@@ -289,8 +289,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             {/* Mobile Hospital Identity */}
             {isMobile && (
-              <div className="flex items-center gap-2 sm:hidden px-1">
-                <div className="w-9 h-9 md:w-10 md:h-10 flex-shrink-0 rounded-[10px] flex items-center justify-center overflow-hidden relative border bg-white/5 border-white/10">
+              <div className="flex items-center gap-2.5 sm:hidden px-1">
+                <div className="w-10 h-10 flex-shrink-0 rounded-[10px] flex items-center justify-center overflow-hidden relative border bg-white/5 border-white/10">
                   {hospitalLogoUrl ? (
                     <Image src={hospitalLogoUrl} alt="Logo RS" fill sizes="40px" priority className="object-contain p-1" referrerPolicy="no-referrer" />
                   ) : (
@@ -299,10 +299,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </div>
                 
                 <div className="flex flex-col text-left">
-                  <span className="font-heading font-bold text-xs sm:text-sm tracking-wide leading-tight text-white">
+                  <span className="font-heading font-extrabold text-[15px] tracking-wide leading-tight text-white">
                     UOBK RSUD AL-MULK
                   </span>
-                  <span className="text-[8px] font-bold uppercase tracking-[0.2em] leading-tight mt-0.5 text-slate-400">
+                  <span className="text-[9px] font-bold uppercase tracking-[0.2em] leading-tight mt-0.5 text-slate-400">
                     KOTA SUKABUMI
                   </span>
                 </div>

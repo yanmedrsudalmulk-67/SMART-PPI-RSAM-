@@ -115,6 +115,56 @@ const DEFAULT_STANDARDS: Record<string, Standard> = {
 };
 
 // --- Standalone Components & Helpers for Performance ---
+const getSlideStyles = (isActive: boolean, isPrev: boolean, isNext: boolean, isMobile: boolean) => {
+  if (isMobile) {
+    return {
+      transform: "scale(1)",
+      filter: "none",
+      opacity: isActive ? 1 : 0.4,
+      transition: "transform 700ms cubic-bezier(0.25, 1, 0.5, 1), opacity 700ms cubic-bezier(0.25, 1, 0.5, 1)",
+    };
+  }
+
+  let transform = "scale(1) rotateY(0deg) translateZ(0px) translateX(0px)";
+  let filter = "none";
+  let opacity = 1;
+  let zIndex = 20;
+
+  if (isActive) {
+    transform = "scale(1) rotateY(0deg) translateZ(0px) translateX(0px)";
+    filter = "none";
+    opacity = 1;
+    zIndex = 20;
+  } else if (isPrev) {
+    // Left slide - tilted towards the center with a highly polished overlapping 3D perspective
+    transform = "scale(0.85) rotateY(18deg) translateZ(-100px) translateX(-36px)";
+    filter = "blur(0.5px)";
+    opacity = 0.45;
+    zIndex = 10;
+  } else if (isNext) {
+    // Right slide - tilted towards the center with a highly polished overlapping 3D perspective
+    transform = "scale(0.85) rotateY(-18deg) translateZ(-100px) translateX(36px)";
+    filter = "blur(0.5px)";
+    opacity = 0.45;
+    zIndex = 10;
+  } else {
+    // Hidden completely in the depth to avoid background clutter
+    transform = "scale(0.7) rotateY(0deg) translateZ(-200px) translateX(0px)";
+    filter = "blur(4px)";
+    opacity = 0;
+    zIndex = 0;
+  }
+
+  return {
+    transform,
+    filter,
+    opacity,
+    zIndex,
+    transformStyle: "preserve-3d" as const,
+    transition: "transform 800ms cubic-bezier(0.16, 1, 0.3, 1), opacity 800ms cubic-bezier(0.16, 1, 0.3, 1), filter 800ms cubic-bezier(0.16, 1, 0.3, 1)",
+  };
+};
+
 const SliderImage = ({
   slide,
   setImageErrors,
@@ -175,16 +225,18 @@ const HeroSlider = ({
   });
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(1200);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const checkMobile = () => {
+    const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
+      setWindowWidth(window.innerWidth);
     };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const visibleSlides = useMemo(() => {
@@ -218,8 +270,16 @@ const HeroSlider = ({
     if (isMobile) {
       return Math.max(1.3, Math.min(1.8, rawRatio));
     }
-    return rawRatio;
-  }, [mounted, currentSlide, aspectRatios, isMobile]);
+    
+    // Mathematically perfect scale factor matching slidesPerView to keep the center card widescreen ratio
+    // without stretching, which keeps the total vertical height much shorter and polished
+    let multiplier = 1.20;
+    if (windowWidth >= 1280) multiplier = 1.28;
+    else if (windowWidth >= 1024) multiplier = 1.24;
+    else if (windowWidth >= 768) multiplier = 1.20;
+    
+    return rawRatio * multiplier;
+  }, [mounted, currentSlide, aspectRatios, isMobile, windowWidth]);
 
   if (isLoading || !mounted) {
     return (
@@ -242,15 +302,17 @@ const HeroSlider = ({
 
   return (
     <div
-      className="w-full relative group rounded-[24px] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-slate-200/50 dark:border-white/10 dark:shadow-blue-900/20 mb-8 mt-4 bg-slate-950 transition-all duration-300 ease-in-out transform-gpu will-change-[width,height]"
-      style={{ aspectRatio: currentRatio }}
+      className="w-full md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto relative group overflow-hidden md:overflow-visible mb-6 mt-1 bg-slate-950/10 transition-all duration-300 ease-in-out transform-gpu will-change-[width,height]"
+      style={{ 
+        aspectRatio: currentRatio,
+        perspective: "1200px"
+      }}
     >
       <Swiper
         key={visibleSlides.map((s) => s.id).join(",")}
-        modules={[Autoplay, Pagination, Navigation, EffectFade]}
-        effect="fade"
-        fadeEffect={{ crossFade: true }}
-        spaceBetween={0}
+        modules={[Autoplay, Pagination, Navigation]}
+        centeredSlides={true}
+        spaceBetween={16}
         slidesPerView={1}
         loop={visibleSlides.length > 1}
         navigation={{
@@ -263,31 +325,71 @@ const HeroSlider = ({
           dynamicBullets: true,
         }}
         onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
-        className="w-full h-full bg-transparent transition-all duration-300 ease-in-out transform-gpu will-change-[width,height]"
+        breakpoints={{
+          0: {
+            slidesPerView: 1,
+            spaceBetween: 0,
+          },
+          768: {
+            slidesPerView: 1.20,
+            spaceBetween: 12,
+          },
+          1024: {
+            slidesPerView: 1.24,
+            spaceBetween: 16,
+          },
+          1280: {
+            slidesPerView: 1.28,
+            spaceBetween: 20,
+          }
+        }}
+        className="w-full h-full bg-transparent !overflow-visible transition-all duration-300 ease-in-out transform-gpu"
+        style={{ transformStyle: 'preserve-3d', perspective: '1200px' }}
       >
         {visibleSlides.map((slide, i) => (
-          <SwiperSlide key={slide.id || i} className="overflow-hidden">
-            <div className="relative w-full h-full overflow-hidden flex items-center justify-center">
-              {slide.image_url && !imageErrors[slide.id] ? (
-                <SliderImage slide={slide} setImageErrors={setImageErrors} />
-              ) : (
-                <div className="absolute inset-0 bg-slate-100 dark:bg-slate-800/80 flex flex-col items-center justify-center gap-3">
-                  <ImageOff className="w-12 h-12 text-slate-400 dark:text-slate-600 mb-2" />
-                  <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-                    Image not available
-                  </span>
+          <SwiperSlide 
+            key={slide.id || i} 
+            className="overflow-visible flex items-center justify-center p-2 md:p-6"
+            style={{ transformStyle: 'preserve-3d', perspective: '1200px' }}
+          >
+            {({ isActive, isPrev, isNext }) => {
+              const slideStyle = getSlideStyles(isActive, isPrev, isNext, isMobile);
+              return (
+                <div
+                  style={slideStyle}
+                  className={`relative w-full h-full rounded-[16px] md:rounded-[20px] overflow-hidden transition-all duration-700 ease-out transform-gpu flex items-center justify-center ${
+                    isActive
+                      ? "shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)]"
+                      : "shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)]"
+                  }`}
+                >
+                  {slide.image_url && !imageErrors[slide.id] ? (
+                    <SliderImage slide={slide} setImageErrors={setImageErrors} />
+                  ) : (
+                    <div className="absolute inset-0 bg-slate-100 dark:bg-slate-800/80 flex flex-col items-center justify-center gap-3">
+                      <ImageOff className="w-12 h-12 text-slate-400 dark:text-slate-600 mb-2" />
+                      <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                        Image not available
+                      </span>
+                    </div>
+                  )}
+                  <div
+                    className={`absolute inset-0 bg-slate-950 transition-opacity duration-700 ease-out pointer-events-none ${
+                      isActive ? "opacity-0" : "opacity-45"
+                    }`}
+                  />
                 </div>
-              )}
-            </div>
+              );
+            }}
           </SwiperSlide>
         ))}
       </Swiper>
 
       {/* Custom Navigation Buttons */}
-      <button className="slider-prev absolute left-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/30 backdrop-blur-md text-white border border-white/20 transition-all opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 shadow-lg cursor-pointer animate-in fade-in">
+      <button className="slider-prev absolute left-6 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-11 md:h-11 flex items-center justify-center rounded-full bg-slate-950/40 hover:bg-slate-950/80 backdrop-blur-md text-white border border-white/10 transition-all opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 shadow-lg cursor-pointer animate-in fade-in">
         <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
       </button>
-      <button className="slider-next absolute right-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/30 backdrop-blur-md text-white border border-white/20 transition-all opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 shadow-lg cursor-pointer animate-in fade-in">
+      <button className="slider-next absolute right-6 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-11 md:h-11 flex items-center justify-center rounded-full bg-slate-950/40 hover:bg-slate-950/80 backdrop-blur-md text-white border border-white/10 transition-all opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 shadow-lg cursor-pointer animate-in fade-in">
         <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
       </button>
     </div>
@@ -1055,8 +1157,8 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="space-y-8 pb-10">
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 border-b border-slate-200 dark:border-white/10 pb-6 mb-2">
+    <div className="space-y-6 pb-10">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-2">
         <div className="text-center lg:text-left w-full lg:w-auto">
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all uppercase">
             Dashboard SMART PPI
@@ -1941,14 +2043,11 @@ export default function DashboardPage() {
         {/* Auto Insight Card */}
         <div className="px-8 pb-8 pt-2">
           <div className="flex items-start gap-4 p-4 rounded-2xl bg-blue-50 dark:bg-[#1e293b]/50 border border-blue-100 dark:border-white/5">
-            <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-xl text-blue-600 dark:text-blue-400">
-              <TrendingUp className="w-5 h-5" />
-            </div>
-            <div>
+            <div className="flex-1">
               <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                Analisis Otomatis
+                Analisa Data
               </h4>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 text-justify leading-relaxed">
                 {generateAutoInsight()}
               </p>
             </div>
