@@ -66,8 +66,50 @@ export default function InputPerlindunganPetugasPage() {
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
-    const d = new Date();
-    setStartTime(d);
+    
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+      const mode = params.get("mode");
+      if (id && mode === "edit") {
+        setIsEditMode(true);
+        setEditId(id);
+        const loadEditData = async () => {
+          const { data: ed, error } = await supabase
+            .from("audit_sessions")
+            .select("*")
+            .eq("id", id)
+            .single();
+          if (ed && !error) {
+            if (ed.tanggal_waktu) setStartTime(new Date(ed.tanggal_waktu));
+            if (ed.observer) setObserver(ed.observer);
+            if (ed.unit) setUnit(ed.unit);
+
+            const indicatorsData = ed.data_indikator || ed.checklist_json || {};
+
+            try {
+              setAuditData((prev: any) => {
+                const updated = { ...prev };
+                Object.keys(updated).forEach((key) => {
+                  if (indicatorsData[key] !== undefined) {
+                    updated[key] = indicatorsData[key];
+                  }
+                });
+                return updated;
+              });
+            } catch (err) {}
+
+            // No documentation or images in this form
+          }
+        };
+        loadEditData();
+      } else {
+        setStartTime(new Date());
+      }
+    } else {
+      setStartTime(new Date());
+    }
   }, []);
 
   const handleError = (err: any) => {

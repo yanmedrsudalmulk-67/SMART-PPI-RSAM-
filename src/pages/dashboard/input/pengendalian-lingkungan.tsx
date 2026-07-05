@@ -195,9 +195,77 @@ export default function InputPengendalianLingkunganPage() {
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
-    const d = new Date();
-    setStartTime(d);
     fetchObservers();
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+      const mode = params.get("mode");
+      if (id && mode === "edit") {
+        setIsEditMode(true);
+        setEditId(id);
+        const loadEditData = async () => {
+          const { data: ed, error } = await supabase
+            .from("audit_sessions")
+            .select("*")
+            .eq("id", id)
+            .single();
+          if (ed && !error) {
+            if (ed.tanggal_waktu) setStartTime(new Date(ed.tanggal_waktu));
+            if (ed.observer) setObserver(ed.observer);
+            if (ed.unit) setUnit(ed.unit);
+
+            const indicatorsData = ed.data_indikator || ed.checklist_json || {};
+            if (indicatorsData.temuan) setTemuan(indicatorsData.temuan);
+            if (indicatorsData.rekomendasi) setRekomendasi(indicatorsData.rekomendasi);
+            
+            const displayPjName = indicatorsData.nama_pj || indicatorsData.nama_pj_ruangan || ed.nama_pj_ruangan || "";
+            if (typeof setPjName === "function") setPjName(displayPjName);
+
+            try {
+              setAuditData((prev: any) => {
+                const updated = { ...prev };
+                Object.keys(updated).forEach((key) => {
+                  if (indicatorsData[key] !== undefined) {
+                    updated[key] = indicatorsData[key];
+                  }
+                });
+                return updated;
+              });
+            } catch (err) {}
+
+            
+
+            // Prefill signatures
+            setTimeout(() => {
+              const t1 = ed.ttd_pj_ruangan || indicatorsData.ttd_pj || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
+              const t2 = ed.ttd_ipcn || indicatorsData.ttd_ipcn || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
+              if (t1 && signatureRef.current?.setPjSignature) {
+                signatureRef.current.setPjSignature(t1);
+              }
+              if (t2 && signatureRef.current?.setSupervisorSignature) {
+                signatureRef.current.setSupervisorSignature(t2);
+              }
+            }, 800);
+
+            // Prefill documentation
+            if (indicatorsData.dokumentasi) {
+              setImages(
+                indicatorsData.dokumentasi.map((url: string) => ({
+                  url,
+                  file: null as any,
+                }))
+              );
+            }
+          }
+        };
+        loadEditData();
+      } else {
+        setStartTime(new Date());
+      }
+    } else {
+      setStartTime(new Date());
+    }
   }, []);
 
   const fetchObservers = async () => {

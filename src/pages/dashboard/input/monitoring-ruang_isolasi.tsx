@@ -100,7 +100,6 @@ export default function InputMonitoringRuangIsolasiPage() {
     },
   );
   useEffect(() => {
-    setStartTime(new Date());
     const initialData: Record<string, AuditStatus> = {};
     const initialKet: Record<string, string> = {};
     checklistGroups.forEach((group) => {
@@ -111,6 +110,76 @@ export default function InputMonitoringRuangIsolasiPage() {
     });
     setData(initialData);
     setKeteranganData(initialKet);
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+      const mode = params.get("mode");
+      if (id && mode === "edit") {
+        setIsEditMode(true);
+        setEditId(id);
+        const loadEditData = async () => {
+          const { data: ed, error } = await supabase
+            .from("audit_sessions")
+            .select("*")
+            .eq("id", id)
+            .single();
+          if (ed && !error) {
+            if (ed.tanggal_waktu) setStartTime(new Date(ed.tanggal_waktu));
+            if (ed.observer) setObserver(ed.observer);
+            
+
+            const indicatorsData = ed.data_indikator || ed.checklist_json || {};
+            if (indicatorsData.temuan) setTemuan(indicatorsData.temuan);
+            if (indicatorsData.rekomendasi) setRekomendasi(indicatorsData.rekomendasi);
+            
+            const displayPjName = indicatorsData.nama_pj || indicatorsData.nama_pj_ruangan || ed.nama_pj_ruangan || "";
+            if (typeof setPjName === "function") setPjName(displayPjName);
+
+            try {
+              setData((prev: any) => {
+                const updated = { ...prev };
+                Object.keys(updated).forEach((key) => {
+                  if (indicatorsData[key] !== undefined) {
+                    updated[key] = indicatorsData[key];
+                  }
+                });
+                return updated;
+              });
+            } catch (err) {}
+
+            
+
+            // Prefill signatures
+            setTimeout(() => {
+              const t1 = ed.ttd_pj_ruangan || indicatorsData.ttd_pj || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
+              const t2 = ed.ttd_ipcn || indicatorsData.ttd_ipcn || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
+              if (t1 && sigRef.current?.setPjSignature) {
+                sigRef.current.setPjSignature(t1);
+              }
+              if (t2 && sigRef.current?.setSupervisorSignature) {
+                sigRef.current.setSupervisorSignature(t2);
+              }
+            }, 800);
+
+            // Prefill documentation
+            if (indicatorsData.dokumentasi) {
+              setImages(
+                indicatorsData.dokumentasi.map((url: string) => ({
+                  url,
+                  file: null as any,
+                }))
+              );
+            }
+          }
+        };
+        loadEditData();
+      } else {
+        setStartTime(new Date());
+      }
+    } else {
+      setStartTime(new Date());
+    }
   }, []);
   const toggleGroup = (title: string) => {
     setExpandedGroups((prev) => ({ ...prev, [title]: !prev[title] }));
@@ -197,12 +266,25 @@ export default function InputMonitoringRuangIsolasiPage() {
           tanda_tangan: [ttd_pj, ttd_ipcn].filter(Boolean),
         },
       };
-      const { data: sessionData, error: sessionError } = await supabase
-        .from("audit_sessions")
-        .insert([sessionPayload])
-        .select("id")
-        .single();
-      if (sessionError) throw sessionError;
+      let sessionId = editId;
+
+      if (isEditMode && editId) {
+        const { error: sessionError } = await supabase
+          .from("audit_sessions")
+          .update(sessionPayload)
+          .eq("id", editId);
+        if (sessionError) throw sessionError;
+
+        await supabase.from("audit_details").delete().eq("session_id", editId);
+      } else {
+        const { data: sessionData, error: sessionError } = await supabase
+          .from("audit_sessions")
+          .insert([sessionPayload])
+          .select("id")
+          .single();
+        if (sessionError) throw sessionError;
+        sessionId = sessionData.id;
+      }
       const detailPayloads = Object.keys(data).map((key) => {
         let label = key;
         checklistGroups.forEach(g => {
@@ -210,7 +292,7 @@ export default function InputMonitoringRuangIsolasiPage() {
            if (found) label = found.label;
         });
         return {
-          session_id: sessionData.id,
+          session_id: sessionId,
           pertanyaan_id: key,
           pertanyaan: label,
           jawaban: String(data[key]),

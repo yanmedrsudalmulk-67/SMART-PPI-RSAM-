@@ -308,8 +308,75 @@ export default function MonitoringGiziPage() {
     fetchObservers();
     const initialData: Record<string, AuditStatus> = {};
     checklistItems.forEach((item) => (initialData[item.id] = null));
-    setStartTime(new Date());
     setData(initialData);
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+      const mode = params.get("mode");
+      if (id && mode === "edit") {
+        setIsEditMode(true);
+        setEditId(id);
+        const loadEditData = async () => {
+          const { data: ed, error } = await supabase
+            .from("audit_sessions")
+            .select("*")
+            .eq("id", id)
+            .single();
+          if (ed && !error) {
+            if (ed.tanggal_waktu) setStartTime(new Date(ed.tanggal_waktu));
+            if (ed.observer) setObserver(ed.observer);
+            if (ed.unit) setRuangan(ed.unit);
+
+            const indicatorsData = ed.data_indikator || ed.checklist_json || {};
+            if (indicatorsData.temuan) setTemuan(indicatorsData.temuan);
+            if (indicatorsData.rekomendasi) setRekomendasi(indicatorsData.rekomendasi);
+            
+            const displayPjName = indicatorsData.nama_pj || indicatorsData.nama_pj_ruangan || ed.nama_pj_ruangan || "";
+            setPjName(displayPjName);
+
+            try {
+              setData((prev: any) => {
+                const updated = { ...prev };
+                Object.keys(updated).forEach((key) => {
+                  if (indicatorsData[key] !== undefined) {
+                    updated[key] = indicatorsData[key];
+                  }
+                });
+                return updated;
+              });
+            } catch (err) {}
+
+            // Prefill signatures
+            setTimeout(() => {
+              const t1 = ed.ttd_pj_ruangan || indicatorsData.ttd_pj || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
+              const t2 = ed.ttd_ipcn || indicatorsData.ttd_ipcn || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
+              if (t1 && sigRef.current?.setPjSignature) {
+                sigRef.current.setPjSignature(t1);
+              }
+              if (t2 && sigRef.current?.setSupervisorSignature) {
+                sigRef.current.setSupervisorSignature(t2);
+              }
+            }, 800);
+
+            // Prefill documentation
+            if (indicatorsData.dokumentasi) {
+              setImages(
+                indicatorsData.dokumentasi.map((url: string) => ({
+                  url,
+                  file: null as any,
+                }))
+              );
+            }
+          }
+        };
+        loadEditData();
+      } else {
+        setStartTime(new Date());
+      }
+    } else {
+      setStartTime(new Date());
+    }
   }, []);
   const fetchObservers = async () => {
     try {
@@ -452,30 +519,57 @@ export default function MonitoringGiziPage() {
           dokumentasi: uploadedUrls,
         },
       };
-      const { data: sessionData, error: sessionError } = await supabase
-        .from("audit_sessions")
-        .insert([sessionPayload])
-        .select("*")
-        .single();
-      if (sessionError) throw sessionError;
+      let sessionId = editId;
+
+      if (isEditMode && editId) {
+        // Update existing session
+        const { error: sessionError } = await supabase
+          .from("audit_sessions")
+          .update(sessionPayload)
+          .eq("id", editId);
+        if (sessionError) throw sessionError;
+
+        // Clean up detail entries for update
+        await supabase.from("audit_details").delete().eq("session_id", editId);
+      } else {
+        // Insert new session
+        const { data: sessionData, error: sessionError } = await supabase
+          .from("audit_sessions")
+          .insert([sessionPayload])
+          .select("id")
+          .single();
+        if (sessionError) throw sessionError;
+        sessionId = sessionData.id;
+      }
+
       const detailPayloads = Object.keys(data).map((key) => ({
-        session_id: sessionData.id,
+        session_id: sessionId,
         pertanyaan_id: key,
         pertanyaan: checklistItems.find((i) => i.id === key)?.label || key,
         jawaban: String(data[key]),
       }));
       await supabase.from("audit_details").insert(detailPayloads);
+
       // Safe native table insert
       try {
-        await supabase.from("audit_gizi").insert([
-          {
-            ...payload,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-        ]);
+        if (isEditMode && editId) {
+          await supabase.from("audit_gizi").update([
+            {
+              ...payload,
+              updated_at: new Date().toISOString(),
+            }
+          ]).eq("id", editId);
+        } else {
+          await supabase.from("audit_gizi").insert([
+            {
+              ...payload,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            },
+          ]);
+        }
       } catch (err) {
-        console.warn("Failed to insert native table", err);
+        console.warn("Failed to insert/update native table", err);
       }
       setShowToast(true);
       setTimeout(() => {

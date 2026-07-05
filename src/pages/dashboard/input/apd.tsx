@@ -101,12 +101,55 @@ export default function InputApdPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+
   useEffect(() => {
-    const d = new Date();
-    setStartTime(d);
-    setNow(d);
     fetchObservers();
+    const d = new Date();
+    setNow(d);
     const timer = setInterval(() => setNow(new Date()), 60000);
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+      const mode = params.get("mode");
+      if (id && mode === "edit") {
+        setIsEditMode(true);
+        setEditId(id);
+        const loadEditData = async () => {
+          const { data: ed, error } = await supabase
+            .from("audit_sessions")
+            .select("*")
+            .eq("id", id)
+            .single();
+          if (ed && !error) {
+            if (ed.tanggal_waktu) setStartTime(new Date(ed.tanggal_waktu));
+            if (ed.observer) setObserver(ed.observer);
+            if (ed.unit) setUnit(ed.unit);
+            if (ed.profesi) setProfesi(ed.profesi);
+            if (ed.jenis_tindakan) setTindakan(ed.jenis_tindakan);
+            
+            const indicatorsData = ed.data_indikator || ed.checklist_json || {};
+            setApdData({
+              masker: indicatorsData.masker || null,
+              sarung_tangan: indicatorsData.sarung_tangan || null,
+              penutup_kepala: indicatorsData.penutup_kepala || null,
+              apron: indicatorsData.apron || null,
+              goggle: indicatorsData.goggle || null,
+              sepatu_boot: indicatorsData.sepatu_boot || null,
+              gaun_pelindung: indicatorsData.gaun_pelindung || null,
+            });
+          }
+        };
+        loadEditData();
+      } else {
+        setStartTime(d);
+      }
+    } else {
+      setStartTime(d);
+    }
+
     return () => clearInterval(timer);
   }, []);
 
@@ -283,39 +326,54 @@ export default function InputApdPage() {
         status_kepatuhan: stats.statusText,
       };
 
-      const { data: sessionData, error: sessionError } = await supabase
-        .from("audit_sessions")
-        .insert([
-          {
-            indikator_id: "audit_apd",
-            nama_indikator: "AUDIT KEPATUHAN PENGGUNAAN APD",
-            tanggal_waktu: payload.tanggal_waktu,
-            observer,
-            unit,
-            profesi,
-            jenis_tindakan: tindakan,
-            jumlah_dinilai: stats.dinilai,
-            jumlah_patuh: stats.patuh,
-            persentase: stats.persentase,
-            status_kepatuhan: stats.statusText,
-            data_indikator: {
-              masker: apdData.masker,
-              sarung_tangan: apdData.sarung_tangan,
-              penutup_kepala: apdData.penutup_kepala,
-              apron: apdData.apron,
-              goggle: apdData.goggle,
-              sepatu_boot: apdData.sepatu_boot,
-              gaun_pelindung: apdData.gaun_pelindung,
-            },
-          },
-        ])
-        .select("*")
-        .single();
+      const sessionPayload = {
+        indikator_id: "audit_apd",
+        nama_indikator: "AUDIT KEPATUHAN PENGGUNAAN APD",
+        tanggal_waktu: payload.tanggal_waktu,
+        observer,
+        unit,
+        profesi,
+        jenis_tindakan: tindakan,
+        jumlah_dinilai: stats.dinilai,
+        jumlah_patuh: stats.patuh,
+        persentase: stats.persentase,
+        status_kepatuhan: stats.statusText,
+        data_indikator: {
+          masker: apdData.masker,
+          sarung_tangan: apdData.sarung_tangan,
+          penutup_kepala: apdData.penutup_kepala,
+          apron: apdData.apron,
+          goggle: apdData.goggle,
+          sepatu_boot: apdData.sepatu_boot,
+          gaun_pelindung: apdData.gaun_pelindung,
+        },
+      };
 
-      if (sessionError) throw sessionError;
+      if (isEditMode && editId) {
+        const { error: sessionError } = await supabase
+          .from("audit_sessions")
+          .update(sessionPayload)
+          .eq("id", editId);
+        if (sessionError) throw sessionError;
+      } else {
+        const { data: sessionData, error: sessionError } = await supabase
+          .from("audit_sessions")
+          .insert([sessionPayload])
+          .select("*")
+          .single();
+        if (sessionError) throw sessionError;
+      }
 
       // Fallback old table
-      await supabase.from("audit_apd").insert([payload]);
+      try {
+        if (isEditMode && editId) {
+          await supabase.from("audit_apd").update([payload]).eq("id", editId);
+        } else {
+          await supabase.from("audit_apd").insert([payload]);
+        }
+      } catch (err) {
+        console.warn("Failed to insert/update native apd table", err);
+      }
 
       setShowToast(true);
       setTimeout(() => {
@@ -533,7 +591,7 @@ export default function InputApdPage() {
           ) : (
             <Save className="w-5 h-5" />
           )}
-          <span>Simpan Data Audit</span>
+          <span>{isEditMode ? "Update Data Audit" : "Simpan Data Audit"}</span>
         </button>
       </div>
     </div>

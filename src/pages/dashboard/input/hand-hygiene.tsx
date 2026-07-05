@@ -92,12 +92,52 @@ export default function HandHygieneAuditPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+
   useEffect(() => {
-    const d = new Date();
-    setStartTime(d);
-    setNow(d);
     fetchObservers();
+    const d = new Date();
+    setNow(d);
     const timer = setInterval(() => setNow(new Date()), 60000);
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+      const mode = params.get("mode");
+      if (id && mode === "edit") {
+        setIsEditMode(true);
+        setEditId(id);
+        const loadEditData = async () => {
+          const { data: ed, error } = await supabase
+            .from("audit_sessions")
+            .select("*")
+            .eq("id", id)
+            .single();
+          if (ed && !error) {
+            if (ed.tanggal_waktu) setStartTime(new Date(ed.tanggal_waktu));
+            if (ed.observer) setObserver(ed.observer);
+            if (ed.unit) setUnit(ed.unit);
+            if (ed.profesi) setProfesi(ed.profesi);
+            
+            const indicatorsData = ed.data_indikator || ed.checklist_json || {};
+            setMomenData({
+              m1: indicatorsData.m1 || null,
+              m2: indicatorsData.m2 || null,
+              m3: indicatorsData.m3 || null,
+              m4: indicatorsData.m4 || null,
+              m5: indicatorsData.m5 || null,
+            });
+          }
+        };
+        loadEditData();
+      } else {
+        setStartTime(d);
+      }
+    } else {
+      setStartTime(d);
+    }
+
     return () => clearInterval(timer);
   }, []);
 
@@ -238,35 +278,51 @@ export default function HandHygieneAuditPage() {
         end_time: end.toISOString(),
       };
 
-      const { data: sessionData, error: sessionError } = await supabase
-        .from("audit_sessions")
-        .insert([
-          {
-            indikator_id: "audit_hand_hygiene",
-            nama_indikator: "AUDIT KEBERSIHAN TANGAN",
-            tanggal_waktu: payload.start_time,
-            observer,
-            unit,
-            profesi,
-            jenis_tindakan: "Kebersihan Tangan Observation",
-            jumlah_dinilai: stats.peluang,
-            jumlah_patuh: stats.patuh,
-            persentase: stats.persentase,
-            status_kepatuhan: stats.statusText,
-            data_indikator: {
-              m1: payload.m1,
-              m2: payload.m2,
-              m3: payload.m3,
-              m4: payload.m4,
-              m5: payload.m5,
-            },
-          },
-        ])
-        .select("*")
-        .single();
+      const sessionPayload = {
+        indikator_id: "audit_hand_hygiene",
+        nama_indikator: "AUDIT KEBERSIHAN TANGAN",
+        tanggal_waktu: payload.start_time,
+        observer,
+        unit,
+        profesi,
+        jenis_tindakan: "Kebersihan Tangan Observation",
+        jumlah_dinilai: stats.peluang,
+        jumlah_patuh: stats.patuh,
+        persentase: stats.persentase,
+        status_kepatuhan: stats.statusText,
+        data_indikator: {
+          m1: payload.m1,
+          m2: payload.m2,
+          m3: payload.m3,
+          m4: payload.m4,
+          m5: payload.m5,
+        },
+      };
 
-      if (sessionError) throw sessionError;
-      await supabase.from("audit_hand_hygiene").insert([payload]);
+      if (isEditMode && editId) {
+        const { error: sessionError } = await supabase
+          .from("audit_sessions")
+          .update(sessionPayload)
+          .eq("id", editId);
+        if (sessionError) throw sessionError;
+      } else {
+        const { data: sessionData, error: sessionError } = await supabase
+          .from("audit_sessions")
+          .insert([sessionPayload])
+          .select("*")
+          .single();
+        if (sessionError) throw sessionError;
+      }
+
+      try {
+        if (isEditMode && editId) {
+          await supabase.from("audit_hand_hygiene").update([payload]).eq("id", editId);
+        } else {
+          await supabase.from("audit_hand_hygiene").insert([payload]);
+        }
+      } catch (err) {
+        console.warn("Failed to insert native hand hygiene table", err);
+      }
 
       setShowToast(true);
       setTimeout(() => {
@@ -580,7 +636,7 @@ export default function HandHygieneAuditPage() {
             ) : (
               <Save className="w-5 h-5" />
             )}
-            <span>Simpan Data Audit</span>
+            <span>{isEditMode ? "Update Data Audit" : "Simpan Data Audit"}</span>
           </button>
         </div>
 
