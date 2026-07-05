@@ -115,41 +115,55 @@ const DEFAULT_STANDARDS: Record<string, Standard> = {
 };
 
 // --- Standalone Components & Helpers for Performance ---
-const getSlideStyles = (isActive: boolean, isPrev: boolean, isNext: boolean, isMobile: boolean) => {
-  if (isMobile) {
+const getSlideStyles = (isActive: boolean, isPrev: boolean, isNext: boolean, windowWidth: number) => {
+  if (windowWidth < 768) {
     return {
       transform: "scale(1)",
       filter: "none",
       opacity: isActive ? 1 : 0.4,
+      zIndex: isActive ? 20 : 10,
+      transformStyle: "preserve-3d" as const,
       transition: "transform 700ms cubic-bezier(0.25, 1, 0.5, 1), opacity 700ms cubic-bezier(0.25, 1, 0.5, 1)",
     };
   }
 
-  let transform = "scale(1) rotateY(0deg) translateZ(0px) translateX(0px)";
+  let transform = "scale(1) translateZ(0px) translateX(0px)";
   let filter = "none";
   let opacity = 1;
   let zIndex = 20;
 
+  // Proportional translation to bring the prev/next slides closely overlapping right behind the center active slide
+  let translateX = 35; // mobile default
+  if (windowWidth >= 1280) {
+    translateX = 145; // desktop
+  } else if (windowWidth >= 1024) {
+    translateX = 115; // large tablet / laptop
+  } else if (windowWidth >= 768) {
+    translateX = 90; // tablet
+  } else if (windowWidth >= 480) {
+    translateX = 60; // large mobile
+  }
+
   if (isActive) {
-    transform = "scale(1) rotateY(0deg) translateZ(0px) translateX(0px)";
+    transform = "scale(1) translateZ(0px) translateX(0px)";
     filter = "none";
     opacity = 1;
     zIndex = 20;
   } else if (isPrev) {
-    // Left slide - tilted towards the center with a highly polished overlapping 3D perspective
-    transform = "scale(0.85) rotateY(18deg) translateZ(-100px) translateX(-36px)";
-    filter = "blur(0.5px)";
-    opacity = 0.45;
+    // Left slide - scaled down and shifted right (towards center) to overlap beautifully
+    transform = `scale(0.85) translateZ(-80px) translateX(${translateX}px)`;
+    filter = "none";
+    opacity = 0.95;
     zIndex = 10;
   } else if (isNext) {
-    // Right slide - tilted towards the center with a highly polished overlapping 3D perspective
-    transform = "scale(0.85) rotateY(-18deg) translateZ(-100px) translateX(36px)";
-    filter = "blur(0.5px)";
-    opacity = 0.45;
+    // Right slide - scaled down and shifted left (towards center) to overlap beautifully
+    transform = `scale(0.85) translateZ(-80px) translateX(${-translateX}px)`;
+    filter = "none";
+    opacity = 0.95;
     zIndex = 10;
   } else {
     // Hidden completely in the depth to avoid background clutter
-    transform = "scale(0.7) rotateY(0deg) translateZ(-200px) translateX(0px)";
+    transform = "scale(0.7) translateZ(-200px) translateX(0px)";
     filter = "blur(4px)";
     opacity = 0;
     zIndex = 0;
@@ -244,6 +258,16 @@ const HeroSlider = ({
     return active.length > 0 ? active : (isLoading ? [] : DEFAULT_SLIDES);
   }, [slides, isLoading]);
 
+  const duplicatedSlides = useMemo(() => {
+    if (visibleSlides.length === 2) {
+      return [...visibleSlides, ...visibleSlides, ...visibleSlides, ...visibleSlides];
+    }
+    if (visibleSlides.length === 3) {
+      return [...visibleSlides, ...visibleSlides, ...visibleSlides];
+    }
+    return visibleSlides;
+  }, [visibleSlides]);
+
   useEffect(() => {
     visibleSlides.forEach((slide) => {
       if (slide.image_url && !aspectRatios[slide.id]) {
@@ -273,10 +297,10 @@ const HeroSlider = ({
     
     // Mathematically perfect scale factor matching slidesPerView to keep the center card widescreen ratio
     // without stretching, which keeps the total vertical height much shorter and polished
-    let multiplier = 1.20;
-    if (windowWidth >= 1280) multiplier = 1.28;
-    else if (windowWidth >= 1024) multiplier = 1.24;
-    else if (windowWidth >= 768) multiplier = 1.20;
+    let multiplier = 1.35;
+    if (windowWidth >= 1280) multiplier = 1.45;
+    else if (windowWidth >= 1024) multiplier = 1.40;
+    else if (windowWidth >= 768) multiplier = 1.35;
     
     return rawRatio * multiplier;
   }, [mounted, currentSlide, aspectRatios, isMobile, windowWidth]);
@@ -302,58 +326,58 @@ const HeroSlider = ({
 
   return (
     <div
-      className="w-full md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto relative group overflow-hidden md:overflow-visible mb-6 mt-1 bg-slate-950/10 transition-all duration-300 ease-in-out transform-gpu will-change-[width,height]"
+      className="w-full md:max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto relative group overflow-hidden md:overflow-visible mb-6 mt-1 bg-slate-950/10 transition-all duration-300 ease-in-out transform-gpu will-change-[width,height]"
       style={{ 
         aspectRatio: currentRatio,
         perspective: "1200px"
       }}
     >
       <Swiper
-        key={visibleSlides.map((s) => s.id).join(",")}
-        modules={[Autoplay, Pagination, Navigation]}
+        key={duplicatedSlides.map((s, idx) => `${s.id}-${idx}`).join(",")}
+        modules={[Autoplay, Pagination]}
         centeredSlides={true}
         spaceBetween={16}
         slidesPerView={1}
-        loop={visibleSlides.length > 1}
-        navigation={{
-          prevEl: ".slider-prev",
-          nextEl: ".slider-next",
-        }}
+        loop={duplicatedSlides.length > 1}
         autoplay={{ delay: 5000, disableOnInteraction: false }}
         pagination={{
           clickable: true,
           dynamicBullets: true,
         }}
-        onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
+        onSlideChange={(swiper) => {
+          if (visibleSlides.length > 0) {
+            setActiveIndex(swiper.realIndex % visibleSlides.length);
+          }
+        }}
         breakpoints={{
           0: {
             slidesPerView: 1,
             spaceBetween: 0,
           },
           768: {
-            slidesPerView: 1.20,
-            spaceBetween: 12,
-          },
-          1024: {
-            slidesPerView: 1.24,
+            slidesPerView: 1.35,
             spaceBetween: 16,
           },
-          1280: {
-            slidesPerView: 1.28,
+          1024: {
+            slidesPerView: 1.40,
             spaceBetween: 20,
+          },
+          1280: {
+            slidesPerView: 1.45,
+            spaceBetween: 24,
           }
         }}
         className="w-full h-full bg-transparent !overflow-visible transition-all duration-300 ease-in-out transform-gpu"
         style={{ transformStyle: 'preserve-3d', perspective: '1200px' }}
       >
-        {visibleSlides.map((slide, i) => (
+        {duplicatedSlides.map((slide, i) => (
           <SwiperSlide 
-            key={slide.id || i} 
+            key={`${slide.id}-dup-${i}`} 
             className="overflow-visible flex items-center justify-center p-2 md:p-6"
             style={{ transformStyle: 'preserve-3d', perspective: '1200px' }}
           >
             {({ isActive, isPrev, isNext }) => {
-              const slideStyle = getSlideStyles(isActive, isPrev, isNext, isMobile);
+              const slideStyle = getSlideStyles(isActive, isPrev, isNext, windowWidth);
               return (
                 <div
                   style={slideStyle}
@@ -375,7 +399,7 @@ const HeroSlider = ({
                   )}
                   <div
                     className={`absolute inset-0 bg-slate-950 transition-opacity duration-700 ease-out pointer-events-none ${
-                      isActive ? "opacity-0" : "opacity-45"
+                      isActive ? "opacity-0" : "opacity-55"
                     }`}
                   />
                 </div>
@@ -384,14 +408,6 @@ const HeroSlider = ({
           </SwiperSlide>
         ))}
       </Swiper>
-
-      {/* Custom Navigation Buttons */}
-      <button className="slider-prev absolute left-6 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-11 md:h-11 flex items-center justify-center rounded-full bg-slate-950/40 hover:bg-slate-950/80 backdrop-blur-md text-white border border-white/10 transition-all opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 shadow-lg cursor-pointer animate-in fade-in">
-        <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
-      </button>
-      <button className="slider-next absolute right-6 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-11 md:h-11 flex items-center justify-center rounded-full bg-slate-950/40 hover:bg-slate-950/80 backdrop-blur-md text-white border border-white/10 transition-all opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 shadow-lg cursor-pointer animate-in fade-in">
-        <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
-      </button>
     </div>
   );
 };
