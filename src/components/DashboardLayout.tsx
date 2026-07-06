@@ -108,6 +108,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           let newSlides: any[] = [];
           if (slidesRes.data && slidesRes.data.length > 0) {
             newSlides = slidesRes.data;
+            // Preload active slider images in parallel in the background
+            newSlides.forEach((slide: any) => {
+              if (slide.image_url && slide.active && typeof window !== "undefined") {
+                const img = new window.Image();
+                img.src = slide.image_url;
+                img.referrerPolicy = "no-referrer";
+              }
+            });
           } else {
             newSlides = []; 
           }

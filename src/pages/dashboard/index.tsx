@@ -238,8 +238,8 @@ const HeroSlider = ({
     s2: 1.777,
   });
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
-  const [windowWidth, setWindowWidth] = useState(1200);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" ? window.innerWidth < 768 : false);
+  const [windowWidth, setWindowWidth] = useState(() => typeof window !== "undefined" ? window.innerWidth : 1200);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -288,7 +288,6 @@ const HeroSlider = ({
 
   const currentSlide = visibleSlides[activeIndex] || visibleSlides[0];
   const currentRatio = useMemo(() => {
-    if (!mounted) return 1.777;
     if (!currentSlide) return 16 / 9;
     const rawRatio = aspectRatios[currentSlide.id] || 16 / 9;
     if (isMobile) {
@@ -303,9 +302,9 @@ const HeroSlider = ({
     else if (windowWidth >= 768) multiplier = 1.35;
     
     return rawRatio * multiplier;
-  }, [mounted, currentSlide, aspectRatios, isMobile, windowWidth]);
+  }, [currentSlide, aspectRatios, isMobile, windowWidth]);
 
-  if (isLoading || !mounted) {
+  if (isLoading) {
     return (
       <div
         className="w-full relative group rounded-[24px] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-slate-200/50 dark:border-white/10 dark:shadow-blue-900/20 mb-8 mt-4 bg-slate-950 flex flex-col justify-end p-8 md:p-14 animate-pulse"
@@ -514,6 +513,15 @@ export default function DashboardPage() {
           slidesRes.data && slidesRes.data.length > 0
             ? slidesRes.data
             : DEFAULT_SLIDES;
+
+        // Preload active slider images in parallel
+        newSlides.forEach((slide: any) => {
+          if (slide.image_url && slide.active && typeof window !== "undefined") {
+            const img = new window.Image();
+            img.src = slide.image_url;
+            img.referrerPolicy = "no-referrer";
+          }
+        });
 
         const newStandards: any = {
           hh: {
