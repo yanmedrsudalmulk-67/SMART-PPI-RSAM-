@@ -471,6 +471,11 @@ export default function DashboardPage() {
   const isDataLoading = !isDashboardLoaded;
   const isSlidesLoading = !isDashboardLoaded;
 
+  const isDashboardLoadedRef = useRef(isDashboardLoaded);
+  useEffect(() => {
+    isDashboardLoadedRef.current = isDashboardLoaded;
+  }, [isDashboardLoaded]);
+
   useEffect(() => {
     // If not loaded yet, fetch will be handled by Layout
     // But we still need to subscribe to changes for immediate local updates
@@ -580,7 +585,9 @@ export default function DashboardPage() {
       }
     };
 
-    fetchFresh();
+    if (!isDashboardLoadedRef.current) {
+      fetchFresh();
+    }
 
     const channels = [
       supabase

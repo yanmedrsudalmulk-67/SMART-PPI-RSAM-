@@ -33,6 +33,7 @@ const NavItem = memo(({ item, isActive, onClick }: { item: any, isActive: boolea
   return (
     <Link 
       href={item.href}
+      prefetch={true}
       onClick={onClick}
       className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
     >
@@ -341,6 +342,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Link 
                 key={item.name} 
                 href={item.href}
+                prefetch={true}
                 className="relative flex-1 h-[56px] flex flex-col items-center justify-center transition-all duration-200 outline-none px-1"
               >
                 {isActive && (

@@ -449,12 +449,19 @@ export default function MonitoringGiziPage() {
   const stats = useMemo(() => {
     let patuh = 0;
     let dinilai = 0;
-    Object.values(data).forEach((val) => {
-      if (val === "ya") {
-        patuh++;
+    Object.entries(data).forEach(([key, val]) => {
+      if (val === "ya" || val === "tidak") {
         dinilai++;
-      } else if (val === "tidak") {
-        dinilai++;
+        const isNegativeQuestion = key === "gizi_c_1_3";
+        if (isNegativeQuestion) {
+          if (val === "tidak") {
+            patuh++;
+          }
+        } else {
+          if (val === "ya") {
+            patuh++;
+          }
+        }
       }
     });
     const persentase = dinilai > 0 ? Math.round((patuh / dinilai) * 100) : 0;
@@ -702,25 +709,7 @@ export default function MonitoringGiziPage() {
             <div className="space-y-4">
               {checklistItems.map((item, idx) => {
                 const selected = data[item.id];
-                const negativeKeywords = [
-                  "berkarat",
-                  "kotor",
-                  "debu",
-                  "genangan",
-                  "tercampur",
-                  "bercampur",
-                  "penumpukan",
-                  "bocor",
-                  "jarum",
-                  "menumpuk",
-                  "sampah medis dan non medis",
-                  "pembuangan sampah infeksius",
-                ];
-                const isNegativeQuestion = negativeKeywords.some((kw) =>
-                  (item.label || (item as any).desc || "")
-                    .toLowerCase()
-                    .includes(kw),
-                );
+                const isNegativeQuestion = item.id === "gizi_c_1_3";
                 let borderLeftColor = "border-l-transparent";
                 if (selected === "na") {
                   borderLeftColor = "border-l-slate-500";
