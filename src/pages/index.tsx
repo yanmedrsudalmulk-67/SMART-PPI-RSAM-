@@ -252,11 +252,11 @@ export default function WelcomePage() {
           transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
           className="flex items-center gap-4"
         >
-          <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center relative">
+          <div className="w-9 h-9 md:w-10 md:h-10 flex-shrink-0 flex items-center justify-center relative">
             {hospitalLogoUrl ? (
               <img src={hospitalLogoUrl} alt="Logo RS" className="w-full h-full object-contain" />
             ) : (
-              <ShieldCheck className="w-8 h-8 transition-colors duration-500 text-sky-400" />
+              <ShieldCheck className="w-6 h-6 md:w-7 md:h-7 transition-colors duration-500 text-sky-400" />
             )}
           </div>
           

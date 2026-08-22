@@ -512,7 +512,7 @@ export default function InputIndexPage() {
           <h1 className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase">
             Input Data SMART PPI
           </h1>
-          <p className="text-sm text-slate-500 mt-1 font-medium">
+          <p className="text-sm text-white mt-1 font-medium">
             Input Data Monitoring PPI Terintegrasi
           </p>
         </div>

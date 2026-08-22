@@ -17,6 +17,7 @@ import {
   Activity,
   Calendar,
   ImageOff,
+  CheckCircle2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
@@ -24,6 +25,7 @@ import { useAppContext } from "@/components/Providers";
 import DashboardLayout from "@/components/DashboardLayout";
 import { supabase } from "@/lib/supabase";
 import { useDashboardStore } from "@/hooks/useDashboardStore";
+import { ClockWidget } from "@/components/ClockWidget";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, Navigation, EffectFade } from "swiper/modules";
@@ -325,7 +327,7 @@ const HeroSlider = ({
 
   return (
     <div
-      className="w-full md:max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto relative group overflow-hidden md:overflow-visible mb-6 mt-1 bg-slate-950/10 transition-all duration-300 ease-in-out transform-gpu will-change-[width,height]"
+      className="w-full md:max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto relative group overflow-hidden md:overflow-visible mb-6 mt-1 bg-transparent transition-all duration-300 ease-in-out transform-gpu will-change-[width,height]"
       style={{ 
         aspectRatio: currentRatio,
         perspective: "1200px"
@@ -1061,18 +1063,24 @@ export default function DashboardPage() {
     return null;
   };
 
-  const generateAutoInsight = () => {
-    if (chartDataList.length < 1)
-      return "Data belum tersedia untuk periode observasi ini.";
+  const getAutoInsightAndRecommendation = () => {
+    if (chartDataList.length < 1) {
+      return {
+        analisa: "Belum ada data monitoring yang terekam pada periode observasi yang dipilih.",
+        rekomendasi: "Lakukan penginputan audit berkala dan surveilans harian di seluruh unit pelayanan untuk menghasilkan evaluasi mutu yang akurat.",
+        status: "neutral" as const,
+        label: "Data Belum Tersedia"
+      };
+    }
 
     // Find the last valid data point based on active tab
     const hasTabData = (d: any) => {
-      if (activeTab === "hh") return d._hasData.hh;
-      if (activeTab === "apd") return d._hasData.apd;
-      if (activeTab === "hais") return d._hasData.hais;
-      if (activeTab === "fasilitas_apd") return d._hasData.fasilitas_apd;
-      if (activeTab === "linen") return d._hasData.linen;
-      return false;
+      if (activeTab === "hh") return d._hasData?.hh ?? true;
+      if (activeTab === "apd") return d._hasData?.apd ?? true;
+      if (activeTab === "hais") return d._hasData?.hais ?? true;
+      if (activeTab === "fasilitas_apd") return d._hasData?.fasilitas_apd ?? true;
+      if (activeTab === "linen") return d._hasData?.linen ?? true;
+      return true;
     };
 
     const validData = chartDataList.filter((d: any) => hasTabData(d));
@@ -1083,83 +1091,126 @@ export default function DashboardPage() {
       dataListToUse.length > 1 ? dataListToUse[dataListToUse.length - 2] : null;
 
     // PPI Standards and Kemenkes guidance
-    // HH >= 85%, APD = 100%
     if (activeTab === "hh") {
       const std = standards["hh"]?.nilai_standar || 85;
-      const isCurrentMeets = current.hh >= std;
-      let text = `Analisis Capaian HH: Saat ini berada di angka ${current.hh}%. `;
+      const isMet = current.hh >= std;
+      const diff = prev ? (current.hh - prev.hh) : 0;
+      const trendText = prev 
+        ? diff > 0 
+          ? `dengan tren peningkatan sebesar +${diff.toFixed(1)}% dari periode sebelumnya` 
+          : diff < 0 
+            ? `dengan tren penurunan sebesar -${Math.abs(diff).toFixed(1)}% dibandingkan periode sebelumnya` 
+            : `dan terpantau stabil dari periode sebelumnya`
+        : "";
 
-      if (isCurrentMeets) {
-        text += `Sudah mencapai Target Kemenkes (>= ${std}%). Pertahankan budaya cuci tangan 5 momen & 6 langkah. `;
-      } else {
-        text += `Belum mencapai target PPI (Target ${std}%). Rekomendasi: Lakukan audit fasilitas HH (Ketersediaan Handrub/Sabun) dan edukasi ulang (Refreshment) kepada seluruh staff. `;
-      }
+      const analisa = isMet
+        ? `Capaian kepatuhan Hand Hygiene (Kebersihan Tangan) pada periode ini mencapai ${current.hh}% ${trendText}. Angka ini telah MEMENUHI standar mutu nasional PPI Kemenkes (Target ≥ ${std}%). Kepatuhan petugas pada 5 Momen cuci tangan dan implementasi 6 langkah kebersihan tangan berjalan efektif di unit pelayanan.`
+        : `Capaian kepatuhan Hand Hygiene (Kebersihan Tangan) saat ini sebesar ${current.hh}% ${trendText}. Angka ini masih BELUM MEMENUHI standar mutu nasional PPI Kemenkes (Target ≥ ${std}%). Teridentifikasi celah ketidakpatuhan terutama pada Momen 1 (Sebelum kontak pasien) dan Momen 5 (Setelah kontak lingkungan sekitar pasien).`;
 
-      if (prev) {
-        const diff = current.hh - prev.hh;
-        if (diff > 0)
-          text += `Tren menunjukkan progres positif (+${diff.toFixed(1)}%). `;
-        else if (diff < 0)
-          text += `Waspadai penurunan tren sebesar ${Math.abs(diff).toFixed(1)}%. Segera lakukan investigasi kepatuhan per departemen. `;
-        else text += `Tren kepatuhan terpantau stabil. `;
-      }
-      return text;
+      const rekomendasi = isMet
+        ? `• Pertahankan dan budayakan konsistensi 5 Momen Cuci Tangan di seluruh shift kerja (Pagi, Sore, dan Malam).\n• Lakukan audit fasilitas berkala untuk memastikan ketersediaan handrub dan sabun cuci tangan di setiap titik pelayanan (Point of Care).\n• Berikan apresiasi/reward berkala kepada unit kerja dengan tingkat kepatuhan kebersihan tangan tertinggi.`
+        : `• Tingkatkan supervisi aktif dan audit kepatuhan harian oleh Tim PPI / IPCLN di setiap ruang perawatan.\n• Lakukan sosialisasi dan workshop refreshment teknik 6 langkah cuci tangan serta kepatuhan 5 momen secara berkesinambungan.\n• Evaluasi ketersediaan sarana fasilitas kebersihan tangan (dispenser handrub, sabun cair, dan tisu pengering) di setiap tempat tidur pasien.`;
+
+      return {
+        analisa,
+        rekomendasi,
+        status: isMet ? ("optimal" as const) : ("warning" as const),
+        label: isMet ? `Target Tercapai (${current.hh}% ≥ ${std}%)` : `Perlu Peningkatan (${current.hh}% < ${std}%)`
+      };
     } else if (activeTab === "apd") {
       const std = standards["apd"]?.nilai_standar || 100;
-      const isCurrentMeets = current.apd >= std;
-      let text = `Analisis Kepatuhan APD: Capaian saat ini ${current.apd}%. `;
+      const isMet = current.apd >= std;
+      const diff = prev ? (current.apd - prev.apd) : 0;
+      const trendText = prev 
+        ? diff > 0 
+          ? `(mengalami kenaikan +${diff.toFixed(1)}%)` 
+          : diff < 0 
+            ? `(mengalami penurunan -${Math.abs(diff).toFixed(1)}%)` 
+            : `(stabil)`
+        : "";
 
-      if (isCurrentMeets) {
-        text += `Sangat Baik, sesuai standar Kemenkes/PPI. Pastikan ketersediaan stock APD tetap terjaga sesuai beban kerja. `;
-      } else {
-        text += `Perlu perhatian khusus karena di bawah standar (${std}%). Rekomendasi: Evaluasi ketersediaan APD di titik pelayanan dan lakukan supervisi langsung (Head to Head) pada saat tindakan medis berisiko. `;
-      }
+      const analisa = isMet
+        ? `Capaian kepatuhan penggunaan Alat Pelindung Diri (APD) mencapai ${current.apd}% ${trendText}, telah SESUAI dengan standar baku mutu PPI (Target 100%). Tenaga medis dan staf klinis menggunakan APD secara tepat sesuai indikasi dan transmisi risiko paparan cairan tubuh atau agen infeksius.`
+        : `Capaian kepatuhan penggunaan APD berada di level ${current.apd}% ${trendText}, masih DI BAWAH standar baku keselamatan PPI (Target 100%). Ditemukan ketidakpatuhan dalam pelepasan APD (doffing sequence) yang berisiko kontaminasi silang atau penggunaan APD yang tidak sesuai indikasi tindakan.`;
 
-      if (prev) {
-        const diff = current.apd - prev.apd;
-        if (diff > 0)
-          text += `Terdapat kenaikan kepatuhan (+${diff.toFixed(1)}%). `;
-        else if (diff < 0)
-          text += `Terdeteksi penurunan tren (${Math.abs(diff).toFixed(1)}%). Segera lakukan audit 'Peer Review' antar unit. `;
-      }
-      return text;
+      const rekomendasi = isMet
+        ? `• Pertahankan ketersediaan buffer stock APD berkualitas (masker medis, sarung tangan, gaun/apron, goggle/face shield) di seluruh unit pelayanan.\n• Lakukan pemantauan berkala terhadap kepatuhan alur pelepasan (doffing) APD yang benar.\n• Lakukan audit berkala pembuangan limbah APD bekas pakai ke wadah limbah infeksius berplastik kuning.`
+        : `• Lakukan supervisi langsung 'Head-to-Head' saat tindakan invasif dan prosedur medis berisiko tinggi.\n• Refreshment edukasi mengenai urutan pemakaian (donning) dan pelepasan (doffing) APD yang aman untuk mencegah transmisi nosokomial.\n• Koordinasikan dengan Unit Farmasi dan Logistik Medis untuk memastikan ukuran dan jenis APD selalu siap pakai di setiap ruangan.`;
+
+      return {
+        analisa,
+        rekomendasi,
+        status: isMet ? ("optimal" as const) : ("warning" as const),
+        label: isMet ? `Target Tercapai (${current.apd}%)` : `Di Bawah Standar (${current.apd}% < 100%)`
+      };
     } else if (activeTab === "hais") {
       const phleStd = standards["phlebitis"]?.nilai_standar || 1.5;
       const iskStd = standards["isk"]?.nilai_standar || 5;
-      let text = "Analisis HAIs: ";
-      const issues: string[] = [];
-      if (current.phlebitis > phleStd)
-        issues.push(
-          `Phlebitis (${current.phlebitis} ‰) di atas batas ${phleStd} ‰`,
-        );
-      if (current.isk > iskStd)
-        issues.push(`ISK (${current.isk} ‰) di atas batas ${iskStd} ‰`);
+      const idoStd = standards["ido"]?.nilai_standar || 2;
+      const vapStd = standards["vap"]?.nilai_standar || 5.8;
 
-      if (issues.length > 0) {
-        text += `Ditemukan insiden yang melebihi standar: ${issues.join(", ")}. Rekomendasi: Terapkan bundle monitoring secara ketat (Pemasangan & Maintenance line). `;
-      } else {
-        text +=
-          "Seluruh indikator HAIs bulan ini berada dalam batas normal sesuai standar Kemenkes. Tetap lakukan kewaspadaan standar. ";
-      }
-      return text;
+      const issues: string[] = [];
+      if (current.phlebitis > phleStd) issues.push(`Phlebitis (${current.phlebitis} ‰ > batas ${phleStd} ‰)`);
+      if (current.isk > iskStd) issues.push(`ISK (${current.isk} ‰ > batas ${iskStd} ‰)`);
+      if (current.ido > idoStd) issues.push(`IDO (${current.ido}% > batas ${idoStd}%)`);
+      if (current.vap > vapStd) issues.push(`VAP (${current.vap} ‰ > batas ${vapStd} ‰)`);
+
+      const hasIssues = issues.length > 0;
+
+      const analisa = hasIssues
+        ? `Hasil surveilans HAIs menunjukkan adanya indikator laju infeksi yang MELEBIHI batas ambang toleransi standar PPI: ${issues.join(", ")}. Hal ini mengindikasikan perlunya evaluasi ketat terhadap kepatuhan Bundles HAIs pada saat pemasangan dan perawatan alat invasif.`
+        : `Hasil surveilans Healthcare-Associated Infections (HAIs) periode ini terpantau AMAN DAN DI BAWAH BATAS MAKSIMAL standar nasional (Phlebitis: ${current.phlebitis} ‰, ISK: ${current.isk} ‰, IDO: ${current.ido}%, VAP: ${current.vap} ‰). Angka kejadian infeksi nosokomial terkendali dengan sangat baik.`;
+
+      const rekomendasi = hasIssues
+        ? `• Terapkan Bundles HAIs (Insertion & Maintenance Bundle) secara disiplin pada seluruh pasien dengan infus vena, kateter urine, dan ventilator.\n• Lakukan audit kepatuhan dressing kateter dan evaluasi kebutuhan pelepasan dini jika tidak ada indikasi medis (Prompt Removal).\n• Lakukan Investigasi Kasus (Root Cause Analysis/RCA) oleh Tim IPCN bersama Dokter Penanggung Jawab Pasien (DPJP) dan Kepala Ruangan.`
+        : `• Pertahankan kepatuhan pelaksanaan Bundle Pencegahan HAIs di seluruh ruang rawat inap dan intensif.\n• Lakukan observasi harian tempat insersi kateter perifer/sentral dan lakukan pergantian dressing sesuai SOP.\n• Lanjutkan surveilans aktif harian oleh IPCLN untuk deteksi dini tanda-tanda infeksi nosokomial.`;
+
+      return {
+        analisa,
+        rekomendasi,
+        status: hasIssues ? ("danger" as const) : ("optimal" as const),
+        label: hasIssues ? `Insiden Melebihi Ambang` : `Laju Infeksi Terkendali`
+      };
     } else if (activeTab === "fasilitas_apd") {
-      let text = `Fasilitas APD: Ketersediaan di angka ${current.fasilitas_apd}%. `;
-      if (current.fasilitas_apd < 100)
-        text +=
-          "Ditemukan beberapa titik point yang kekosongan stock. Koordinasikan dengan bagian Farmasi/Logistik untuk pemenuhan fasilitas. ";
-      else
-        text +=
-          "Ketersediaan fasilitas sangat baik dan mendukung kepatuhan pencegahan infeksi. ";
-      return text;
+      const isMet = current.fasilitas_apd >= 100;
+      const analisa = isMet
+        ? `Ketersediaan fasilitas dan sarana APD di seluruh unit pelayanan mencapai 100%, sangat memadai untuk mendukung perlindungan tenaga kesehatan dan pencegahan transmisi mikroorganisme.`
+        : `Ketersediaan fasilitas APD terpantau di angka ${current.fasilitas_apd}%. Teridentifikasi adanya titik pelayanan atau depo unit yang mengalami kekosongan buffer stock jenis APD tertentu.`;
+
+      const rekomendasi = isMet
+        ? `• Pertahankan sistem monitoring logistik harian antara Farmasi, Gudang Medis, dan Unit Pelayanan.\n• Pastikan penyimpanan APD terlindung dari debu, kelembapan, dan paparan langsung sinar matahari.`
+        : `• Segera lakukan koordinasi dan pengadaan re-stock APD ke Unit Farmasi dan Logistik Medis.\n• Tetapkan batas minimum stok darurat (Emergency Stock) di setiap ruang tindakan dan IGD.`;
+
+      return {
+        analisa,
+        rekomendasi,
+        status: isMet ? ("optimal" as const) : ("warning" as const),
+        label: isMet ? `Fasilitas Lengkap (100%)` : `Perlu Restock (${current.fasilitas_apd}%)`
+      };
     } else if (activeTab === "linen") {
-      let text = `Penatalaksanaan Linen: Capaian ${current.linen}%. `;
-      if (current.linen < 100)
-        text +=
-          "Belum optimal sesuai standar. Rekomendasi: Pastikan alur pemisahan linen infeksius dan non-infeksius serta penggunaan APD yang benar di Laundry. ";
-      else text += "Pengeleloaan linen sudah sesuai dengan standar PPI. ";
-      return text;
+      const isMet = current.linen >= 100;
+      const analisa = isMet
+        ? `Manajemen dan tata kelola penatalaksanaan linen bersih, pemilahan linen infeksius, hingga distribusi linen steril telah berjalan 100% sesuai standar SOP PPI dan Akreditasi Rumah Sakit.`
+        : `Tingkat kepatuhan penatalaksanaan linen berada di angka ${current.linen}%. Terdapat catatan evaluasi dalam alur pemilahan kantong linen infeksius (plastik kuning) vs non-infeksius, atau kepatuhan APD staf laundry.`;
+
+      const rekomendasi = isMet
+        ? `• Pertahankan pemisahan alur troli linen kotor dan linen bersih (tidak boleh bersilangan).\n• Lakukan uji swab mikrobiologi berkala pada linen bersih pasca proses pencucian dan penyimpanan.`
+        : `• Tingkatkan pengawasan pemilahan linen langsung di sumber ruangan (Point of Generation).\n• Pastikan staf laundry menggunakan APD lengkap (apron kedap air, sarung tangan heavy duty, masker, dan sepatu boots).\n• Cek suhu pencucian air panas (minimal 70°C) dan konsentrasi disinfektan/klorin sesuai standar.`;
+
+      return {
+        analisa,
+        rekomendasi,
+        status: isMet ? ("optimal" as const) : ("warning" as const),
+        label: isMet ? `Sesuai Standar (100%)` : `Perlu Perbaikan (${current.linen}%)`
+      };
     }
-    return "Data monitoring PPI terpantau dinamis.";
+
+    return {
+      analisa: "Data monitoring PPI terpantau dinamis pada periode observasi ini.",
+      rekomendasi: "Lanjutkan pemantauan dan penginputan audit harian secara konsisten di setiap unit kerja.",
+      status: "neutral" as const,
+      label: "Monitoring Aktif"
+    };
   };
 
   const renderCustomLegend = (props: any) => {
@@ -1188,15 +1239,15 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="space-y-6 pb-10">
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-2">
-        <div className="text-center lg:text-left w-full lg:w-auto">
+    <div className="space-y-6 pb-10 w-full max-w-full overflow-x-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
+        <div className="text-center sm:text-left w-full sm:w-auto">
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all uppercase">
             Dashboard SMART PPI
           </h1>
           <div className="mt-1">
             <p
-              className="text-slate-900 dark:text-slate-400 font-normal leading-tight max-w-[280px] sm:max-w-none mx-auto md:mx-0 text-[14px] sm:text-[14px] xl:text-[14px]"
+              className="text-white font-normal leading-tight max-w-[280px] sm:max-w-none mx-auto sm:mx-0 text-[14px]"
               style={{ fontSize: "14px" }}
             >
               Pencegahan Dan Pengendalian Infeksi <br className="sm:hidden" />{" "}
@@ -1204,22 +1255,26 @@ export default function DashboardPage() {
             </p>
           </div>
         </div>
+
+        {/* Widget Jam & Tanggal - Sejajar Pojok Kanan Atas */}
+        <div className="flex justify-center sm:justify-end shrink-0">
+          <ClockWidget />
+        </div>
       </div>
 
       <HeroSlider slides={slides} isLoading={isSlidesLoading} />
 
-      {/* Global Period Filter - Control Center Style */}
-      <section className="relative group">
-        <div className="absolute -inset-1 bg-gradient-to-r from-sky-500/20 to-blue-600/20 rounded-[32px] blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-        <div className="relative bg-[#15273E] backdrop-blur-md rounded-[32px] p-6 md:p-8 border border-[#25456B] shadow-[0_20px_50px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.12)] transition-all overflow-hidden">
+      {/* Global Period Filter - Atlantic Blue Dop */}
+      <section className="relative">
+        <div className="relative bg-gradient-to-br from-[#102542]/95 via-[#0E2038]/90 to-[#0A182B]/95 backdrop-blur-xl rounded-[24px] p-6 md:p-7 border border-[#1E4273]/65 transition-all overflow-hidden shadow-[0_8px_24px_rgba(10,24,43,0.4)]">
           {/* Subtle Background Pattern */}
-          <div className="absolute top-0 right-0 p-4 opacity-[0.05] text-sky-400 pointer-events-none">
+          <div className="absolute top-0 right-0 p-4 opacity-[0.05] text-blue-300 pointer-events-none">
             <Activity className="w-24 h-24" />
           </div>
 
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#0E1B2D] border border-sky-400/30 flex items-center justify-center text-sky-400 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]">
+              <div className="w-12 h-12 rounded-2xl bg-blue-500/15 border border-blue-400/30 flex items-center justify-center text-blue-300">
                 <BarChart2 className="w-6 h-6" />
               </div>
               <div>
@@ -1229,140 +1284,133 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="glowing-border-container w-full md:w-auto lg:min-w-[600px]">
-              {/* Spinning gradient layer */}
-              <div className="glowing-border-bg" />
-              {/* Glowing shadow layer underneath */}
-              <div className="glowing-border-shadow" />
+            <div className="w-full md:w-auto lg:min-w-[580px] bg-[#0A1B30]/85 backdrop-blur-md rounded-2xl p-2.5 border border-[#1E4273]/65">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
+                {/* Select Period Type */}
+                <div className="relative group/select">
+                  <label className="absolute -top-2 left-3 px-1.5 bg-[#0A1B30] border border-[#1E4273]/65 text-[10px] font-bold text-sky-300 uppercase tracking-widest z-10 rounded">
+                    Tipe
+                  </label>
+                  <select
+                    value={filterPeriodType}
+                    onChange={(e) => setFilterPeriodType(e.target.value as any)}
+                    className="w-full bg-[#0D223C] border border-[#1E4273]/65 text-slate-100 text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400/60 transition-all appearance-none cursor-pointer"
+                  >
+                    <option value="bulanan" className="bg-[#0B1A2C] text-slate-100">
+                      BULANAN
+                    </option>
+                    <option value="triwulan" className="bg-[#0B1A2C] text-slate-100">
+                      TRIWULAN
+                    </option>
+                    <option value="semester" className="bg-[#0B1A2C] text-slate-100">
+                      SEMESTER
+                    </option>
+                    <option value="tahunan" className="bg-[#0B1A2C] text-slate-100">
+                      TAHUNAN
+                    </option>
+                  </select>
+                </div>
 
-              <div className="glowing-border-inner rounded-[14px] p-2.5 w-full">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
-                  {/* Select Period Type */}
-                  <div className="relative group/select">
-                    <label className="absolute -top-2 left-3 px-1 bg-[#15273E] text-[10px] font-bold text-sky-300 uppercase tracking-widest z-10 rounded">
-                      Tipe
-                    </label>
-                    <select
-                      value={filterPeriodType}
-                      onChange={(e) => setFilterPeriodType(e.target.value as any)}
-                      className="w-full bg-[#0E1B2D] border border-[#25456B] text-slate-100 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400/60 transition-all appearance-none cursor-pointer shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]"
-                    >
-                      <option value="bulanan" className="bg-[#15273E] text-slate-100">
-                        BULANAN
-                      </option>
-                      <option value="triwulan" className="bg-[#15273E] text-slate-100">
-                        TRIWULAN
-                      </option>
-                      <option value="semester" className="bg-[#15273E] text-slate-100">
-                        SEMESTER
-                      </option>
-                      <option value="tahunan" className="bg-[#15273E] text-slate-100">
-                        TAHUNAN
-                      </option>
-                    </select>
-                  </div>
-
-                  {/* Select Detail Period */}
-                  <div className="relative group/select">
-                    <label className="absolute -top-2 left-3 px-1 bg-[#15273E] text-[10px] font-bold text-sky-300 uppercase tracking-widest z-10 rounded">
-                      {filterPeriodType === "bulanan"
-                        ? "Bulan"
-                        : filterPeriodType === "triwulan"
-                          ? "Triwulan"
-                          : filterPeriodType === "semester"
-                            ? "Semester"
-                            : "Detail"}
-                    </label>
-                    <div className="relative">
-                      {filterPeriodType === "bulanan" && (
-                        <select
-                          value={filterMonth}
-                          onChange={(e) => setFilterMonth(parseInt(e.target.value))}
-                          className="w-full bg-[#0E1B2D] border border-[#25456B] text-slate-100 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400/60 transition-all appearance-none cursor-pointer disabled:opacity-50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]"
-                        >
-                          {[
-                            "Januari",
-                            "Februari",
-                            "Maret",
-                            "April",
-                            "Mei",
-                            "Juni",
-                            "Juli",
-                            "Agustus",
-                            "September",
-                            "Oktober",
-                            "November",
-                            "Desember",
-                          ].map((m, i) => (
-                            <option key={i} value={i} className="bg-[#15273E] text-slate-100">
-                              {m}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                      {filterPeriodType === "triwulan" && (
-                        <select
-                          value={filterQuarter}
-                          onChange={(e) =>
-                            setFilterQuarter(parseInt(e.target.value))
-                          }
-                          className="w-full bg-[#0E1B2D] border border-[#25456B] text-slate-100 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400/60 transition-all appearance-none cursor-pointer shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]"
-                        >
-                          <option value={0} className="bg-[#15273E] text-slate-100">
-                            TW 1 (Jan-Mar)
+                {/* Select Detail Period */}
+                <div className="relative group/select">
+                  <label className="absolute -top-2 left-3 px-1.5 bg-[#0A1B30] border border-[#1E4273]/65 text-[10px] font-bold text-sky-300 uppercase tracking-widest z-10 rounded">
+                    {filterPeriodType === "bulanan"
+                      ? "Bulan"
+                      : filterPeriodType === "triwulan"
+                        ? "Triwulan"
+                        : filterPeriodType === "semester"
+                          ? "Semester"
+                          : "Detail"}
+                  </label>
+                  <div className="relative">
+                    {filterPeriodType === "bulanan" && (
+                      <select
+                        value={filterMonth}
+                        onChange={(e) => setFilterMonth(parseInt(e.target.value))}
+                        className="w-full bg-[#0D223C] border border-[#1E4273]/65 text-slate-100 text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400/60 transition-all appearance-none cursor-pointer disabled:opacity-50"
+                      >
+                        {[
+                          "Januari",
+                          "Februari",
+                          "Maret",
+                          "April",
+                          "Mei",
+                          "Juni",
+                          "Juli",
+                          "Agustus",
+                          "September",
+                          "Oktober",
+                          "November",
+                          "Desember",
+                        ].map((m, i) => (
+                          <option key={i} value={i} className="bg-[#0B1A2C] text-slate-100">
+                            {m}
                           </option>
-                          <option value={1} className="bg-[#15273E] text-slate-100">
-                            TW 2 (Apr-Jun)
-                          </option>
-                          <option value={2} className="bg-[#15273E] text-slate-100">
-                            TW 3 (Jul-Sep)
-                          </option>
-                          <option value={3} className="bg-[#15273E] text-slate-100">
-                            TW 4 (Okt-Des)
-                          </option>
-                        </select>
-                      )}
-                      {filterPeriodType === "semester" && (
-                        <select
-                          value={filterSemester}
-                          onChange={(e) =>
-                            setFilterSemester(parseInt(e.target.value))
-                          }
-                          className="w-full bg-[#0E1B2D] border border-[#25456B] text-slate-100 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400/60 transition-all appearance-none cursor-pointer shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]"
-                        >
-                          <option value={0} className="bg-[#15273E] text-slate-100">
-                            SM 1 (Jan-Jun)
-                          </option>
-                          <option value={1} className="bg-[#15273E] text-slate-100">
-                            SM 2 (Jul-Des)
-                          </option>
-                        </select>
-                      )}
-                      {filterPeriodType === "tahunan" && (
-                        <div className="w-full bg-[#0E1B2D] border border-[#25456B] text-slate-400 text-sm font-bold rounded-2xl px-4 py-4 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]">
-                          Tahun Penuh
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Select Year */}
-                  <div className="relative group/select">
-                    <label className="absolute -top-2 left-3 px-1 bg-[#15273E] text-[10px] font-bold text-sky-300 uppercase tracking-widest z-10 rounded">
-                      Tahun
-                    </label>
-                    <select
-                      value={filterYear}
-                      onChange={(e) => setFilterYear(parseInt(e.target.value))}
-                      className="w-full bg-[#0E1B2D] border border-[#25456B] text-slate-100 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400/60 transition-all appearance-none cursor-pointer shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]"
-                    >
-                      {[2024, 2025, 2026, 2027].map((y) => (
-                        <option key={y} value={y} className="bg-[#15273E] text-slate-100">
-                          {y}
+                        ))}
+                      </select>
+                    )}
+                    {filterPeriodType === "triwulan" && (
+                      <select
+                        value={filterQuarter}
+                        onChange={(e) =>
+                          setFilterQuarter(parseInt(e.target.value))
+                        }
+                        className="w-full bg-[#0D223C] border border-[#1E4273]/65 text-slate-100 text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400/60 transition-all appearance-none cursor-pointer"
+                      >
+                        <option value={0} className="bg-[#0B1A2C] text-slate-100">
+                          TW 1 (Jan-Mar)
                         </option>
-                      ))}
-                    </select>
+                        <option value={1} className="bg-[#0B1A2C] text-slate-100">
+                          TW 2 (Apr-Jun)
+                        </option>
+                        <option value={2} className="bg-[#0B1A2C] text-slate-100">
+                          TW 3 (Jul-Sep)
+                        </option>
+                        <option value={3} className="bg-[#0B1A2C] text-slate-100">
+                          TW 4 (Okt-Des)
+                        </option>
+                      </select>
+                    )}
+                    {filterPeriodType === "semester" && (
+                      <select
+                        value={filterSemester}
+                        onChange={(e) =>
+                          setFilterSemester(parseInt(e.target.value))
+                        }
+                        className="w-full bg-[#0D223C] border border-[#1E4273]/65 text-slate-100 text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400/60 transition-all appearance-none cursor-pointer"
+                      >
+                        <option value={0} className="bg-[#0B1A2C] text-slate-100">
+                          SM 1 (Jan-Jun)
+                        </option>
+                        <option value={1} className="bg-[#0B1A2C] text-slate-100">
+                          SM 2 (Jul-Des)
+                        </option>
+                      </select>
+                    )}
+                    {filterPeriodType === "tahunan" && (
+                      <div className="w-full bg-[#0D223C] border border-[#1E4273]/65 text-slate-300 text-sm font-bold rounded-xl px-4 py-3">
+                        Tahun Penuh
+                      </div>
+                    )}
                   </div>
+                </div>
+
+                {/* Select Year */}
+                <div className="relative group/select">
+                  <label className="absolute -top-2 left-3 px-1.5 bg-[#0A1B30] border border-[#1E4273]/65 text-[10px] font-bold text-sky-300 uppercase tracking-widest z-10 rounded">
+                    Tahun
+                  </label>
+                  <select
+                    value={filterYear}
+                    onChange={(e) => setFilterYear(parseInt(e.target.value))}
+                    className="w-full bg-[#0D223C] border border-[#1E4273]/65 text-slate-100 text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400/60 transition-all appearance-none cursor-pointer"
+                  >
+                    {[2024, 2025, 2026, 2027].map((y) => (
+                      <option key={y} value={y} className="bg-[#0B1A2C] text-slate-100">
+                        {y}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
@@ -1371,20 +1419,20 @@ export default function DashboardPage() {
       </section>
 
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-3 gap-6">
-        {/* HH Card */}
-        <div className="group relative bg-[#15273E] p-8 rounded-[32px] border border-[#25456B] shadow-[0_20px_50px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.12)] hover:shadow-[0_25px_60px_rgba(0,0,0,0.85),0_0_25px_rgba(56,189,248,0.25)] hover:border-sky-400/50 transition-all duration-500 transform-gpu hover:-translate-y-1">
-          <div className="absolute top-0 right-0 p-4 opacity-[0.04] text-sky-400 group-hover:opacity-[0.1] transition-opacity pointer-events-none">
+        {/* HH Card - Ocean Teal */}
+        <div className="group relative bg-gradient-to-br from-[#06424D]/95 via-[#08525E]/90 to-[#042D36]/95 backdrop-blur-xl p-7 rounded-[24px] border border-cyan-500/35 hover:border-cyan-400/65 transition-all duration-300 transform-gpu hover:-translate-y-0.5 overflow-hidden shadow-[0_8px_24px_rgba(4,45,54,0.45)]">
+          <div className="absolute top-0 right-0 p-4 opacity-[0.07] text-cyan-300 group-hover:opacity-[0.14] transition-opacity pointer-events-none">
             <Droplets className="w-16 h-16" />
           </div>
-          <div className="flex items-center gap-4 mb-8">
-            <div className="w-12 h-12 rounded-2xl bg-[#0E1B2D] border border-sky-400/30 flex items-center justify-center text-sky-400 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]">
+          <div className="flex items-center gap-4 mb-7">
+            <div className="w-12 h-12 rounded-xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-300">
               <Droplets className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-sky-300/70 leading-none mb-1">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300/90 leading-none mb-1">
                 Indikator Mutu
               </h3>
-              <p className="text-[20px] font-bold text-slate-100">
+              <p className="text-[19px] font-bold text-slate-100 leading-snug">
                 Kepatuhan Kebersihan Tangan
               </p>
             </div>
@@ -1396,16 +1444,16 @@ export default function DashboardPage() {
               {stats.hh}%
             </span>
           </div>
-          <div className="mt-8 pt-6 border-t border-[#25456B]/60 flex items-center justify-between">
-            <span className="text-[15px] font-bold text-sky-400 uppercase tracking-widest">
+          <div className="mt-7 pt-5 border-t border-cyan-500/25 flex items-center justify-between">
+            <span className="text-[14px] font-bold text-cyan-300 uppercase tracking-widest">
               Capaian
             </span>
             <div className="flex flex-col items-end">
-              <span className="text-[10px] font-black uppercase text-slate-400 mb-1">
+              <span className="text-[10px] font-black uppercase text-slate-300/80 mb-1">
                 Standard: {standards?.hh?.nilai_standar || 85}%
               </span>
               <span
-                className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full ${stats.hh >= (standards?.hh?.nilai_standar || 85) ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" : "bg-red-500/15 text-red-400 border border-red-500/30"}`}
+                className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full ${stats.hh >= (standards?.hh?.nilai_standar || 85) ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-red-500/20 text-red-400 border border-red-500/40"}`}
               >
                 {stats.hh >= (standards?.hh?.nilai_standar || 85)
                   ? "Tercapai"
@@ -1415,20 +1463,20 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* APD Card */}
-        <div className="group relative bg-[#15273E] p-8 rounded-[32px] border border-[#25456B] shadow-[0_20px_50px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.12)] hover:shadow-[0_25px_60px_rgba(0,0,0,0.85),0_0_25px_rgba(52,211,153,0.25)] hover:border-emerald-400/50 transition-all duration-500 transform-gpu hover:-translate-y-1">
-          <div className="absolute top-0 right-0 p-4 opacity-[0.04] text-emerald-400 group-hover:opacity-[0.1] transition-opacity pointer-events-none">
+        {/* APD Card - Navy */}
+        <div className="group relative bg-gradient-to-br from-[#0A1E3F]/95 via-[#0C254D]/90 to-[#07162C]/95 backdrop-blur-xl p-7 rounded-[24px] border border-[#1E437C]/70 hover:border-sky-400/60 transition-all duration-300 transform-gpu hover:-translate-y-0.5 overflow-hidden shadow-[0_8px_24px_rgba(7,22,44,0.4)]">
+          <div className="absolute top-0 right-0 p-4 opacity-[0.06] text-sky-400 group-hover:opacity-[0.12] transition-opacity pointer-events-none">
             <Shield className="w-16 h-16" />
           </div>
-          <div className="flex items-center gap-4 mb-8">
-            <div className="w-12 h-12 rounded-2xl bg-[#0E1B2D] border border-emerald-400/30 flex items-center justify-center text-emerald-400 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]">
+          <div className="flex items-center gap-4 mb-7">
+            <div className="w-12 h-12 rounded-xl bg-sky-500/20 border border-sky-400/40 flex items-center justify-center text-sky-300">
               <Shield className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-300/70 leading-none mb-1">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-sky-300/90 leading-none mb-1">
                 Indikator Mutu
               </h3>
-              <p className="text-[20px] font-bold text-slate-100">
+              <p className="text-[19px] font-bold text-slate-100 leading-snug">
                 Kepatuhan Penggunaan APD
               </p>
             </div>
@@ -1440,16 +1488,16 @@ export default function DashboardPage() {
               {stats.apd}%
             </span>
           </div>
-          <div className="mt-8 pt-6 border-t border-[#25456B]/60 flex items-center justify-between">
-            <span className="text-[15px] font-bold text-sky-400 uppercase tracking-widest">
+          <div className="mt-7 pt-5 border-t border-[#1E437C]/50 flex items-center justify-between">
+            <span className="text-[14px] font-bold text-sky-400 uppercase tracking-widest">
               Capaian
             </span>
             <div className="flex flex-col items-end">
-              <span className="text-[10px] font-black uppercase text-slate-400 mb-1">
+              <span className="text-[10px] font-black uppercase text-slate-300/80 mb-1">
                 Standard: {standards?.apd?.nilai_standar || 100}%
               </span>
               <span
-                className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full ${stats.apd >= (standards?.apd?.nilai_standar || 100) ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" : "bg-red-500/15 text-red-400 border border-red-500/30"}`}
+                className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full ${stats.apd >= (standards?.apd?.nilai_standar || 100) ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-red-500/20 text-red-400 border border-red-500/40"}`}
               >
                 {stats.apd >= (standards?.apd?.nilai_standar || 100)
                   ? "Tercapai"
@@ -1459,26 +1507,26 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* HAIs Card */}
-        <div className="group relative bg-[#15273E] p-8 rounded-[32px] border border-[#25456B] shadow-[0_20px_50px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.12)] hover:shadow-[0_25px_60px_rgba(0,0,0,0.85),0_0_25px_rgba(244,63,94,0.25)] hover:border-rose-400/50 transition-all duration-500 transform-gpu hover:-translate-y-1">
-          <div className="absolute top-0 right-0 p-4 opacity-[0.04] text-rose-400 group-hover:opacity-[0.1] transition-opacity pointer-events-none">
+        {/* HAIs Card - Gradasi Biru Ungu Dark */}
+        <div className="group relative bg-gradient-to-br from-[#1E154A]/95 via-[#141E4F]/90 to-[#0C122E]/95 backdrop-blur-xl p-7 rounded-[24px] border border-indigo-500/35 hover:border-indigo-400/60 transition-all duration-300 transform-gpu hover:-translate-y-0.5 overflow-hidden shadow-[0_8px_24px_rgba(12,18,46,0.4)]">
+          <div className="absolute top-0 right-0 p-4 opacity-[0.06] text-indigo-400 group-hover:opacity-[0.12] transition-opacity pointer-events-none">
             <AlertCircle className="w-16 h-16" />
           </div>
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-[#0E1B2D] border border-rose-400/30 flex items-center justify-center text-rose-400 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]">
+            <div className="w-12 h-12 rounded-xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-indigo-300">
               <AlertCircle className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-300/70 leading-none mb-1">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-300/90 leading-none mb-1">
                 Indikator Mutu
               </h3>
-              <p className="text-sm font-bold text-slate-100 uppercase tracking-tight">
-                INSIDEN HAIs
+              <p className="text-[19px] font-bold text-slate-100 uppercase tracking-tight">
+                INSIDEN HAIS
               </p>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2.5 mt-4">
-            <div className="bg-[#0E1B2D] p-2.5 rounded-[14px] border border-[#25456B]/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]">
+            <div className="bg-[#0C1435]/80 backdrop-blur-md p-2.5 rounded-xl border border-indigo-500/30">
               <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
                 Phlebitis
               </p>
@@ -1488,7 +1536,7 @@ export default function DashboardPage() {
                 {stats.hais.phlebitis} ‰
               </p>
             </div>
-            <div className="bg-[#0E1B2D] p-2.5 rounded-[14px] border border-[#25456B]/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]">
+            <div className="bg-[#0C1435]/80 backdrop-blur-md p-2.5 rounded-xl border border-indigo-500/30">
               <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
                 ISK
               </p>
@@ -1498,7 +1546,7 @@ export default function DashboardPage() {
                 {stats.hais.isk} ‰
               </p>
             </div>
-            <div className="bg-[#0E1B2D] p-2.5 rounded-[14px] border border-[#25456B]/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]">
+            <div className="bg-[#0C1435]/80 backdrop-blur-md p-2.5 rounded-xl border border-indigo-500/30">
               <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
                 IDO
               </p>
@@ -1508,7 +1556,7 @@ export default function DashboardPage() {
                 {stats.hais.ido}%
               </p>
             </div>
-            <div className="bg-[#0E1B2D] p-2.5 rounded-[14px] border border-[#25456B]/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]">
+            <div className="bg-[#0C1435]/80 backdrop-blur-md p-2.5 rounded-xl border border-indigo-500/30">
               <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
                 VAP
               </p>
@@ -1522,8 +1570,9 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="bg-[#15273E] rounded-[32px] border border-[#25456B] overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.75),inset_0_1px_1px_rgba(255,255,255,0.12)] transition-all mt-8">
-        <div className="p-6 border-b border-[#25456B]/60 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-[#0E1B2D]/40">
+      {/* Chart and Analytics Section - Glassmorphism */}
+      <div className="bg-[#0B1A2C]/70 backdrop-blur-xl rounded-[24px] border border-[#1E3B66]/60 overflow-hidden transition-all mt-6">
+        <div className="p-5 sm:p-6 border-b border-[#1E3B66]/50 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-[#071322]/50">
           <div className="flex flex-wrap gap-2">
             {[
               {
@@ -1551,7 +1600,7 @@ export default function DashboardPage() {
               <button
                 key={t.id}
                 onClick={() => setActiveTab(t.id as any)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${activeTab === t.id ? `${t.bg} ${t.c} shadow-md` : "text-slate-400 hover:text-white hover:bg-white/5"}`}
+                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${activeTab === t.id ? `${t.bg} ${t.c}` : "text-slate-400 hover:text-white hover:bg-white/5"}`}
               >
                 <t.icon className="w-4 h-4" /> {t.label}
               </button>
@@ -1559,7 +1608,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex flex-wrap gap-3 items-center">
-            <div className="flex bg-[#0E1B2D] rounded-lg border border-[#25456B] items-center px-3 py-1 gap-2 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]">
+            <div className="flex bg-[#071322]/80 backdrop-blur-md rounded-xl border border-[#1E3B66]/60 items-center px-3 py-1 gap-2">
               <Calendar className="w-3.5 h-3.5 text-sky-400" />
               <select
                 value={filterPeriodType}
@@ -1570,7 +1619,7 @@ export default function DashboardPage() {
                   <option
                     key={p}
                     value={p}
-                    className="bg-[#15273E] text-slate-100"
+                    className="bg-[#0B1A2C] text-slate-100"
                   >
                     {p.toUpperCase()}
                   </option>
@@ -1579,7 +1628,7 @@ export default function DashboardPage() {
 
               {filterPeriodType === "bulanan" && (
                 <>
-                  <div className="w-px h-4 bg-[#25456B] mx-1" />
+                  <div className="w-px h-4 bg-white/15 mx-1" />
                   <select
                     value={filterMonth}
                     onChange={(e) => setFilterMonth(parseInt(e.target.value))}
@@ -1602,7 +1651,7 @@ export default function DashboardPage() {
                       <option
                         key={m}
                         value={i}
-                        className="bg-[#15273E] text-slate-100"
+                        className="bg-[#0B1A2C] text-slate-100"
                       >
                         {m}
                       </option>
@@ -1613,7 +1662,7 @@ export default function DashboardPage() {
 
               {filterPeriodType === "triwulan" && (
                 <>
-                  <div className="w-px h-4 bg-[#25456B] mx-1" />
+                  <div className="w-px h-4 bg-white/15 mx-1" />
                   <select
                     value={filterQuarter}
                     onChange={(e) => setFilterQuarter(parseInt(e.target.value))}
@@ -1628,7 +1677,7 @@ export default function DashboardPage() {
                       <option
                         key={q}
                         value={i}
-                        className="bg-[#15273E] text-slate-100"
+                        className="bg-[#0B1A2C] text-slate-100"
                       >
                         {q}
                       </option>
@@ -1639,7 +1688,7 @@ export default function DashboardPage() {
 
               {filterPeriodType === "semester" && (
                 <>
-                  <div className="w-px h-4 bg-[#25456B] mx-1" />
+                  <div className="w-px h-4 bg-white/15 mx-1" />
                   <select
                     value={filterSemester}
                     onChange={(e) =>
@@ -1651,7 +1700,7 @@ export default function DashboardPage() {
                       <option
                         key={s}
                         value={i}
-                        className="bg-[#15273E] text-slate-100"
+                        className="bg-[#0B1A2C] text-slate-100"
                       >
                         {s}
                       </option>
@@ -1660,7 +1709,7 @@ export default function DashboardPage() {
                 </>
               )}
 
-              <div className="w-px h-4 bg-[#25456B] mx-1" />
+              <div className="w-px h-4 bg-white/15 mx-1" />
               <select
                 value={filterYear}
                 onChange={(e) => setFilterYear(parseInt(e.target.value))}
@@ -1673,7 +1722,7 @@ export default function DashboardPage() {
                   <option
                     key={y}
                     value={y}
-                    className="bg-[#15273E] text-slate-100"
+                    className="bg-[#0B1A2C] text-slate-100"
                   >
                     {y}
                   </option>
@@ -1684,29 +1733,29 @@ export default function DashboardPage() {
             <select
               value={selectedUnit}
               onChange={(e) => setSelectedUnit(e.target.value)}
-              className="bg-[#0E1B2D] border border-[#25456B] text-slate-200 text-xs font-bold rounded-lg px-3 py-2 outline-none shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]"
+              className="bg-[#071322]/80 backdrop-blur-md border border-[#1E3B66]/60 text-slate-200 text-xs font-bold rounded-xl px-3 py-2 outline-none"
             >
               {units.map((u) => (
                 <option
                   key={u}
                   value={u}
-                  className="bg-[#15273E] text-slate-100"
+                  className="bg-[#0B1A2C] text-slate-100"
                 >
                   {u.toUpperCase()}
                 </option>
               ))}
             </select>
 
-            <div className="flex bg-[#0E1B2D] rounded-lg border border-[#25456B] overflow-hidden shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]">
+            <div className="flex bg-[#071322]/80 backdrop-blur-md rounded-xl border border-[#1E3B66]/60 overflow-hidden">
               <button
                 onClick={() => setChartMode("bar")}
-                className={`p-2 transition-colors ${chartMode === "bar" ? "bg-sky-500 text-white shadow-lg" : "text-slate-400 hover:text-white"}`}
+                className={`p-2 transition-colors ${chartMode === "bar" ? "bg-sky-500 text-white" : "text-slate-400 hover:text-white"}`}
               >
                 <BarChart2 className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setChartMode("line")}
-                className={`p-2 transition-colors ${chartMode === "line" ? "bg-sky-500 text-white shadow-lg" : "text-slate-400 hover:text-white"}`}
+                className={`p-2 transition-colors ${chartMode === "line" ? "bg-sky-500 text-white" : "text-slate-400 hover:text-white"}`}
               >
                 <LineChart className="w-4 h-4" />
               </button>
@@ -2071,18 +2120,56 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Auto Insight Card */}
-        <div className="px-8 pb-8 pt-2">
-          <div className="flex items-start gap-4 p-5 rounded-2xl bg-[#0E1B2D] border border-[#25456B] shadow-[inset_0_2px_6px_rgba(0,0,0,0.4),0_8px_20px_rgba(0,0,0,0.3)]">
-            <div className="flex-1">
-              <h4 className="text-sm font-bold text-sky-400">
-                Analisa Data
-              </h4>
-              <p className="text-sm text-slate-200 mt-1 text-justify leading-relaxed">
-                {generateAutoInsight()}
-              </p>
-            </div>
-          </div>
+        {/* Auto Insight & Rekomendasi PPI Card - Glassmorphism 2.0 */}
+        <div className="px-6 md:px-8 pb-8 pt-2">
+          {(() => {
+            const insight = getAutoInsightAndRecommendation();
+            const isOptimal = insight.status === "optimal";
+            const isDanger = insight.status === "danger";
+            const isWarning = insight.status === "warning";
+
+            const badgeBg = isOptimal
+              ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+              : isDanger
+              ? "bg-rose-500/15 text-rose-400 border-rose-500/30"
+              : isWarning
+              ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
+              : "bg-sky-500/15 text-sky-400 border-sky-500/30";
+
+            return (
+              <div className="p-6 rounded-2xl bg-[#071322]/80 backdrop-blur-xl border border-[#1E3B66]/60 space-y-5">
+                {/* Analisa Data Section */}
+                <div className="space-y-2.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h4 className="text-sm font-bold text-sky-400 flex items-center gap-2 tracking-wide">
+                      <Activity className="w-4 h-4 text-sky-400" />
+                      Analisa Data Standar PPI
+                    </h4>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${badgeBg}`}>
+                      {insight.label}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-200 text-justify leading-relaxed">
+                    {insight.analisa}
+                  </p>
+                </div>
+
+                {/* Divider */}
+                <div className="h-px w-full bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+
+                {/* Rekomendasi PPI Section */}
+                <div className="space-y-2.5">
+                  <h4 className="text-sm font-bold text-amber-300 flex items-center gap-2 tracking-wide">
+                    <CheckCircle2 className="w-4 h-4 text-amber-400" />
+                    Rekomendasi & Rencana Tindak Lanjut (RTL)
+                  </h4>
+                  <div className="text-sm text-slate-200 leading-relaxed space-y-1.5 whitespace-pre-line">
+                    {insight.rekomendasi}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
     </div>

@@ -16,7 +16,6 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppContext } from '@/components/Providers';
 import { AppLogo } from '@/components/AppLogo';
-import { ClockWidget } from '@/components/ClockWidget';
 import { useDashboardStore } from '@/hooks/useDashboardStore';
 import { supabase } from '@/lib/supabase';
 
@@ -24,7 +23,7 @@ const NavItem = memo(({ item, isActive, onClick }: { item: any, isActive: boolea
   const baseClasses = "relative flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-300 ease-in-out group antialiased hover:scale-[1.02] active:scale-[0.98] transform-gpu will-change-transform";
   
   const activeClasses = "bg-gradient-to-r from-sky-500/25 via-cyan-500/20 to-sky-600/10 border border-sky-400/40 text-white font-bold ring-1 ring-sky-400/30 shadow-[0_4px_20px_rgba(56,189,248,0.22)]";
-  const inactiveClasses = "text-slate-300/80 hover:bg-[#132B47]/60 hover:text-white hover:shadow-md border border-transparent";
+  const inactiveClasses = "text-slate-300/85 hover:bg-[#132A4D]/80 hover:text-white hover:shadow-md border border-transparent";
 
   const iconBase = "w-[22px] h-[22px]";
   const iconActive = "text-sky-300 drop-shadow-[0_0_10px_rgba(56,189,248,0.6)]";
@@ -225,18 +224,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           damping: 40,
           mass: 0.8
         }}
-        className="border flex flex-col fixed inset-y-4 left-4 z-50 w-[280px] rounded-[24px] transition-colors duration-500 print:hidden transform-gpu will-change-transform backdrop-blur-xl bg-[#0B1A2C]/95 border-[#1E3E62]/60 shadow-[0_12px_40px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.12)]"
+        className="border flex flex-col fixed inset-y-4 left-4 z-50 w-[280px] rounded-[24px] transition-colors duration-500 print:hidden transform-gpu will-change-transform backdrop-blur-xl bg-[#0A192F]/98 border-[#1B3B6F]/70 shadow-[0_12px_45px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.12)]"
       >
         {/* Toggle Button on the Right Border */}
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="absolute -right-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center border shadow-lg transition-all duration-300 z-50 group hidden md:flex bg-[#10243C] border-sky-400/40 text-sky-400 hover:bg-[#1A3A5E] hover:border-sky-300 hover:scale-110"
+          className="absolute -right-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center border shadow-lg transition-all duration-300 z-50 group hidden md:flex bg-[#0D2140] border-[#254E86] text-sky-400 hover:bg-[#14325E] hover:border-sky-300 hover:scale-110"
           title={isSidebarOpen ? "Minimize Sidebar" : "Expand Sidebar"}
         >
           <ChevronLeft className={`w-4 h-4 transition-transform duration-500 ${isSidebarOpen ? 'rotate-0' : 'rotate-180'}`} />
         </button>
 
-        <div className="flex flex-col items-center justify-center pt-5 pb-4 border-b shrink-0 px-4 relative border-[#1E3E62]/50 bg-[#10243C]/40 rounded-t-[23px]">
+        <div className="flex flex-col items-center justify-center pt-5 pb-4 border-b shrink-0 px-4 relative border-[#1B3B6F]/60 bg-[#0F2445]/60 rounded-t-[23px]">
           <div className="flex items-center justify-center w-[56px] h-[56px] mb-3 relative group">
             <AppLogo className="w-full h-full text-white group-hover:text-sky-200 transition-colors" iconClassName="w-7 h-7 text-sky-400" />
           </div>
@@ -283,53 +282,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className={`flex-1 flex flex-col h-full min-w-0 overflow-hidden transition-[margin-left] duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] print:ml-0 ${
         !isMobile ? (isSidebarOpen ? 'ml-[312px]' : 'ml-[40px]') : 'ml-0'
       }`}>
-        {/* Top Header */}
-        <header className="min-h-[64px] sm:h-20 shrink-0 border-b flex items-center justify-between px-4 sm:px-8 sticky top-0 z-[45] transition-all duration-500 print:hidden backdrop-blur-xl bg-[#0B1A2C]/85 border-[#1E3E62]/50 shadow-[0_4px_30px_rgba(0,0,0,0.35)]">
-          <div className="flex items-center gap-2 sm:gap-4">
-            
-            {/* Mobile Hamburger Menu Toggle */}
-            {!navItems.some(item => item.href === pathname) && !pathname.startsWith('/dashboard/input') && (
-              <button
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="md:hidden p-2 -ml-2 rounded-lg transition-colors text-sky-400 hover:bg-sky-500/10"
-              >
-                <Menu className="w-6 h-6" />
-              </button>
-            )}
-
-            {/* Clock Widget */}
-            <ClockWidget />
-
-            {/* Mobile Hospital Identity */}
-            {isMobile && (
-              <div className="flex items-center gap-2.5 sm:hidden px-1">
-                <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center relative">
-                  {hospitalLogoUrl ? (
-                    <Image src={hospitalLogoUrl} alt="Logo RS" fill sizes="40px" priority className="object-contain" referrerPolicy="no-referrer" />
-                  ) : (
-                    <ShieldCheck className="w-6 h-6 text-sky-400" />
-                  )}
-                </div>
-                
-                <div className="flex flex-col text-left">
-                  <span className="font-heading font-extrabold text-[15px] tracking-wide leading-tight text-white">
-                    UOBK RSUD AL-MULK
-                  </span>
-                  <span className="text-[9px] font-bold uppercase tracking-[0.2em] leading-tight mt-0.5 text-sky-300/70">
-                    KOTA SUKABUMI
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3 sm:gap-4 z-50">
-            {/* Theme toggle and notifications removed for clean dark design and optimal speed */}
-          </div>
-        </header>
-
         {/* Page Content */}
-        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 pb-56 sm:p-6 sm:pb-8 lg:p-8 relative overscroll-y-none [transform:translateZ(0)] will-change-scroll">
+        <main ref={mainRef} className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 pb-32 sm:pb-10 relative overscroll-y-none [transform:translateZ(0)] will-change-scroll w-full max-w-full">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={pathname}
@@ -337,7 +291,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.18, ease: "easeOut" }}
-              className="w-full h-full transform-gpu"
+              className="w-full h-full max-w-full overflow-x-hidden transform-gpu"
             >
               {children}
             </motion.div>

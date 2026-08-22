@@ -268,7 +268,7 @@ export default function SettingsPage() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between py-4 border-b border-slate-200 dark:border-white/5 transition-all text-center lg:text-left gap-4">
         <div className="w-full lg:w-auto">
           <h1 className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 via-blue-500 to-emerald-500 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all drop-shadow-sm dark:drop-shadow-[0_0_10px_rgba(59,130,246,0.4)] uppercase">Pengaturan</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 font-medium">Kelola preferensi dan tampilan aplikasi SMART-PPI</p>
+          <p className="text-sm text-white mt-2 font-medium">Kelola preferensi dan tampilan aplikasi SMART-PPI</p>
         </div>
       </div>
 

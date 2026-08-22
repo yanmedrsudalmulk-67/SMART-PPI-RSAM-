@@ -501,7 +501,7 @@ export default function ReportsPage() {
                   <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all uppercase mb-2">
                      Laporan SMART PPI
                   </h1>
-                  <p className="text-sm font-normal text-slate-500 dark:text-slate-400 mx-auto md:mx-0 max-w-[280px] sm:max-w-none">
+                  <p className="text-sm font-normal text-white mx-auto md:mx-0 max-w-[280px] sm:max-w-none">
                      Pusat analisis data pencegahan dan pengendalian infeksi terintegrasi.
                   </p>
                 </div>

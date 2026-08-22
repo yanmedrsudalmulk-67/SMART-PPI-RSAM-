@@ -26,7 +26,7 @@ const handleExport = (type: string) => {
   }
 };
 
-function AnalyticsPageContent() {
+export default function AnalyticsPage() {
   const { sessions, isLoading } = useAnalyticsRealtime();
   const [mounted, setMounted] = useState(false);
 
@@ -263,7 +263,7 @@ function AnalyticsPageContent() {
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 py-4 border-b border-slate-200 dark:border-white/5">
         <div className="text-center lg:text-left w-full lg:w-auto">
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase">Analitik SMART PPI</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">Pusat analisis data terintegrasi Supabase Realtime.</p>
+          <p className="text-sm text-white mt-1 font-medium">Pusat analisis data terintegrasi Supabase Realtime.</p>
         </div>
         <div className="flex flex-wrap gap-2 justify-center print:hidden">
           <button onClick={() => handleExport('pdf')} className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg text-xs font-bold uppercase transition-all shadow-sm">
@@ -522,14 +522,6 @@ function AnalyticsPageContent() {
   );
 }
 
-AnalyticsPageContent.getLayout = function getLayout(page: ReactElement) {
+AnalyticsPage.getLayout = function getLayout(page: ReactElement) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };
-
-const AnalyticsPage = dynamic(() => Promise.resolve(AnalyticsPageContent), {
-  ssr: false,
-});
-
-(AnalyticsPage as any).getLayout = AnalyticsPageContent.getLayout;
-
-export default AnalyticsPage;
