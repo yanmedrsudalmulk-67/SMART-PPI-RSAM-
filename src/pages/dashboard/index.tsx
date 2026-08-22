@@ -1210,20 +1210,20 @@ export default function DashboardPage() {
 
       {/* Global Period Filter - Control Center Style */}
       <section className="relative group">
-        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-[32px] blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-        <div className="relative bg-white/80 dark:bg-[#111827]/80 backdrop-blur-sm rounded-[32px] p-6 md:p-8 border border-slate-200 dark:border-white/10 shadow-sm transition-all overflow-hidden">
+        <div className="absolute -inset-1 bg-gradient-to-r from-sky-500/20 to-blue-600/20 rounded-[32px] blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+        <div className="relative bg-[#15273E] backdrop-blur-md rounded-[32px] p-6 md:p-8 border border-[#25456B] shadow-[0_20px_50px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.12)] transition-all overflow-hidden">
           {/* Subtle Background Pattern */}
-          <div className="absolute top-0 right-0 p-4 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
+          <div className="absolute top-0 right-0 p-4 opacity-[0.05] text-sky-400 pointer-events-none">
             <Activity className="w-24 h-24" />
           </div>
 
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-blue-600/10 dark:bg-blue-600/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+              <div className="w-12 h-12 rounded-2xl bg-[#0E1B2D] border border-sky-400/30 flex items-center justify-center text-sky-400 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]">
                 <BarChart2 className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-base font-bold text-slate-800 dark:text-slate-100">
+                <p className="text-base font-bold text-white tracking-wide">
                   Pilih Periode Monitoring
                 </p>
               </div>
@@ -1239,24 +1239,24 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
                   {/* Select Period Type */}
                   <div className="relative group/select">
-                    <label className="absolute -top-2 left-3 px-1 bg-white dark:bg-[#111827] text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest z-10">
+                    <label className="absolute -top-2 left-3 px-1 bg-[#15273E] text-[10px] font-bold text-sky-300 uppercase tracking-widest z-10 rounded">
                       Tipe
                     </label>
                     <select
                       value={filterPeriodType}
                       onChange={(e) => setFilterPeriodType(e.target.value as any)}
-                      className="w-full bg-slate-50/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 transition-all appearance-none cursor-pointer"
+                      className="w-full bg-[#0E1B2D] border border-[#25456B] text-slate-100 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400/60 transition-all appearance-none cursor-pointer shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]"
                     >
-                      <option value="bulanan" className="dark:bg-slate-900">
+                      <option value="bulanan" className="bg-[#15273E] text-slate-100">
                         BULANAN
                       </option>
-                      <option value="triwulan" className="dark:bg-slate-900">
+                      <option value="triwulan" className="bg-[#15273E] text-slate-100">
                         TRIWULAN
                       </option>
-                      <option value="semester" className="dark:bg-slate-900">
+                      <option value="semester" className="bg-[#15273E] text-slate-100">
                         SEMESTER
                       </option>
-                      <option value="tahunan" className="dark:bg-slate-900">
+                      <option value="tahunan" className="bg-[#15273E] text-slate-100">
                         TAHUNAN
                       </option>
                     </select>
@@ -1264,7 +1264,7 @@ export default function DashboardPage() {
 
                   {/* Select Detail Period */}
                   <div className="relative group/select">
-                    <label className="absolute -top-2 left-3 px-1 bg-white dark:bg-[#111827] text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest z-10">
+                    <label className="absolute -top-2 left-3 px-1 bg-[#15273E] text-[10px] font-bold text-sky-300 uppercase tracking-widest z-10 rounded">
                       {filterPeriodType === "bulanan"
                         ? "Bulan"
                         : filterPeriodType === "triwulan"
@@ -1278,7 +1278,7 @@ export default function DashboardPage() {
                         <select
                           value={filterMonth}
                           onChange={(e) => setFilterMonth(parseInt(e.target.value))}
-                          className="w-full bg-slate-50/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 transition-all appearance-none cursor-pointer disabled:opacity-50"
+                          className="w-full bg-[#0E1B2D] border border-[#25456B] text-slate-100 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400/60 transition-all appearance-none cursor-pointer disabled:opacity-50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]"
                         >
                           {[
                             "Januari",
@@ -1294,7 +1294,7 @@ export default function DashboardPage() {
                             "November",
                             "Desember",
                           ].map((m, i) => (
-                            <option key={i} value={i} className="dark:bg-slate-900">
+                            <option key={i} value={i} className="bg-[#15273E] text-slate-100">
                               {m}
                             </option>
                           ))}
@@ -1306,18 +1306,18 @@ export default function DashboardPage() {
                           onChange={(e) =>
                             setFilterQuarter(parseInt(e.target.value))
                           }
-                          className="w-full bg-slate-50/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 transition-all appearance-none cursor-pointer"
+                          className="w-full bg-[#0E1B2D] border border-[#25456B] text-slate-100 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400/60 transition-all appearance-none cursor-pointer shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]"
                         >
-                          <option value={0} className="dark:bg-slate-900">
+                          <option value={0} className="bg-[#15273E] text-slate-100">
                             TW 1 (Jan-Mar)
                           </option>
-                          <option value={1} className="dark:bg-slate-900">
+                          <option value={1} className="bg-[#15273E] text-slate-100">
                             TW 2 (Apr-Jun)
                           </option>
-                          <option value={2} className="dark:bg-slate-900">
+                          <option value={2} className="bg-[#15273E] text-slate-100">
                             TW 3 (Jul-Sep)
                           </option>
-                          <option value={3} className="dark:bg-slate-900">
+                          <option value={3} className="bg-[#15273E] text-slate-100">
                             TW 4 (Okt-Des)
                           </option>
                         </select>
@@ -1328,18 +1328,18 @@ export default function DashboardPage() {
                           onChange={(e) =>
                             setFilterSemester(parseInt(e.target.value))
                           }
-                          className="w-full bg-slate-50/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 transition-all appearance-none cursor-pointer"
+                          className="w-full bg-[#0E1B2D] border border-[#25456B] text-slate-100 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400/60 transition-all appearance-none cursor-pointer shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]"
                         >
-                          <option value={0} className="dark:bg-slate-900">
+                          <option value={0} className="bg-[#15273E] text-slate-100">
                             SM 1 (Jan-Jun)
                           </option>
-                          <option value={1} className="dark:bg-slate-900">
+                          <option value={1} className="bg-[#15273E] text-slate-100">
                             SM 2 (Jul-Des)
                           </option>
                         </select>
                       )}
                       {filterPeriodType === "tahunan" && (
-                        <div className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 dark:text-slate-500 text-sm font-bold rounded-2xl px-4 py-4">
+                        <div className="w-full bg-[#0E1B2D] border border-[#25456B] text-slate-400 text-sm font-bold rounded-2xl px-4 py-4 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]">
                           Tahun Penuh
                         </div>
                       )}
@@ -1348,16 +1348,16 @@ export default function DashboardPage() {
 
                   {/* Select Year */}
                   <div className="relative group/select">
-                    <label className="absolute -top-2 left-3 px-1 bg-white dark:bg-[#111827] text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest z-10">
+                    <label className="absolute -top-2 left-3 px-1 bg-[#15273E] text-[10px] font-bold text-sky-300 uppercase tracking-widest z-10 rounded">
                       Tahun
                     </label>
                     <select
                       value={filterYear}
                       onChange={(e) => setFilterYear(parseInt(e.target.value))}
-                      className="w-full bg-slate-50/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 transition-all appearance-none cursor-pointer"
+                      className="w-full bg-[#0E1B2D] border border-[#25456B] text-slate-100 text-sm font-bold rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400/60 transition-all appearance-none cursor-pointer shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]"
                     >
                       {[2024, 2025, 2026, 2027].map((y) => (
-                        <option key={y} value={y} className="dark:bg-slate-900">
+                        <option key={y} value={y} className="bg-[#15273E] text-slate-100">
                           {y}
                         </option>
                       ))}
@@ -1372,19 +1372,19 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-3 gap-6">
         {/* HH Card */}
-        <div className="group relative bg-white dark:bg-[#111827] p-8 rounded-[32px] border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-500">
-          <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none">
-            <Droplets className="w-16 h-16 text-blue-600" />
+        <div className="group relative bg-[#15273E] p-8 rounded-[32px] border border-[#25456B] shadow-[0_20px_50px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.12)] hover:shadow-[0_25px_60px_rgba(0,0,0,0.85),0_0_25px_rgba(56,189,248,0.25)] hover:border-sky-400/50 transition-all duration-500 transform-gpu hover:-translate-y-1">
+          <div className="absolute top-0 right-0 p-4 opacity-[0.04] text-sky-400 group-hover:opacity-[0.1] transition-opacity pointer-events-none">
+            <Droplets className="w-16 h-16" />
           </div>
           <div className="flex items-center gap-4 mb-8">
-            <div className="w-12 h-12 rounded-2xl bg-blue-500/10 dark:bg-blue-600/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+            <div className="w-12 h-12 rounded-2xl bg-[#0E1B2D] border border-sky-400/30 flex items-center justify-center text-sky-400 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]">
               <Droplets className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 leading-none mb-1">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-sky-300/70 leading-none mb-1">
                 Indikator Mutu
               </h3>
-              <p className="text-[20px] font-bold text-slate-700 dark:text-slate-300">
+              <p className="text-[20px] font-bold text-slate-100">
                 Kepatuhan Kebersihan Tangan
               </p>
             </div>
@@ -1396,16 +1396,16 @@ export default function DashboardPage() {
               {stats.hh}%
             </span>
           </div>
-          <div className="mt-8 pt-6 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
-            <span className="text-[15px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">
+          <div className="mt-8 pt-6 border-t border-[#25456B]/60 flex items-center justify-between">
+            <span className="text-[15px] font-bold text-sky-400 uppercase tracking-widest">
               Capaian
             </span>
             <div className="flex flex-col items-end">
-              <span className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 mb-1">
+              <span className="text-[10px] font-black uppercase text-slate-400 mb-1">
                 Standard: {standards?.hh?.nilai_standar || 85}%
               </span>
               <span
-                className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full ${stats.hh >= (standards?.hh?.nilai_standar || 85) ? "bg-emerald-500/10 text-emerald-600" : "bg-red-500/10 text-red-600"}`}
+                className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full ${stats.hh >= (standards?.hh?.nilai_standar || 85) ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" : "bg-red-500/15 text-red-400 border border-red-500/30"}`}
               >
                 {stats.hh >= (standards?.hh?.nilai_standar || 85)
                   ? "Tercapai"
@@ -1416,19 +1416,19 @@ export default function DashboardPage() {
         </div>
 
         {/* APD Card */}
-        <div className="group relative bg-white dark:bg-[#111827] p-8 rounded-[32px] border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-500">
-          <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none">
-            <Shield className="w-16 h-16 text-emerald-600" />
+        <div className="group relative bg-[#15273E] p-8 rounded-[32px] border border-[#25456B] shadow-[0_20px_50px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.12)] hover:shadow-[0_25px_60px_rgba(0,0,0,0.85),0_0_25px_rgba(52,211,153,0.25)] hover:border-emerald-400/50 transition-all duration-500 transform-gpu hover:-translate-y-1">
+          <div className="absolute top-0 right-0 p-4 opacity-[0.04] text-emerald-400 group-hover:opacity-[0.1] transition-opacity pointer-events-none">
+            <Shield className="w-16 h-16" />
           </div>
           <div className="flex items-center gap-4 mb-8">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 dark:bg-emerald-600/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+            <div className="w-12 h-12 rounded-2xl bg-[#0E1B2D] border border-emerald-400/30 flex items-center justify-center text-emerald-400 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]">
               <Shield className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 leading-none mb-1">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-300/70 leading-none mb-1">
                 Indikator Mutu
               </h3>
-              <p className="text-[20px] font-bold text-slate-700 dark:text-slate-300">
+              <p className="text-[20px] font-bold text-slate-100">
                 Kepatuhan Penggunaan APD
               </p>
             </div>
@@ -1440,16 +1440,16 @@ export default function DashboardPage() {
               {stats.apd}%
             </span>
           </div>
-          <div className="mt-8 pt-6 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
-            <span className="text-[15px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">
+          <div className="mt-8 pt-6 border-t border-[#25456B]/60 flex items-center justify-between">
+            <span className="text-[15px] font-bold text-sky-400 uppercase tracking-widest">
               Capaian
             </span>
             <div className="flex flex-col items-end">
-              <span className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 mb-1">
+              <span className="text-[10px] font-black uppercase text-slate-400 mb-1">
                 Standard: {standards?.apd?.nilai_standar || 100}%
               </span>
               <span
-                className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full ${stats.apd >= (standards?.apd?.nilai_standar || 100) ? "bg-emerald-500/10 text-emerald-600" : "bg-red-500/10 text-red-600"}`}
+                className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full ${stats.apd >= (standards?.apd?.nilai_standar || 100) ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" : "bg-red-500/15 text-red-400 border border-red-500/30"}`}
               >
                 {stats.apd >= (standards?.apd?.nilai_standar || 100)
                   ? "Tercapai"
@@ -1460,26 +1460,26 @@ export default function DashboardPage() {
         </div>
 
         {/* HAIs Card */}
-        <div className="group relative bg-white dark:bg-[#111827] p-8 rounded-[32px] border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-xl hover:shadow-red-500/10 transition-all duration-500">
-          <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none">
-            <AlertCircle className="w-16 h-16 text-red-600" />
+        <div className="group relative bg-[#15273E] p-8 rounded-[32px] border border-[#25456B] shadow-[0_20px_50px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.12)] hover:shadow-[0_25px_60px_rgba(0,0,0,0.85),0_0_25px_rgba(244,63,94,0.25)] hover:border-rose-400/50 transition-all duration-500 transform-gpu hover:-translate-y-1">
+          <div className="absolute top-0 right-0 p-4 opacity-[0.04] text-rose-400 group-hover:opacity-[0.1] transition-opacity pointer-events-none">
+            <AlertCircle className="w-16 h-16" />
           </div>
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-red-500/10 dark:bg-red-600/20 flex items-center justify-center text-red-600 dark:text-red-400">
+            <div className="w-12 h-12 rounded-2xl bg-[#0E1B2D] border border-rose-400/30 flex items-center justify-center text-rose-400 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]">
               <AlertCircle className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 leading-none mb-1">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-300/70 leading-none mb-1">
                 Indikator Mutu
               </h3>
-              <p className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-tight">
+              <p className="text-sm font-bold text-slate-100 uppercase tracking-tight">
                 INSIDEN HAIs
               </p>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2 mt-4">
-            <div className="bg-slate-50 dark:bg-white/5 p-2 rounded-[12px] border border-slate-100 dark:border-white/5">
-              <p className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">
+          <div className="grid grid-cols-2 gap-2.5 mt-4">
+            <div className="bg-[#0E1B2D] p-2.5 rounded-[14px] border border-[#25456B]/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]">
+              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
                 Phlebitis
               </p>
               <p
@@ -1488,8 +1488,8 @@ export default function DashboardPage() {
                 {stats.hais.phlebitis} ‰
               </p>
             </div>
-            <div className="bg-slate-50 dark:bg-white/5 p-2 rounded-[12px] border border-slate-100 dark:border-white/5">
-              <p className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">
+            <div className="bg-[#0E1B2D] p-2.5 rounded-[14px] border border-[#25456B]/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]">
+              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
                 ISK
               </p>
               <p
@@ -1498,8 +1498,8 @@ export default function DashboardPage() {
                 {stats.hais.isk} ‰
               </p>
             </div>
-            <div className="bg-slate-50 dark:bg-white/5 p-2 rounded-[12px] border border-slate-100 dark:border-white/5">
-              <p className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">
+            <div className="bg-[#0E1B2D] p-2.5 rounded-[14px] border border-[#25456B]/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]">
+              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
                 IDO
               </p>
               <p
@@ -1508,8 +1508,8 @@ export default function DashboardPage() {
                 {stats.hais.ido}%
               </p>
             </div>
-            <div className="bg-slate-50 dark:bg-white/5 p-2 rounded-[12px] border border-slate-100 dark:border-white/5">
-              <p className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">
+            <div className="bg-[#0E1B2D] p-2.5 rounded-[14px] border border-[#25456B]/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]">
+              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
                 VAP
               </p>
               <p
@@ -1522,36 +1522,36 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-[#111827] rounded-[32px] border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm dark:shadow-none transition-all mt-8">
-        <div className="p-6 border-b border-slate-200 dark:border-white/5 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+      <div className="bg-[#15273E] rounded-[32px] border border-[#25456B] overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.75),inset_0_1px_1px_rgba(255,255,255,0.12)] transition-all mt-8">
+        <div className="p-6 border-b border-[#25456B]/60 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-[#0E1B2D]/40">
           <div className="flex flex-wrap gap-2">
             {[
               {
                 id: "hh",
                 label: "KEBERSIHAN TANGAN",
                 icon: Droplets,
-                c: "text-blue-600 dark:text-blue-400",
-                bg: "bg-blue-500/10 dark:bg-white/10",
+                c: "text-sky-400",
+                bg: "bg-sky-500/20 border border-sky-400/30",
               },
               {
                 id: "apd",
                 label: "KEPATUHAN APD",
                 icon: Shield,
-                c: "text-emerald-600 dark:text-emerald-400",
-                bg: "bg-emerald-500/10 dark:bg-white/10",
+                c: "text-emerald-400",
+                bg: "bg-emerald-500/20 border border-emerald-400/30",
               },
               {
                 id: "hais",
                 label: "INSIDEN HAIS",
                 icon: AlertCircle,
-                c: "text-red-600 dark:text-red-400",
-                bg: "bg-red-500/10 dark:bg-white/10",
+                c: "text-rose-400",
+                bg: "bg-rose-500/20 border border-rose-400/30",
               },
             ].map((t) => (
               <button
                 key={t.id}
                 onClick={() => setActiveTab(t.id as any)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${activeTab === t.id ? `${t.bg} ${t.c}` : "text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"}`}
+                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${activeTab === t.id ? `${t.bg} ${t.c} shadow-md` : "text-slate-400 hover:text-white hover:bg-white/5"}`}
               >
                 <t.icon className="w-4 h-4" /> {t.label}
               </button>
@@ -1559,18 +1559,18 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex flex-wrap gap-3 items-center">
-            <div className="flex bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 items-center px-3 py-1 gap-2">
-              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+            <div className="flex bg-[#0E1B2D] rounded-lg border border-[#25456B] items-center px-3 py-1 gap-2 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]">
+              <Calendar className="w-3.5 h-3.5 text-sky-400" />
               <select
                 value={filterPeriodType}
                 onChange={(e) => setFilterPeriodType(e.target.value as any)}
-                className="bg-transparent border-none outline-none text-[10px] font-black uppercase text-blue-600 dark:text-blue-400 cursor-pointer"
+                className="bg-transparent border-none outline-none text-[10px] font-black uppercase text-sky-400 cursor-pointer"
               >
                 {["bulanan", "triwulan", "semester", "tahunan"].map((p) => (
                   <option
                     key={p}
                     value={p}
-                    className="bg-white dark:bg-slate-900"
+                    className="bg-[#15273E] text-slate-100"
                   >
                     {p.toUpperCase()}
                   </option>
@@ -1579,11 +1579,11 @@ export default function DashboardPage() {
 
               {filterPeriodType === "bulanan" && (
                 <>
-                  <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
+                  <div className="w-px h-4 bg-[#25456B] mx-1" />
                   <select
                     value={filterMonth}
                     onChange={(e) => setFilterMonth(parseInt(e.target.value))}
-                    className="bg-transparent border-none outline-none text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
+                    className="bg-transparent border-none outline-none text-xs font-bold text-slate-200 cursor-pointer"
                   >
                     {[
                       "Januari",
@@ -1602,7 +1602,7 @@ export default function DashboardPage() {
                       <option
                         key={m}
                         value={i}
-                        className="bg-white dark:bg-slate-900"
+                        className="bg-[#15273E] text-slate-100"
                       >
                         {m}
                       </option>
@@ -1613,11 +1613,11 @@ export default function DashboardPage() {
 
               {filterPeriodType === "triwulan" && (
                 <>
-                  <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
+                  <div className="w-px h-4 bg-[#25456B] mx-1" />
                   <select
                     value={filterQuarter}
                     onChange={(e) => setFilterQuarter(parseInt(e.target.value))}
-                    className="bg-transparent border-none outline-none text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
+                    className="bg-transparent border-none outline-none text-xs font-bold text-slate-200 cursor-pointer"
                   >
                     {[
                       "Triwulan 1",
@@ -1628,7 +1628,7 @@ export default function DashboardPage() {
                       <option
                         key={q}
                         value={i}
-                        className="bg-white dark:bg-slate-900"
+                        className="bg-[#15273E] text-slate-100"
                       >
                         {q}
                       </option>
@@ -1639,19 +1639,19 @@ export default function DashboardPage() {
 
               {filterPeriodType === "semester" && (
                 <>
-                  <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
+                  <div className="w-px h-4 bg-[#25456B] mx-1" />
                   <select
                     value={filterSemester}
                     onChange={(e) =>
                       setFilterSemester(parseInt(e.target.value))
                     }
-                    className="bg-transparent border-none outline-none text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
+                    className="bg-transparent border-none outline-none text-xs font-bold text-slate-200 cursor-pointer"
                   >
                     {["Semester 1", "Semester 2"].map((s, i) => (
                       <option
                         key={s}
                         value={i}
-                        className="bg-white dark:bg-slate-900"
+                        className="bg-[#15273E] text-slate-100"
                       >
                         {s}
                       </option>
@@ -1660,11 +1660,11 @@ export default function DashboardPage() {
                 </>
               )}
 
-              <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
+              <div className="w-px h-4 bg-[#25456B] mx-1" />
               <select
                 value={filterYear}
                 onChange={(e) => setFilterYear(parseInt(e.target.value))}
-                className="bg-transparent border-none outline-none text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
+                className="bg-transparent border-none outline-none text-xs font-bold text-slate-200 cursor-pointer"
               >
                 {Array.from(
                   { length: 5 },
@@ -1673,7 +1673,7 @@ export default function DashboardPage() {
                   <option
                     key={y}
                     value={y}
-                    className="bg-white dark:bg-slate-900"
+                    className="bg-[#15273E] text-slate-100"
                   >
                     {y}
                   </option>
@@ -1684,29 +1684,29 @@ export default function DashboardPage() {
             <select
               value={selectedUnit}
               onChange={(e) => setSelectedUnit(e.target.value)}
-              className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg px-3 py-2 outline-none"
+              className="bg-[#0E1B2D] border border-[#25456B] text-slate-200 text-xs font-bold rounded-lg px-3 py-2 outline-none shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]"
             >
               {units.map((u) => (
                 <option
                   key={u}
                   value={u}
-                  className="bg-white dark:bg-slate-900"
+                  className="bg-[#15273E] text-slate-100"
                 >
                   {u.toUpperCase()}
                 </option>
               ))}
             </select>
 
-            <div className="flex bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
+            <div className="flex bg-[#0E1B2D] rounded-lg border border-[#25456B] overflow-hidden shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]">
               <button
                 onClick={() => setChartMode("bar")}
-                className={`p-2 transition-colors ${chartMode === "bar" ? "bg-blue-600 text-white shadow-lg" : "text-slate-400 dark:text-slate-500"}`}
+                className={`p-2 transition-colors ${chartMode === "bar" ? "bg-sky-500 text-white shadow-lg" : "text-slate-400 hover:text-white"}`}
               >
                 <BarChart2 className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setChartMode("line")}
-                className={`p-2 transition-colors ${chartMode === "line" ? "bg-blue-600 text-white shadow-lg" : "text-slate-400 dark:text-slate-500"}`}
+                className={`p-2 transition-colors ${chartMode === "line" ? "bg-sky-500 text-white shadow-lg" : "text-slate-400 hover:text-white"}`}
               >
                 <LineChart className="w-4 h-4" />
               </button>
@@ -2073,12 +2073,12 @@ export default function DashboardPage() {
 
         {/* Auto Insight Card */}
         <div className="px-8 pb-8 pt-2">
-          <div className="flex items-start gap-4 p-4 rounded-2xl bg-blue-50 dark:bg-[#1e293b]/50 border border-blue-100 dark:border-white/5">
+          <div className="flex items-start gap-4 p-5 rounded-2xl bg-[#0E1B2D] border border-[#25456B] shadow-[inset_0_2px_6px_rgba(0,0,0,0.4),0_8px_20px_rgba(0,0,0,0.3)]">
             <div className="flex-1">
-              <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+              <h4 className="text-sm font-bold text-sky-400">
                 Analisa Data
               </h4>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 text-justify leading-relaxed">
+              <p className="text-sm text-slate-200 mt-1 text-justify leading-relaxed">
                 {generateAutoInsight()}
               </p>
             </div>

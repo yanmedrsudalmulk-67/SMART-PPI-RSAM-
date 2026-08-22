@@ -26,9 +26,14 @@ const handleExport = (type: string) => {
   }
 };
 
-export default function AnalyticsPage() {
+function AnalyticsPageContent() {
   const { sessions, isLoading } = useAnalyticsRealtime();
-  
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Filters
   const [periodeType, setPeriodeType] = useState('Semua Waktu');
   const [filterUnit, setFilterUnit] = useState('Semua Unit');
@@ -243,7 +248,7 @@ export default function AnalyticsPage() {
     return text;
   }, [totalObservasi, kepatuhanAvg, topUnits, bottomUnits, jenisTemuanTerbanyak, sessions.length, filteredSessions.length]);
 
-  if (isLoading) {
+  if (!mounted || isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 text-slate-500">
         <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -517,6 +522,14 @@ export default function AnalyticsPage() {
   );
 }
 
-AnalyticsPage.getLayout = function getLayout(page: ReactElement) {
+AnalyticsPageContent.getLayout = function getLayout(page: ReactElement) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };
+
+const AnalyticsPage = dynamic(() => Promise.resolve(AnalyticsPageContent), {
+  ssr: false,
+});
+
+(AnalyticsPage as any).getLayout = AnalyticsPageContent.getLayout;
+
+export default AnalyticsPage;

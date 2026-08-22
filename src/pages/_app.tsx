@@ -1,10 +1,10 @@
 import '@/styles/globals.css';
 import type { AppProps } from 'next/app';
+import Router from 'next/router';
 import { Poppins } from 'next/font/google';
 import { AppProvider } from '@/components/Providers';
 import { NextPage } from 'next';
-import { ReactElement, ReactNode } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { ReactElement, ReactNode, useEffect } from 'react';
 
 const poppins = Poppins({ 
   subsets: ['latin'], 
@@ -21,6 +21,45 @@ type AppPropsWithLayout = AppProps & {
 };
 
 export default function App({ Component, pageProps }: AppPropsWithLayout) {
+  useEffect(() => {
+    const isAbortError = (err: any) => {
+      if (!err) return false;
+      if (err.cancelled) return true;
+      if (err.name === 'AbortError') return true;
+      const msg = typeof err === 'string' ? err : err?.message;
+      if (typeof msg === 'string') {
+        if (
+          msg.includes('Abort fetching component') ||
+          msg.includes('Route Cancelled') ||
+          msg.includes('cancelled')
+        ) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    const handleRouteChangeError = (err: any) => {
+      if (isAbortError(err)) {
+        // Silently ignore user-cancelled or aborted route changes
+      }
+    };
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      if (isAbortError(event.reason)) {
+        event.preventDefault();
+      }
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    Router.events.on('routeChangeError', handleRouteChangeError);
+
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      Router.events.off('routeChangeError', handleRouteChangeError);
+    };
+  }, []);
+
   // Use the layout defined at the page level, if available
   const getLayout = Component.getLayout ?? ((page) => page);
 

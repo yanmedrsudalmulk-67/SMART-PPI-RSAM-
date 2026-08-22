@@ -17,19 +17,19 @@ export const ClockWidget = memo(() => {
   }, []);
 
   if (!mounted) return (
-    <div className="hidden sm:flex items-center gap-3 px-4 py-2 rounded-xl border animate-pulse bg-white/5 border-white/10">
-      <Clock className="w-4 h-4 text-blue-400" />
-      <div className="w-20 h-8 bg-white/10 rounded-lg"></div>
+    <div className="hidden sm:flex items-center gap-3 px-4 py-2 rounded-xl border animate-pulse bg-[#10243C]/60 border-sky-400/20">
+      <Clock className="w-4 h-4 text-sky-400" />
+      <div className="w-20 h-8 bg-sky-400/10 rounded-lg"></div>
     </div>
   );
 
   return (
-    <div className="hidden sm:flex items-center gap-3 px-4 py-2 rounded-xl border transition-all duration-500 shadow-lg bg-white/5 border-white/10 hover:bg-white/10">
-      <div className="flex items-center justify-center transition-colors duration-500 drop-shadow-md">
-        <Clock className="w-4 h-4 text-blue-400" />
+    <div className="hidden sm:flex items-center gap-3 px-4 py-2 rounded-xl border transition-all duration-500 shadow-lg bg-[#10243C]/80 border-sky-400/25 hover:bg-[#152E4C] hover:border-sky-400/40">
+      <div className="flex items-center justify-center transition-colors duration-500 drop-shadow-[0_0_8px_rgba(56,189,248,0.5)]">
+        <Clock className="w-4 h-4 text-sky-400" />
       </div>
       <div className="flex flex-col items-start min-w-[90px]">
-        <span className="text-[9px] uppercase tracking-widest font-bold transition-colors duration-500 text-slate-300">
+        <span className="text-[9px] uppercase tracking-widest font-bold transition-colors duration-500 text-sky-200/80">
           {time.toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
         </span>
         <span className="text-xs font-bold font-mono tracking-widest leading-none mt-0.5 transition-colors duration-500 text-white">

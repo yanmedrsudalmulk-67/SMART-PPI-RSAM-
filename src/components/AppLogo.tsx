@@ -12,15 +12,15 @@ export function AppLogo({ className = "w-10 h-10", iconClassName = "w-6 h-6" }: 
   
   if (appLogoUrl) {
     return (
-      <div className={`relative flex items-center justify-center overflow-hidden rounded-2xl ${className}`}>
-        <Image src={appLogoUrl} alt="App Logo" fill sizes="40px" priority className="object-contain" referrerPolicy="no-referrer" />
+      <div className={`relative flex items-center justify-center ${className}`}>
+        <Image src={appLogoUrl} alt="App Logo" fill sizes="80px" priority className="object-contain" referrerPolicy="no-referrer" />
       </div>
     );
   }
   
   return (
-    <div className={`bg-primary rounded-2xl shadow-lg flex items-center justify-center ${className}`}>
-      <ShieldCheck className={`text-white ${iconClassName}`} />
+    <div className={`flex items-center justify-center ${className}`}>
+      <ShieldCheck className={`text-sky-400 ${iconClassName}`} />
     </div>
   );
 }

@@ -23,22 +23,22 @@ import { supabase } from '@/lib/supabase';
 const NavItem = memo(({ item, isActive, onClick }: { item: any, isActive: boolean, onClick?: () => void }) => {
   const baseClasses = "relative flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-300 ease-in-out group antialiased hover:scale-[1.02] active:scale-[0.98] transform-gpu will-change-transform";
   
-  const activeClasses = "bg-white/10 border border-white/20 shadow-sm text-white font-bold ring-1 ring-white/20";
-  const inactiveClasses = "text-white/70 hover:bg-white/10 hover:text-white hover:shadow-md border border-transparent";
+  const activeClasses = "bg-gradient-to-r from-sky-500/25 via-cyan-500/20 to-sky-600/10 border border-sky-400/40 text-white font-bold ring-1 ring-sky-400/30 shadow-[0_4px_20px_rgba(56,189,248,0.22)]";
+  const inactiveClasses = "text-slate-300/80 hover:bg-[#132B47]/60 hover:text-white hover:shadow-md border border-transparent";
 
   const iconBase = "w-[22px] h-[22px]";
-  const iconActive = "text-white drop-shadow-md";
-  const iconInactive = "text-white/80 group-hover:text-white transition-colors duration-300";
+  const iconActive = "text-sky-300 drop-shadow-[0_0_10px_rgba(56,189,248,0.6)]";
+  const iconInactive = "text-slate-400 group-hover:text-sky-200 transition-colors duration-300";
 
   return (
     <Link 
       href={item.href}
-      prefetch={true}
+      prefetch={false}
       onClick={onClick}
       className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
     >
       {isActive && (
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-emerald-400 rounded-r-full shadow-[0_0_10px_rgba(52,211,153,0.8)]" />
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-sky-400 rounded-r-full shadow-[0_0_12px_rgba(56,189,248,0.9)]" />
       )}
       <motion.div 
         animate={isActive ? { scale: 1.1 } : { scale: 1 }}
@@ -47,7 +47,7 @@ const NavItem = memo(({ item, isActive, onClick }: { item: any, isActive: boolea
       >
         <item.icon className={`${iconBase} ${isActive ? iconActive : iconInactive}`} strokeWidth={isActive ? 2.5 : 2} />
       </motion.div>
-      <span className={`text-[15px] sm:text-[14px] tracking-wide relative z-10 ${isActive ? 'font-bold drop-shadow-md' : 'font-medium'}`}>{item.name}</span>
+      <span className={`text-[15px] sm:text-[14px] tracking-wide relative z-10 ${isActive ? 'font-bold text-white drop-shadow-md' : 'font-medium'}`}>{item.name}</span>
     </Link>
   );
 });
@@ -194,7 +194,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!mounted) return null;
 
   return (
-    <div className="h-[100dvh] w-screen overflow-hidden flex bg-gradient-to-br from-[#130b29] via-[#0a0f1c] to-[#09152b] text-slate-200">
+    <div className="h-[100dvh] w-screen overflow-hidden flex bg-[#091526] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(14,165,233,0.18),rgba(255,255,255,0))] bg-[radial-gradient(circle_at_85%_20%,rgba(2,132,199,0.22),transparent_45%)] bg-[radial-gradient(circle_at_10%_80%,rgba(30,64,175,0.25),transparent_50%)] text-slate-200 relative">
+      {/* Subtle Ambient Steel-Cyan Background Glow Accent */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-sky-500/10 rounded-full blur-[120px] pointer-events-none z-0" />
+      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none z-0" />
+
       {/* Mobile Backdrop Overlay */}
       <AnimatePresence>
         {isMobile && isSidebarOpen && (
@@ -203,7 +207,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsSidebarOpen(false)}
-            className="fixed inset-0 bg-black/50 z-40 transition-opacity duration-200"
+            className="fixed inset-0 bg-black/60 z-40 transition-opacity duration-200 backdrop-blur-sm"
           />
         )}
       </AnimatePresence>
@@ -221,26 +225,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           damping: 40,
           mass: 0.8
         }}
-        className="border-r flex flex-col fixed inset-y-4 left-4 z-50 w-[280px] rounded-[24px] transition-colors duration-500 print:hidden transform-gpu will-change-transform backdrop-blur-md bg-[#0a0f1d]/90 border border-white/5 shadow-[0_8px_32px_0_rgba(0,0,0,0.4),inset_0_1px_0_0_rgba(255,255,255,0.1)]"
+        className="border flex flex-col fixed inset-y-4 left-4 z-50 w-[280px] rounded-[24px] transition-colors duration-500 print:hidden transform-gpu will-change-transform backdrop-blur-xl bg-[#0B1A2C]/95 border-[#1E3E62]/60 shadow-[0_12px_40px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.12)]"
       >
-        {/* New Elegant Toggle Button on the Right Border */}
+        {/* Toggle Button on the Right Border */}
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="absolute -right-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center border shadow-md transition-all duration-300 z-50 group hidden md:flex bg-[#151f32] border-white/10 text-emerald-400 hover:bg-[#1e2c45] hover:border-emerald-400/40"
+          className="absolute -right-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center border shadow-lg transition-all duration-300 z-50 group hidden md:flex bg-[#10243C] border-sky-400/40 text-sky-400 hover:bg-[#1A3A5E] hover:border-sky-300 hover:scale-110"
           title={isSidebarOpen ? "Minimize Sidebar" : "Expand Sidebar"}
         >
           <ChevronLeft className={`w-4 h-4 transition-transform duration-500 ${isSidebarOpen ? 'rotate-0' : 'rotate-180'}`} />
         </button>
 
-        <div className="flex flex-col items-center justify-center pt-5 pb-4 border-b shrink-0 px-4 relative border-white/5">
-          <div className="flex items-center justify-center w-[56px] h-[56px] rounded-[18px] shadow-sm bg-white/5 mb-3 border border-white/10 relative group">
-            <AppLogo className="w-full h-full text-white group-hover:text-emerald-100 transition-colors" iconClassName="w-6 h-6 text-emerald-600 dark:text-[#0a0f1c]" />
+        <div className="flex flex-col items-center justify-center pt-5 pb-4 border-b shrink-0 px-4 relative border-[#1E3E62]/50 bg-[#10243C]/40 rounded-t-[23px]">
+          <div className="flex items-center justify-center w-[56px] h-[56px] mb-3 relative group">
+            <AppLogo className="w-full h-full text-white group-hover:text-sky-200 transition-colors" iconClassName="w-7 h-7 text-sky-400" />
           </div>
           <div className="flex flex-col items-center text-center">
-            <span className="font-heading font-[800] text-[18px] tracking-[1.5px] transition-all antialiased text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
+            <span className="font-heading font-[800] text-[18px] tracking-[1.5px] transition-all antialiased text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
               SMART PPI
             </span>
-            <span className="text-[8px] whitespace-nowrap leading-[1.4] text-center mt-1 transition-all antialiased text-slate-400">
+            <span className="text-[8.5px] whitespace-nowrap leading-[1.4] text-center mt-1 transition-all antialiased text-sky-200/70 font-medium">
               Sistem Monitoring, Audit dan Supervisi Terintegrasi
             </span>
           </div>
@@ -248,7 +252,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         
         <div className="flex-1 overflow-y-auto py-6 px-4 space-y-2 custom-sidebar-scrollbar">
           <div className="mb-5 px-1">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] antialiased text-slate-500">Menu Utama</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] antialiased text-sky-400/80">Menu Utama</p>
           </div>
           {navItems.map((item) => (
             <NavItem 
@@ -280,14 +284,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         !isMobile ? (isSidebarOpen ? 'ml-[312px]' : 'ml-[40px]') : 'ml-0'
       }`}>
         {/* Top Header */}
-        <header className="min-h-[64px] sm:h-20 shrink-0 border-b flex items-center justify-between px-4 sm:px-8 sticky top-0 z-[45] transition-all duration-500 print:hidden backdrop-blur-md bg-[#0a0f1d]/90 border-white/5 shadow-[0_4px_30px_rgba(0,0,0,0.2)]">
+        <header className="min-h-[64px] sm:h-20 shrink-0 border-b flex items-center justify-between px-4 sm:px-8 sticky top-0 z-[45] transition-all duration-500 print:hidden backdrop-blur-xl bg-[#0B1A2C]/85 border-[#1E3E62]/50 shadow-[0_4px_30px_rgba(0,0,0,0.35)]">
           <div className="flex items-center gap-2 sm:gap-4">
             
             {/* Mobile Hamburger Menu Toggle */}
             {!navItems.some(item => item.href === pathname) && !pathname.startsWith('/dashboard/input') && (
               <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="md:hidden p-2 -ml-2 rounded-lg transition-colors text-slate-400 hover:bg-white/5"
+                className="md:hidden p-2 -ml-2 rounded-lg transition-colors text-sky-400 hover:bg-sky-500/10"
               >
                 <Menu className="w-6 h-6" />
               </button>
@@ -299,11 +303,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Mobile Hospital Identity */}
             {isMobile && (
               <div className="flex items-center gap-2.5 sm:hidden px-1">
-                <div className="w-10 h-10 flex-shrink-0 rounded-[10px] flex items-center justify-center overflow-hidden relative border bg-white/5 border-white/10">
+                <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center relative">
                   {hospitalLogoUrl ? (
-                    <Image src={hospitalLogoUrl} alt="Logo RS" fill sizes="40px" priority className="object-contain p-1" referrerPolicy="no-referrer" />
+                    <Image src={hospitalLogoUrl} alt="Logo RS" fill sizes="40px" priority className="object-contain" referrerPolicy="no-referrer" />
                   ) : (
-                    <ShieldCheck className="w-5 h-5 md:w-6 md:h-6 text-blue-400" />
+                    <ShieldCheck className="w-6 h-6 text-sky-400" />
                   )}
                 </div>
                 
@@ -311,7 +315,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <span className="font-heading font-extrabold text-[15px] tracking-wide leading-tight text-white">
                     UOBK RSUD AL-MULK
                   </span>
-                  <span className="text-[9px] font-bold uppercase tracking-[0.2em] leading-tight mt-0.5 text-slate-400">
+                  <span className="text-[9px] font-bold uppercase tracking-[0.2em] leading-tight mt-0.5 text-sky-300/70">
                     KOTA SUKABUMI
                   </span>
                 </div>
@@ -343,20 +347,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Mobile Bottom Navigation */}
       <div className="fixed bottom-5 inset-x-5 z-50 flex justify-center md:hidden pb-[env(safe-area-inset-bottom)]">
-        <nav className="w-full max-w-md flex justify-around items-center h-[72px] px-2 rounded-[36px] border backdrop-blur-md transition-all duration-300 bg-[#0a0f1c]/90 border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15),_0_0_25px_rgba(16,185,129,0.05)]">
+        <nav className="w-full max-w-md flex justify-around items-center h-[72px] px-2 rounded-[36px] border backdrop-blur-xl transition-all duration-300 bg-[#0B1A2C]/95 border-sky-500/25 shadow-[0_12px_40px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.15),_0_0_25px_rgba(56,189,248,0.1)]">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link 
                 key={item.name} 
                 href={item.href}
-                prefetch={true}
+                prefetch={false}
                 className="relative flex-1 h-[56px] flex flex-col items-center justify-center transition-all duration-200 outline-none px-1"
               >
                 {isActive && (
                   <motion.div
                     layoutId="mobileNavIndicator"
-                    className="absolute inset-x-1.5 inset-y-1.5 rounded-[22px] bg-gradient-to-br from-emerald-500 to-teal-600 border border-emerald-400/30 shadow-[0_4px_16px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.25)]"
+                    className="absolute inset-x-1.5 inset-y-1.5 rounded-[22px] bg-gradient-to-br from-sky-500 to-cyan-600 border border-sky-400/40 shadow-[0_4px_16px_rgba(56,189,248,0.4),inset_0_1px_0_rgba(255,255,255,0.25)]"
                     transition={{ type: "spring", stiffness: 380, damping: 30 }}
                   />
                 )}
