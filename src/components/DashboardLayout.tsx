@@ -194,7 +194,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!mounted) return null;
 
   return (
-    <div className="h-[100dvh] w-screen overflow-hidden flex bg-[#091526] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(14,165,233,0.18),rgba(255,255,255,0))] bg-[radial-gradient(circle_at_85%_20%,rgba(2,132,199,0.22),transparent_45%)] bg-[radial-gradient(circle_at_10%_80%,rgba(30,64,175,0.25),transparent_50%)] text-slate-200 relative">
+    <div className="h-[100dvh] w-full overflow-hidden flex bg-[#091526] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(14,165,233,0.18),rgba(255,255,255,0))] bg-[radial-gradient(circle_at_85%_20%,rgba(2,132,199,0.22),transparent_45%)] bg-[radial-gradient(circle_at_10%_80%,rgba(30,64,175,0.25),transparent_50%)] text-slate-200 relative">
       {/* Subtle Ambient Steel-Cyan Background Glow Accent */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-sky-500/10 rounded-full blur-[120px] pointer-events-none z-0" />
       <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none z-0" />

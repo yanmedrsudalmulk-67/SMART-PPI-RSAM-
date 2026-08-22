@@ -9,6 +9,11 @@
 }
 
 html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Mencegah double scrollbar di level window / webview */
   scroll-behavior: smooth;
   scroll-padding-top: 5rem;
   /* Hardware Accelerated rendering optimizations */
@@ -17,56 +22,25 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior-y: none;
   -webkit-overflow-scrolling: touch;
-  overflow-x: hidden;
   max-width: 100vw;
 }
 
-/* Global Custom Animated Glowing Scrollbar (Blue-Purple Gradient) */
+#__next {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Sembunyikan garis scrollbar secara global tanpa menghilangkan fungsi scroll */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 0px; /* Hide horizontal scrollbar dimension */
-}
-
-::-webkit-scrollbar:horizontal {
   display: none !important;
-  height: 0px !important;
   width: 0px !important;
-}
-
-::-webkit-scrollbar-track {
-  background: #091526; /* Matches application background */
-}
-
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #38bdf8, #818cf8, #c084fc, #ec4899, #38bdf8);
-  background-size: 100% 300%;
-  border-radius: 9999px;
-  border: 1.5px solid #091526;
-  box-shadow: 0 0 12px rgba(168, 85, 247, 0.75), inset 0 0 4px rgba(255, 255, 255, 0.5);
-  animation: scrollbar-glow 4s ease infinite;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #60a5fa, #a855f7, #f43f5e, #60a5fa);
-  background-size: 100% 300%;
-  box-shadow: 0 0 18px rgba(192, 132, 252, 0.95), inset 0 0 6px rgba(255, 255, 255, 0.8);
-}
-
-@keyframes scrollbar-glow {
-  0% {
-    background-position: 0% 0%;
-  }
-  50% {
-    background-position: 0% 100%;
-  }
-  100% {
-    background-position: 0% 0%;
-  }
+  height: 0px !important;
 }
 
 * {
-  scrollbar-color: #818cf8 #091526;
-  scrollbar-width: thin;
+  -ms-overflow-style: none !important; /* IE and Edge */
+  scrollbar-width: none !important; /* Firefox */
 }
 
 :root {

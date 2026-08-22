@@ -1571,37 +1571,38 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Chart and Analytics Section - Glassmorphism */}
-      <div className="bg-[#0B1A2C]/70 backdrop-blur-xl rounded-[24px] border border-[#1E3B66]/60 overflow-hidden transition-all mt-6">
-        <div className="p-5 sm:p-6 border-b border-[#1E3B66]/50 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-[#071322]/50">
+      {/* Chart and Analytics Section - Glassmorphism with Navy Blue Header */}
+      <div className="bg-[#091A30]/85 backdrop-blur-xl rounded-[24px] border border-[#1E437C]/65 overflow-hidden transition-all mt-6 shadow-[0_8px_28px_rgba(7,22,44,0.45)]">
+        {/* Navy Blue Header */}
+        <div className="p-5 sm:p-6 border-b border-[#1E437C]/70 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-gradient-to-r from-[#0A1E3F] via-[#0D2852] to-[#081833]">
           <div className="flex flex-wrap gap-2">
             {[
               {
                 id: "hh",
                 label: "KEBERSIHAN TANGAN",
                 icon: Droplets,
-                c: "text-sky-400",
-                bg: "bg-sky-500/20 border border-sky-400/30",
+                c: "text-sky-300",
+                bg: "bg-sky-500/25 border border-sky-400/40 shadow-sm",
               },
               {
                 id: "apd",
                 label: "KEPATUHAN APD",
                 icon: Shield,
-                c: "text-emerald-400",
-                bg: "bg-emerald-500/20 border border-emerald-400/30",
+                c: "text-emerald-300",
+                bg: "bg-emerald-500/25 border border-emerald-400/40 shadow-sm",
               },
               {
                 id: "hais",
                 label: "INSIDEN HAIS",
                 icon: AlertCircle,
-                c: "text-rose-400",
-                bg: "bg-rose-500/20 border border-rose-400/30",
+                c: "text-rose-300",
+                bg: "bg-rose-500/25 border border-rose-400/40 shadow-sm",
               },
             ].map((t) => (
               <button
                 key={t.id}
                 onClick={() => setActiveTab(t.id as any)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${activeTab === t.id ? `${t.bg} ${t.c}` : "text-slate-400 hover:text-white hover:bg-white/5"}`}
+                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${activeTab === t.id ? `${t.bg} ${t.c}` : "text-slate-300 hover:text-white hover:bg-white/10"}`}
               >
                 <t.icon className="w-4 h-4" /> {t.label}
               </button>
@@ -1609,18 +1610,18 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex flex-wrap gap-3 items-center">
-            <div className="flex bg-[#071322]/80 backdrop-blur-md rounded-xl border border-[#1E3B66]/60 items-center px-3 py-1 gap-2">
+            <div className="flex bg-[#06152B]/90 backdrop-blur-md rounded-xl border border-[#1E437C]/70 items-center px-3 py-1 gap-2 shadow-inner">
               <Calendar className="w-3.5 h-3.5 text-sky-400" />
               <select
                 value={filterPeriodType}
                 onChange={(e) => setFilterPeriodType(e.target.value as any)}
-                className="bg-transparent border-none outline-none text-[10px] font-black uppercase text-sky-400 cursor-pointer"
+                className="bg-transparent border-none outline-none text-[10px] font-black uppercase text-sky-300 cursor-pointer"
               >
                 {["bulanan", "triwulan", "semester", "tahunan"].map((p) => (
                   <option
                     key={p}
                     value={p}
-                    className="bg-[#0B1A2C] text-slate-100"
+                    className="bg-[#0A1E3F] text-slate-100"
                   >
                     {p.toUpperCase()}
                   </option>
@@ -1652,7 +1653,7 @@ export default function DashboardPage() {
                       <option
                         key={m}
                         value={i}
-                        className="bg-[#0B1A2C] text-slate-100"
+                        className="bg-[#0A1E3F] text-slate-100"
                       >
                         {m}
                       </option>
@@ -1678,7 +1679,7 @@ export default function DashboardPage() {
                       <option
                         key={q}
                         value={i}
-                        className="bg-[#0B1A2C] text-slate-100"
+                        className="bg-[#0A1E3F] text-slate-100"
                       >
                         {q}
                       </option>
@@ -1701,7 +1702,7 @@ export default function DashboardPage() {
                       <option
                         key={s}
                         value={i}
-                        className="bg-[#0B1A2C] text-slate-100"
+                        className="bg-[#0A1E3F] text-slate-100"
                       >
                         {s}
                       </option>
@@ -1723,7 +1724,7 @@ export default function DashboardPage() {
                   <option
                     key={y}
                     value={y}
-                    className="bg-[#0B1A2C] text-slate-100"
+                    className="bg-[#0A1E3F] text-slate-100"
                   >
                     {y}
                   </option>
@@ -1734,29 +1735,29 @@ export default function DashboardPage() {
             <select
               value={selectedUnit}
               onChange={(e) => setSelectedUnit(e.target.value)}
-              className="bg-[#071322]/80 backdrop-blur-md border border-[#1E3B66]/60 text-slate-200 text-xs font-bold rounded-xl px-3 py-2 outline-none"
+              className="bg-[#06152B]/90 backdrop-blur-md border border-[#1E437C]/70 text-slate-100 text-xs font-bold rounded-xl px-3 py-2 outline-none cursor-pointer"
             >
               {units.map((u) => (
                 <option
                   key={u}
                   value={u}
-                  className="bg-[#0B1A2C] text-slate-100"
+                  className="bg-[#0A1E3F] text-slate-100"
                 >
                   {u.toUpperCase()}
                 </option>
               ))}
             </select>
 
-            <div className="flex bg-[#071322]/80 backdrop-blur-md rounded-xl border border-[#1E3B66]/60 overflow-hidden">
+            <div className="flex bg-[#06152B]/90 backdrop-blur-md rounded-xl border border-[#1E437C]/70 overflow-hidden shadow-inner">
               <button
                 onClick={() => setChartMode("bar")}
-                className={`p-2 transition-colors ${chartMode === "bar" ? "bg-sky-500 text-white" : "text-slate-400 hover:text-white"}`}
+                className={`p-2 transition-colors ${chartMode === "bar" ? "bg-sky-500 text-white shadow-sm" : "text-slate-400 hover:text-white"}`}
               >
                 <BarChart2 className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setChartMode("line")}
-                className={`p-2 transition-colors ${chartMode === "line" ? "bg-sky-500 text-white" : "text-slate-400 hover:text-white"}`}
+                className={`p-2 transition-colors ${chartMode === "line" ? "bg-sky-500 text-white shadow-sm" : "text-slate-400 hover:text-white"}`}
               >
                 <LineChart className="w-4 h-4" />
               </button>
@@ -2138,7 +2139,7 @@ export default function DashboardPage() {
               : "bg-sky-500/15 text-sky-400 border-sky-500/30";
 
             return (
-              <div className="p-6 rounded-2xl bg-[#071322]/80 backdrop-blur-xl border border-[#1E3B66]/60 space-y-5">
+              <div className="p-6 rounded-2xl bg-[#06152B]/90 backdrop-blur-xl border border-[#1E437C]/65 space-y-5">
                 {/* Analisa Data Section */}
                 <div className="space-y-2.5">
                   <div className="flex flex-wrap items-center justify-between gap-2">
