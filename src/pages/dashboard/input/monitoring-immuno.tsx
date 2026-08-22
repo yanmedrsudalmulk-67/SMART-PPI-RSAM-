@@ -510,7 +510,11 @@ export default function InputMonitoringImmunoPage() {
                 className="relative w-24 h-24 rounded-xl overflow-hidden border border-white/10 shadow-sm"
               >
                 <img
-                  src={URL.createObjectURL(img)}
+                  src={
+                    (img as any) instanceof File || (img as any) instanceof Blob
+                      ? URL.createObjectURL(img as any)
+                      : (img as any)?.url || (typeof img === "string" ? img : "")
+                  }
                   alt="img"
                   className="w-full h-full object-cover"
                 />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '@/lib/supabase';
 import { 
@@ -135,7 +135,7 @@ const ProfessionFilter = ({
 export default function HandHygieneReport({ 
   filters 
 }: { 
-  filters: { searchQuery: string, periode: string, type: string } 
+  filters: { searchQuery: string, periode: string, type: string, unitFilter?: string } 
 }) {
   const { hospitalLogoUrl } = useAppContext();
   const [data, setData] = useState<any[]>([]);
@@ -190,36 +190,69 @@ export default function HandHygieneReport({
     </div>
   );
 
-  const fetchData = async () => {
+  const normalizeHH = (item: any) => {
+    const json = item.data_indikator || item.checklist_json || {};
+    return {
+      ...item,
+      id: item.id,
+      observer: item.observer || item.supervisor || '',
+      unit: item.unit || item.ruangan || '',
+      profesi: item.profesi || json.profesi || 'LAINNYA',
+      start_time: item.start_time || item.tanggal_waktu || item.created_at,
+      end_time: item.end_time || item.tanggal_waktu || item.start_time || item.created_at,
+      m1: item.m1 || json.m1 || null,
+      m2: item.m2 || json.m2 || null,
+      m3: item.m3 || json.m3 || null,
+      m4: item.m4 || json.m4 || null,
+      m5: item.m5 || json.m5 || null,
+      peluang: item.peluang !== undefined ? item.peluang : item.jumlah_dinilai !== undefined ? item.jumlah_dinilai : 0,
+      patuh: item.patuh !== undefined ? item.patuh : item.jumlah_patuh !== undefined ? item.jumlah_patuh : 0,
+      persentase: item.persentase !== undefined ? item.persentase : 0,
+    };
+  };
+
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const { data: result } = await supabase.from('audit_hand_hygiene').select('*').order('start_time', { ascending: false });
-      if (result) setData(result);
+      const [hhRes, sessionsRes] = await Promise.all([
+        supabase.from('audit_hand_hygiene').select('*').order('start_time', { ascending: false }),
+        supabase.from('audit_sessions').select('*').eq('indikator_id', 'audit_hand_hygiene').order('tanggal_waktu', { ascending: false })
+      ]);
+
+      const raw = [...(hhRes.data || []), ...(sessionsRes.data || [])];
+      const seen = new Set<string>();
+      const combined = raw.filter(item => {
+        if (!item.id || seen.has(item.id)) return false;
+        seen.add(item.id);
+        return true;
+      }).map(normalizeHH);
+
+      combined.sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
+      setData(combined);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
     const ch = supabase.channel('audit_hand_hygiene_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_hand_hygiene' }, (payload) => {
-         if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-             setData(prev => {
-                const norm = payload.new as any;
-                const isUpdate = prev.some(p => p.id === norm.id);
-                const nextData = isUpdate ? prev.map(p => p.id === norm.id ? norm : p) : [norm, ...prev];
-                return nextData.sort((a,b) => new Date(b.start_time || b.waktu).getTime() - new Date(a.start_time || a.waktu).getTime());
-             });
-          } else if (payload.eventType === 'DELETE') {
-             setData(prev => prev.filter(p => p.id !== payload.old.id));
-          }
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_hand_hygiene' }, () => {
+         fetchData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_sessions', filter: 'indikator_id=eq.audit_hand_hygiene' }, () => {
+         fetchData();
+      })
+      .on('broadcast', { event: 'audit_submitted' }, (payload) => {
+        if (payload?.payload?.indikator_id === 'audit_hand_hygiene') {
+          fetchData();
+        }
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, []);
+  }, [fetchData]);
 
   // Ensure scroll resets to top when data loading finishes
   useEffect(() => {
@@ -240,6 +273,9 @@ export default function HandHygieneReport({
 
     if (!loading) {
       scrollToTop();
+      requestAnimationFrame(scrollToTop);
+      setTimeout(scrollToTop, 50);
+      setTimeout(scrollToTop, 150);
     }
   }, [loading]);
 
@@ -247,6 +283,9 @@ export default function HandHygieneReport({
     return data.filter(item => {
       if (selectedProfessions.length > 0) {
         if (!item.profesi || !selectedProfessions.includes(item.profesi.trim().toUpperCase())) return false;
+      }
+      if (filters.unitFilter && filters.unitFilter !== 'Semua Unit') {
+        if (item.unit !== filters.unitFilter && item.ruangan !== filters.unitFilter) return false;
       }
       if (filters.searchQuery) {
         const query = filters.searchQuery.toLowerCase();

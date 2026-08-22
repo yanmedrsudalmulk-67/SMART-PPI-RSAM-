@@ -119,41 +119,57 @@ export default function InputMonitoringRuangIsolasiPage() {
         setIsEditMode(true);
         setEditId(id);
         const loadEditData = async () => {
-          const { data: ed, error } = await supabase
+          let ed: any = null;
+          const { data: sessionData, error: sessionErr } = await supabase
             .from("audit_sessions")
             .select("*")
             .eq("id", id)
             .single();
-          if (ed && !error) {
-            if (ed.tanggal_waktu) setStartTime(new Date(ed.tanggal_waktu));
-            if (ed.observer) setObserver(ed.observer);
-            
+
+          if (sessionData && !sessionErr) {
+            ed = sessionData;
+          } else {
+            const { data: nativeData } = await supabase
+              .from("audit_ruang_isolasi")
+              .select("*")
+              .eq("id", id)
+              .single();
+            if (nativeData) ed = nativeData;
+          }
+
+          if (ed) {
+            if (ed.tanggal_waktu || ed.waktu) setStartTime(new Date(ed.tanggal_waktu || ed.waktu));
+            if (ed.observer || ed.supervisor) setObserver(ed.observer || ed.supervisor);
 
             const indicatorsData = ed.data_indikator || ed.checklist_json || {};
-            if (indicatorsData.temuan) setTemuan(indicatorsData.temuan);
-            if (indicatorsData.rekomendasi) setRekomendasi(indicatorsData.rekomendasi);
-            
-            const displayPjName = indicatorsData.nama_pj || indicatorsData.nama_pj_ruangan || ed.nama_pj_ruangan || "";
+            const answersMap = indicatorsData.data || indicatorsData.checklist_json?.data || indicatorsData;
+            const ketMap = indicatorsData.keterangan || indicatorsData.checklist_json?.keterangan || {};
+
+            if (indicatorsData.temuan || ed.temuan) setTemuan(indicatorsData.temuan || ed.temuan || "");
+            if (indicatorsData.rekomendasi || ed.rekomendasi) setRekomendasi(indicatorsData.rekomendasi || ed.rekomendasi || "");
+
+            const displayPjName = ed.nama_pj_ruangan || ed.nama_pj || indicatorsData.nama_pj_ruangan || indicatorsData.nama_pj || "";
             if (typeof setPjName === "function") setPjName(displayPjName);
 
             try {
               setData((prev: any) => {
                 const updated = { ...prev };
                 Object.keys(updated).forEach((key) => {
-                  if (indicatorsData[key] !== undefined) {
-                    updated[key] = indicatorsData[key];
+                  if (answersMap && answersMap[key] !== undefined) {
+                    updated[key] = answersMap[key];
                   }
                 });
                 return updated;
               });
+              if (ketMap && typeof ketMap === "object") {
+                setKeteranganData(ketMap);
+              }
             } catch (err) {}
-
-            
 
             // Prefill signatures
             setTimeout(() => {
-              const t1 = ed.ttd_pj_ruangan || indicatorsData.ttd_pj || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
-              const t2 = ed.ttd_ipcn || indicatorsData.ttd_ipcn || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
+              const t1 = ed.ttd_pj_ruangan || ed.ttd_pj || indicatorsData.ttd_pj_ruangan || indicatorsData.ttd_pj || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
+              const t2 = ed.ttd_ipcn || ed.tanda_tangan_2 || indicatorsData.ttd_ipcn || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
               if (t1 && sigRef.current?.setPjSignature) {
                 sigRef.current.setPjSignature(t1);
               }
@@ -163,12 +179,10 @@ export default function InputMonitoringRuangIsolasiPage() {
             }, 800);
 
             // Prefill documentation
-            if (indicatorsData.dokumentasi) {
+            const docs = ed.foto || indicatorsData.dokumentasi || indicatorsData.foto || [];
+            if (Array.isArray(docs) && docs.length > 0) {
               setImages(
-                indicatorsData.dokumentasi.map((url: string) => ({
-                  url,
-                  file: null as any,
-                }))
+                docs.map((item: any) => typeof item === "string" ? ({ url: item } as any) : item)
               );
             }
           }
@@ -235,9 +249,17 @@ export default function InputMonitoringRuangIsolasiPage() {
       ) : [];
       const payload = {
         waktu: startTime?.toISOString() || new Date().toISOString(),
+        ruangan: "Ruang Isolasi",
+        unit: "Ruang Isolasi",
+        nama_pj: pjName.trim(),
+        nama_pj_ruangan: pjName.trim(),
         checklist_json: {
           data,
           keterangan: keteranganData,
+          ruangan: "Ruang Isolasi",
+          unit: "Ruang Isolasi",
+          nama_pj: pjName.trim(),
+          nama_pj_ruangan: pjName.trim(),
         },
         persentase: stats.persentase,
         temuan,
@@ -247,19 +269,32 @@ export default function InputMonitoringRuangIsolasiPage() {
         status_kepatuhan: stats.statusText,
         foto: uploadedUrls,
         ttd_pj,
-        ttd_ipcn
+        ttd_ipcn,
+        ttd_pj_ruangan: ttd_pj,
       };
       const sessionPayload = {
         indikator_id: "monitoring_ppi_ruang_isolasi",
         nama_indikator: "MONITORING RUANG ISOLASI",
         tanggal_waktu: payload.waktu,
         observer: observer,
+        unit: "Ruang Isolasi",
+        nama_pj: pjName.trim(),
+        nama_pj_ruangan: pjName.trim(),
+        ttd_pj_ruangan: ttd_pj,
+        ttd_ipcn: ttd_ipcn,
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.statusText,
         data_indikator: {
           ...payload.checklist_json,
+          ruangan: "Ruang Isolasi",
+          unit: "Ruang Isolasi",
+          nama_pj: pjName.trim(),
+          nama_pj_ruangan: pjName.trim(),
+          ttd_pj: ttd_pj,
+          ttd_pj_ruangan: ttd_pj,
+          ttd_ipcn: ttd_ipcn,
           temuan: payload.temuan,
           rekomendasi: payload.rekomendasi,
           dokumentasi: uploadedUrls,
@@ -300,13 +335,18 @@ export default function InputMonitoringRuangIsolasiPage() {
       });
       await supabase.from("audit_details").insert(detailPayloads);
       try {
-        await supabase
-          .from("audit_ruang_isolasi")
-          .insert([{ ...payload, ttd_pj, ttd_ipcn }])
-          .select("id")
-          .single();
+        if (isEditMode && editId) {
+          await supabase
+            .from("audit_ruang_isolasi")
+            .update({ ...payload, ttd_pj, ttd_ipcn })
+            .eq("id", editId);
+        } else {
+          await supabase
+            .from("audit_ruang_isolasi")
+            .insert([{ ...payload, ttd_pj, ttd_ipcn }]);
+        }
       } catch (err) {
-        console.warn("Failed to insert into native table, but saved to generic session.", err);
+        console.warn("Failed to insert/update native table, but saved to generic session.", err);
       }
       const ch = supabase.channel('changes_monitoring_ppi_ruang_isolasi');
       ch.subscribe((status) => {
@@ -314,7 +354,7 @@ export default function InputMonitoringRuangIsolasiPage() {
           ch.send({
             type: 'broadcast',
             event: 'audit_submitted',
-            payload: { tableName: 'monitoring_ppi_ruang_isolasi' }
+            payload: { tableName: 'monitoring_ppi_ruang_isolasi', indikator_id: 'monitoring_ppi_ruang_isolasi' }
           }).then(() => supabase.removeChannel(ch));
         }
       });
@@ -367,7 +407,7 @@ export default function InputMonitoringRuangIsolasiPage() {
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
             <Activity className="w-4 h-4 text-purple-400" /> Data Subjek
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-3">
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
                 Waktu Audit
@@ -387,6 +427,14 @@ export default function InputMonitoringRuangIsolasiPage() {
                 onChange={(e) => setStartTime(new Date(e.target.value))}
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 [color-scheme:dark]"
               />
+            </div>
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
+                Ruangan
+              </label>
+              <div className="w-full bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-3 text-sm text-blue-300 font-medium">
+                Ruang Isolasi
+              </div>
             </div>
             <EditableSelect
               label="Supervisor"
@@ -543,7 +591,11 @@ export default function InputMonitoringRuangIsolasiPage() {
                 className="relative w-24 h-24 rounded-xl overflow-hidden border border-white/10 shadow-sm"
               >
                 <img
-                  src={URL.createObjectURL(img)}
+                  src={
+                    (img as any) instanceof File || (img as any) instanceof Blob
+                      ? URL.createObjectURL(img as any)
+                      : (img as any)?.url || (typeof img === "string" ? img : "")
+                  }
                   alt="img"
                   className="w-full h-full object-cover"
                 />

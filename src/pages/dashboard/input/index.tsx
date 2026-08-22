@@ -608,6 +608,7 @@ export default function InputIndexPage() {
           >
             <Link
               href={mod.href}
+              prefetch={false}
               className="relative group p-6 rounded-[28px] bg-white/70 dark:bg-[#0F172A]/80 backdrop-blur-sm border border-slate-200 dark:border-white/5 flex flex-col overflow-hidden shadow-sm hover:shadow-xl dark:shadow-none dark:hover:shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all duration-300 w-full"
             >
               {/* Background gradient hint */}

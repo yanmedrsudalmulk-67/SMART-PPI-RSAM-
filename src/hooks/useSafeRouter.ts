@@ -4,17 +4,16 @@ function isAbortError(err: any) {
   if (!err) return false;
   if (err.cancelled) return true;
   if (err.name === 'AbortError') return true;
-  const msg = typeof err === 'string' ? err : err?.message;
-  if (typeof msg === 'string') {
-    if (
-      msg.includes('Abort fetching component') ||
-      msg.includes('Route Cancelled') ||
-      msg.includes('cancelled')
-    ) {
-      return true;
-    }
-  }
-  return false;
+  const str = String(
+    err?.message || err?.reason?.message || err?.reason || err?.error || err || ''
+  );
+  return (
+    str.includes('Abort fetching component') ||
+    str.includes('Route Cancelled') ||
+    str.includes('cancelled') ||
+    str.includes('aborted') ||
+    str.includes('AbortError')
+  );
 }
 
 export function useSafeRouter() {

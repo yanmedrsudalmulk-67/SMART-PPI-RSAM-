@@ -111,7 +111,48 @@ export default function EtikaBatukReport({
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+
+    const ch = supabase
+      .channel('etika_batuk_realtime_channel')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_sessions', filter: `indikator_id=eq.${tableName}` }, () => {
+        fetchData();
+      })
+      .on('broadcast', { event: 'audit_submitted' }, (payload) => {
+        if (payload?.payload?.indikator_id === tableName || payload?.payload?.tableName === tableName) {
+          fetchData();
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [fetchData, tableName]);
+
+  // Ensure scroll resets to top when data loading finishes
+  useEffect(() => {
+    const scrollToTop = () => {
+      const mainEl = document.querySelector("main");
+      if (mainEl) {
+        mainEl.scrollTop = 0;
+        mainEl.scrollTo({ top: 0, behavior: "instant" as any });
+      }
+      const scrollableElements = document.querySelectorAll('.overflow-y-auto');
+      scrollableElements.forEach(el => {
+        el.scrollTop = 0;
+      });
+      window.scrollTo({ top: 0, behavior: "instant" as any });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    if (!loading) {
+      scrollToTop();
+      requestAnimationFrame(scrollToTop);
+      setTimeout(scrollToTop, 50);
+      setTimeout(scrollToTop, 150);
+    }
+  }, [loading]);
 
   const filteredData = data.filter((d) => {
     if (!d.waktu) return false;

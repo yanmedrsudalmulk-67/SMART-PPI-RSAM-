@@ -33,7 +33,6 @@ const NavItem = memo(({ item, isActive, onClick }: { item: any, isActive: boolea
   return (
     <Link 
       href={item.href}
-      prefetch={false}
       onClick={onClick}
       className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
     >
@@ -189,7 +188,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     document.documentElement.classList.remove('light');
     document.documentElement.classList.add('dark');
     localStorage.setItem('theme', 'dark');
-  }, [mounted]);
+
+    // Warm up and prefetch routes to prevent route change aborts
+    navItems.forEach((item) => {
+      try {
+        router.prefetch(item.href);
+      } catch (e) {
+        // ignore prefetch errors
+      }
+    });
+  }, [mounted, router]);
 
   if (!mounted) return null;
 
@@ -268,7 +276,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             onClick={(e) => {
               e.preventDefault();
               setUserRole('');
-              router.push('/login');
+              router.push('/');
             }}
             className="flex items-center justify-center gap-3 w-full py-3.5 px-4 rounded-xl font-bold text-[14px] tracking-wide transition-all duration-300 group bg-red-500/20 hover:bg-red-500/40 text-white border border-red-500/30 hover:border-red-400/50 hover:shadow-[0_4px_20px_rgba(239,68,68,0.3)] hover:scale-[1.02] active:scale-[0.98]"
             title="Keluar"
@@ -343,7 +351,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Link 
                 key={item.name} 
                 href={item.href}
-                prefetch={false}
                 className="relative flex-1 h-[56px] flex flex-col items-center justify-center transition-all duration-200 outline-none px-1"
               >
                 {isActive && (

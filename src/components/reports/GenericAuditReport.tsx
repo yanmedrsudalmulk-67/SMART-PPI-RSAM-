@@ -92,6 +92,9 @@ const INDICATOR_TO_FORM_PATH: Record<string, string> = {
   'monitoring_laboratorium': '/dashboard/input/monitoring-laboratorium',
   'monitoring_radiologi': '/dashboard/input/monitoring-radiologi',
   'monitoring_ppi_ruang_isolasi': '/dashboard/input/monitoring-ruang_isolasi',
+  'audit_ruang_isolasi': '/dashboard/input/monitoring-ruang_isolasi',
+  'ruang_isolasi': '/dashboard/input/monitoring-ruang_isolasi',
+  'monitoring_ruang_isolasi': '/dashboard/input/monitoring-ruang_isolasi',
   'ppi_ruang_isolasi': '/dashboard/input/ppi-ruang-isolasi',
   'monitoring_immuno': '/dashboard/input/monitoring-immuno',
   'monitoring_fasilitas_hand_hygiene': '/dashboard/input/monitoring-fasilitas_hh',
@@ -710,6 +713,9 @@ export default function GenericAuditReport({
 
     if (!loading) {
       scrollToTop();
+      requestAnimationFrame(scrollToTop);
+      setTimeout(scrollToTop, 50);
+      setTimeout(scrollToTop, 150);
     }
   }, [loading, selectedRecordId]);
 

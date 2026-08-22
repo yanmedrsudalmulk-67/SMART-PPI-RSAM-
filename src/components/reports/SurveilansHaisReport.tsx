@@ -120,6 +120,9 @@ export default function SurveilansHaisReport({
         },
         fetchHaisData,
       )
+      .on("broadcast", { event: "audit_submitted" }, () => {
+        fetchHaisData();
+      })
       .subscribe();
 
     return () => {
@@ -146,6 +149,9 @@ export default function SurveilansHaisReport({
 
     if (!loading) {
       scrollToTop();
+      requestAnimationFrame(scrollToTop);
+      setTimeout(scrollToTop, 50);
+      setTimeout(scrollToTop, 150);
     }
   }, [loading]);
 

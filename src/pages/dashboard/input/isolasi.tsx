@@ -238,6 +238,7 @@ export default function IsolasiInputPage() {
       <div className="flex items-center gap-4 mb-6 py-4 border-b border-white/5">
         <Link
           href="/dashboard/input"
+          prefetch={false}
           className="p-2.5 bg-white/5 rounded-xl border border-white/10 text-slate-400 hover:text-white transition-all"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -368,6 +369,7 @@ export default function IsolasiInputPage() {
                 </div>
 
                 <Link
+                  prefetch={false}
                   href={
                     ind.id === "hh"
                       ? "/dashboard/input/hand-hygiene"

@@ -320,8 +320,10 @@ export default function ReportsPage() {
     setIsCategoryTransitioning(true);
     setKategori(cat);
     setSubKategori((SUB_CATEGORIES as any)[cat]?.[0] || null);
+    forceScrollToTop();
     setTimeout(() => {
       setIsCategoryTransitioning(false);
+      forceScrollToTop();
     }, 280);
   };
   const [selectedIndicator, setSelectedIndicator] = useState<string | null>(null);
@@ -339,28 +341,36 @@ export default function ReportsPage() {
     }
   }, [isReportsLoaded, reportsData]);
 
-  // Automatically scroll main container to top when changing indicators
-  useEffect(() => {
-    const scrollToTop = () => {
+  // Helper to force scroll reset across main layout, window, and all scroll containers
+  const forceScrollToTop = () => {
+    if (typeof window === 'undefined') return;
+    const reset = () => {
       const mainEl = document.querySelector('main');
       if (mainEl) {
         mainEl.scrollTop = 0;
         mainEl.scrollTo({ top: 0, behavior: 'instant' as any });
       }
-      
       const scrollableElements = document.querySelectorAll('.overflow-y-auto');
       scrollableElements.forEach(el => {
         el.scrollTop = 0;
       });
-
       window.scrollTo({ top: 0, behavior: 'instant' as any });
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
     };
 
-    // Scroll immediately
-    scrollToTop();
-  }, [selectedIndicator]);
+    reset();
+    requestAnimationFrame(reset);
+    setTimeout(reset, 50);
+    setTimeout(reset, 150);
+    setTimeout(reset, 300);
+    setTimeout(reset, 500);
+  };
+
+  // Automatically scroll main container to top when changing indicators, categories, or subcategories
+  useEffect(() => {
+    forceScrollToTop();
+  }, [selectedIndicator, kategori, subKategori]);
 
   const startDateISO = useMemo(() => {
     if (periode === 'Bulanan') {
@@ -478,12 +488,7 @@ export default function ReportsPage() {
 
   const handleBack = () => {
      setSelectedIndicator(null);
-     const mainEl = document.querySelector('main');
-     if (mainEl) {
-       mainEl.scrollTo({ top: 0, behavior: 'smooth' });
-     } else {
-       window.scrollTo({ top: 0, behavior: 'smooth' });
-     }
+     forceScrollToTop();
   };
 
   const selectedData = INDICATORS_MAP[selectedIndicator || ''];
@@ -492,7 +497,7 @@ export default function ReportsPage() {
     <div className="max-w-[1600px] mx-auto pb-32">
       <AnimatePresence mode="wait">
         {!selectedIndicator && (
-          <motion.div key="hub" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20, scale: 0.98 }} className="space-y-8">
+          <motion.div key="hub" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20, scale: 0.98 }} onAnimationComplete={forceScrollToTop} className="space-y-8">
             
             {/* Header & Filter Periode */}
             {kategori !== 'Surveilans HAIs' && (
@@ -689,7 +694,10 @@ export default function ReportsPage() {
                         <button
                           key={tab.id}
                           id={`sub-tab-${tab.id.toLowerCase()}`}
-                          onClick={() => setSubKategori(tab.id)}
+                          onClick={() => {
+                            setSubKategori(tab.id);
+                            forceScrollToTop();
+                          }}
                           className={`flex-1 flex items-center justify-center gap-2 py-3 text-[10px] sm:text-xs font-bold uppercase tracking-widest rounded-full transition-colors relative z-10 whitespace-nowrap shrink-0 overflow-hidden text-ellipsis ${
                             isSubActive
                               ? "text-white"
@@ -754,12 +762,7 @@ export default function ReportsPage() {
                         stats={statsMap.get(ind.id)}
                         onClick={() => {
                           setSelectedIndicator(ind.id);
-                          const mainEl = document.querySelector('main');
-                          if (mainEl) {
-                            mainEl.scrollTo({ top: 0, behavior: 'instant' as any });
-                          } else {
-                            window.scrollTo({ top: 0, behavior: 'auto' });
-                          }
+                          forceScrollToTop();
                         }}
                       />
                     </motion.div>
@@ -772,7 +775,7 @@ export default function ReportsPage() {
         )}
 
         {selectedIndicator && (
-          <motion.div key="detail" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
+          <motion.div key="detail" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} onAnimationComplete={forceScrollToTop} className="space-y-6">
             
             {/* Header Detail View */}
             <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-3xl p-4 sm:p-6 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">

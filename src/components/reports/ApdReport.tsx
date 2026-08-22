@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import { ReportSkeleton } from '@/components/SkeletonLoading';
 import { supabase } from '@/lib/supabase';
@@ -17,72 +17,89 @@ import { useAppContext } from '@/components/Providers';
 export default function ApdReport({ 
   filters 
 }: { 
-  filters: { searchQuery: string, periode: string, type?: string } 
+  filters: { searchQuery: string, periode: string, type?: string, unitFilter?: string } 
 }) {
   const { hospitalLogoUrl } = useAppContext();
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [chartType, setChartType] = useState<'line'|'bar'>('bar');
 
-  const fetchData = async () => {
+  const normalizeApd = (item: any) => {
+    const json = item.data_indikator || item.checklist_json || {};
+    let dinilai = 0;
+    let patuh = 0;
+    const components = ['masker', 'sarung_tangan', 'penutup_kepala', 'apron', 'goggle', 'sepatu_boot', 'gaun_pelindung'];
+    components.forEach(comp => {
+      const val = String(item[comp] || json[comp] || '').toLowerCase();
+      if (val === 'ya' || val === 'sesuai' || val === 'tidak' || val === 'tidak sesuai') {
+        dinilai++;
+        if (val === 'ya' || val === 'sesuai') patuh++;
+      }
+    });
+    const persentase = dinilai > 0 ? Math.round((patuh / dinilai) * 100) : item.persentase || 0;
+    return {
+      ...item,
+      id: item.id,
+      tanggal_waktu: item.tanggal_waktu || item.waktu || item.created_at,
+      observer: item.observer || item.supervisor || '',
+      unit: item.unit || item.ruangan || '',
+      profesi: item.profesi || json.profesi || 'LAINNYA',
+      tindakan: item.tindakan || item.jenis_tindakan || json.tindakan || '',
+      masker: item.masker || json.masker,
+      sarung_tangan: item.sarung_tangan || json.sarung_tangan,
+      penutup_kepala: item.penutup_kepala || json.penutup_kepala,
+      apron: item.apron || json.apron,
+      goggle: item.goggle || json.goggle,
+      sepatu_boot: item.sepatu_boot || json.sepatu_boot,
+      gaun_pelindung: item.gaun_pelindung || json.gaun_pelindung,
+      jumlah_dinilai: dinilai || item.jumlah_dinilai || 0,
+      jumlah_patuh: patuh || item.jumlah_patuh || 0,
+      persentase,
+    };
+  };
+
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const { data: result } = await supabase.from('audit_apd').select('*').order('tanggal_waktu', { ascending: false });
-      if (result) {
-        const mappedResult = result.map(item => {
-          let dinilai = 0;
-          let patuh = 0;
-          const components = ['masker', 'sarung_tangan', 'penutup_kepala', 'apron', 'goggle', 'sepatu_boot', 'gaun_pelindung'];
-          components.forEach(comp => {
-            const val = String(item[comp] || '').toLowerCase();
-            if (val === 'ya' || val === 'sesuai' || val === 'tidak' || val === 'tidak sesuai') {
-              dinilai++;
-              if (val === 'ya' || val === 'sesuai') patuh++;
-            }
-          });
-          const persentase = dinilai > 0 ? Math.round((patuh / dinilai) * 100) : item.persentase || 0;
-          return { ...item, jumlah_dinilai: dinilai || item.jumlah_dinilai, jumlah_patuh: patuh || item.jumlah_patuh, persentase };
-        });
-        setData(mappedResult);
-      }
+      const [apdRes, sessionsRes] = await Promise.all([
+        supabase.from('audit_apd').select('*').order('tanggal_waktu', { ascending: false }),
+        supabase.from('audit_sessions').select('*').eq('indikator_id', 'audit_apd').order('tanggal_waktu', { ascending: false })
+      ]);
+
+      const raw = [...(apdRes.data || []), ...(sessionsRes.data || [])];
+      const seen = new Set<string>();
+      const combined = raw.filter(item => {
+        if (!item.id || seen.has(item.id)) return false;
+        seen.add(item.id);
+        return true;
+      }).map(normalizeApd);
+
+      combined.sort((a, b) => new Date(b.tanggal_waktu).getTime() - new Date(a.tanggal_waktu).getTime());
+      setData(combined);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
-    const ch = supabase.channel('audit_apd_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_apd' }, (payload) => {
-         if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-             setData(prev => {
-                const norm = payload.new as any;
-                let patuh = 0;
-                let dinilai = 0;
-                const components = ['masker', 'sarung_tangan', 'penutup_kepala', 'apron', 'goggle', 'sepatu_boot', 'gaun_pelindung'];
-                components.forEach(comp => {
-                  const val = String(norm[comp] || '').toLowerCase();
-                  if (val === 'ya' || val === 'sesuai' || val === 'tidak' || val === 'tidak sesuai') {
-                    dinilai++;
-                    if (val === 'ya' || val === 'sesuai') patuh++;
-                  }
-                });
-                const persentase = dinilai > 0 ? Math.round((patuh / dinilai) * 100) : norm.persentase || 0;
-                const mappedNorm = { ...norm, jumlah_dinilai: dinilai || norm.jumlah_dinilai, jumlah_patuh: patuh || norm.jumlah_patuh, persentase };
-
-                const isUpdate = prev.some(p => p.id === mappedNorm.id);
-                const nextData = isUpdate ? prev.map(p => p.id === mappedNorm.id ? mappedNorm : p) : [mappedNorm, ...prev];
-                return nextData.sort((a,b) => new Date(b.tanggal_waktu || b.created_at).getTime() - new Date(a.tanggal_waktu || a.created_at).getTime());
-             });
-          } else if (payload.eventType === 'DELETE') {
-             setData(prev => prev.filter(p => p.id !== payload.old.id));
-          }
+    const ch = supabase.channel('audit_apd_realtime_all')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_apd' }, () => {
+         fetchData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_sessions', filter: 'indikator_id=eq.audit_apd' }, () => {
+         fetchData();
+      })
+      .on('broadcast', { event: 'audit_submitted' }, (payload) => {
+        if (payload?.payload?.indikator_id === 'audit_apd') {
+          fetchData();
+        }
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, []);
+  }, [fetchData]);
 
   // Ensure scroll resets to top when data loading finishes
   useEffect(() => {
@@ -103,11 +120,17 @@ export default function ApdReport({
 
     if (!loading) {
       scrollToTop();
+      requestAnimationFrame(scrollToTop);
+      setTimeout(scrollToTop, 50);
+      setTimeout(scrollToTop, 150);
     }
   }, [loading]);
 
   const filteredData = useMemo(() => {
     return data.filter(item => {
+      if (filters.unitFilter && filters.unitFilter !== 'Semua Unit') {
+        if (item.unit !== filters.unitFilter && item.ruangan !== filters.unitFilter) return false;
+      }
       if (filters.searchQuery) {
         const query = filters.searchQuery.toLowerCase();
         if (!item.observer?.toLowerCase().includes(query) && !item.unit?.toLowerCase().includes(query) && !item.tindakan?.toLowerCase().includes(query)) return false;

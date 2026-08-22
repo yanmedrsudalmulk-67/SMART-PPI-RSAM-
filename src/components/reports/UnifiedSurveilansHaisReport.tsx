@@ -160,6 +160,9 @@ export default function UnifiedSurveilansHaisReport() {
 
     if (!loading) {
       scrollToTop();
+      requestAnimationFrame(scrollToTop);
+      setTimeout(scrollToTop, 50);
+      setTimeout(scrollToTop, 150);
     }
   }, [loading]);
 

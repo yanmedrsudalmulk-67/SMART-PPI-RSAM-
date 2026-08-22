@@ -67,41 +67,58 @@ export default function InputPPIRuangIsolasiPage() {
         setIsEditMode(true);
         setEditId(id);
         const loadEditData = async () => {
-          const { data: ed, error } = await supabase
+          let ed: any = null;
+          const { data: sessionData, error: sessionErr } = await supabase
             .from("audit_sessions")
             .select("*")
             .eq("id", id)
             .single();
-          if (ed && !error) {
-            if (ed.tanggal_waktu) setStartTime(new Date(ed.tanggal_waktu));
-            if (ed.observer) setObserver(ed.observer);
-            
+
+          if (sessionData && !sessionErr) {
+            ed = sessionData;
+          } else {
+            const { data: nativeData } = await supabase
+              .from("ppi_ruang_isolasi")
+              .select("*")
+              .eq("id", id)
+              .single();
+            if (nativeData) ed = nativeData;
+          }
+
+          if (ed) {
+            if (ed.tanggal_waktu || ed.waktu) setStartTime(new Date(ed.tanggal_waktu || ed.waktu));
+            if (ed.observer || ed.supervisor) setObserver(ed.observer || ed.supervisor);
 
             const indicatorsData = ed.data_indikator || ed.checklist_json || {};
-            if (indicatorsData.temuan) setTemuan(indicatorsData.temuan);
-            if (indicatorsData.rekomendasi) setRekomendasi(indicatorsData.rekomendasi);
-            
-            const displayPjName = indicatorsData.nama_pj || indicatorsData.nama_pj_ruangan || ed.nama_pj_ruangan || "";
+            const answersMap = indicatorsData.data || indicatorsData.checklist_json?.data || indicatorsData;
+
+            if (indicatorsData.nama_pasien || ed.nama_pasien) setNamaPasien(indicatorsData.nama_pasien || ed.nama_pasien || "");
+            if (indicatorsData.umur || ed.umur) setUmur(indicatorsData.umur || ed.umur || "");
+            if (indicatorsData.no_rm || ed.no_rm) setNoRm(indicatorsData.no_rm || ed.no_rm || "");
+            if (indicatorsData.tekanan_udara || ed.tekanan_udara) setTekananUdara(indicatorsData.tekanan_udara || ed.tekanan_udara || null);
+            if (indicatorsData.keterangan || ed.keterangan) setKeterangan(indicatorsData.keterangan || ed.keterangan || "");
+            if (indicatorsData.temuan || ed.temuan) setTemuan(indicatorsData.temuan || ed.temuan || "");
+            if (indicatorsData.rekomendasi || ed.rekomendasi) setRekomendasi(indicatorsData.rekomendasi || ed.rekomendasi || "");
+
+            const displayPjName = ed.nama_pj_ruangan || ed.nama_pj || indicatorsData.nama_pj_ruangan || indicatorsData.nama_pj || "";
             if (typeof setPjName === "function") setPjName(displayPjName);
 
             try {
               setData((prev: any) => {
                 const updated = { ...prev };
                 Object.keys(updated).forEach((key) => {
-                  if (indicatorsData[key] !== undefined) {
-                    updated[key] = indicatorsData[key];
+                  if (answersMap && answersMap[key] !== undefined) {
+                    updated[key] = answersMap[key];
                   }
                 });
                 return updated;
               });
             } catch (err) {}
 
-            
-
             // Prefill signatures
             setTimeout(() => {
-              const t1 = ed.ttd_pj_ruangan || indicatorsData.ttd_pj || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
-              const t2 = ed.ttd_ipcn || indicatorsData.ttd_ipcn || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
+              const t1 = ed.ttd_pj_ruangan || ed.ttd_pj || indicatorsData.ttd_pj_ruangan || indicatorsData.ttd_pj || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
+              const t2 = ed.ttd_ipcn || ed.tanda_tangan_2 || indicatorsData.ttd_ipcn || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
               if (t1 && sigRef.current?.setPjSignature) {
                 sigRef.current.setPjSignature(t1);
               }
@@ -111,12 +128,10 @@ export default function InputPPIRuangIsolasiPage() {
             }, 800);
 
             // Prefill documentation
-            if (indicatorsData.dokumentasi) {
+            const docs = ed.foto || indicatorsData.dokumentasi || indicatorsData.foto || [];
+            if (Array.isArray(docs) && docs.length > 0) {
               setImages(
-                indicatorsData.dokumentasi.map((url: string) => ({
-                  url,
-                  file: null as any,
-                }))
+                docs.map((item: any) => typeof item === "string" ? ({ url: item } as any) : item)
               );
             }
           }
@@ -177,11 +192,21 @@ export default function InputPPIRuangIsolasiPage() {
       ) : [];
       const payload = {
         waktu: startTime?.toISOString() || new Date().toISOString(),
+        ruangan: "Ruang Isolasi",
+        unit: "Ruang Isolasi",
+        nama_pj: pjName.trim(),
+        nama_pj_ruangan: pjName.trim(),
         nama_pasien: namaPasien,
         umur: umur,
         no_rm: noRm,
         tekanan_udara: tekananUdara,
-        checklist_json: { data },
+        checklist_json: {
+          data,
+          ruangan: "Ruang Isolasi",
+          unit: "Ruang Isolasi",
+          nama_pj: pjName.trim(),
+          nama_pj_ruangan: pjName.trim(),
+        },
         keterangan,
         persentase: stats.persentase,
         temuan,
@@ -191,19 +216,32 @@ export default function InputPPIRuangIsolasiPage() {
         status_kepatuhan: stats.statusText,
         foto: uploadedUrls,
         ttd_pj,
-        ttd_ipcn
+        ttd_ipcn,
+        ttd_pj_ruangan: ttd_pj,
       };
       const sessionPayload = {
         indikator_id: "ppi_ruang_isolasi",
         nama_indikator: "PPI DI RUANG ISOLASI",
         tanggal_waktu: payload.waktu,
         observer: observer,
+        unit: "Ruang Isolasi",
+        nama_pj: pjName.trim(),
+        nama_pj_ruangan: pjName.trim(),
+        ttd_pj_ruangan: ttd_pj,
+        ttd_ipcn: ttd_ipcn,
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.statusText,
         data_indikator: {
           ...payload.checklist_json,
+          ruangan: "Ruang Isolasi",
+          unit: "Ruang Isolasi",
+          nama_pj: pjName.trim(),
+          nama_pj_ruangan: pjName.trim(),
+          ttd_pj: ttd_pj,
+          ttd_pj_ruangan: ttd_pj,
+          ttd_ipcn: ttd_ipcn,
           nama_pasien: payload.nama_pasien,
           umur: payload.umur,
           no_rm: payload.no_rm,
@@ -247,13 +285,18 @@ export default function InputPPIRuangIsolasiPage() {
       });
       await supabase.from("audit_details").insert(detailPayloads);
       try {
-        await supabase
-          .from("ppi_ruang_isolasi")
-          .insert([{ ...payload, ttd_pj, ttd_ipcn }])
-          .select("id")
-          .single();
+        if (isEditMode && editId) {
+          await supabase
+            .from("ppi_ruang_isolasi")
+            .update({ ...payload, ttd_pj, ttd_ipcn })
+            .eq("id", editId);
+        } else {
+          await supabase
+            .from("ppi_ruang_isolasi")
+            .insert([{ ...payload, ttd_pj, ttd_ipcn }]);
+        }
       } catch (err) {
-        console.warn("Failed to insert into native table, but saved to generic session.", err);
+        console.warn("Failed to insert/update native table, but saved to generic session.", err);
       }
       const ch = supabase.channel('changes_ppi_ruang_isolasi');
       ch.subscribe((status) => {
@@ -261,7 +304,7 @@ export default function InputPPIRuangIsolasiPage() {
           ch.send({
             type: 'broadcast',
             event: 'audit_submitted',
-            payload: { tableName: 'ppi_ruang_isolasi' }
+            payload: { tableName: 'ppi_ruang_isolasi', indikator_id: 'ppi_ruang_isolasi' }
           }).then(() => supabase.removeChannel(ch));
         }
       });
@@ -563,7 +606,11 @@ export default function InputPPIRuangIsolasiPage() {
                 className="relative w-24 h-24 rounded-xl overflow-hidden border border-white/10 shadow-sm"
               >
                 <img
-                  src={URL.createObjectURL(img)}
+                  src={
+                    (img as any) instanceof File || (img as any) instanceof Blob
+                      ? URL.createObjectURL(img as any)
+                      : (img as any)?.url || (typeof img === "string" ? img : "")
+                  }
                   alt="img"
                   className="w-full h-full object-cover"
                 />

@@ -3,9 +3,30 @@
 @tailwind utilities;
 
 /* 120Hz / High Refresh Rate GPU rendering optimizations for performance-critical elements */
-.will-gpu {
+.will-gpu,
+.gpu-accelerated {
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  perspective: 1000px;
+  -webkit-perspective: 1000px;
+}
+
+/* 120 FPS / 144 Hz frame rate pacing */
+@media (prefers-reduced-motion: no-preference) {
+  * {
+    scroll-behavior: smooth;
+  }
+}
+
+.optimize-gpu {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+}
+
+.contain-render {
+  contain: layout style paint;
 }
 
 html, body {

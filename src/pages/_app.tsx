@@ -26,17 +26,16 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
       if (!err) return false;
       if (err.cancelled) return true;
       if (err.name === 'AbortError') return true;
-      const msg = typeof err === 'string' ? err : err?.message;
-      if (typeof msg === 'string') {
-        if (
-          msg.includes('Abort fetching component') ||
-          msg.includes('Route Cancelled') ||
-          msg.includes('cancelled')
-        ) {
-          return true;
-        }
-      }
-      return false;
+      const str = String(
+        err?.message || err?.reason?.message || err?.reason || err?.error || err || ''
+      );
+      return (
+        str.includes('Abort fetching component') ||
+        str.includes('Route Cancelled') ||
+        str.includes('cancelled') ||
+        str.includes('aborted') ||
+        str.includes('AbortError')
+      );
     };
 
     const handleRouteChangeError = (err: any) => {
@@ -45,16 +44,33 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
       }
     };
 
+    const handleWindowError = (event: ErrorEvent) => {
+      if (
+        isAbortError(event.error) ||
+        isAbortError(event.message) ||
+        (event.message && String(event.message).includes('Abort fetching component'))
+      ) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    };
+
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      if (isAbortError(event.reason)) {
+      if (
+        isAbortError(event.reason) ||
+        isAbortError(event.reason?.message) ||
+        String(event.reason || '').includes('Abort fetching component')
+      ) {
         event.preventDefault();
       }
     };
 
+    window.addEventListener('error', handleWindowError);
     window.addEventListener('unhandledrejection', handleUnhandledRejection);
     Router.events.on('routeChangeError', handleRouteChangeError);
 
     return () => {
+      window.removeEventListener('error', handleWindowError);
       window.removeEventListener('unhandledrejection', handleUnhandledRejection);
       Router.events.off('routeChangeError', handleRouteChangeError);
     };
