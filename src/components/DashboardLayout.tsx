@@ -16,6 +16,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppContext } from '@/components/Providers';
 import { AppLogo } from '@/components/AppLogo';
+import { ClockWidget } from '@/components/ClockWidget';
 import { useDashboardStore } from '@/hooks/useDashboardStore';
 import { supabase } from '@/lib/supabase';
 
@@ -284,6 +285,40 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       }`}>
         {/* Page Content */}
         <main ref={mainRef} className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 pb-32 sm:pb-10 relative overscroll-y-none [transform:translateZ(0)] will-change-scroll w-full max-w-full">
+          {/* Header Khusus Mode Portrait untuk Seluruh Menu (Dashboard, Input, Analitik, Laporan, Pengaturan) */}
+          <div className="flex sm:hidden flex-col mb-4 print:hidden">
+            <div className="flex items-center justify-between gap-3 px-1">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 flex-shrink-0 flex items-center justify-center relative">
+                  {hospitalLogoUrl ? (
+                    <img src={hospitalLogoUrl} alt="Logo RS" className="w-full h-full object-contain" />
+                  ) : (
+                    <ShieldCheck className="w-6 h-6 transition-colors duration-500 text-sky-400" />
+                  )}
+                </div>
+                
+                <div className="flex flex-col text-left transition-colors duration-500">
+                  <span className="font-heading font-bold text-[13px] tracking-wide leading-tight transition-colors duration-500 text-white">
+                    UOBK RSUD AL-MULK
+                  </span>
+                  <span className="text-[9.5px] font-bold uppercase tracking-[0.2em] transition-colors duration-500 text-slate-400">
+                    KOTA SUKABUMI
+                  </span>
+                </div>
+              </div>
+
+              <div className="shrink-0 scale-90 origin-right">
+                <ClockWidget />
+              </div>
+            </div>
+
+            {/* Garis Pembatas Tipis Gradasi Biru-Ungu Animasi Menyala */}
+            <div className="relative w-full mt-3">
+              <div className="h-[2px] w-full rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 via-purple-500 to-sky-400 bg-[length:200%_auto] animate-gradient shadow-[0_0_12px_rgba(168,85,247,0.8)]" />
+              <div className="absolute inset-0 h-[2px] w-full rounded-full bg-gradient-to-r from-sky-400 via-purple-400 to-blue-500 blur-[2px] opacity-80 animate-pulse" />
+            </div>
+          </div>
+
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={pathname}

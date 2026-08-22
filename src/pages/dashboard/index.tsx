@@ -7,6 +7,7 @@ import "swiper/css/effect-fade";
 import {
   AlertCircle,
   Shield,
+  ShieldCheck,
   Droplets,
   BarChart2,
   LineChart,
@@ -1256,8 +1257,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Widget Jam & Tanggal - Sejajar Pojok Kanan Atas */}
-        <div className="flex justify-center sm:justify-end shrink-0">
+        {/* Widget Jam & Tanggal - Desktop & Landscape */}
+        <div className="hidden sm:flex justify-end shrink-0">
           <ClockWidget />
         </div>
       </div>
