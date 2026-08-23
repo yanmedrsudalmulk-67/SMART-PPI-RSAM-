@@ -1265,37 +1265,38 @@ export default function DashboardPage() {
 
       <HeroSlider slides={slides} isLoading={isSlidesLoading} />
 
-      {/* Global Period Filter - Atlantic Blue Dop */}
+      {/* Global Period Filter - Glassmorphism 2.0 Transparan */}
       <section className="relative">
-        <div className="relative bg-gradient-to-br from-[#102542]/95 via-[#0E2038]/90 to-[#0A182B]/95 backdrop-blur-xl rounded-[24px] p-6 md:p-7 border border-[#1E4273]/65 transition-all overflow-hidden shadow-[0_8px_24px_rgba(10,24,43,0.4)]">
-          {/* Subtle Background Pattern */}
-          <div className="absolute top-0 right-0 p-4 opacity-[0.05] text-blue-300 pointer-events-none">
+        <div className="group relative bg-[#092540]/30 backdrop-blur-2xl backdrop-saturate-150 rounded-[24px] p-6 md:p-7 border border-sky-400/40 hover:border-sky-300/80 transition-all duration-300 transform-gpu overflow-hidden shadow-[0_8px_32px_0_rgba(14,165,233,0.25)] hover:shadow-[0_12px_40px_rgba(14,165,233,0.38)] before:absolute before:inset-0 before:bg-gradient-to-br before:from-sky-300/15 before:via-sky-500/5 before:to-transparent before:pointer-events-none">
+          {/* Subtle glossy light reflection overlay */}
+          <div className="absolute -top-24 -right-24 w-56 h-56 bg-sky-400/20 rounded-full blur-3xl pointer-events-none group-hover:bg-sky-300/35 transition-all duration-500" />
+          <div className="absolute top-0 right-0 p-4 opacity-[0.10] text-sky-200 group-hover:opacity-[0.22] group-hover:scale-110 transition-all pointer-events-none">
             <Activity className="w-24 h-24" />
           </div>
 
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-blue-500/15 border border-blue-400/30 flex items-center justify-center text-blue-300">
+              <div className="w-12 h-12 rounded-2xl bg-sky-400/20 backdrop-blur-md border border-sky-300/40 flex items-center justify-center text-sky-200 shadow-[0_0_15px_rgba(56,189,248,0.25)]">
                 <BarChart2 className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-base font-bold text-white tracking-wide">
+                <p className="text-base font-bold text-white tracking-wide drop-shadow-sm">
                   Pilih Periode Monitoring
                 </p>
               </div>
             </div>
 
-            <div className="w-full md:w-auto lg:min-w-[580px] bg-[#0A1B30]/85 backdrop-blur-md rounded-2xl p-2.5 border border-[#1E4273]/65">
+            <div className="w-full md:w-auto lg:min-w-[580px] bg-[#081B33]/40 backdrop-blur-xl rounded-2xl p-3 border border-sky-400/30 shadow-[0_4px_24px_rgba(0,0,0,0.25)]">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
                 {/* Select Period Type */}
                 <div className="relative group/select">
-                  <label className="absolute -top-2 left-3 px-1.5 bg-[#0A1B30] border border-[#1E4273]/65 text-[10px] font-bold text-sky-300 uppercase tracking-widest z-10 rounded">
+                  <label className="absolute -top-2.5 left-3 px-2 bg-[#081B33]/90 backdrop-blur-md border border-sky-400/40 text-[10px] font-black text-sky-300 uppercase tracking-widest z-10 rounded-md shadow-sm">
                     Tipe
                   </label>
                   <select
                     value={filterPeriodType}
                     onChange={(e) => setFilterPeriodType(e.target.value as any)}
-                    className="w-full bg-[#0D223C] border border-[#1E4273]/65 text-slate-100 text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400/60 transition-all appearance-none cursor-pointer"
+                    className="w-full bg-[#081B33]/60 backdrop-blur-md border border-sky-400/30 text-white text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-sky-300 transition-all appearance-none cursor-pointer hover:border-sky-400/60 shadow-inner"
                   >
                     <option value="bulanan" className="bg-[#0B1A2C] text-slate-100">
                       BULANAN
@@ -1314,7 +1315,7 @@ export default function DashboardPage() {
 
                 {/* Select Detail Period */}
                 <div className="relative group/select">
-                  <label className="absolute -top-2 left-3 px-1.5 bg-[#0A1B30] border border-[#1E4273]/65 text-[10px] font-bold text-sky-300 uppercase tracking-widest z-10 rounded">
+                  <label className="absolute -top-2.5 left-3 px-2 bg-[#081B33]/90 backdrop-blur-md border border-sky-400/40 text-[10px] font-black text-sky-300 uppercase tracking-widest z-10 rounded-md shadow-sm">
                     {filterPeriodType === "bulanan"
                       ? "Bulan"
                       : filterPeriodType === "triwulan"
@@ -1328,7 +1329,7 @@ export default function DashboardPage() {
                       <select
                         value={filterMonth}
                         onChange={(e) => setFilterMonth(parseInt(e.target.value))}
-                        className="w-full bg-[#0D223C] border border-[#1E4273]/65 text-slate-100 text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400/60 transition-all appearance-none cursor-pointer disabled:opacity-50"
+                        className="w-full bg-[#081B33]/60 backdrop-blur-md border border-sky-400/30 text-white text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-sky-300 transition-all appearance-none cursor-pointer disabled:opacity-50 hover:border-sky-400/60 shadow-inner"
                       >
                         {[
                           "Januari",
@@ -1356,7 +1357,7 @@ export default function DashboardPage() {
                         onChange={(e) =>
                           setFilterQuarter(parseInt(e.target.value))
                         }
-                        className="w-full bg-[#0D223C] border border-[#1E4273]/65 text-slate-100 text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400/60 transition-all appearance-none cursor-pointer"
+                        className="w-full bg-[#081B33]/60 backdrop-blur-md border border-sky-400/30 text-white text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-sky-300 transition-all appearance-none cursor-pointer hover:border-sky-400/60 shadow-inner"
                       >
                         <option value={0} className="bg-[#0B1A2C] text-slate-100">
                           TW 1 (Jan-Mar)
@@ -1378,7 +1379,7 @@ export default function DashboardPage() {
                         onChange={(e) =>
                           setFilterSemester(parseInt(e.target.value))
                         }
-                        className="w-full bg-[#0D223C] border border-[#1E4273]/65 text-slate-100 text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400/60 transition-all appearance-none cursor-pointer"
+                        className="w-full bg-[#081B33]/60 backdrop-blur-md border border-sky-400/30 text-white text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-sky-300 transition-all appearance-none cursor-pointer hover:border-sky-400/60 shadow-inner"
                       >
                         <option value={0} className="bg-[#0B1A2C] text-slate-100">
                           SM 1 (Jan-Jun)
@@ -1389,7 +1390,7 @@ export default function DashboardPage() {
                       </select>
                     )}
                     {filterPeriodType === "tahunan" && (
-                      <div className="w-full bg-[#0D223C] border border-[#1E4273]/65 text-slate-300 text-sm font-bold rounded-xl px-4 py-3">
+                      <div className="w-full bg-[#081B33]/60 backdrop-blur-md border border-sky-400/30 text-slate-200 text-sm font-bold rounded-xl px-4 py-3 shadow-inner">
                         Tahun Penuh
                       </div>
                     )}
@@ -1398,13 +1399,13 @@ export default function DashboardPage() {
 
                 {/* Select Year */}
                 <div className="relative group/select">
-                  <label className="absolute -top-2 left-3 px-1.5 bg-[#0A1B30] border border-[#1E4273]/65 text-[10px] font-bold text-sky-300 uppercase tracking-widest z-10 rounded">
+                  <label className="absolute -top-2.5 left-3 px-2 bg-[#081B33]/90 backdrop-blur-md border border-sky-400/40 text-[10px] font-black text-sky-300 uppercase tracking-widest z-10 rounded-md shadow-sm">
                     Tahun
                   </label>
                   <select
                     value={filterYear}
                     onChange={(e) => setFilterYear(parseInt(e.target.value))}
-                    className="w-full bg-[#0D223C] border border-[#1E4273]/65 text-slate-100 text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400/60 transition-all appearance-none cursor-pointer"
+                    className="w-full bg-[#081B33]/60 backdrop-blur-md border border-sky-400/30 text-white text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-sky-300 transition-all appearance-none cursor-pointer hover:border-sky-400/60 shadow-inner"
                   >
                     {[2024, 2025, 2026, 2027].map((y) => (
                       <option key={y} value={y} className="bg-[#0B1A2C] text-slate-100">
@@ -1420,41 +1421,43 @@ export default function DashboardPage() {
       </section>
 
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-3 gap-6">
-        {/* HH Card - Ocean Teal */}
-        <div className="group relative bg-gradient-to-br from-[#06424D]/95 via-[#08525E]/90 to-[#042D36]/95 backdrop-blur-xl p-7 rounded-[24px] border border-cyan-500/35 hover:border-cyan-400/65 transition-all duration-300 transform-gpu hover:-translate-y-0.5 overflow-hidden shadow-[0_8px_24px_rgba(4,45,54,0.45)]">
-          <div className="absolute top-0 right-0 p-4 opacity-[0.07] text-cyan-300 group-hover:opacity-[0.14] transition-opacity pointer-events-none">
+        {/* HH Card - Glassmorphism 2.0 Transparan */}
+        <div className="group relative bg-[#063440]/30 backdrop-blur-2xl backdrop-saturate-150 p-7 rounded-[24px] border border-cyan-400/40 hover:border-cyan-300/80 transition-all duration-300 transform-gpu hover:-translate-y-1 overflow-hidden shadow-[0_8px_32px_0_rgba(6,182,212,0.25)] hover:shadow-[0_12px_40px_rgba(6,182,212,0.38)] before:absolute before:inset-0 before:bg-gradient-to-br before:from-cyan-300/15 before:via-cyan-500/5 before:to-transparent before:pointer-events-none">
+          {/* Subtle glossy light reflection overlay */}
+          <div className="absolute -top-24 -right-24 w-48 h-48 bg-cyan-400/20 rounded-full blur-3xl pointer-events-none group-hover:bg-cyan-300/35 transition-all duration-500" />
+          <div className="absolute top-0 right-0 p-4 opacity-[0.10] text-cyan-200 group-hover:opacity-[0.22] group-hover:scale-110 transition-all pointer-events-none">
             <Droplets className="w-16 h-16" />
           </div>
-          <div className="flex items-center gap-4 mb-7">
-            <div className="w-12 h-12 rounded-xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-300">
+          <div className="flex items-center gap-4 mb-7 relative z-10">
+            <div className="w-12 h-12 rounded-xl bg-cyan-400/20 backdrop-blur-md border border-cyan-300/40 flex items-center justify-center text-cyan-200 shadow-[0_0_15px_rgba(34,211,238,0.25)]">
               <Droplets className="w-6 h-6" />
             </div>
             <div>
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300/90 leading-none mb-1">
                 Indikator Mutu
               </h3>
-              <p className="text-[19px] font-bold text-slate-100 leading-snug">
+              <p className="text-[19px] font-bold text-white leading-snug drop-shadow-sm">
                 Kepatuhan Kebersihan Tangan
               </p>
             </div>
           </div>
-          <div className="flex items-baseline gap-3 mb-4">
+          <div className="flex items-baseline gap-3 mb-4 relative z-10">
             <span
-              className={`text-6xl font-black tracking-tighter ${getStatusColor(stats.hh, standards.hh)}`}
+              className={`text-6xl font-black tracking-tighter drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)] ${getStatusColor(stats.hh, standards.hh)}`}
             >
               {stats.hh}%
             </span>
           </div>
-          <div className="mt-7 pt-5 border-t border-cyan-500/25 flex items-center justify-between">
-            <span className="text-[14px] font-bold text-cyan-300 uppercase tracking-widest">
+          <div className="mt-7 pt-5 border-t border-cyan-400/25 flex items-center justify-between relative z-10">
+            <span className="text-[14px] font-bold text-cyan-200 uppercase tracking-widest drop-shadow-sm">
               Capaian
             </span>
             <div className="flex flex-col items-end">
-              <span className="text-[10px] font-black uppercase text-slate-300/80 mb-1">
+              <span className="text-[10px] font-black uppercase text-slate-200/90 mb-1">
                 Standard: {standards?.hh?.nilai_standar || 85}%
               </span>
               <span
-                className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full ${stats.hh >= (standards?.hh?.nilai_standar || 85) ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-red-500/20 text-red-400 border border-red-500/40"}`}
+                className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full backdrop-blur-md ${stats.hh >= (standards?.hh?.nilai_standar || 85) ? "bg-emerald-500/25 text-emerald-200 border border-emerald-400/50 shadow-[0_0_12px_rgba(16,185,129,0.3)]" : "bg-red-500/25 text-red-200 border border-red-400/50 shadow-[0_0_12px_rgba(239,68,68,0.3)]"}`}
               >
                 {stats.hh >= (standards?.hh?.nilai_standar || 85)
                   ? "Tercapai"
@@ -1464,41 +1467,43 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* APD Card - Navy */}
-        <div className="group relative bg-gradient-to-br from-[#0A1E3F]/95 via-[#0C254D]/90 to-[#07162C]/95 backdrop-blur-xl p-7 rounded-[24px] border border-[#1E437C]/70 hover:border-sky-400/60 transition-all duration-300 transform-gpu hover:-translate-y-0.5 overflow-hidden shadow-[0_8px_24px_rgba(7,22,44,0.4)]">
-          <div className="absolute top-0 right-0 p-4 opacity-[0.06] text-sky-400 group-hover:opacity-[0.12] transition-opacity pointer-events-none">
+        {/* APD Card - Glassmorphism 2.0 Transparan */}
+        <div className="group relative bg-[#092540]/30 backdrop-blur-2xl backdrop-saturate-150 p-7 rounded-[24px] border border-sky-400/40 hover:border-sky-300/80 transition-all duration-300 transform-gpu hover:-translate-y-1 overflow-hidden shadow-[0_8px_32px_0_rgba(14,165,233,0.25)] hover:shadow-[0_12px_40px_rgba(14,165,233,0.38)] before:absolute before:inset-0 before:bg-gradient-to-br before:from-sky-300/15 before:via-sky-500/5 before:to-transparent before:pointer-events-none">
+          {/* Subtle glossy light reflection overlay */}
+          <div className="absolute -top-24 -right-24 w-48 h-48 bg-sky-400/20 rounded-full blur-3xl pointer-events-none group-hover:bg-sky-300/35 transition-all duration-500" />
+          <div className="absolute top-0 right-0 p-4 opacity-[0.10] text-sky-200 group-hover:opacity-[0.22] group-hover:scale-110 transition-all pointer-events-none">
             <Shield className="w-16 h-16" />
           </div>
-          <div className="flex items-center gap-4 mb-7">
-            <div className="w-12 h-12 rounded-xl bg-sky-500/20 border border-sky-400/40 flex items-center justify-center text-sky-300">
+          <div className="flex items-center gap-4 mb-7 relative z-10">
+            <div className="w-12 h-12 rounded-xl bg-sky-400/20 backdrop-blur-md border border-sky-300/40 flex items-center justify-center text-sky-200 shadow-[0_0_15px_rgba(56,189,248,0.25)]">
               <Shield className="w-6 h-6" />
             </div>
             <div>
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-sky-300/90 leading-none mb-1">
                 Indikator Mutu
               </h3>
-              <p className="text-[19px] font-bold text-slate-100 leading-snug">
+              <p className="text-[19px] font-bold text-white leading-snug drop-shadow-sm">
                 Kepatuhan Penggunaan APD
               </p>
             </div>
           </div>
-          <div className="flex items-baseline gap-3 mb-4">
+          <div className="flex items-baseline gap-3 mb-4 relative z-10">
             <span
-              className={`text-6xl font-black tracking-tighter ${getStatusColor(stats.apd, standards.apd)}`}
+              className={`text-6xl font-black tracking-tighter drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)] ${getStatusColor(stats.apd, standards.apd)}`}
             >
               {stats.apd}%
             </span>
           </div>
-          <div className="mt-7 pt-5 border-t border-[#1E437C]/50 flex items-center justify-between">
-            <span className="text-[14px] font-bold text-sky-400 uppercase tracking-widest">
+          <div className="mt-7 pt-5 border-t border-sky-400/25 flex items-center justify-between relative z-10">
+            <span className="text-[14px] font-bold text-sky-200 uppercase tracking-widest drop-shadow-sm">
               Capaian
             </span>
             <div className="flex flex-col items-end">
-              <span className="text-[10px] font-black uppercase text-slate-300/80 mb-1">
+              <span className="text-[10px] font-black uppercase text-slate-200/90 mb-1">
                 Standard: {standards?.apd?.nilai_standar || 100}%
               </span>
               <span
-                className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full ${stats.apd >= (standards?.apd?.nilai_standar || 100) ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-red-500/20 text-red-400 border border-red-500/40"}`}
+                className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full backdrop-blur-md ${stats.apd >= (standards?.apd?.nilai_standar || 100) ? "bg-emerald-500/25 text-emerald-200 border border-emerald-400/50 shadow-[0_0_12px_rgba(16,185,129,0.3)]" : "bg-red-500/25 text-red-200 border border-red-400/50 shadow-[0_0_12px_rgba(239,68,68,0.3)]"}`}
               >
                 {stats.apd >= (standards?.apd?.nilai_standar || 100)
                   ? "Tercapai"
@@ -1508,61 +1513,63 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* HAIs Card - Gradasi Biru Ungu Dark */}
-        <div className="group relative bg-gradient-to-br from-[#1E154A]/95 via-[#141E4F]/90 to-[#0C122E]/95 backdrop-blur-xl p-7 rounded-[24px] border border-indigo-500/35 hover:border-indigo-400/60 transition-all duration-300 transform-gpu hover:-translate-y-0.5 overflow-hidden shadow-[0_8px_24px_rgba(12,18,46,0.4)]">
-          <div className="absolute top-0 right-0 p-4 opacity-[0.06] text-indigo-400 group-hover:opacity-[0.12] transition-opacity pointer-events-none">
+        {/* HAIs Card - Glassmorphism 2.0 Transparan */}
+        <div className="group relative bg-[#1B1242]/30 backdrop-blur-2xl backdrop-saturate-150 p-7 rounded-[24px] border border-indigo-400/40 hover:border-indigo-300/80 transition-all duration-300 transform-gpu hover:-translate-y-1 overflow-hidden shadow-[0_8px_32px_0_rgba(99,102,241,0.25)] hover:shadow-[0_12px_40px_rgba(99,102,241,0.38)] before:absolute before:inset-0 before:bg-gradient-to-br before:from-indigo-300/15 before:via-indigo-500/5 before:to-transparent before:pointer-events-none">
+          {/* Subtle glossy light reflection overlay */}
+          <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-400/20 rounded-full blur-3xl pointer-events-none group-hover:bg-indigo-300/35 transition-all duration-500" />
+          <div className="absolute top-0 right-0 p-4 opacity-[0.10] text-indigo-200 group-hover:opacity-[0.22] group-hover:scale-110 transition-all pointer-events-none">
             <AlertCircle className="w-16 h-16" />
           </div>
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-indigo-300">
+          <div className="flex items-center gap-4 mb-6 relative z-10">
+            <div className="w-12 h-12 rounded-xl bg-indigo-400/20 backdrop-blur-md border border-indigo-300/40 flex items-center justify-center text-indigo-200 shadow-[0_0_15px_rgba(129,140,248,0.25)]">
               <AlertCircle className="w-6 h-6" />
             </div>
             <div>
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-300/90 leading-none mb-1">
                 Indikator Mutu
               </h3>
-              <p className="text-[19px] font-bold text-slate-100 uppercase tracking-tight">
+              <p className="text-[19px] font-bold text-white uppercase tracking-tight drop-shadow-sm">
                 INSIDEN HAIS
               </p>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2.5 mt-4">
-            <div className="bg-[#0C1435]/80 backdrop-blur-md p-2.5 rounded-xl border border-indigo-500/30">
-              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
+          <div className="grid grid-cols-2 gap-2.5 mt-4 relative z-10">
+            <div className="bg-[#0C1435]/50 backdrop-blur-md p-2.5 rounded-xl border border-indigo-400/30 hover:border-indigo-300/60 transition-all shadow-inner">
+              <p className="text-[8px] font-black text-slate-200/80 uppercase tracking-widest mb-0.5">
                 Phlebitis
               </p>
               <p
-                className={`text-sm font-black ${getStatusColor(stats.hais.phlebitis, standards.phlebitis)}`}
+                className={`text-sm font-black drop-shadow-sm ${getStatusColor(stats.hais.phlebitis, standards.phlebitis)}`}
               >
                 {stats.hais.phlebitis} ‰
               </p>
             </div>
-            <div className="bg-[#0C1435]/80 backdrop-blur-md p-2.5 rounded-xl border border-indigo-500/30">
-              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
+            <div className="bg-[#0C1435]/50 backdrop-blur-md p-2.5 rounded-xl border border-indigo-400/30 hover:border-indigo-300/60 transition-all shadow-inner">
+              <p className="text-[8px] font-black text-slate-200/80 uppercase tracking-widest mb-0.5">
                 ISK
               </p>
               <p
-                className={`text-sm font-black ${getStatusColor(stats.hais.isk, standards.isk)}`}
+                className={`text-sm font-black drop-shadow-sm ${getStatusColor(stats.hais.isk, standards.isk)}`}
               >
                 {stats.hais.isk} ‰
               </p>
             </div>
-            <div className="bg-[#0C1435]/80 backdrop-blur-md p-2.5 rounded-xl border border-indigo-500/30">
-              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
+            <div className="bg-[#0C1435]/50 backdrop-blur-md p-2.5 rounded-xl border border-indigo-400/30 hover:border-indigo-300/60 transition-all shadow-inner">
+              <p className="text-[8px] font-black text-slate-200/80 uppercase tracking-widest mb-0.5">
                 IDO
               </p>
               <p
-                className={`text-sm font-black ${getStatusColor(stats.hais.ido, standards.ido)}`}
+                className={`text-sm font-black drop-shadow-sm ${getStatusColor(stats.hais.ido, standards.ido)}`}
               >
                 {stats.hais.ido}%
               </p>
             </div>
-            <div className="bg-[#0C1435]/80 backdrop-blur-md p-2.5 rounded-xl border border-indigo-500/30">
-              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
+            <div className="bg-[#0C1435]/50 backdrop-blur-md p-2.5 rounded-xl border border-indigo-400/30 hover:border-indigo-300/60 transition-all shadow-inner">
+              <p className="text-[8px] font-black text-slate-200/80 uppercase tracking-widest mb-0.5">
                 VAP
               </p>
               <p
-                className={`text-sm font-black ${getStatusColor(stats.hais.vap, standards.vap)}`}
+                className={`text-sm font-black drop-shadow-sm ${getStatusColor(stats.hais.vap, standards.vap)}`}
               >
                 {stats.hais.vap} ‰
               </p>

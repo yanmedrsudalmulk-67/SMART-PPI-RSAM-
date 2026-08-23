@@ -54,6 +54,24 @@ const professions = [
   "Pramusaji",
 ];
 
+const listTindakanOptions = [
+  "Mengukur TTV",
+  "Visite Dokter",
+  "Pemasangan Infus",
+  "Pemasangan Kateter Urin",
+  "Pemberian Obat Injeksi",
+  "Menolong Persalinan",
+  "Mengambil sampel darah",
+  "Pemeriksaan EKG",
+  "Perawatan Luka",
+  "Hecting luka",
+  "Melakukan Aff Infus",
+  "Pemberian Oksigenasi",
+  "Resusitasi Jantung Paru (RJP)",
+  "Pemeriksaan sampling darah",
+  "Pemeriksaan Rontgen",
+];
+
 const apdItems = [
   { id: "masker", label: "1. Masker", key: "masker" },
   { id: "sarung_tangan", label: "2. Sarung Tangan", key: "sarung_tangan" },
@@ -82,6 +100,22 @@ export default function InputApdPage() {
   const [unit, setUnit] = useState("");
   const [profesi, setProfesi] = useState("");
   const [tindakan, setTindakan] = useState("");
+  const [tindakanOption, setTindakanOption] = useState("");
+  const [customTindakan, setCustomTindakan] = useState("");
+
+  const handleTindakanOptionChange = (opt: string) => {
+    setTindakanOption(opt);
+    if (opt === "Lainnya") {
+      setTindakan(customTindakan);
+    } else {
+      setTindakan(opt);
+    }
+  };
+
+  const handleCustomTindakanChange = (val: string) => {
+    setCustomTindakan(val);
+    setTindakan(val);
+  };
 
   const [observers, setObservers] = useState<Observer[]>([]);
   const [isObserverModalOpen, setIsObserverModalOpen] = useState(false);
@@ -118,27 +152,47 @@ export default function InputApdPage() {
         setIsEditMode(true);
         setEditId(id);
         const loadEditData = async () => {
-          const { data: ed, error } = await supabase
+          let { data: ed } = await supabase
             .from("audit_sessions")
             .select("*")
             .eq("id", id)
-            .single();
-          if (ed && !error) {
+            .maybeSingle();
+
+          if (!ed) {
+            const { data: nativeEd } = await supabase
+              .from("audit_apd")
+              .select("*")
+              .eq("id", id)
+              .maybeSingle();
+            if (nativeEd) ed = nativeEd;
+          }
+
+          if (ed) {
             if (ed.tanggal_waktu) setStartTime(new Date(ed.tanggal_waktu));
             if (ed.observer) setObserver(ed.observer);
             if (ed.unit) setUnit(ed.unit);
             if (ed.profesi) setProfesi(ed.profesi);
-            if (ed.jenis_tindakan) setTindakan(ed.jenis_tindakan);
+            const tindakanVal = ed.jenis_tindakan || ed.tindakan;
+            if (tindakanVal) {
+              setTindakan(tindakanVal);
+              if (listTindakanOptions.includes(tindakanVal)) {
+                setTindakanOption(tindakanVal);
+                setCustomTindakan("");
+              } else {
+                setTindakanOption("Lainnya");
+                setCustomTindakan(tindakanVal);
+              }
+            }
             
             const indicatorsData = ed.data_indikator || ed.checklist_json || {};
             setApdData({
-              masker: indicatorsData.masker || null,
-              sarung_tangan: indicatorsData.sarung_tangan || null,
-              penutup_kepala: indicatorsData.penutup_kepala || null,
-              apron: indicatorsData.apron || null,
-              goggle: indicatorsData.goggle || null,
-              sepatu_boot: indicatorsData.sepatu_boot || null,
-              gaun_pelindung: indicatorsData.gaun_pelindung || null,
+              masker: indicatorsData.masker || ed.masker || null,
+              sarung_tangan: indicatorsData.sarung_tangan || ed.sarung_tangan || null,
+              penutup_kepala: indicatorsData.penutup_kepala || ed.penutup_kepala || null,
+              apron: indicatorsData.apron || ed.apron || null,
+              goggle: indicatorsData.goggle || ed.goggle || null,
+              sepatu_boot: indicatorsData.sepatu_boot || ed.sepatu_boot || null,
+              gaun_pelindung: indicatorsData.gaun_pelindung || ed.gaun_pelindung || null,
             });
           }
         };
@@ -304,6 +358,12 @@ export default function InputApdPage() {
       return;
     }
 
+    const finalTindakan = tindakanOption === "Lainnya" ? customTindakan.trim() : tindakanOption;
+    if (!finalTindakan) {
+      alert("Silakan pilih atau ketik jenis tindakan terlebih dahulu.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -312,7 +372,7 @@ export default function InputApdPage() {
         observer,
         unit,
         profesi,
-        tindakan,
+        tindakan: finalTindakan,
         masker: apdData.masker,
         sarung_tangan: apdData.sarung_tangan,
         penutup_kepala: apdData.penutup_kepala,
@@ -333,7 +393,7 @@ export default function InputApdPage() {
         observer,
         unit,
         profesi,
-        jenis_tindakan: tindakan,
+        jenis_tindakan: finalTindakan,
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
@@ -349,6 +409,7 @@ export default function InputApdPage() {
         },
       };
 
+      let createdSessionId = editId;
       if (isEditMode && editId) {
         const { error: sessionError } = await supabase
           .from("audit_sessions")
@@ -362,6 +423,9 @@ export default function InputApdPage() {
           .select("*")
           .single();
         if (sessionError) throw sessionError;
+        if (sessionData && sessionData.id) {
+          createdSessionId = sessionData.id;
+        }
       }
 
       // Fallback old table
@@ -369,7 +433,8 @@ export default function InputApdPage() {
         if (isEditMode && editId) {
           await supabase.from("audit_apd").update([payload]).eq("id", editId);
         } else {
-          await supabase.from("audit_apd").insert([payload]);
+          const nativePayload = createdSessionId ? { ...payload, id: createdSessionId } : payload;
+          await supabase.from("audit_apd").insert([nativePayload]);
         }
       } catch (err) {
         console.warn("Failed to insert/update native apd table", err);
@@ -501,17 +566,54 @@ export default function InputApdPage() {
           </div>
         </div>
 
-        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
-          <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
-            <FileText className="w-4 h-4 text-amber-400" /> Tindakan
-          </h2>
-          <input
-            type="text"
-            value={tindakan}
-            onChange={(e) => setTindakan(e.target.value)}
-            placeholder="Contoh: Pemasangan infus, Operasi, dll"
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none"
-          />
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400">
+              <FileText className="w-4 h-4 text-amber-400" /> Tindakan
+            </h2>
+            {tindakanOption === "Lainnya" && (
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-400/10 px-2.5 py-0.5 rounded-full border border-amber-400/20">
+                Ketik Manual
+              </span>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <select
+              value={tindakanOption}
+              onChange={(e) => handleTindakanOptionChange(e.target.value)}
+              className="w-full bg-slate-900/80 border border-white/10 focus:border-amber-400/60 rounded-xl px-4 py-3 text-sm text-white outline-none cursor-pointer transition-all"
+            >
+              <option value="" className="bg-slate-900 text-slate-400">
+                -- Pilih Jenis Tindakan --
+              </option>
+              {listTindakanOptions.map((opt) => (
+                <option key={opt} value={opt} className="bg-slate-900 text-white">
+                  {opt}
+                </option>
+              ))}
+              <option value="Lainnya" className="bg-slate-900 text-amber-400 font-bold">
+                Lainnya
+              </option>
+            </select>
+
+            {tindakanOption === "Lainnya" && (
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="pt-1"
+              >
+                <input
+                  type="text"
+                  value={customTindakan}
+                  onChange={(e) => handleCustomTindakanChange(e.target.value)}
+                  placeholder="Ketik jenis tindakan manual di sini..."
+                  autoFocus
+                  className="w-full bg-white/5 border border-amber-400/40 focus:border-amber-400 rounded-xl px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 transition-colors shadow-inner"
+                />
+              </motion.div>
+            )}
+          </div>
         </div>
 
         <div className="space-y-4">

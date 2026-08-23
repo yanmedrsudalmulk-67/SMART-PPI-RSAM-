@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '@/lib/supabase';
+import { useSafeRouter } from '@/hooks/useSafeRouter';
 import { 
   BarChart2, User, ChevronDown, CheckCircle2, ShieldCheck, Activity, Users, 
-  MapPin, Clock, Calendar as CalendarIcon, Check, X, TrendingUp
+  MapPin, Clock, Calendar as CalendarIcon, Check, X, TrendingUp, Edit, Trash2, AlertTriangle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -211,23 +212,71 @@ export default function HandHygieneReport({
     };
   };
 
+  const router = useSafeRouter();
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleEditClick = (recordId: string) => {
+    router.push(`/dashboard/input/hand-hygiene?id=${recordId}&mode=edit`);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmId) return;
+    setIsDeleting(true);
+    try {
+      await supabase.from("audit_hand_hygiene").delete().eq("id", deleteConfirmId);
+      await supabase.from("audit_sessions").delete().eq("id", deleteConfirmId);
+      await fetchData();
+    } catch (err: any) {
+      console.error("Gagal menghapus data:", err);
+      alert("Gagal menghapus data: " + (err.message || err));
+    } finally {
+      setIsDeleting(false);
+      setDeleteConfirmId(null);
+    }
+  };
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [hhRes, sessionsRes] = await Promise.all([
-        supabase.from('audit_hand_hygiene').select('*').order('start_time', { ascending: false }),
-        supabase.from('audit_sessions').select('*').eq('indikator_id', 'audit_hand_hygiene').order('tanggal_waktu', { ascending: false })
+        supabase.from('audit_hand_hygiene').select('*').order('start_time', { ascending: true }),
+        supabase.from('audit_sessions').select('*').eq('indikator_id', 'audit_hand_hygiene').order('tanggal_waktu', { ascending: true })
       ]);
 
-      const raw = [...(hhRes.data || []), ...(sessionsRes.data || [])];
-      const seen = new Set<string>();
-      const combined = raw.filter(item => {
-        if (!item.id || seen.has(item.id)) return false;
-        seen.add(item.id);
-        return true;
-      }).map(normalizeHH);
+      const sessions = (sessionsRes.data || []).map(normalizeHH);
+      const hh = (hhRes.data || []).map(normalizeHH);
 
-      combined.sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
+      const seenIds = new Set<string>();
+      const seenKeys = new Set<string>();
+      const combined: any[] = [];
+
+      for (const item of sessions) {
+        if (!item.id || seenIds.has(item.id)) continue;
+        seenIds.add(item.id);
+        const obs = (item.observer || '').toLowerCase().trim();
+        const unt = (item.unit || '').toLowerCase().trim();
+        const timeKey = item.start_time ? new Date(item.start_time).toISOString().substring(0, 16) : '';
+        if (obs && unt && timeKey) {
+          seenKeys.add(`${obs}_${unt}_${timeKey}`);
+        }
+        combined.push(item);
+      }
+
+      for (const item of hh) {
+        if (!item.id || seenIds.has(item.id)) continue;
+        const obs = (item.observer || '').toLowerCase().trim();
+        const unt = (item.unit || '').toLowerCase().trim();
+        const timeKey = item.start_time ? new Date(item.start_time).toISOString().substring(0, 16) : '';
+        const key = `${obs}_${unt}_${timeKey}`;
+        if (obs && unt && timeKey && seenKeys.has(key)) continue;
+
+        seenIds.add(item.id);
+        if (obs && unt && timeKey) seenKeys.add(key);
+        combined.push(item);
+      }
+
+      combined.sort((a, b) => new Date(a.start_time || 0).getTime() - new Date(b.start_time || 0).getTime());
       setData(combined);
     } catch (err) {
       console.error(err);
@@ -526,6 +575,7 @@ export default function HandHygieneReport({
                 <th className="px-4 py-4 border-b border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-400">PELUANG HAND HYGIENE</th>
                 <th className="px-4 py-4 border-b border-slate-200 dark:border-white/5 text-emerald-600 dark:text-emerald-400">HAND HYGIENE YANG DILAKUKAN</th>
                 <th className="px-4 py-4 border-b border-slate-200 dark:border-white/5 text-blue-600 dark:text-blue-400">PERSENTASE (TOTAL)</th>
+                <th className="px-4 py-4 border-b border-slate-200 dark:border-white/5 text-center">AKSI</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-[10px] sm:text-xs font-bold text-slate-900 dark:text-slate-300">
@@ -557,12 +607,32 @@ export default function HandHygieneReport({
                         {row.persentase || 0}%
                       </span>
                     </td>
+                    <td className="px-4 py-4 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => handleEditClick(row.id)}
+                          type="button"
+                          className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all duration-200 shadow-sm border border-blue-500/20"
+                          title="Edit Data"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirmId(row.id)}
+                          type="button"
+                          className="p-1.5 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all duration-200 shadow-sm border border-rose-500/20"
+                          title="Hapus Data"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 );
               })}
               {filteredData.length === 0 && (
                 <tr>
-                  <td colSpan={13} className="px-4 py-12 text-center text-slate-500 font-medium">Belum ada data untuk periode ini</td>
+                  <td colSpan={14} className="px-4 py-12 text-center text-slate-500 font-medium">Belum ada data untuk periode ini</td>
                 </tr>
               )}
             </tbody>
@@ -684,6 +754,62 @@ export default function HandHygieneReport({
             </div>
          </div>
       </div>
+
+      {/* Modal Konfirmasi Hapus */}
+      <AnimatePresence>
+        {deleteConfirmId && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => !isDeleting && setDeleteConfirmId(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative w-full max-w-md bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl p-6 overflow-hidden z-10"
+            >
+              <div className="flex items-center gap-4 text-rose-500 mb-4">
+                <div className="p-3 bg-rose-500/10 rounded-2xl">
+                  <AlertTriangle className="w-8 h-8" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                    Hapus Data Audit?
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Tindakan ini tidak dapat dibatalkan.
+                  </p>
+                </div>
+              </div>
+              <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">
+                Apakah Anda yakin ingin menghapus data laporan audit kebersihan tangan ini?
+              </p>
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={() => setDeleteConfirmId(null)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={handleConfirmDelete}
+                  className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-lg shadow-rose-500/20 flex items-center gap-2"
+                >
+                  {isDeleting ? "Menghapus..." : "Ya, Hapus Data"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
