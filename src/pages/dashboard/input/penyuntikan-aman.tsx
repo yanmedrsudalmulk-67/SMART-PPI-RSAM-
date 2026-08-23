@@ -498,37 +498,15 @@ export default function InputPenyuntikanAmanPage() {
           <div className="space-y-4">
             {auditItems.map((item, idx) => {
               const selected = auditData[item.id];
-              const negativeKeywords = [
-                "berkarat",
-                "kotor",
-                "debu",
-                "genangan",
-                "tercampur",
-                "bercampur",
-                "penumpukan",
-                "bocor",
-                "jarum",
-                "menumpuk",
-                "sampah medis dan non medis",
-                "pembuangan sampah infeksius",
-              ];
-              const isNegativeQuestion = negativeKeywords.some((kw) =>
-                (item.label || (item as any).desc || "")
-                  .toLowerCase()
-                  .includes(kw),
-              );
+              const isNegativeQuestion = false;
               let borderLeftColor = "border-l-transparent";
               if (selected === "na") {
                 borderLeftColor = "border-l-slate-500";
               } else if (selected) {
                 borderLeftColor =
                   selected === "ya"
-                    ? isNegativeQuestion
-                      ? "border-l-red-500"
-                      : "border-l-blue-500"
-                    : isNegativeQuestion
-                      ? "border-l-blue-500"
-                      : "border-l-red-500";
+                    ? "border-l-blue-500"
+                    : "border-l-red-500";
               }
 
               return (
@@ -554,16 +532,12 @@ export default function InputPenyuntikanAmanPage() {
                         if (choice === "na") {
                           activeClass =
                             "bg-slate-500 text-white shadow-[0_0_15px_rgba(100,116,139,0.3)] transform scale-105";
-                        } else if (isNegativeQuestion) {
+                        } else if (choice === "ya") {
                           activeClass =
-                            choice === "ya"
-                              ? "bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)] transform scale-105"
-                              : "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] transform scale-105";
+                            "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] transform scale-105";
                         } else {
                           activeClass =
-                            choice === "ya"
-                              ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] transform scale-105"
-                              : "bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)] transform scale-105";
+                            "bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)] transform scale-105";
                         }
 
                         return (

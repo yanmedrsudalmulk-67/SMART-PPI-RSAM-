@@ -93,10 +93,10 @@ export default function EtikaBatukReport({
         .select("*")
         .eq("indikator_id", tableName);
       if (extraFilter) sessionQuery = sessionQuery.match(extraFilter);
-      const { data: sessionData } = await sessionQuery.order("tanggal_waktu", { ascending: false });
+      const { data: sessionData } = await sessionQuery.order("tanggal_waktu", { ascending: true });
       
       const normalized = (sessionData || []).map(normalizeItem)
-        .sort((a, b) => new Date(b.waktu).getTime() - new Date(a.waktu).getTime());
+        .sort((a, b) => new Date(a.waktu || 0).getTime() - new Date(b.waktu || 0).getTime());
         
       setData(normalized);
       if (normalized.length > 0 && selectedRecordId === null) {
@@ -207,24 +207,49 @@ export default function EtikaBatukReport({
         return;
       }
       
-      const html2pdf = (await import("html2pdf.js")).default;
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf")
+      ]);
       
-      const opt = {
-        margin: [10, 10, 10, 10] as [number, number, number, number],
-        filename: `Laporan_Edukasi_Etika_Batuk_${selectedRecord.unit || "Unit"}_${format(new Date(), "yyyyMMdd_HHmmss")}.pdf`,
-        image: { type: "jpeg" as const, quality: 0.98 },
-        html2canvas: { 
-          scale: 2, 
-          useCORS: true,
-          letterRendering: true,
-          logging: false,
-        },
-        jsPDF: { unit: "mm" as const, format: "a4" as const, orientation: "portrait" as const }
-      };
+      const canvas = await html2canvas(element, { 
+        scale: 2, 
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff"
+      });
       
-      await html2pdf().from(element).set(opt).save();
+      const imgData = canvas.toDataURL("image/jpeg", 0.98);
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4"
+      });
+      
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      const printWidth = pageWidth - (margin * 2);
+      const printHeight = (canvas.height * printWidth) / canvas.width;
+      
+      let heightLeft = printHeight;
+      let position = margin;
+      
+      pdf.addImage(imgData, "JPEG", margin, position, printWidth, printHeight);
+      heightLeft -= (pageHeight - (margin * 2));
+      
+      while (heightLeft > 0) {
+        position = heightLeft - printHeight + margin;
+        pdf.addPage();
+        pdf.addImage(imgData, "JPEG", margin, position, printWidth, printHeight);
+        heightLeft -= (pageHeight - (margin * 2));
+      }
+      
+      const filename = `Laporan_Edukasi_Etika_Batuk_${selectedRecord.unit || "Unit"}_${format(new Date(), "yyyyMMdd_HHmmss")}.pdf`;
+      pdf.save(filename);
     } catch (err) {
       console.error("PDF download error:", err);
+      window.print();
     } finally {
       setDownloading(false);
     }

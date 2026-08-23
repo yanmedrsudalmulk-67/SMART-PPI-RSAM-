@@ -226,7 +226,7 @@ export default function GenericAuditReport({
       }
 
       const { data: sessionData } = await sessionQuery.order("tanggal_waktu", {
-        ascending: false,
+        ascending: true,
       });
 
       let tableData: any[] = [];
@@ -261,7 +261,7 @@ export default function GenericAuditReport({
       const normalized = result
         .map(normalizeItem)
         .sort(
-          (a, b) => new Date(b.waktu).getTime() - new Date(a.waktu).getTime(),
+          (a, b) => new Date(a.waktu || 0).getTime() - new Date(b.waktu || 0).getTime(),
         );
 
       setData(normalized);
@@ -285,7 +285,7 @@ export default function GenericAuditReport({
             const norm = normalizeItem(payload.new);
             const isUpdate = prev.some(p => p.id === norm.id);
             const nextData = isUpdate ? prev.map(p => p.id === norm.id ? norm : p) : [norm, ...prev];
-            return nextData.sort((a,b) => new Date(b.waktu).getTime() - new Date(a.waktu).getTime());
+            return nextData.sort((a,b) => new Date(a.waktu || 0).getTime() - new Date(b.waktu || 0).getTime());
          });
       } else if (payload.eventType === 'DELETE') {
          setData(prev => prev.filter(p => p.id !== payload.old.id));
@@ -575,6 +575,12 @@ export default function GenericAuditReport({
       return val.status.toLowerCase();
     }
     return undefined;
+  };
+
+  const checkIsNegative = (itemId: string) => {
+    const found = indicatorItems?.find((i) => i.id === itemId || i.key === itemId);
+    if (found) return !!found.isNegative;
+    return itemId === "peralatan_berkarat" || itemId === "jarum_suntik_bekas" || itemId === "item_5" || itemId === "item_11";
   };
 
   const getKeterangan = (itemId: string) => {
@@ -918,18 +924,18 @@ export default function GenericAuditReport({
                       <td className="px-1 py-1 sm:px-2 sm:py-2 text-center border border-slate-800 align-middle">
                         {status === "ya" && (
                           <span
-                            className={`font-black text-[10px] sm:text-[14px] ${item.id === "peralatan_berkarat" || item.id === "jarum_suntik_bekas" ? "text-red-600" : "text-emerald-600"}`}
+                            className={`font-black text-[10px] sm:text-[14px] ${checkIsNegative(item.id) ? "text-red-600" : "text-emerald-600"}`}
                           >
-                            ✓
+                            {checkIsNegative(item.id) ? "✗" : "✓"}
                           </span>
                         )}
                       </td>
                       <td className="px-1 py-1 sm:px-2 sm:py-2 text-center border border-slate-800 align-middle">
                         {status === "tidak" && (
                           <span
-                            className={`font-black text-[10px] sm:text-[14px] ${item.id === "peralatan_berkarat" || item.id === "jarum_suntik_bekas" ? "text-emerald-600" : "text-red-600"}`}
+                            className={`font-black text-[10px] sm:text-[14px] ${checkIsNegative(item.id) ? "text-emerald-600" : "text-red-600"}`}
                           >
-                            ✗
+                            {checkIsNegative(item.id) ? "✓" : "✗"}
                           </span>
                         )}
                       </td>
@@ -958,9 +964,14 @@ export default function GenericAuditReport({
                 </p>
                 <p className="text-xl sm:text-2xl font-black text-force-black font-mono leading-none">
                   {(() => {
-                    return checklistItems.filter(
-                      (item) => getStatus(item.id) === "ya",
-                    ).length;
+                    return checklistItems.filter((item) => {
+                      const status = getStatus(item.id);
+                      if (checkIsNegative(item.id)) {
+                        return status === "tidak";
+                      } else {
+                        return status === "ya";
+                      }
+                    }).length;
                   })()}
                 </p>
               </div>
@@ -970,9 +981,14 @@ export default function GenericAuditReport({
                 </p>
                 <p className="text-xl sm:text-2xl font-black text-force-black font-mono leading-none">
                   {(() => {
-                    return checklistItems.filter(
-                      (item) => getStatus(item.id) === "tidak",
-                    ).length;
+                    return checklistItems.filter((item) => {
+                      const status = getStatus(item.id);
+                      if (checkIsNegative(item.id)) {
+                        return status === "ya";
+                      } else {
+                        return status === "tidak";
+                      }
+                    }).length;
                   })()}
                 </p>
               </div>
@@ -982,9 +998,10 @@ export default function GenericAuditReport({
                 </p>
                 <p className="text-xl sm:text-2xl font-black text-force-black font-mono leading-none">
                   {(() => {
-                    return checklistItems.filter(
-                      (item) => getStatus(item.id) === "na",
-                    ).length;
+                    return checklistItems.filter((item) => {
+                      const status = getStatus(item.id);
+                      return status === "na" || status === "n/a";
+                    }).length;
                   })()}
                 </p>
               </div>
@@ -1004,32 +1021,34 @@ export default function GenericAuditReport({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 break-inside-avoid">
-            <div className="border-2 border-slate-800 p-3 bg-slate-50/50">
-              <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-force-black mb-2 border-b-2 border-slate-800 pb-1 flex items-center gap-2">
-                Temuan Lapangan
-              </h4>
-              <div className="text-xs sm:text-sm text-force-black leading-tight whitespace-pre-wrap">
-                {selectedRecord.temuan || (
-                  <span className="italic">
-                    Tidak ada temuan spesifik yang dicatat.
-                  </span>
-                )}
+          {tableName !== "perlindungan_petugas" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 break-inside-avoid">
+              <div className="border-2 border-slate-800 p-3 bg-slate-50/50">
+                <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-force-black mb-2 border-b-2 border-slate-800 pb-1 flex items-center gap-2">
+                  Temuan Lapangan
+                </h4>
+                <div className="text-xs sm:text-sm text-force-black leading-tight whitespace-pre-wrap">
+                  {selectedRecord.temuan || (
+                    <span className="italic">
+                      Tidak ada temuan spesifik yang dicatat.
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="border-2 border-slate-800 p-3 bg-slate-50/50">
+                <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-force-black mb-2 border-b-2 border-slate-800 pb-1 flex items-center gap-2">
+                  Rekomendasi & Tindak Lanjut
+                </h4>
+                <div className="text-xs sm:text-sm text-force-black leading-tight whitespace-pre-wrap">
+                  {selectedRecord.rekomendasi || (
+                    <span className="italic">
+                      Sesuai dengan standar prosedur operasional yang berlaku.
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
-            <div className="border-2 border-slate-800 p-3 bg-slate-50/50">
-              <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-force-black mb-2 border-b-2 border-slate-800 pb-1 flex items-center gap-2">
-                Rekomendasi & Tindak Lanjut
-              </h4>
-              <div className="text-xs sm:text-sm text-force-black leading-tight whitespace-pre-wrap">
-                {selectedRecord.rekomendasi || (
-                  <span className="italic">
-                    Sesuai dengan standar prosedur operasional yang berlaku.
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
+          )}
 
           {selectedRecord.foto &&
             (selectedRecord.foto as string[]).length > 0 && (
@@ -1063,69 +1082,105 @@ export default function GenericAuditReport({
               </div>
             )}
 
-          <div className="grid grid-cols-2 gap-8 mt-4 mb-2 break-inside-avoid">
-            <div className="text-center space-y-2">
-              <p className="text-[9px] font-black uppercase tracking-widest text-force-black mb-2">
-                PJ Ruangan
-              </p>
-              <div className="h-16 relative w-full flex justify-center items-center">
-                {selectedRecord.tanda_tangan_1 ? (
-                  <img
-                    src={selectedRecord.tanda_tangan_1}
-                    className="object-contain h-full relative z-10 mix-blend-multiply"
-                    alt="TTD PJ"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
-                    crossOrigin="anonymous"
-                  />
-                ) : (
-                  <span className="text-[8px] text-gray-500 uppercase tracking-widest font-black italic">
-                    Tanpa Tanda Tangan
-                  </span>
-                )}
-              </div>
-              <div className="pt-1 border-t border-slate-300 w-[90%] md:w-48 mx-auto">
-                <p className="font-bold text-[10px] uppercase tracking-wider text-force-black mt-1 text-wrap">
-                  {selectedRecord.nama_pj_ruangan
-                    ? `( ${selectedRecord.nama_pj_ruangan} )`
-                    : "( ........................................ )"}
+          {tableName === "perlindungan_petugas" ? (
+            <div className="flex justify-end mt-4 mb-2 break-inside-avoid">
+              <div className="text-center space-y-2 w-64">
+                <p className="text-[9px] font-black uppercase tracking-widest text-force-black mb-2">
+                  IPCN / Auditor
                 </p>
+                <div className="h-16 relative w-full flex justify-center items-center">
+                  {(selectedRecord.tanda_tangan_2 || selectedRecord.tanda_tangan_1) ? (
+                    <img
+                      src={selectedRecord.tanda_tangan_2 || selectedRecord.tanda_tangan_1}
+                      className="object-contain h-full relative z-10 mix-blend-multiply"
+                      alt="TTD IPCN"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                      crossOrigin="anonymous"
+                    />
+                  ) : (
+                    <span className="text-[8px] text-gray-500 uppercase tracking-widest font-black italic">
+                      Tanpa Tanda Tangan
+                    </span>
+                  )}
+                </div>
+                <div className="pt-1 border-t border-slate-300 w-[90%] md:w-48 mx-auto">
+                  <p className="font-bold text-[10px] uppercase tracking-wider text-force-black mt-1 text-wrap">
+                    ({" "}
+                    {selectedRecord.supervisor ||
+                      selectedRecord.observer ||
+                      "........................................"}{" "}
+                    )
+                  </p>
+                </div>
               </div>
             </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-8 mt-4 mb-2 break-inside-avoid">
+              <div className="text-center space-y-2">
+                <p className="text-[9px] font-black uppercase tracking-widest text-force-black mb-2">
+                  PJ Ruangan
+                </p>
+                <div className="h-16 relative w-full flex justify-center items-center">
+                  {selectedRecord.tanda_tangan_1 ? (
+                    <img
+                      src={selectedRecord.tanda_tangan_1}
+                      className="object-contain h-full relative z-10 mix-blend-multiply"
+                      alt="TTD PJ"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                      crossOrigin="anonymous"
+                    />
+                  ) : (
+                    <span className="text-[8px] text-gray-500 uppercase tracking-widest font-black italic">
+                      Tanpa Tanda Tangan
+                    </span>
+                  )}
+                </div>
+                <div className="pt-1 border-t border-slate-300 w-[90%] md:w-48 mx-auto">
+                  <p className="font-bold text-[10px] uppercase tracking-wider text-force-black mt-1 text-wrap">
+                    {selectedRecord.nama_pj_ruangan
+                      ? `( ${selectedRecord.nama_pj_ruangan} )`
+                      : "( ........................................ )"}
+                  </p>
+                </div>
+              </div>
 
-            <div className="text-center space-y-2">
-              <p className="text-[9px] font-black uppercase tracking-widest text-force-black mb-2">
-                IPCN / Auditor
-              </p>
-              <div className="h-16 relative w-full flex justify-center items-center">
-                {selectedRecord.tanda_tangan_2 ? (
-                  <img
-                    src={selectedRecord.tanda_tangan_2}
-                    className="object-contain h-full relative z-10 mix-blend-multiply"
-                    alt="TTD IPCN"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
-                    crossOrigin="anonymous"
-                  />
-                ) : (
-                  <span className="text-[8px] text-gray-500 uppercase tracking-widest font-black italic">
-                    Tanpa Tanda Tangan
-                  </span>
-                )}
-              </div>
-              <div className="pt-1 border-t border-slate-300 w-[90%] md:w-48 mx-auto">
-                <p className="font-bold text-[10px] uppercase tracking-wider text-force-black mt-1 text-wrap">
-                  ({" "}
-                  {selectedRecord.supervisor ||
-                    selectedRecord.observer ||
-                    "........................................"}{" "}
-                  )
+              <div className="text-center space-y-2">
+                <p className="text-[9px] font-black uppercase tracking-widest text-force-black mb-2">
+                  IPCN / Auditor
                 </p>
+                <div className="h-16 relative w-full flex justify-center items-center">
+                  {selectedRecord.tanda_tangan_2 ? (
+                    <img
+                      src={selectedRecord.tanda_tangan_2}
+                      className="object-contain h-full relative z-10 mix-blend-multiply"
+                      alt="TTD IPCN"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                      crossOrigin="anonymous"
+                    />
+                  ) : (
+                    <span className="text-[8px] text-gray-500 uppercase tracking-widest font-black italic">
+                      Tanpa Tanda Tangan
+                    </span>
+                  )}
+                </div>
+                <div className="pt-1 border-t border-slate-300 w-[90%] md:w-48 mx-auto">
+                  <p className="font-bold text-[10px] uppercase tracking-wider text-force-black mt-1 text-wrap">
+                    ({" "}
+                    {selectedRecord.supervisor ||
+                      selectedRecord.observer ||
+                      "........................................"}{" "}
+                    )
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
 
         </div>

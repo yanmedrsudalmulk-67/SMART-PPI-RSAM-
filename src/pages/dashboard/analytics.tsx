@@ -1,527 +1,1455 @@
-import { ReactElement, useState, useMemo, useEffect, useRef } from 'react';
+import { ReactElement, useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { 
-  BarChart3, PieChart as PieChartIcon, TrendingUp, Filter, Download, 
-  Activity, Users, ClipboardCheck, AlertTriangle, CheckCircle, Clock,
-  Bot, Lightbulb, FileText, FileSpreadsheet, ImageIcon
+  BarChart2, TrendingUp, Filter, Download, Activity, Users, ClipboardCheck, 
+  AlertTriangle, CheckCircle2, Clock, ShieldCheck, Shield, FileText, 
+  FileSpreadsheet, ImageIcon, Calendar, Award, AlertCircle, UserCheck, 
+  RefreshCw, Building2, Layers, ChevronDown, Check, HelpCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import DashboardLayout from '@/components/DashboardLayout';
-import { useAnalyticsRealtime, AuditSession } from '@/lib/useAnalyticsRealtime';
+import { supabase } from '@/lib/supabase';
+import * as XLSX from 'xlsx';
 
 import { 
-  ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, 
-  CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ReferenceLine 
+  ResponsiveContainer, BarChart, Bar, LineChart, Line, AreaChart, Area, 
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine, Cell, LabelList
 } from '@/components/ChartComponents';
 
-const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+// --- CHART TYPE TOGGLE COMPONENT ---
+const ChartTypeToggle = ({ 
+  type, 
+  onChange, 
+  colorScheme = 'emerald' 
+}: { 
+  type: 'line' | 'bar'; 
+  onChange: (t: 'line' | 'bar') => void;
+  colorScheme?: 'emerald' | 'sky' | 'purple';
+}) => {
+  const activeBg = {
+    emerald: 'bg-emerald-500 text-white shadow-[0_0_12px_rgba(16,185,129,0.4)]',
+    sky: 'bg-sky-500 text-white shadow-[0_0_12px_rgba(14,165,233,0.4)]',
+    purple: 'bg-purple-500 text-white shadow-[0_0_12px_rgba(168,85,247,0.4)]',
+  }[colorScheme];
 
-// Helper to export via printing or html2canvas (skipped complex client sid imports for simplicity, using print)
-const handleExport = (type: string) => {
-  if (type === 'pdf') {
-    window.print();
-  } else {
-    alert(`Export ${type.toUpperCase()} akan mengunduh data dalam format ${type}.`);
+  return (
+    <div className="flex items-center bg-[#071322] p-1 rounded-2xl border border-white/10 shadow-inner">
+      <button
+        type="button"
+        onClick={() => onChange('line')}
+        title="Grafik Line"
+        aria-label="Grafik Line"
+        className={`p-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center ${
+          type === 'line' ? activeBg : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+        }`}
+      >
+        <TrendingUp className="w-4 h-4" />
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange('bar')}
+        title="Grafik Batang"
+        aria-label="Grafik Batang"
+        className={`p-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center ${
+          type === 'bar' ? activeBg : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+        }`}
+      >
+        <BarChart2 className="w-4 h-4" />
+      </button>
+    </div>
+  );
+};
+
+// --- HELPER CONSTANTS ---
+const MONTH_NAMES = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+];
+
+const MONTH_SHORT = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 
+  'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+];
+
+const QUARTER_NAMES = [
+  'Triwulan I (Jan - Mar)',
+  'Triwulan II (Apr - Jun)',
+  'Triwulan III (Jul - Sep)',
+  'Triwulan IV (Okt - Des)'
+];
+
+const SEMESTER_NAMES = [
+  'Semester I (Jan - Jun)',
+  'Semester II (Jul - Des)'
+];
+
+// Profession Group Classifier
+function getProfessionGroup(profesiStr: string | null | undefined): 'Perawat / Bidan' | 'Dokter' | 'Nakes Lainnya' {
+  if (!profesiStr) return 'Nakes Lainnya';
+  const p = profesiStr.toLowerCase().trim();
+  if (p.includes('perawat') || p.includes('bidan') || p.includes('nurse') || p.includes('midwife')) {
+    return 'Perawat / Bidan';
   }
+  if (p.includes('dokter') || p.includes('dr.') || p.includes('spesialis') || p.includes('dpjp') || p.includes('residen')) {
+    return 'Dokter';
+  }
+  return 'Nakes Lainnya';
+}
+
+// Custom Glassmorphism Tooltip Component
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-[#0b172a]/95 backdrop-blur-xl border border-sky-400/30 p-4 rounded-2xl shadow-2xl text-xs space-y-2 text-white z-50 min-w-[200px]">
+        <div className="font-bold border-b border-white/10 pb-1.5 text-sky-300 flex items-center justify-between">
+          <span>{label}</span>
+          <span className="text-[10px] text-slate-400 font-normal">Realtime Data</span>
+        </div>
+        <div className="space-y-1.5 pt-1">
+          {payload.map((entry: any, index: number) => {
+            const extra = entry.payload;
+            return (
+              <div key={`item-${index}`} className="flex flex-col gap-0.5">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="flex items-center gap-1.5 font-medium" style={{ color: entry.color }}>
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                    {entry.name}:
+                  </span>
+                  <span className="font-bold text-white">
+                    {typeof entry.value === 'number' ? `${entry.value}%` : entry.value}
+                  </span>
+                </div>
+                {extra && extra.details && extra.details[entry.name] && (
+                  <div className="pl-3 text-[10px] text-slate-300 grid grid-cols-2 gap-x-2 gap-y-0.5 bg-white/5 p-1.5 rounded-lg border border-white/5">
+                    <span>Observasi: <strong>{extra.details[entry.name].observasi || 0}</strong></span>
+                    <span>Patuh: <strong className="text-emerald-400">{extra.details[entry.name].patuh || 0}</strong></span>
+                    <span>Tidak Patuh: <strong className="text-rose-400">{extra.details[entry.name].tidakPatuh || 0}</strong></span>
+                    <span>N/A: <strong>{extra.details[entry.name].na || 0}</strong></span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+// Custom Tooltip for HAIs
+const HaisTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-[#0b172a]/95 backdrop-blur-xl border border-purple-400/30 p-4 rounded-2xl shadow-2xl text-xs space-y-2 text-white z-50 min-w-[200px]">
+        <div className="font-bold border-b border-white/10 pb-1.5 text-purple-300">
+          {label}
+        </div>
+        <div className="space-y-1.5 pt-1">
+          {payload.map((entry: any, index: number) => (
+            <div key={`hais-${index}`} className="flex items-center justify-between gap-4">
+              <span className="flex items-center gap-1.5 font-medium" style={{ color: entry.color }}>
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                {entry.name}:
+              </span>
+              <span className="font-bold text-white">{entry.value} Kejadian</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return null;
 };
 
 export default function AnalyticsPage() {
-  const { sessions, isLoading } = useAnalyticsRealtime();
   const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Raw Database States
+  const [rawSessions, setRawSessions] = useState<any[]>([]);
+  const [rawHH, setRawHH] = useState<any[]>([]);
+  const [rawApd, setRawApd] = useState<any[]>([]);
+
+  // Period Filters
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth();
+
+  const [periodeType, setPeriodeType] = useState<'Bulanan' | 'Triwulan' | 'Semester' | 'Tahunan'>('Bulanan');
+  const [selectedMonth, setSelectedMonth] = useState<number>(currentMonth);
+  const [selectedQuarter, setSelectedQuarter] = useState<number>(Math.floor(currentMonth / 3) + 1);
+  const [selectedSemester, setSelectedSemester] = useState<number>(currentMonth < 6 ? 1 : 2);
+  const [selectedYear, setSelectedYear] = useState<number>(currentYear);
+
+  // Sub Filters
+  const [selectedUnit, setSelectedUnit] = useState<string>('Semua Unit');
+  const [selectedProfesiGroup, setSelectedProfesiGroup] = useState<string>('Semua Profesi');
+
+  // Chart Type Display States (Grafik Line vs Grafik Batang)
+  const [hhChartType, setHhChartType] = useState<'line' | 'bar'>('line');
+  const [apdChartType, setApdChartType] = useState<'line' | 'bar'>('line');
+  const [haisChartType, setHaisChartType] = useState<'line' | 'bar'>('line');
+  const [haisRoomChartType, setHaisRoomChartType] = useState<'line' | 'bar'>('bar');
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Filters
-  const [periodeType, setPeriodeType] = useState('Semua Waktu');
-  const [filterUnit, setFilterUnit] = useState('Semua Unit');
-  const [filterAuditor, setFilterAuditor] = useState('Semua Auditor');
-  const [filterIndikator, setFilterIndikator] = useState('Semua');
+  // Fetch Data from Supabase
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [sessionsRes, hhRes, apdRes] = await Promise.all([
+        supabase.from('audit_sessions').select('*').order('tanggal_waktu', { ascending: true }),
+        supabase.from('audit_hand_hygiene').select('*').order('start_time', { ascending: true }),
+        supabase.from('audit_apd').select('*').order('tanggal_waktu', { ascending: true })
+      ]);
 
-  // Filter Data
-  const filteredSessions = useMemo(() => {
-    return sessions.filter(s => {
-      // Filter Unit
-      if (filterUnit !== 'Semua Unit' && s.unit !== filterUnit) return false;
-      // Filter Auditor
-      if (filterAuditor !== 'Semua Auditor' && s.observer !== filterAuditor) return false;
-      
-      // Filter Indikator/Kategori (Grouping)
-      if (filterIndikator !== 'Semua') {
-         if (filterIndikator === 'Hand Hygiene' && s.indikator_id !== 'audit_hand_hygiene') return false;
-         if (filterIndikator === 'APD' && s.indikator_id !== 'audit_apd') return false;
-         if (filterIndikator === 'Dekontaminasi' && s.indikator_id !== 'dekontaminasi_alat') return false;
-         if (filterIndikator === 'Limbah' && !s.indikator_id.includes('limbah')) return false;
-         if (filterIndikator === 'Linen' && !s.indikator_id.includes('linen')) return false;
-         if (filterIndikator === 'Bundles' && s.kategori !== 'Monitoring Bundles') return false;
-         if (filterIndikator === 'HAI' && s.kategori !== 'Surveilans HAIs') return false;
-      }
+      setRawSessions(sessionsRes.data || []);
+      setRawHH(hhRes.data || []);
+      setRawApd(apdRes.data || []);
+    } catch (err) {
+      console.error('Error fetching analytics data:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-      // Filter Periode Date Logic 
-      if (periodeType !== 'Semua Waktu') {
-         const dDate = new Date(s.tanggal_waktu);
-         const now = new Date();
-         if (periodeType === 'Harian' && dDate.toDateString() !== now.toDateString()) return false;
-         if (periodeType === 'Bulanan' && (dDate.getMonth() !== now.getMonth() || dDate.getFullYear() !== now.getFullYear())) return false;
-         if (periodeType === 'Tahunan' && dDate.getFullYear() !== now.getFullYear()) return false;
-      }
+  // Supabase Realtime Subscriptions
+  useEffect(() => {
+    fetchData();
 
-      return true;
-    });
-  }, [sessions, filterUnit, filterAuditor, filterIndikator, periodeType]);
+    const chSessions = supabase
+      .channel('realtime_grafik_sessions')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_sessions' }, () => fetchData())
+      .subscribe();
 
-  // Derive Stats
-  const { 
-    totalObservasi, totalUnit, totalAuditor, kepatuhanAvg, 
-    temuanTidakPatuh, temuanBelumTindakLanjut 
-  } = useMemo(() => {
-    const stdSessions = filteredSessions.filter(s => s.kategori !== 'Surveilans HAIs');
-    
-    let totalDinilai = 0;
-    let totalPatuh = 0;
-    stdSessions.forEach(s => {
-       totalDinilai += s.jumlah_dinilai || 0;
-       totalPatuh += s.jumlah_patuh || 0;
-    });
-    
-    const kepatuhan = totalDinilai > 0 ? (totalPatuh / totalDinilai) * 100 : 0;
-    const tidakPatuh = totalDinilai - totalPatuh;
+    const chHH = supabase
+      .channel('realtime_grafik_hh')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_hand_hygiene' }, () => fetchData())
+      .subscribe();
 
-    const units = new Set(filteredSessions.map(s => s.unit).filter(Boolean));
-    const observers = new Set(filteredSessions.map(s => s.observer).filter(Boolean));
+    const chApd = supabase
+      .channel('realtime_grafik_apd')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_apd' }, () => fetchData())
+      .subscribe();
 
-    return {
-      totalObservasi: filteredSessions.length,
-      totalUnit: units.size,
-      totalAuditor: observers.size,
-      kepatuhanAvg: Math.round(kepatuhan),
-      temuanTidakPatuh: tidakPatuh,
-      temuanBelumTindakLanjut: 0 // Mocked conceptually as 0 or could be computed if table supports
+    return () => {
+      supabase.removeChannel(chSessions);
+      supabase.removeChannel(chHH);
+      supabase.removeChannel(chApd);
     };
-  }, [filteredSessions]);
+  }, [fetchData]);
 
-  // HAIs specific computations
-  const haisSessions = useMemo(() => filteredSessions.filter(s => s.kategori === 'Surveilans HAIs'), [filteredSessions]);
-  const haisData = useMemo(() => {
-     const stats: Record<string, number> = { IADP: 0, ISK: 0, VAP: 0, HAP: 0, IDO: 0 };
-     haisSessions.forEach(s => {
-        const title = (s.nama_indikator || '').toUpperCase();
-        let matched = false;
-        Object.keys(stats).forEach(k => {
-          if (title.includes(k) || (k === 'IADP' && title.includes('PHLEBITIS'))) {
-            stats[k] += s.jumlah_patuh || 0; // The occurrence is typically 'jumlah_patuh' for hais or rate, using patuh as frequency
-            matched = true;
+  // Extract All Available Unique Units dynamically
+  const availableUnits = useMemo(() => {
+    const unitsSet = new Set<string>();
+    rawSessions.forEach(s => s.unit && unitsSet.add(s.unit.trim()));
+    rawHH.forEach(s => s.unit && unitsSet.add(s.unit.trim()));
+    rawApd.forEach(s => s.unit && unitsSet.add(s.unit.trim()));
+    return ['Semua Unit', ...Array.from(unitsSet).sort()];
+  }, [rawSessions, rawHH, rawApd]);
+
+  // Helper Date Matcher
+  const matchesPeriod = useCallback((dateStr: string | null | undefined) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return false;
+
+    if (d.getFullYear() !== selectedYear) return false;
+
+    const m = d.getMonth();
+    if (periodeType === 'Bulanan') {
+      return m === selectedMonth;
+    } else if (periodeType === 'Triwulan') {
+      if (selectedQuarter === 1) return m >= 0 && m <= 2;
+      if (selectedQuarter === 2) return m >= 3 && m <= 5;
+      if (selectedQuarter === 3) return m >= 6 && m <= 8;
+      if (selectedQuarter === 4) return m >= 9 && m <= 11;
+    } else if (periodeType === 'Semester') {
+      if (selectedSemester === 1) return m >= 0 && m <= 5;
+      if (selectedSemester === 2) return m >= 6 && m <= 11;
+    } else if (periodeType === 'Tahunan') {
+      return true;
+    }
+    return true;
+  }, [periodeType, selectedMonth, selectedQuarter, selectedSemester, selectedYear]);
+
+  // Normalize & Process Hand Hygiene Data
+  const normalizedHH = useMemo(() => {
+    const records: any[] = [];
+    const seenIds = new Set<string>();
+    const seenKeys = new Set<string>();
+
+    // 1. From audit_sessions
+    const hhSessions = rawSessions.filter(s => s.indikator_id === 'audit_hand_hygiene');
+    for (const s of hhSessions) {
+      if (!s.id || seenIds.has(s.id)) continue;
+      if (!matchesPeriod(s.tanggal_waktu)) continue;
+      if (selectedUnit !== 'Semua Unit' && (s.unit || '').trim() !== selectedUnit) continue;
+
+      const profGroup = getProfessionGroup(s.profesi);
+      if (selectedProfesiGroup !== 'Semua Profesi' && profGroup !== selectedProfesiGroup) continue;
+
+      seenIds.add(s.id);
+      const timeKey = s.tanggal_waktu ? new Date(s.tanggal_waktu).toISOString().substring(0, 16) : '';
+      if (s.observer && s.unit && timeKey) {
+        seenKeys.add(`${s.observer.toLowerCase().trim()}_${s.unit.toLowerCase().trim()}_${timeKey}`);
+      }
+
+      const patuh = Number(s.jumlah_patuh) || 0;
+      const dinilai = Number(s.jumlah_dinilai) || 0;
+      const tidakPatuh = Math.max(0, dinilai - patuh);
+      const na = Number(s.data_indikator?.na_count) || 0;
+
+      records.push({
+        id: s.id,
+        date: new Date(s.tanggal_waktu),
+        unit: s.unit || '-',
+        observer: s.observer || '-',
+        profesi: s.profesi || '-',
+        profGroup,
+        patuh,
+        tidakPatuh,
+        na,
+        dinilai
+      });
+    }
+
+    // 2. From audit_hand_hygiene
+    for (const item of rawHH) {
+      const dt = item.start_time || item.created_at || item.tanggal_waktu;
+      if (!item.id || seenIds.has(item.id)) continue;
+      if (!matchesPeriod(dt)) continue;
+      if (selectedUnit !== 'Semua Unit' && (item.unit || '').trim() !== selectedUnit) continue;
+
+      const profGroup = getProfessionGroup(item.profesi);
+      if (selectedProfesiGroup !== 'Semua Profesi' && profGroup !== selectedProfesiGroup) continue;
+
+      const timeKey = dt ? new Date(dt).toISOString().substring(0, 16) : '';
+      const key = `${(item.observer || '').toLowerCase().trim()}_${(item.unit || '').toLowerCase().trim()}_${timeKey}`;
+      if (item.observer && item.unit && timeKey && seenKeys.has(key)) continue;
+
+      seenIds.add(item.id);
+      if (item.observer && item.unit && timeKey) seenKeys.add(key);
+
+      // Moments evaluation
+      let patuh = Number(item.patuh) || 0;
+      let dinilai = Number(item.peluang) || Number(item.jumlah_dinilai) || 0;
+      let tidakPatuh = 0;
+      let na = 0;
+
+      if (!dinilai && (item.m1 !== undefined || item.m2 !== undefined)) {
+        const moments = [item.m1, item.m2, item.m3, item.m4, item.m5];
+        moments.forEach(m => {
+          if (!m || m === 'N/A' || m === 'TIDAK_DILAKUKAN') {
+            na++;
+          } else if (m === 'HR' || m === 'HW' || m === 'Selesai' || m === 'Patuh' || m === true) {
+            patuh++;
+            dinilai++;
+          } else {
+            tidakPatuh++;
+            dinilai++;
           }
         });
-        if (!matched) {
-          if(!stats[title]) stats[title] = 0;
-          stats[title] += s.jumlah_patuh || 0;
-        }
-     });
-     return Object.keys(stats).map(k => ({ name: k, value: stats[k] })).filter(d => d.value > 0);
-  }, [haisSessions]);
+      } else {
+        tidakPatuh = Math.max(0, dinilai - patuh);
+      }
 
-  // Compliance By Indicator Trend
-  const { trenBulananIndikator, distribusiTemuan, jenisTemuanTerbanyak } = useMemo(() => {
-    const std = filteredSessions.filter(s => s.kategori !== 'Surveilans HAIs');
-    
-    // Distribusi
-    let patuh = 0;
-    let tidakPatuh = 0;
-    std.forEach(s => { patuh += s.jumlah_patuh || 0; tidakPatuh += (s.jumlah_dinilai - s.jumlah_patuh) || 0; });
-    const distribusi = [
-      { name: 'Patuh', value: patuh },
-      { name: 'Tidak Patuh', value: tidakPatuh }
-    ];
+      records.push({
+        id: item.id,
+        date: new Date(dt),
+        unit: item.unit || '-',
+        observer: item.observer || '-',
+        profesi: item.profesi || '-',
+        profGroup,
+        patuh,
+        tidakPatuh,
+        na,
+        dinilai
+      });
+    }
 
-    // Jenis Temuan Bar Chart
-    const jenisTemuanMap: Record<string, number> = {};
-    std.forEach(s => {
-       const tidakP = (s.jumlah_dinilai || 0) - (s.jumlah_patuh || 0);
-       let cat = s.kategori || s.nama_indikator;
-       if (s.indikator_id === 'audit_hand_hygiene') cat = 'Hand Hygiene';
-       if (s.indikator_id === 'audit_apd') cat = 'APD';
-       if (!jenisTemuanMap[cat]) jenisTemuanMap[cat] = 0;
-       jenisTemuanMap[cat] += tidakP;
+    return records;
+  }, [rawSessions, rawHH, matchesPeriod, selectedUnit, selectedProfesiGroup]);
+
+  // Normalize & Process APD Data
+  const normalizedApd = useMemo(() => {
+    const records: any[] = [];
+    const seenIds = new Set<string>();
+    const seenKeys = new Set<string>();
+
+    // 1. From audit_sessions
+    const apdSessions = rawSessions.filter(s => s.indikator_id === 'audit_apd');
+    for (const s of apdSessions) {
+      if (!s.id || seenIds.has(s.id)) continue;
+      if (!matchesPeriod(s.tanggal_waktu)) continue;
+      if (selectedUnit !== 'Semua Unit' && (s.unit || '').trim() !== selectedUnit) continue;
+
+      const profGroup = getProfessionGroup(s.profesi);
+      if (selectedProfesiGroup !== 'Semua Profesi' && profGroup !== selectedProfesiGroup) continue;
+
+      seenIds.add(s.id);
+      const timeKey = s.tanggal_waktu ? new Date(s.tanggal_waktu).toISOString().substring(0, 16) : '';
+      if (s.observer && s.unit && timeKey) {
+        seenKeys.add(`${s.observer.toLowerCase().trim()}_${s.unit.toLowerCase().trim()}_${timeKey}`);
+      }
+
+      const patuh = Number(s.jumlah_patuh) || 0;
+      const dinilai = Number(s.jumlah_dinilai) || 0;
+      const tidakPatuh = Math.max(0, dinilai - patuh);
+      const na = Number(s.data_indikator?.na_count) || 0;
+
+      records.push({
+        id: s.id,
+        date: new Date(s.tanggal_waktu),
+        unit: s.unit || '-',
+        observer: s.observer || '-',
+        profesi: s.profesi || '-',
+        profGroup,
+        patuh,
+        tidakPatuh,
+        na,
+        dinilai
+      });
+    }
+
+    // 2. From audit_apd
+    for (const item of rawApd) {
+      const dt = item.tanggal_waktu || item.created_at;
+      if (!item.id || seenIds.has(item.id)) continue;
+      if (!matchesPeriod(dt)) continue;
+      if (selectedUnit !== 'Semua Unit' && (item.unit || '').trim() !== selectedUnit) continue;
+
+      const profGroup = getProfessionGroup(item.profesi);
+      if (selectedProfesiGroup !== 'Semua Profesi' && profGroup !== selectedProfesiGroup) continue;
+
+      const timeKey = dt ? new Date(dt).toISOString().substring(0, 16) : '';
+      const key = `${(item.observer || '').toLowerCase().trim()}_${(item.unit || '').toLowerCase().trim()}_${timeKey}`;
+      if (item.observer && item.unit && timeKey && seenKeys.has(key)) continue;
+
+      seenIds.add(item.id);
+      if (item.observer && item.unit && timeKey) seenKeys.add(key);
+
+      let patuh = Number(item.jumlah_apd_patuh) || Number(item.jumlah_patuh) || 0;
+      let dinilai = Number(item.jumlah_apd_wajib) || Number(item.jumlah_dinilai) || 0;
+      let tidakPatuh = 0;
+      let na = 0;
+
+      if (!dinilai && (item.masker !== undefined || item.sarung_tangan !== undefined)) {
+        const apdItems = [
+          item.masker, item.sarung_tangan, item.penutup_kepala, 
+          item.apron, item.goggle, item.sepatu_boot, item.gaun_pelindung
+        ];
+        apdItems.forEach(a => {
+          if (!a || a === 'N/A' || a === 'TIDAK_DIBUTUHKAN') {
+            na++;
+          } else if (a === 'Patuh' || a === 'Ya' || a === true) {
+            patuh++;
+            dinilai++;
+          } else if (a === 'Tidak Patuh' || a === 'Tidak' || a === false) {
+            tidakPatuh++;
+            dinilai++;
+          }
+        });
+      } else {
+        tidakPatuh = Math.max(0, dinilai - patuh);
+      }
+
+      records.push({
+        id: item.id,
+        date: new Date(dt),
+        unit: item.unit || '-',
+        observer: item.observer || '-',
+        profesi: item.profesi || '-',
+        profGroup,
+        patuh,
+        tidakPatuh,
+        na,
+        dinilai
+      });
+    }
+
+    return records;
+  }, [rawSessions, rawApd, matchesPeriod, selectedUnit, selectedProfesiGroup]);
+
+  // Normalize & Process HAIs Data
+  const normalizedHais = useMemo(() => {
+    const haisSessions = rawSessions.filter(s => 
+      s.kategori === 'Surveilans HAIs' || 
+      (s.indikator_id && s.indikator_id.startsWith('surveilans'))
+    );
+
+    const records: any[] = [];
+    for (const s of haisSessions) {
+      if (!matchesPeriod(s.tanggal_waktu)) continue;
+      if (selectedUnit !== 'Semua Unit' && (s.unit || '').trim() !== selectedUnit) continue;
+
+      const indId = (s.indikator_id || '').toLowerCase();
+      const nama = (s.nama_indikator || '').toUpperCase();
+
+      let haisType = 'Lainnya';
+      if (indId.includes('phlebitis') || nama.includes('PHLEBITIS')) haisType = 'Phlebitis';
+      else if (indId.includes('isk') || indId.includes('cauti') || nama.includes('ISK') || nama.includes('CAUTI')) haisType = 'CAUTI / ISK';
+      else if (indId.includes('ido') || nama.includes('IDO')) haisType = 'IDO';
+      else if (indId.includes('vap') || nama.includes('VAP')) haisType = 'VAP';
+      else if (indId.includes('dekubitus') || nama.includes('DEKUBITUS')) haisType = 'Dekubitus';
+
+      const cases = Number(s.jumlah_patuh) || 0; // In HAIs, jumlah_patuh represents incident count
+      const denominator = Number(s.jumlah_dinilai) || 0;
+
+      records.push({
+        id: s.id,
+        date: new Date(s.tanggal_waktu),
+        unit: s.unit || 'Lainnya',
+        haisType,
+        cases,
+        denominator
+      });
+    }
+
+    return records;
+  }, [rawSessions, matchesPeriod, selectedUnit]);
+
+  // --- STATS COMPUTATION FOR TOP SUMMARY CARDS ---
+  const summaryStats = useMemo(() => {
+    // 1. Hand Hygiene Avg
+    let hhPatuh = 0, hhDinilai = 0;
+    normalizedHH.forEach(r => {
+      hhPatuh += r.patuh;
+      hhDinilai += r.dinilai;
     });
-    const jenisTemuan = Object.keys(jenisTemuanMap)
-      .map(k => ({ name: k, TidakPatuh: jenisTemuanMap[k] }))
-      .filter(x => x.TidakPatuh > 0)
-      .sort((a,b) => b.TidakPatuh - a.TidakPatuh);
+    const hhAvg = hhDinilai > 0 ? Math.round((hhPatuh / hhDinilai) * 100) : null;
 
-    // Tren Bulanan
-    const tren: Record<string, any> = {};
-    MONTHS.forEach(m => tren[m] = { name: m, hhDinilai:0, hhPatuh:0, apdDinilai:0, apdPatuh:0, bundleDinilai:0, bundlePatuh:0 });
+    // 2. APD Avg
+    let apdPatuh = 0, apdDinilai = 0;
+    normalizedApd.forEach(r => {
+      apdPatuh += r.patuh;
+      apdDinilai += r.dinilai;
+    });
+    const apdAvg = apdDinilai > 0 ? Math.round((apdPatuh / apdDinilai) * 100) : null;
 
-    std.forEach(s => {
-      const d = new Date(s.tanggal_waktu);
-      if (d.getFullYear() === new Date().getFullYear()) {
-        const mNm = MONTHS[d.getMonth()];
-        if (s.indikator_id === 'audit_hand_hygiene') {
-           tren[mNm].hhDinilai += s.jumlah_dinilai; tren[mNm].hhPatuh += s.jumlah_patuh;
-        } else if (s.indikator_id === 'audit_apd') {
-           tren[mNm].apdDinilai += s.jumlah_dinilai; tren[mNm].apdPatuh += s.jumlah_patuh;
-        } else if (s.kategori?.includes('Bundles')) {
-           tren[mNm].bundleDinilai += s.jumlah_dinilai; tren[mNm].bundlePatuh += s.jumlah_patuh;
-        }
+    // 3. Total Observasi
+    const totalObservasi = normalizedHH.length + normalizedApd.length;
+
+    // 4. Total HAIs Incidents
+    let totalHaisCases = 0;
+    normalizedHais.forEach(r => totalHaisCases += r.cases);
+
+    // 5. Best & Improvement Needed Indicators
+    const indicatorsList: { name: string; pct: number }[] = [];
+    if (hhAvg !== null) indicatorsList.push({ name: 'Kebersihan Tangan', pct: hhAvg });
+    if (apdAvg !== null) indicatorsList.push({ name: 'Kepatuhan APD', pct: apdAvg });
+
+    let bestInd = '-';
+    let worstInd = '-';
+
+    if (indicatorsList.length > 0) {
+      indicatorsList.sort((a, b) => b.pct - a.pct);
+      bestInd = `${indicatorsList[0].name} (${indicatorsList[0].pct}%)`;
+      worstInd = `${indicatorsList[indicatorsList.length - 1].name} (${indicatorsList[indicatorsList.length - 1].pct}%)`;
+    }
+
+    return {
+      hhAvg,
+      apdAvg,
+      totalObservasi,
+      totalHaisCases,
+      bestInd,
+      worstInd
+    };
+  }, [normalizedHH, normalizedApd, normalizedHais]);
+
+  // --- HAND HYGIENE PROFESSION BREAKDOWN ---
+  const hhProfBreakdown = useMemo(() => {
+    const groups = {
+      'Perawat / Bidan': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 },
+      'Dokter': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 },
+      'Nakes Lainnya': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 }
+    };
+
+    normalizedHH.forEach(r => {
+      const g = groups[r.profGroup as keyof typeof groups];
+      if (g) {
+        g.patuh += r.patuh;
+        g.dinilai += r.dinilai;
+        g.tidakPatuh += r.tidakPatuh;
+        g.na += r.na;
+        g.obs += 1;
       }
     });
 
-    const trenList = MONTHS.map(m => {
-       const v = tren[m];
-       return {
-         name: m,
-         'Hand Hygiene': v.hhDinilai ? Math.round((v.hhPatuh/v.hhDinilai)*100) : 0,
-         'APD': v.apdDinilai ? Math.round((v.apdPatuh/v.apdDinilai)*100) : 0,
-         'Bundles': v.bundleDinilai ? Math.round((v.bundlePatuh/v.bundleDinilai)*100) : 0,
-       };
-    }).filter(m => m['Hand Hygiene'] > 0 || m['APD'] > 0 || m['Bundles'] > 0);
+    return [
+      {
+        name: 'Perawat / Bidan',
+        pct: groups['Perawat / Bidan'].dinilai > 0 ? Math.round((groups['Perawat / Bidan'].patuh / groups['Perawat / Bidan'].dinilai) * 100) : 0,
+        data: groups['Perawat / Bidan']
+      },
+      {
+        name: 'Dokter',
+        pct: groups['Dokter'].dinilai > 0 ? Math.round((groups['Dokter'].patuh / groups['Dokter'].dinilai) * 100) : 0,
+        data: groups['Dokter']
+      },
+      {
+        name: 'Nakes Lainnya',
+        pct: groups['Nakes Lainnya'].dinilai > 0 ? Math.round((groups['Nakes Lainnya'].patuh / groups['Nakes Lainnya'].dinilai) * 100) : 0,
+        data: groups['Nakes Lainnya']
+      }
+    ];
+  }, [normalizedHH]);
 
-    return { trenBulananIndikator: trenList.length ? trenList : [], distribusiTemuan: distribusi.filter(d=>d.value>0), jenisTemuanTerbanyak: jenisTemuan };
-  }, [filteredSessions]);
+  // --- TIME BUCKETS GENERATOR FOR TREND CHARTS ---
+  const timeBuckets = useMemo(() => {
+    if (periodeType === 'Bulanan') {
+      return ['Minggu 1', 'Minggu 2', 'Minggu 3', 'Minggu 4'];
+    } else if (periodeType === 'Triwulan') {
+      const startM = (selectedQuarter - 1) * 3;
+      return [MONTH_SHORT[startM], MONTH_SHORT[startM + 1], MONTH_SHORT[startM + 2]];
+    } else if (periodeType === 'Semester') {
+      const startM = (selectedSemester - 1) * 6;
+      return Array.from({ length: 6 }, (_, i) => MONTH_SHORT[startM + i]);
+    } else {
+      return MONTH_SHORT;
+    }
+  }, [periodeType, selectedQuarter, selectedSemester]);
 
-  // Unit Compliance, Ranking & Auditor Activity
-  const { unitData, topUnits, bottomUnits, auditorData } = useMemo(() => {
-     const std = filteredSessions.filter(s => s.kategori !== 'Surveilans HAIs' && s.unit);
-     const statMap: Record<string, { patuh: number, dinilai: number }> = {};
-     const obsMap: Record<string, { count: number, patuh: number, dinilai: number }> = {};
+  // Helper to map a Date object to its Bucket Label index
+  const getBucketLabel = useCallback((d: Date) => {
+    const m = d.getMonth();
+    const dateNum = d.getDate();
 
-     std.forEach(s => {
-        if (!statMap[s.unit]) statMap[s.unit] = { patuh: 0, dinilai: 0 };
-        statMap[s.unit].patuh += s.jumlah_patuh || 0;
-        statMap[s.unit].dinilai += s.jumlah_dinilai || 0;
+    if (periodeType === 'Bulanan') {
+      if (dateNum <= 7) return 'Minggu 1';
+      if (dateNum <= 14) return 'Minggu 2';
+      if (dateNum <= 21) return 'Minggu 3';
+      return 'Minggu 4';
+    } else if (periodeType === 'Triwulan') {
+      return MONTH_SHORT[m];
+    } else if (periodeType === 'Semester') {
+      return MONTH_SHORT[m];
+    } else {
+      return MONTH_SHORT[m];
+    }
+  }, [periodeType]);
 
-        if (s.observer) {
-           if (!obsMap[s.observer]) obsMap[s.observer] = { count: 0, patuh: 0, dinilai: 0 };
-           obsMap[s.observer].count += 1;
-           obsMap[s.observer].patuh += s.jumlah_patuh || 0;
-           obsMap[s.observer].dinilai += s.jumlah_dinilai || 0;
-        }
-     });
+  // --- HAND HYGIENE TREND DATA ---
+  const hhTrendData = useMemo(() => {
+    if (normalizedHH.length === 0) return [];
 
-     const items = Object.keys(statMap).map(u => {
-        const persentase = statMap[u].dinilai > 0 ? Math.round((statMap[u].patuh / statMap[u].dinilai)*100) : 0;
-        return { name: u, Kepatuhan: persentase };
-     }).sort((a,b) => b.Kepatuhan - a.Kepatuhan);
-
-     const auditors = Object.keys(obsMap).map(o => {
-        const p = obsMap[o].dinilai > 0 ? Math.round((obsMap[o].patuh / obsMap[o].dinilai)*100) : 0;
-        return { name: o, Observasi: obsMap[o].count, Kepatuhan: p };
-     }).sort((a,b) => b.Observasi - a.Observasi);
-
-     return { 
-       unitData: items, 
-       topUnits: items.slice(0, 10), 
-       bottomUnits: [...items].sort((a,b) => a.Kepatuhan - b.Kepatuhan).slice(0, 10),
-       auditorData: auditors.slice(0, 5) // Top 5
-     };
-  }, [filteredSessions]);
-
-  // Unit Dropdown Options based on REAL data
-  const unitOptions = useMemo(() => {
-     const un = new Set(sessions.map(s => s.unit).filter(Boolean));
-     return ['Semua Unit', ...Array.from(un).sort()];
-  }, [sessions]);
-
-  const auditorOptions = useMemo(() => {
-     const au = new Set(sessions.map(s => s.observer).filter(Boolean));
-     return ['Semua Auditor', ...Array.from(au).sort()];
-  }, [sessions]);
-
-  // AI Generated Text
-  const aiAnalysis = useMemo(() => {
-    if (sessions.length === 0) return "Belum ada data observasi yang masuk dalam sistem untuk dianalisis.";
-    if (filteredSessions.length === 0) return "Tidak ada data yang cocok dengan filter yang dipilih saat ini.";
+    const bucketMap: Record<string, Record<string, { patuh: number; dinilai: number; tidakPatuh: number; na: number; obs: number }>> = {};
     
-    let text = `Berdasarkan ${totalObservasi} sesi hasil observasi pada periode berjalan, capaian rata-rata RSUD AL-MULK mencapai ${kepatuhanAvg}%. `;
-    if (topUnits.length > 0) {
-      text += `Unit dengan performa terbaik dipimpin oleh ${topUnits[0].name} dengan skor ${topUnits[0].Kepatuhan}%. `;
-    }
-    if (bottomUnits.length > 0 && bottomUnits[0].Kepatuhan < 85) {
-      text += `Perhatian khusus diperlukan di ${bottomUnits[0].name} yang saat ini berada pada angka ${bottomUnits[0].Kepatuhan}%. `;
-    }
-    if (jenisTemuanTerbanyak.length > 0) {
-      text += `Paling banyak ditemukan ketidakpatuhan pada kategori ${jenisTemuanTerbanyak[0].name} dengan total ${jenisTemuanTerbanyak[0].TidakPatuh} kejadian.`;
-    }
-    return text;
-  }, [totalObservasi, kepatuhanAvg, topUnits, bottomUnits, jenisTemuanTerbanyak, sessions.length, filteredSessions.length]);
+    timeBuckets.forEach(b => {
+      bucketMap[b] = {
+        'Perawat / Bidan': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 },
+        'Dokter': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 },
+        'Nakes Lainnya': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 }
+      };
+    });
 
-  if (!mounted || isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 text-slate-500">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm font-medium">Melakukan sinkronisasi data realtime...</p>
-      </div>
-    );
+    normalizedHH.forEach(r => {
+      const bLabel = getBucketLabel(r.date);
+      if (bucketMap[bLabel] && bucketMap[bLabel][r.profGroup]) {
+        const item = bucketMap[bLabel][r.profGroup];
+        item.patuh += r.patuh;
+        item.dinilai += r.dinilai;
+        item.tidakPatuh += r.tidakPatuh;
+        item.na += r.na;
+        item.obs += 1;
+      }
+    });
+
+    return timeBuckets.map(b => {
+      const pData = bucketMap[b]['Perawat / Bidan'];
+      const dData = bucketMap[b]['Dokter'];
+      const nData = bucketMap[b]['Nakes Lainnya'];
+
+      const pPct = pData.dinilai > 0 ? Math.round((pData.patuh / pData.dinilai) * 100) : 0;
+      const dPct = dData.dinilai > 0 ? Math.round((dData.patuh / dData.dinilai) * 100) : 0;
+      const nPct = nData.dinilai > 0 ? Math.round((nData.patuh / nData.dinilai) * 100) : 0;
+
+      return {
+        periode: b,
+        'Perawat / Bidan': pPct,
+        'Dokter': dPct,
+        'Nakes Lainnya': nPct,
+        details: {
+          'Perawat / Bidan': { observasi: pData.obs, patuh: pData.patuh, tidakPatuh: pData.tidakPatuh, na: pData.na },
+          'Dokter': { observasi: dData.obs, patuh: dData.patuh, tidakPatuh: dData.tidakPatuh, na: dData.na },
+          'Nakes Lainnya': { observasi: nData.obs, patuh: nData.patuh, tidakPatuh: nData.tidakPatuh, na: nData.na }
+        }
+      };
+    });
+  }, [normalizedHH, timeBuckets, getBucketLabel]);
+
+  // --- APD PROFESSION BREAKDOWN ---
+  const apdProfBreakdown = useMemo(() => {
+    const groups = {
+      'Perawat / Bidan': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 },
+      'Dokter': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 },
+      'Nakes Lainnya': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 }
+    };
+
+    normalizedApd.forEach(r => {
+      const g = groups[r.profGroup as keyof typeof groups];
+      if (g) {
+        g.patuh += r.patuh;
+        g.dinilai += r.dinilai;
+        g.tidakPatuh += r.tidakPatuh;
+        g.na += r.na;
+        g.obs += 1;
+      }
+    });
+
+    return [
+      {
+        name: 'Perawat / Bidan',
+        pct: groups['Perawat / Bidan'].dinilai > 0 ? Math.round((groups['Perawat / Bidan'].patuh / groups['Perawat / Bidan'].dinilai) * 100) : 0,
+        data: groups['Perawat / Bidan']
+      },
+      {
+        name: 'Dokter',
+        pct: groups['Dokter'].dinilai > 0 ? Math.round((groups['Dokter'].patuh / groups['Dokter'].dinilai) * 100) : 0,
+        data: groups['Dokter']
+      },
+      {
+        name: 'Nakes Lainnya',
+        pct: groups['Nakes Lainnya'].dinilai > 0 ? Math.round((groups['Nakes Lainnya'].patuh / groups['Nakes Lainnya'].dinilai) * 100) : 0,
+        data: groups['Nakes Lainnya']
+      }
+    ];
+  }, [normalizedApd]);
+
+  // --- APD TREND DATA ---
+  const apdTrendData = useMemo(() => {
+    if (normalizedApd.length === 0) return [];
+
+    const bucketMap: Record<string, Record<string, { patuh: number; dinilai: number; tidakPatuh: number; na: number; obs: number }>> = {};
+    
+    timeBuckets.forEach(b => {
+      bucketMap[b] = {
+        'Perawat / Bidan': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 },
+        'Dokter': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 },
+        'Nakes Lainnya': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 }
+      };
+    });
+
+    normalizedApd.forEach(r => {
+      const bLabel = getBucketLabel(r.date);
+      if (bucketMap[bLabel] && bucketMap[bLabel][r.profGroup]) {
+        const item = bucketMap[bLabel][r.profGroup];
+        item.patuh += r.patuh;
+        item.dinilai += r.dinilai;
+        item.tidakPatuh += r.tidakPatuh;
+        item.na += r.na;
+        item.obs += 1;
+      }
+    });
+
+    return timeBuckets.map(b => {
+      const pData = bucketMap[b]['Perawat / Bidan'];
+      const dData = bucketMap[b]['Dokter'];
+      const nData = bucketMap[b]['Nakes Lainnya'];
+
+      const pPct = pData.dinilai > 0 ? Math.round((pData.patuh / pData.dinilai) * 100) : 0;
+      const dPct = dData.dinilai > 0 ? Math.round((dData.patuh / dData.dinilai) * 100) : 0;
+      const nPct = nData.dinilai > 0 ? Math.round((nData.patuh / nData.dinilai) * 100) : 0;
+
+      return {
+        periode: b,
+        'Perawat / Bidan': pPct,
+        'Dokter': dPct,
+        'Nakes Lainnya': nPct,
+        'Target': 100,
+        details: {
+          'Perawat / Bidan': { observasi: pData.obs, patuh: pData.patuh, tidakPatuh: pData.tidakPatuh, na: pData.na },
+          'Dokter': { observasi: dData.obs, patuh: dData.patuh, tidakPatuh: dData.tidakPatuh, na: dData.na },
+          'Nakes Lainnya': { observasi: nData.obs, patuh: nData.patuh, tidakPatuh: nData.tidakPatuh, na: nData.na }
+        }
+      };
+    });
+  }, [normalizedApd, timeBuckets, getBucketLabel]);
+
+  // --- HAIs TREND & ROOM DISTRIBUTION ---
+  const { haisTrendData, haisRoomData } = useMemo(() => {
+    if (normalizedHais.length === 0) return { haisTrendData: [], haisRoomData: [] };
+
+    // 1. Trend Data
+    const bucketMap: Record<string, Record<string, number>> = {};
+    timeBuckets.forEach(b => {
+      bucketMap[b] = { 'Phlebitis': 0, 'CAUTI / ISK': 0, 'IDO': 0, 'VAP': 0, 'Dekubitus': 0 };
+    });
+
+    // 2. Room Distribution
+    const roomMap: Record<string, number> = {};
+
+    normalizedHais.forEach(r => {
+      const bLabel = getBucketLabel(r.date);
+      if (bucketMap[bLabel] && bucketMap[bLabel][r.haisType] !== undefined) {
+        bucketMap[bLabel][r.haisType] += r.cases;
+      }
+
+      if (!roomMap[r.unit]) roomMap[r.unit] = 0;
+      roomMap[r.unit] += r.cases;
+    });
+
+    const trend = timeBuckets.map(b => ({
+      periode: b,
+      ...bucketMap[b]
+    }));
+
+    const room = Object.keys(roomMap)
+      .map(unit => ({ unit, Kejadian: roomMap[unit] }))
+      .sort((a, b) => b.Kejadian - a.Kejadian);
+
+    return { haisTrendData: trend, haisRoomData: room };
+  }, [normalizedHais, timeBuckets, getBucketLabel]);
+
+  // EXPORT FUNCTIONALITY (PDF, EXCEL, PRINT)
+  const handleExport = (type: 'pdf' | 'excel' | 'print') => {
+    const filterTitle = `${periodeType} - ${
+      periodeType === 'Bulanan' ? `${MONTH_NAMES[selectedMonth]} ${selectedYear}` :
+      periodeType === 'Triwulan' ? `${QUARTER_NAMES[selectedQuarter - 1]} ${selectedYear}` :
+      periodeType === 'Semester' ? `${SEMESTER_NAMES[selectedSemester - 1]} ${selectedYear}` :
+      `Tahun ${selectedYear}`
+    } (${selectedUnit})`;
+
+    if (type === 'excel') {
+      const wb = XLSX.utils.book_new();
+
+      // Sheet 1: Summary Stats
+      const summaryData = [
+        ['SMART-PPI - REKAPITULASI CAPAIAN GRAFIK INDIKATOR MUTU'],
+        ['Periode Filter:', filterTitle],
+        ['Unit / Ruangan:', selectedUnit],
+        ['Profesi Filter:', selectedProfesiGroup],
+        [],
+        ['INDIKATOR', 'NILAI CAPAIAN / HASIL'],
+        ['Rata-rata Kebersihan Tangan', summaryStats.hhAvg !== null ? `${summaryStats.hhAvg}%` : 'Belum Ada Data'],
+        ['Rata-rata Kepatuhan APD', summaryStats.apdAvg !== null ? `${summaryStats.apdAvg}%` : 'Belum Ada Data'],
+        ['Total Sesi Observasi', summaryStats.totalObservasi],
+        ['Total Kejadian HAIs', summaryStats.totalHaisCases],
+        ['Indikator Performa Terbaik', summaryStats.bestInd],
+        ['Indikator Perlu Perbaikan', summaryStats.worstInd]
+      ];
+      const ws1 = XLSX.utils.aoa_to_sheet(summaryData);
+      XLSX.utils.book_append_sheet(wb, ws1, 'Ringkasan Capaian');
+
+      // Sheet 2: Kebersihan Tangan
+      const hhExportData = [
+        ['PROFESI', 'TOTAL OBSERVASI', 'JUMLAH PATUH', 'TIDAK PATUH', 'N/A', 'PERSENTASE (%)'],
+        ...hhProfBreakdown.map(p => [
+          p.name, p.data.obs, p.data.patuh, p.data.tidakPatuh, p.data.na, `${p.pct}%`
+        ])
+      ];
+      const ws2 = XLSX.utils.aoa_to_sheet(hhExportData);
+      XLSX.utils.book_append_sheet(wb, ws2, 'Kebersihan Tangan');
+
+      // Sheet 3: APD
+      const apdExportData = [
+        ['PROFESI', 'TOTAL OBSERVASI', 'JUMLAH PATUH', 'TIDAK PATUH', 'N/A', 'PERSENTASE (%)'],
+        ...apdProfBreakdown.map(p => [
+          p.name, p.data.obs, p.data.patuh, p.data.tidakPatuh, p.data.na, `${p.pct}%`
+        ])
+      ];
+      const ws3 = XLSX.utils.aoa_to_sheet(apdExportData);
+      XLSX.utils.book_append_sheet(wb, ws3, 'Kepatuhan APD');
+
+      // Save file
+      const fileName = `Grafik_SMART_PPI_${selectedYear}_${periodeType}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+    } else {
+      window.print();
+    }
+  };
+
+  if (!mounted) {
+    return null;
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-20 animate-in fade-in duration-500">
-      {/* Header & Export */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 py-4 border-b border-slate-200 dark:border-white/5">
-        <div className="text-center lg:text-left w-full lg:w-auto">
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase">Analitik SMART PPI</h1>
-          <p className="text-sm text-white mt-1 font-medium">Pusat analisis data terintegrasi Supabase Realtime.</p>
-        </div>
-        <div className="flex flex-wrap gap-2 justify-center print:hidden">
-          <button onClick={() => handleExport('pdf')} className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg text-xs font-bold uppercase transition-all shadow-sm">
-            <FileText className="w-4 h-4" /> PDF
-          </button>
-          <button onClick={() => handleExport('excel')} className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-600 dark:text-green-400 rounded-lg text-xs font-bold uppercase transition-all shadow-sm">
-            <FileSpreadsheet className="w-4 h-4" /> Excel
-          </button>
-        </div>
-      </div>
-
-      {/* FILTER SECTION */}
-      <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md p-4 rounded-3xl border border-slate-200 dark:border-white/10 shadow-sm print:hidden">
-         <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4">
-             <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-               <Filter className="w-4 h-4" />
-               <span className="text-sm font-bold">Filter:</span>
-             </div>
-             
-             <select value={periodeType} onChange={e => setPeriodeType(e.target.value)} className="bg-transparent border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/50 dark:bg-slate-800">
-                {['Semua Waktu', 'Harian', 'Bulanan', 'Tahunan'].map(p => <option key={p} value={p}>{p}</option>)}
-             </select>
-
-             <select value={filterIndikator} onChange={e => setFilterIndikator(e.target.value)} className="bg-transparent border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/50 dark:bg-slate-800">
-                {['Semua', 'Hand Hygiene', 'APD', 'Dekontaminasi', 'Limbah', 'Linen', 'Bundles', 'HAI'].map(p => <option key={p} value={p}>{p}</option>)}
-             </select>
-
-             <select value={filterUnit} onChange={e => setFilterUnit(e.target.value)} className="bg-transparent border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/50 dark:bg-slate-800 max-w-[200px] truncate">
-                {unitOptions.map(p => <option key={p} value={p}>{p}</option>)}
-             </select>
-
-             <select value={filterAuditor} onChange={e => setFilterAuditor(e.target.value)} className="bg-transparent border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/50 dark:bg-slate-800 max-w-[200px] truncate">
-                {auditorOptions.map(p => <option key={p} value={p}>{p}</option>)}
-             </select>
-         </div>
-      </div>
-
-      {filteredSessions.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-12 bg-white/40 dark:bg-slate-900/40 rounded-3xl border border-slate-200/50 dark:border-white/5">
-           <AlertTriangle className="w-12 h-12 text-amber-500 mb-4" />
-           <h3 className="text-lg font-bold text-slate-800 dark:text-white">Belum ada data monitoring yang tersedia untuk periode/filter ini.</h3>
-           <p className="text-slate-500 text-sm mt-1">Sistem akan menampilkan grafik secara otomatis ketika input data dilakukan.</p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {/* STAT CARD GRID */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {[
-              { label: 'Total Observasi', value: totalObservasi, icon: ClipboardCheck, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-500/10' },
-              { label: 'Unit Dinilai', value: totalUnit, icon: Activity, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-500/10' },
-              { label: 'Auditor Aktif', value: totalAuditor, icon: Users, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
-              { label: 'Rata-rata Kepatuhan', value: `${kepatuhanAvg}%`, icon: PieChartIcon, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-500/10' },
-              { label: 'Temuan Tidak Patuh', value: temuanTidakPatuh, icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-50 dark:bg-red-500/10' },
-              { label: 'Belum Ditindaklanjuti', value: temuanBelumTindakLanjut, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10' },
-            ].map((stat, i) => (
-              <div key={i} className="bg-white dark:bg-slate-900/60 backdrop-blur-md rounded-[1.5rem] p-4 border border-slate-200 dark:border-white/5 shadow-sm transform transition hover:scale-[1.02]">
-                 <div className={`w-10 h-10 rounded-full ${stat.bg} ${stat.color} flex items-center justify-center mb-3`}>
-                   <stat.icon className="w-5 h-5" />
-                 </div>
-                 <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{stat.label}</p>
-                 <p className="text-2xl font-black text-slate-800 dark:text-white mt-1">{stat.value}</p>
+    <DashboardLayout>
+      <div className="space-y-8 max-w-7xl mx-auto pb-24 text-slate-100 animate-in fade-in duration-300">
+        
+        {/* HEADER PAGE */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 p-6 rounded-3xl bg-gradient-to-r from-[#091b33]/90 via-[#0d284c]/80 to-[#091b33]/90 border border-sky-500/20 backdrop-blur-2xl shadow-2xl relative overflow-hidden">
+          <div className="absolute -right-12 -top-12 w-48 h-48 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="space-y-1 z-10">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-2xl bg-sky-500/10 border border-sky-400/30 text-sky-400 shadow-inner">
+                <BarChart2 className="w-7 h-7" />
               </div>
-            ))}
-          </div>
-
-          {/* AI ANALYSIS BANNER */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
-             <div className="absolute -right-10 -top-10 text-white/5 opacity-20">
-               <Bot className="w-64 h-64" />
-             </div>
-             <div className="relative z-10 flex gap-4 items-start">
-                <div className="bg-white/20 p-3 rounded-2xl flex-shrink-0 animate-pulse">
-                   <Lightbulb className="w-6 h-6 text-yellow-300" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-blue-200 mb-2">Automated AI Insights</h3>
-                  <p className="text-sm sm:text-base font-medium leading-relaxed max-w-4xl text-white/90">
-                    {aiAnalysis}
-                  </p>
-                  {bottomUnits.length > 0 && bottomUnits[0].Kepatuhan < 85 && (
-                    <div className="mt-4 bg-white/10 rounded-xl p-3 inline-flex items-center gap-2 border border-white/20">
-                      <AlertTriangle className="w-4 h-4 text-amber-300" />
-                      <span className="text-xs font-bold text-white">Rekomendasi: Perlu dilakukan supervisi dan pelatihan penyegaran PPI untuk unit {bottomUnits[0].name}.</span>
-                    </div>
+              <div>
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase font-heading flex items-center gap-2">
+                    GRAFIK <span className="text-sky-400">SMART-PPI</span>
+                  </h1>
+                  {loading && (
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30 flex items-center gap-1.5 animate-pulse">
+                      <RefreshCw className="w-3 h-3 animate-spin text-sky-400" />
+                      Memuat Data...
+                    </span>
                   )}
                 </div>
-             </div>
+                <p className="text-xs sm:text-sm text-slate-300 font-medium">
+                  Pusat Visualisasi Realtime Capaian Indikator Mutu PPI Terintegrasi
+                </p>
+              </div>
+            </div>
           </div>
 
-          {/* CHARTS GRID 1: Trends */}
-          <div className="grid lg:grid-cols-2 gap-6">
-             <div className="bg-white dark:bg-slate-900/60 p-6 flex flex-col rounded-[2rem] border border-slate-200 dark:border-white/5 shadow-sm min-h-[400px]">
-               <div className="flex items-center justify-between mb-4">
-                 <h3 className="font-bold text-slate-800 dark:text-white uppercase text-xs tracking-widest">Tren Kepatuhan Bulanan</h3>
-                 <TrendingUp className="w-4 h-4 text-slate-400" />
-               </div>
-               {trenBulananIndikator.length > 0 ? (
-                 <div className="flex-1 w-full min-h-[300px]">
-                   <ResponsiveContainer width="100%" height="100%">
-                     <LineChart data={trenBulananIndikator} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
-                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-slate-200 dark:text-white/5" />
-                       <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
-                       <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} domain={[0, 100]} />
-                       <Tooltip contentStyle={{ borderRadius: '12px' }} itemStyle={{ fontSize: '11px', fontWeight: 'bold' }} />
-                       <Legend wrapperStyle={{ fontSize: '10px' }} />
-                       <ReferenceLine y={85} stroke="#10b981" strokeDasharray="3 3" label={{ position: 'top', value: 'Standar HH (85%)', fill: '#10b981', fontSize: 9 }} />
-                       <Line type="monotone" dataKey="Hand Hygiene" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                       <Line type="monotone" dataKey="APD" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                       <Line type="monotone" dataKey="Bundles" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                     </LineChart>
-                   </ResponsiveContainer>
-                 </div>
-               ) : (
-                 <div className="flex-1 flex items-center justify-center text-slate-400 text-xs font-medium">Tren grafik akan tampil setelah data terkumpul beberapa bulan.</div>
-               )}
-             </div>
-
-             <div className="bg-white dark:bg-slate-900/60 p-6 flex flex-col rounded-[2rem] border border-slate-200 dark:border-white/5 shadow-sm min-h-[400px]">
-               <div className="flex items-center justify-between mb-4">
-                 <h3 className="font-bold text-slate-800 dark:text-white uppercase text-xs tracking-widest">Temuan Ketidakpatuhan Terbanyak</h3>
-                 <BarChart3 className="w-4 h-4 text-slate-400" />
-               </div>
-               {jenisTemuanTerbanyak.length > 0 ? (
-                 <div className="flex-1 w-full min-h-[300px]">
-                   <ResponsiveContainer width="100%" height="100%">
-                     <BarChart data={jenisTemuanTerbanyak} layout="vertical" margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
-                       <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="currentColor" className="text-slate-200 dark:text-white/5" />
-                       <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
-                       <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 9 }} width={90} />
-                       <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '12px' }} />
-                       <Bar dataKey="TidakPatuh" name="Total Kejadian Tidak Patuh" radius={[0, 4, 4, 0]} fill="#ef4444" barSize={16}>
-                         {jenisTemuanTerbanyak.map((e, index) => <Cell key={index} fill={COLORS[index % COLORS.length]} />)}
-                       </Bar>
-                     </BarChart>
-                   </ResponsiveContainer>
-                 </div>
-               ) : (
-                 <div className="flex-1 flex items-center justify-center text-slate-400 text-xs font-medium">Tidak ada kejadian ketidakpatuhan. Luar biasa!</div>
-               )}
-             </div>
-          </div>
-
-          {/* CHARTS GRID 2: Per Unit & HAIs */}
-          <div className="grid lg:grid-cols-3 gap-6">
-             <div className="bg-white dark:bg-slate-900/60 p-6 flex flex-col rounded-[2rem] border border-slate-200 dark:border-white/5 shadow-sm min-h-[400px] lg:col-span-2">
-               <div className="flex items-center justify-between mb-4">
-                 <h3 className="font-bold text-slate-800 dark:text-white uppercase text-xs tracking-widest">Kepatuhan Per Unit (Top & Bottom)</h3>
-                 <BarChart3 className="w-4 h-4 text-slate-400" />
-               </div>
-               <div className="flex-1 overflow-y-auto pr-2 custom-sidebar-scrollbar" style={{ maxHeight: '400px' }}>
-                  <div className="space-y-4">
-                    {unitData.map((u, i) => (
-                      <div key={i} className="flex items-center gap-4">
-                        <div className="w-24 shrink-0 text-xs font-bold text-slate-700 dark:text-slate-200 truncate" title={u.name}>{u.name}</div>
-                        <div className="flex-1 h-3 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden relative">
-                           <div 
-                             className={`absolute top-0 left-0 h-full rounded-full ${u.Kepatuhan >= 85 ? 'bg-emerald-500' : (u.Kepatuhan >= 70 ? 'bg-amber-500' : 'bg-red-500')}`} 
-                             style={{ width: `${u.Kepatuhan}%` }}
-                           />
-                        </div>
-                        <div className={`w-12 text-right text-xs font-extrabold ${u.Kepatuhan >= 85 ? 'text-emerald-600' : (u.Kepatuhan >= 70 ? 'text-amber-500' : 'text-red-500')}`}>
-                           {u.Kepatuhan}%
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-               </div>
-             </div>
-
-             <div className="bg-white dark:bg-slate-900/60 p-6 flex flex-col rounded-[2rem] border border-slate-200 dark:border-white/5 shadow-sm min-h-[400px]">
-               <div className="flex items-center justify-between mb-4">
-                 <h3 className="font-bold text-slate-800 dark:text-white uppercase text-xs tracking-widest">Insiden HAIs</h3>
-                 <PieChartIcon className="w-4 h-4 text-slate-400" />
-               </div>
-               {haisData.length > 0 ? (
-                 <div className="flex-1 w-full min-h-[250px] flex items-center justify-center">
-                   <ResponsiveContainer width="100%" height="100%">
-                     <PieChart>
-                       <Pie data={haisData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                         {haisData.map((entry, index) => <Cell key={index} fill={COLORS[index % COLORS.length]} />)}
-                       </Pie>
-                       <Tooltip contentStyle={{ borderRadius: '12px' }} />
-                       <Legend layout="horizontal" verticalAlign="bottom" align="center" wrapperStyle={{ fontSize: '10px' }} />
-                     </PieChart>
-                   </ResponsiveContainer>
-                 </div>
-               ) : (
-                 <div className="flex-1 flex flex-col gap-2 items-center justify-center text-slate-400 text-xs font-medium">
-                   <CheckCircle className="w-12 h-12 text-emerald-500/50 mb-2" />
-                   <p>Tidak ada insiden infeksi HAIs tercatat.</p>
-                 </div>
-               )}
-             </div>
-          </div>
-
-          {/* CHARTS GRID 3: Temuan & Auditor */}
-          <div className="grid lg:grid-cols-2 gap-6">
-             <div className="bg-white dark:bg-slate-900/60 p-6 flex flex-col rounded-[2rem] border border-slate-200 dark:border-white/5 shadow-sm min-h-[400px]">
-               <div className="flex items-center justify-between mb-4">
-                 <h3 className="font-bold text-slate-800 dark:text-white uppercase text-xs tracking-widest">Distribusi Temuan</h3>
-                 <PieChartIcon className="w-4 h-4 text-slate-400" />
-               </div>
-               {distribusiTemuan.length > 0 ? (
-                 <div className="flex-1 w-full min-h-[250px] flex items-center justify-center">
-                   <ResponsiveContainer width="100%" height="100%">
-                     <PieChart>
-                       <Pie data={distribusiTemuan} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                         {distribusiTemuan.map((entry, index) => <Cell key={index} fill={entry.name === 'Patuh' ? '#10b981' : '#ef4444'} />)}
-                       </Pie>
-                       <Tooltip contentStyle={{ borderRadius: '12px' }} />
-                       <Legend layout="horizontal" verticalAlign="bottom" align="center" wrapperStyle={{ fontSize: '10px' }} />
-                     </PieChart>
-                   </ResponsiveContainer>
-                 </div>
-               ) : (
-                 <div className="flex-1 flex flex-col gap-2 items-center justify-center text-slate-400 text-xs font-medium">
-                   Tidak ada data temuan.
-                 </div>
-               )}
-             </div>
-
-             <div className="bg-white dark:bg-slate-900/60 p-6 flex flex-col rounded-[2rem] border border-slate-200 dark:border-white/5 shadow-sm min-h-[400px]">
-               <div className="flex items-center justify-between mb-4">
-                 <h3 className="font-bold text-slate-800 dark:text-white uppercase text-xs tracking-widest">Aktivitas Auditor Top</h3>
-                 <Users className="w-4 h-4 text-slate-400" />
-               </div>
-               <div className="flex-1 overflow-y-auto pr-2 custom-sidebar-scrollbar" style={{ maxHeight: '400px' }}>
-                  <div className="space-y-4">
-                    {auditorData.map((a, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
-                        <div className="flex items-center gap-3">
-                           <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-600 flex items-center justify-center font-bold text-xs uppercase">
-                             {a.name.slice(0, 2)}
-                           </div>
-                           <div>
-                             <p className="text-xs font-bold text-slate-800 dark:text-white truncate max-w-[150px]">{a.name}</p>
-                             <p className="text-[10px] text-slate-500">{a.Observasi} Observasi</p>
-                           </div>
-                        </div>
-                        <div className="text-right">
-                           <p className="text-xs font-bold text-slate-800 dark:text-white">{a.Kepatuhan}%</p>
-                           <p className="text-[10px] text-slate-500">Kepatuhan Avg</p>
-                        </div>
-                      </div>
-                    ))}
-                    {auditorData.length === 0 && (
-                      <div className="text-center text-xs text-slate-400 py-8">Belum ada aktivitas auditor.</div>
-                    )}
-                  </div>
-               </div>
-             </div>
+          {/* EXPORT BUTTONS */}
+          <div className="flex items-center gap-2.5 z-10 print:hidden flex-wrap">
+            <button
+              onClick={() => handleExport('excel')}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-bold text-xs transition-all shadow-lg shadow-emerald-500/10 active:scale-95"
+            >
+              <FileSpreadsheet className="w-4 h-4" /> Export Excel
+            </button>
+            <button
+              onClick={() => handleExport('pdf')}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 font-bold text-xs transition-all shadow-lg shadow-sky-500/10 active:scale-95"
+            >
+              <FileText className="w-4 h-4" /> Cetak / PDF
+            </button>
           </div>
         </div>
-      )}
-    </div>
+
+        {/* CONTROLS & FILTER SECTION */}
+        <div className="p-6 rounded-3xl bg-[#092340]/60 border border-sky-400/20 backdrop-blur-xl shadow-xl space-y-4 print:hidden">
+          <div className="flex items-center gap-2 text-sky-400 font-bold text-sm border-b border-white/10 pb-3">
+            <Filter className="w-4 h-4" />
+            <span>Filter Periode & Sub-Indikator</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Periode Type */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tipe Periode</label>
+              <select
+                value={periodeType}
+                onChange={(e: any) => setPeriodeType(e.target.value)}
+                className="w-full bg-[#0b172a] border border-sky-500/30 rounded-2xl px-3.5 py-2.5 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-sky-400/50"
+              >
+                <option value="Bulanan">Bulanan</option>
+                <option value="Triwulan">Triwulan</option>
+                <option value="Semester">Semester</option>
+                <option value="Tahunan">Tahunan</option>
+              </select>
+            </div>
+
+            {/* Specific Period Selection */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pilihan Periode</label>
+              {periodeType === 'Bulanan' && (
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                    className="w-full bg-[#0b172a] border border-sky-500/30 rounded-2xl px-2.5 py-2.5 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-sky-400/50"
+                  >
+                    {MONTH_NAMES.map((m, idx) => (
+                      <option key={m} value={idx}>{m}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(Number(e.target.value))}
+                    className="w-full bg-[#0b172a] border border-sky-500/30 rounded-2xl px-2.5 py-2.5 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-sky-400/50"
+                  >
+                    {[2024, 2025, 2026, 2027].map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {periodeType === 'Triwulan' && (
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    value={selectedQuarter}
+                    onChange={(e) => setSelectedQuarter(Number(e.target.value))}
+                    className="w-full bg-[#0b172a] border border-sky-500/30 rounded-2xl px-2.5 py-2.5 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-sky-400/50"
+                  >
+                    {QUARTER_NAMES.map((q, idx) => (
+                      <option key={q} value={idx + 1}>{q}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(Number(e.target.value))}
+                    className="w-full bg-[#0b172a] border border-sky-500/30 rounded-2xl px-2.5 py-2.5 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-sky-400/50"
+                  >
+                    {[2024, 2025, 2026, 2027].map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {periodeType === 'Semester' && (
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    value={selectedSemester}
+                    onChange={(e) => setSelectedSemester(Number(e.target.value))}
+                    className="w-full bg-[#0b172a] border border-sky-500/30 rounded-2xl px-2.5 py-2.5 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-sky-400/50"
+                  >
+                    {SEMESTER_NAMES.map((s, idx) => (
+                      <option key={s} value={idx + 1}>{s}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(Number(e.target.value))}
+                    className="w-full bg-[#0b172a] border border-sky-500/30 rounded-2xl px-2.5 py-2.5 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-sky-400/50"
+                  >
+                    {[2024, 2025, 2026, 2027].map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {periodeType === 'Tahunan' && (
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(Number(e.target.value))}
+                  className="w-full bg-[#0b172a] border border-sky-500/30 rounded-2xl px-3.5 py-2.5 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-sky-400/50"
+                >
+                  {[2024, 2025, 2026, 2027].map(y => (
+                    <option key={y} value={y}>Tahun {y}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            {/* Sub Filter: Unit/Ruangan */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Unit / Ruangan</label>
+              <select
+                value={selectedUnit}
+                onChange={(e) => setSelectedUnit(e.target.value)}
+                className="w-full bg-[#0b172a] border border-sky-500/30 rounded-2xl px-3.5 py-2.5 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-sky-400/50 truncate"
+              >
+                {availableUnits.map(u => (
+                  <option key={u} value={u}>{u}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Sub Filter: Profesi */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Kategori Profesi</label>
+              <select
+                value={selectedProfesiGroup}
+                onChange={(e) => setSelectedProfesiGroup(e.target.value)}
+                className="w-full bg-[#0b172a] border border-sky-500/30 rounded-2xl px-3.5 py-2.5 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-sky-400/50"
+              >
+                <option value="Semua Profesi">Semua Profesi</option>
+                <option value="Perawat / Bidan">Perawat / Bidan</option>
+                <option value="Dokter">Dokter</option>
+                <option value="Nakes Lainnya">Nakes Lainnya</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION 1: KEPATUHAN KEBERSIHAN TANGAN */}
+        <div className="p-6 sm:p-8 rounded-3xl bg-[#081e36]/70 border border-emerald-500/20 backdrop-blur-xl shadow-2xl space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-8 bg-emerald-400 rounded-full shadow-[0_0_12px_rgba(52,211,153,0.8)]" />
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-lg sm:text-xl font-black text-white tracking-wide uppercase font-heading">
+                    KEPATUHAN KEBERSIHAN TANGAN
+                  </h2>
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1 shadow-sm">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    Standar Target: ≥ 85%
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 font-medium mt-0.5">
+                  Capaian dan Perkembangan Kebersihan Tangan Berdasarkan Profesi & Periode
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* A. Capaian Berdasarkan Profesi */}
+          <div className="space-y-4">
+            <h3 className="text-xs font-bold text-emerald-300 uppercase tracking-wider flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              <span>A. Capaian Kepatuhan Berdasarkan Profesi</span>
+            </h3>
+
+            {normalizedHH.length === 0 ? (
+              <div className="p-8 rounded-3xl bg-[#09172a]/60 border border-white/5 text-center space-y-2">
+                <BarChart2 className="w-10 h-10 text-slate-500 mx-auto animate-pulse" />
+                <h4 className="text-sm font-bold text-slate-300">Belum tersedia data grafik pada periode yang dipilih.</h4>
+                <p className="text-xs text-slate-400">Data grafik akan ditampilkan secara otomatis setelah terdapat data pada Menu Input.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {hhProfBreakdown.map((prof) => (
+                  <div
+                    key={prof.name}
+                    className="p-5 rounded-2xl bg-[#0b1b30] border border-emerald-500/20 space-y-3 relative overflow-hidden shadow-lg"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-200">{prof.name}</span>
+                      <span className="text-xl font-black text-emerald-400 font-heading">{prof.pct}%</span>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full h-3 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-white/5">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${prof.pct}%` }}
+                        transition={{ duration: 0.8, ease: 'easeOut' }}
+                        className="h-full bg-gradient-to-r from-emerald-500 to-teal-300 rounded-full shadow-[0_0_10px_rgba(52,211,153,0.5)]"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-1 pt-2 border-t border-white/5 text-[10px] text-slate-400 text-center">
+                      <div>Obs: <strong className="text-white">{prof.data.obs}</strong></div>
+                      <div>Patuh: <strong className="text-emerald-400">{prof.data.patuh}</strong></div>
+                      <div>T.Patuh: <strong className="text-rose-400">{prof.data.tidakPatuh}</strong></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* B. Grafik Tren Waktu */}
+          <div className="space-y-4 pt-4 border-t border-white/10">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <h3 className="text-xs font-bold text-emerald-300 uppercase tracking-wider flex items-center gap-2">
+                <TrendingUp className="w-4 h-4" />
+                <span>B. Tren Kepatuhan Kebersihan Tangan</span>
+              </h3>
+              <ChartTypeToggle type={hhChartType} onChange={setHhChartType} colorScheme="emerald" />
+            </div>
+
+            {hhTrendData.length === 0 ? (
+              <div className="p-8 rounded-3xl bg-[#09172a]/60 border border-white/5 text-center space-y-2">
+                <BarChart2 className="w-10 h-10 text-slate-500 mx-auto animate-pulse" />
+                <h4 className="text-sm font-bold text-slate-300">Belum tersedia data grafik pada periode yang dipilih.</h4>
+                <p className="text-xs text-slate-400">Data grafik akan ditampilkan secara otomatis setelah terdapat data pada Menu Input.</p>
+              </div>
+            ) : (
+              <div className="h-[340px] w-full pt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  {hhChartType === 'line' ? (
+                    <LineChart data={hhTrendData} margin={{ top: 25, right: 30, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                      <XAxis dataKey="periode" stroke="#94a3b8" tick={{ fontSize: 11, fill: '#cbd5e1' }} />
+                      <YAxis domain={[0, 115]} stroke="#94a3b8" tick={{ fontSize: 11, fill: '#cbd5e1' }} unit="%" />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
+                      <ReferenceLine y={85} stroke="#34d399" strokeDasharray="5 5" strokeWidth={2} label={{ value: 'Standar Target: ≥85%', fill: '#34d399', fontSize: 11, position: 'top', fontWeight: 'bold' }} />
+                      <Line type="monotone" dataKey="Perawat / Bidan" stroke="#10b981" strokeWidth={3} dot={{ r: 5, fill: '#10b981' }} activeDot={{ r: 8 }}>
+                        <LabelList dataKey="Perawat / Bidan" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#34d399" fontSize={10} fontWeight="bold" dy={-6} />
+                      </Line>
+                      <Line type="monotone" dataKey="Dokter" stroke="#3b82f6" strokeWidth={3} dot={{ r: 5, fill: '#3b82f6' }} activeDot={{ r: 8 }}>
+                        <LabelList dataKey="Dokter" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#60a5fa" fontSize={10} fontWeight="bold" dy={-6} />
+                      </Line>
+                      <Line type="monotone" dataKey="Nakes Lainnya" stroke="#f59e0b" strokeWidth={3} dot={{ r: 5, fill: '#f59e0b' }} activeDot={{ r: 8 }}>
+                        <LabelList dataKey="Nakes Lainnya" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#fbbf24" fontSize={10} fontWeight="bold" dy={-6} />
+                      </Line>
+                    </LineChart>
+                  ) : (
+                    <BarChart data={hhTrendData} margin={{ top: 25, right: 30, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                      <XAxis dataKey="periode" stroke="#94a3b8" tick={{ fontSize: 11, fill: '#cbd5e1' }} />
+                      <YAxis domain={[0, 115]} stroke="#94a3b8" tick={{ fontSize: 11, fill: '#cbd5e1' }} unit="%" />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
+                      <ReferenceLine y={85} stroke="#34d399" strokeDasharray="5 5" strokeWidth={2} label={{ value: 'Standar Target: ≥85%', fill: '#34d399', fontSize: 11, position: 'top', fontWeight: 'bold' }} />
+                      <Bar dataKey="Perawat / Bidan" fill="#10b981" radius={[4, 4, 0, 0]}>
+                        <LabelList dataKey="Perawat / Bidan" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#34d399" fontSize={10} fontWeight="bold" />
+                      </Bar>
+                      <Bar dataKey="Dokter" fill="#3b82f6" radius={[4, 4, 0, 0]}>
+                        <LabelList dataKey="Dokter" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#60a5fa" fontSize={10} fontWeight="bold" />
+                      </Bar>
+                      <Bar dataKey="Nakes Lainnya" fill="#f59e0b" radius={[4, 4, 0, 0]}>
+                        <LabelList dataKey="Nakes Lainnya" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#fbbf24" fontSize={10} fontWeight="bold" />
+                      </Bar>
+                    </BarChart>
+                  )}
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* SECTION 2: KEPATUHAN PENGGUNAAN APD */}
+        <div className="p-6 sm:p-8 rounded-3xl bg-[#081e36]/70 border border-sky-500/20 backdrop-blur-xl shadow-2xl space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-8 bg-sky-400 rounded-full shadow-[0_0_12px_rgba(56,189,248,0.8)]" />
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-lg sm:text-xl font-black text-white tracking-wide uppercase font-heading">
+                    KEPATUHAN PENGGUNAAN APD
+                  </h2>
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1 shadow-sm">
+                    <Award className="w-3.5 h-3.5 text-amber-400" />
+                    Standar Target: 100%
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 font-medium mt-0.5">
+                  Capaian Kepatuhan Penggunaan Alat Pelindung Diri (APD) dan Baseline Target
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* A. Capaian Berdasarkan Profesi */}
+          <div className="space-y-4">
+            <h3 className="text-xs font-bold text-sky-300 uppercase tracking-wider flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              <span>A. Capaian Kepatuhan APD Berdasarkan Profesi</span>
+            </h3>
+
+            {normalizedApd.length === 0 ? (
+              <div className="p-8 rounded-3xl bg-[#09172a]/60 border border-white/5 text-center space-y-2">
+                <BarChart2 className="w-10 h-10 text-slate-500 mx-auto animate-pulse" />
+                <h4 className="text-sm font-bold text-slate-300">Belum tersedia data grafik pada periode yang dipilih.</h4>
+                <p className="text-xs text-slate-400">Data grafik akan ditampilkan secara otomatis setelah terdapat data pada Menu Input.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {apdProfBreakdown.map((prof) => (
+                  <div
+                    key={prof.name}
+                    className="p-5 rounded-2xl bg-[#0b1b30] border border-sky-500/20 space-y-3 relative overflow-hidden shadow-lg"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-200">{prof.name}</span>
+                      <span className="text-xl font-black text-sky-400 font-heading">{prof.pct}%</span>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full h-3 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-white/5">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${prof.pct}%` }}
+                        transition={{ duration: 0.8, ease: 'easeOut' }}
+                        className="h-full bg-gradient-to-r from-sky-500 to-indigo-400 rounded-full shadow-[0_0_10px_rgba(56,189,248,0.5)]"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-1 pt-2 border-t border-white/5 text-[10px] text-slate-400 text-center">
+                      <div>Obs: <strong className="text-white">{prof.data.obs}</strong></div>
+                      <div>Patuh: <strong className="text-sky-400">{prof.data.patuh}</strong></div>
+                      <div>T.Patuh: <strong className="text-rose-400">{prof.data.tidakPatuh}</strong></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* B. Grafik Tren APD */}
+          <div className="space-y-4 pt-4 border-t border-white/10">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <h3 className="text-xs font-bold text-sky-300 uppercase tracking-wider flex items-center gap-2">
+                <TrendingUp className="w-4 h-4" />
+                <span>B. Tren Kepatuhan Penggunaan APD</span>
+              </h3>
+              <ChartTypeToggle type={apdChartType} onChange={setApdChartType} colorScheme="sky" />
+            </div>
+
+            {apdTrendData.length === 0 ? (
+              <div className="p-8 rounded-3xl bg-[#09172a]/60 border border-white/5 text-center space-y-2">
+                <BarChart2 className="w-10 h-10 text-slate-500 mx-auto animate-pulse" />
+                <h4 className="text-sm font-bold text-slate-300">Belum tersedia data grafik pada periode yang dipilih.</h4>
+                <p className="text-xs text-slate-400">Data grafik akan ditampilkan secara otomatis setelah terdapat data pada Menu Input.</p>
+              </div>
+            ) : (
+              <div className="h-[340px] w-full pt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  {apdChartType === 'line' ? (
+                    <LineChart data={apdTrendData} margin={{ top: 25, right: 30, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                      <XAxis dataKey="periode" stroke="#94a3b8" tick={{ fontSize: 11, fill: '#cbd5e1' }} />
+                      <YAxis domain={[0, 115]} stroke="#94a3b8" tick={{ fontSize: 11, fill: '#cbd5e1' }} unit="%" />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
+                      <ReferenceLine y={100} label={{ value: 'Standar Target: 100%', fill: '#f59e0b', fontSize: 11, position: 'top', fontWeight: 'bold' }} stroke="#f59e0b" strokeDasharray="5 5" strokeWidth={2} />
+                      <Line type="monotone" dataKey="Perawat / Bidan" stroke="#0284c7" strokeWidth={3} dot={{ r: 5, fill: '#0284c7' }} activeDot={{ r: 8 }}>
+                        <LabelList dataKey="Perawat / Bidan" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#38bdf8" fontSize={10} fontWeight="bold" dy={-6} />
+                      </Line>
+                      <Line type="monotone" dataKey="Dokter" stroke="#6366f1" strokeWidth={3} dot={{ r: 5, fill: '#6366f1' }} activeDot={{ r: 8 }}>
+                        <LabelList dataKey="Dokter" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#818cf8" fontSize={10} fontWeight="bold" dy={-6} />
+                      </Line>
+                      <Line type="monotone" dataKey="Nakes Lainnya" stroke="#ec4899" strokeWidth={3} dot={{ r: 5, fill: '#ec4899' }} activeDot={{ r: 8 }}>
+                        <LabelList dataKey="Nakes Lainnya" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#f472b6" fontSize={10} fontWeight="bold" dy={-6} />
+                      </Line>
+                    </LineChart>
+                  ) : (
+                    <BarChart data={apdTrendData} margin={{ top: 25, right: 30, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                      <XAxis dataKey="periode" stroke="#94a3b8" tick={{ fontSize: 11, fill: '#cbd5e1' }} />
+                      <YAxis domain={[0, 115]} stroke="#94a3b8" tick={{ fontSize: 11, fill: '#cbd5e1' }} unit="%" />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
+                      <ReferenceLine y={100} label={{ value: 'Standar Target: 100%', fill: '#f59e0b', fontSize: 11, position: 'top', fontWeight: 'bold' }} stroke="#f59e0b" strokeDasharray="5 5" strokeWidth={2} />
+                      <Bar dataKey="Perawat / Bidan" fill="#0284c7" radius={[4, 4, 0, 0]}>
+                        <LabelList dataKey="Perawat / Bidan" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#38bdf8" fontSize={10} fontWeight="bold" />
+                      </Bar>
+                      <Bar dataKey="Dokter" fill="#6366f1" radius={[4, 4, 0, 0]}>
+                        <LabelList dataKey="Dokter" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#818cf8" fontSize={10} fontWeight="bold" />
+                      </Bar>
+                      <Bar dataKey="Nakes Lainnya" fill="#ec4899" radius={[4, 4, 0, 0]}>
+                        <LabelList dataKey="Nakes Lainnya" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#f472b6" fontSize={10} fontWeight="bold" />
+                      </Bar>
+                    </BarChart>
+                  )}
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* SECTION 3: GRAFIK SURVEILANS HAIs */}
+        <div className="p-6 sm:p-8 rounded-3xl bg-[#081e36]/70 border border-purple-500/20 backdrop-blur-xl shadow-2xl space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-8 bg-purple-400 rounded-full shadow-[0_0_12px_rgba(192,132,252,0.8)]" />
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-lg sm:text-xl font-black text-white tracking-wide uppercase font-heading">
+                    GRAFIK SURVEILANS HAIS
+                  </h2>
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1 shadow-sm">
+                    <AlertCircle className="w-3.5 h-3.5 text-purple-400" />
+                    Standar Indikator: Phlebitis ≤ 1.5‰ | ISK ≤ 5‰ | IDO ≤ 2% | VAP ≤ 5‰
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 font-medium mt-0.5">
+                  Tren Insiden Phlebitis, CAUTI/ISK, IDO, VAP, dan Distribusi Berdasarkan Ruangan
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* A. Tren Insiden HAIs */}
+            <div className="space-y-4 p-5 rounded-2xl bg-[#0b1b30] border border-purple-500/20">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <h3 className="text-xs font-bold text-purple-300 uppercase tracking-wider flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4" />
+                  <span>A. Tren Insiden HAIs Berdasarkan Periode</span>
+                </h3>
+                <ChartTypeToggle type={haisChartType} onChange={setHaisChartType} colorScheme="purple" />
+              </div>
+
+              {haisTrendData.length === 0 ? (
+                <div className="p-8 rounded-2xl bg-[#09172a]/60 border border-white/5 text-center space-y-2">
+                  <BarChart2 className="w-8 h-8 text-slate-500 mx-auto animate-pulse" />
+                  <p className="text-xs text-slate-400">Belum tersedia data surveilans HAIs pada periode ini.</p>
+                </div>
+              ) : (
+                <div className="h-[290px] w-full pt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    {haisChartType === 'line' ? (
+                      <LineChart data={haisTrendData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                        <XAxis dataKey="periode" stroke="#94a3b8" tick={{ fontSize: 10, fill: '#cbd5e1' }} />
+                        <YAxis stroke="#94a3b8" tick={{ fontSize: 10, fill: '#cbd5e1' }} allowDecimals={false} />
+                        <Tooltip content={<HaisTooltip />} />
+                        <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
+                        <Line type="monotone" dataKey="Phlebitis" stroke="#a855f7" strokeWidth={2.5} dot={{ r: 4 }}>
+                          <LabelList dataKey="Phlebitis" position="top" formatter={(val: any) => typeof val === 'number' && val > 0 ? val : ''} fill="#c084fc" fontSize={10} fontWeight="bold" dy={-6} />
+                        </Line>
+                        <Line type="monotone" dataKey="CAUTI / ISK" stroke="#3b82f6" strokeWidth={2.5} dot={{ r: 4 }}>
+                          <LabelList dataKey="CAUTI / ISK" position="top" formatter={(val: any) => typeof val === 'number' && val > 0 ? val : ''} fill="#60a5fa" fontSize={10} fontWeight="bold" dy={-6} />
+                        </Line>
+                        <Line type="monotone" dataKey="IDO" stroke="#f43f5e" strokeWidth={2.5} dot={{ r: 4 }}>
+                          <LabelList dataKey="IDO" position="top" formatter={(val: any) => typeof val === 'number' && val > 0 ? val : ''} fill="#fb7185" fontSize={10} fontWeight="bold" dy={-6} />
+                        </Line>
+                        <Line type="monotone" dataKey="VAP" stroke="#eab308" strokeWidth={2.5} dot={{ r: 4 }}>
+                          <LabelList dataKey="VAP" position="top" formatter={(val: any) => typeof val === 'number' && val > 0 ? val : ''} fill="#facc15" fontSize={10} fontWeight="bold" dy={-6} />
+                        </Line>
+                      </LineChart>
+                    ) : (
+                      <BarChart data={haisTrendData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                        <XAxis dataKey="periode" stroke="#94a3b8" tick={{ fontSize: 10, fill: '#cbd5e1' }} />
+                        <YAxis stroke="#94a3b8" tick={{ fontSize: 10, fill: '#cbd5e1' }} allowDecimals={false} />
+                        <Tooltip content={<HaisTooltip />} />
+                        <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
+                        <Bar dataKey="Phlebitis" fill="#a855f7" radius={[4, 4, 0, 0]}>
+                          <LabelList dataKey="Phlebitis" position="top" formatter={(val: any) => typeof val === 'number' && val > 0 ? val : ''} fill="#c084fc" fontSize={10} fontWeight="bold" />
+                        </Bar>
+                        <Bar dataKey="CAUTI / ISK" fill="#3b82f6" radius={[4, 4, 0, 0]}>
+                          <LabelList dataKey="CAUTI / ISK" position="top" formatter={(val: any) => typeof val === 'number' && val > 0 ? val : ''} fill="#60a5fa" fontSize={10} fontWeight="bold" />
+                        </Bar>
+                        <Bar dataKey="IDO" fill="#f43f5e" radius={[4, 4, 0, 0]}>
+                          <LabelList dataKey="IDO" position="top" formatter={(val: any) => typeof val === 'number' && val > 0 ? val : ''} fill="#fb7185" fontSize={10} fontWeight="bold" />
+                        </Bar>
+                        <Bar dataKey="VAP" fill="#eab308" radius={[4, 4, 0, 0]}>
+                          <LabelList dataKey="VAP" position="top" formatter={(val: any) => typeof val === 'number' && val > 0 ? val : ''} fill="#facc15" fontSize={10} fontWeight="bold" />
+                        </Bar>
+                      </BarChart>
+                    )}
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+
+            {/* B. Distribusi HAIs Berdasarkan Ruangan */}
+            <div className="space-y-4 p-5 rounded-2xl bg-[#0b1b30] border border-purple-500/20">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <h3 className="text-xs font-bold text-purple-300 uppercase tracking-wider flex items-center gap-2">
+                  <Building2 className="w-4 h-4" />
+                  <span>B. Distribusi Insiden HAIs Berdasarkan Ruangan</span>
+                </h3>
+                <ChartTypeToggle type={haisRoomChartType} onChange={setHaisRoomChartType} colorScheme="purple" />
+              </div>
+
+              {haisRoomData.length === 0 ? (
+                <div className="p-8 rounded-2xl bg-[#09172a]/60 border border-white/5 text-center space-y-2">
+                  <BarChart2 className="w-8 h-8 text-slate-500 mx-auto animate-pulse" />
+                  <p className="text-xs text-slate-400">Belum tersedia data distribusi ruangan pada periode ini.</p>
+                </div>
+              ) : (
+                <div className="h-[290px] w-full pt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    {haisRoomChartType === 'bar' ? (
+                      <BarChart data={haisRoomData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                        <XAxis dataKey="unit" stroke="#94a3b8" tick={{ fontSize: 10, fill: '#cbd5e1' }} />
+                        <YAxis stroke="#94a3b8" tick={{ fontSize: 10, fill: '#cbd5e1' }} allowDecimals={false} />
+                        <Tooltip content={<HaisTooltip />} />
+                        <Bar dataKey="Kejadian" fill="#8b5cf6" radius={[6, 6, 0, 0]}>
+                          <LabelList dataKey="Kejadian" position="top" formatter={(val: any) => typeof val === 'number' && val > 0 ? val : ''} fill="#c084fc" fontSize={10} fontWeight="bold" />
+                          {haisRoomData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#8b5cf6' : '#a855f7'} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    ) : (
+                      <LineChart data={haisRoomData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                        <XAxis dataKey="unit" stroke="#94a3b8" tick={{ fontSize: 10, fill: '#cbd5e1' }} />
+                        <YAxis stroke="#94a3b8" tick={{ fontSize: 10, fill: '#cbd5e1' }} allowDecimals={false} />
+                        <Tooltip content={<HaisTooltip />} />
+                        <Line type="monotone" dataKey="Kejadian" stroke="#a855f7" strokeWidth={3} dot={{ r: 5, fill: '#a855f7' }}>
+                          <LabelList dataKey="Kejadian" position="top" formatter={(val: any) => typeof val === 'number' && val > 0 ? val : ''} fill="#c084fc" fontSize={10} fontWeight="bold" dy={-6} />
+                        </Line>
+                      </LineChart>
+                    )}
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </DashboardLayout>
   );
 }
-
-AnalyticsPage.getLayout = function getLayout(page: ReactElement) {
-  return <DashboardLayout>{page}</DashboardLayout>;
-};

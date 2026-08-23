@@ -709,7 +709,7 @@ export default function HandHygieneReport({
       <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-sm pt-6 sm:pt-8 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-sm">
         <div className="flex px-6 sm:px-8 justify-between items-center mb-8">
            <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-3">
-             <BarChart2 className="w-5 h-5 text-emerald-500" /> Analitik Tren Kepatuhan
+             <BarChart2 className="w-5 h-5 text-emerald-500" /> Grafik Tren Kepatuhan
            </h3>
            <div className="flex gap-2 bg-slate-100 dark:bg-white/5 p-1 rounded-xl">
              <button onClick={() => setChartType('line')} className={`px-4 py-2 text-[10px] sm:text-xs font-bold rounded-lg transition-all ${chartType === 'line' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}>Run Chart</button>

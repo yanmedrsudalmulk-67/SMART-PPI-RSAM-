@@ -10,16 +10,14 @@ import { useAppContext } from '@/components/Providers';
 import DashboardLayout from '@/components/DashboardLayout';
 import { genericAuditConfigs } from '@/lib/audit-configs';
 
-import dynamic from 'next/dynamic';
+import GenericAuditReport from '@/components/reports/GenericAuditReport';
+import HandHygieneReport from '@/components/reports/HandHygieneReport';
+import ApdReport from '@/components/reports/ApdReport';
+import SurveilansHaisReport from '@/components/reports/SurveilansHaisReport';
+import UnifiedSurveilansHaisReport from '@/components/reports/UnifiedSurveilansHaisReport';
+import EtikaBatukReport from '@/components/reports/EtikaBatukReport';
+import DiklatReport from '@/components/reports/DiklatReport';
 import { ReportSkeleton } from '@/components/SkeletonLoading';
-
-const GenericAuditReport = dynamic(() => import('@/components/reports/GenericAuditReport'), { ssr: false, loading: () => <ReportSkeleton /> });
-const HandHygieneReport = dynamic(() => import('@/components/reports/HandHygieneReport'), { ssr: false, loading: () => <ReportSkeleton /> });
-const ApdReport = dynamic(() => import('@/components/reports/ApdReport'), { ssr: false, loading: () => <ReportSkeleton /> });
-const SurveilansHaisReport = dynamic(() => import('@/components/reports/SurveilansHaisReport'), { ssr: false, loading: () => <ReportSkeleton /> });
-const UnifiedSurveilansHaisReport = dynamic(() => import('@/components/reports/UnifiedSurveilansHaisReport'), { ssr: false, loading: () => <ReportSkeleton /> });
-const EtikaBatukReport = dynamic(() => import('@/components/reports/EtikaBatukReport'), { ssr: false, loading: () => <ReportSkeleton /> });
-const DiklatReport = dynamic(() => import('@/components/reports/DiklatReport'), { ssr: false, loading: () => <ReportSkeleton /> });
 
 const INDICATORS_MAP: Record<string, { cat: string, subcat?: string, title: string, id: string, icon: any }> = {
   // Kewaspadaan Isolasi - Standar

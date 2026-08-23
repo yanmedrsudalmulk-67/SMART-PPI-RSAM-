@@ -3,10 +3,11 @@ import SignatureCanvas from 'react-signature-canvas';
 import { User, Eraser } from 'lucide-react';
 
 interface DigitalSignatureSectionProps {
-  pjName: string;
-  setPjName: (name: string) => void;
+  pjName?: string;
+  setPjName?: (name: string) => void;
   pjLabel?: string;
   supervisorLabel?: string;
+  hidePj?: boolean;
 }
 
 export interface DigitalSignatureRef {
@@ -18,7 +19,7 @@ export interface DigitalSignatureRef {
 }
 
 const DigitalSignatureSection = forwardRef<DigitalSignatureRef, DigitalSignatureSectionProps>(
-  ({ pjName, setPjName, pjLabel = 'PJ RUANGAN', supervisorLabel = 'IPCN / IPCLN (SUPERVISOR)' }, ref) => {
+  ({ pjName = '', setPjName = () => {}, pjLabel = 'PJ RUANGAN', supervisorLabel = 'IPCN / IPCLN (SUPERVISOR)', hidePj = false }, ref) => {
     const sigPadPJ = useRef<SignatureCanvas>(null);
     const sigPadSupervisor = useRef<SignatureCanvas>(null);
     const [mounted, setMounted] = useState(false);
@@ -29,7 +30,7 @@ const DigitalSignatureSection = forwardRef<DigitalSignatureRef, DigitalSignature
 
     useImperativeHandle(ref, () => ({
       getPjSignature: () => {
-        if (sigPadPJ.current && !sigPadPJ.current.isEmpty()) {
+        if (!hidePj && sigPadPJ.current && !sigPadPJ.current.isEmpty()) {
           return sigPadPJ.current.getCanvas().toDataURL('image/png');
         }
         return null;
@@ -41,7 +42,7 @@ const DigitalSignatureSection = forwardRef<DigitalSignatureRef, DigitalSignature
         return null;
       },
       setPjSignature: (dataUrl: string) => {
-        if (dataUrl) {
+        if (dataUrl && !hidePj) {
           sigPadPJ.current?.fromDataURL(dataUrl);
         }
       },
@@ -51,7 +52,7 @@ const DigitalSignatureSection = forwardRef<DigitalSignatureRef, DigitalSignature
         }
       },
       clearAll: () => {
-        sigPadPJ.current?.clear();
+        if (!hidePj) sigPadPJ.current?.clear();
         sigPadSupervisor.current?.clear();
       }
     }));
@@ -69,54 +70,58 @@ const DigitalSignatureSection = forwardRef<DigitalSignatureRef, DigitalSignature
           </h2>
 
           <div className="space-y-6">
-            <div>
-              <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2 pl-1">
-                NAMA PJ RUANGAN
-              </label>
-              <div className="relative group/input">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <User className="h-4 w-4 text-slate-500 group-focus-within/input:text-blue-400 transition-colors" />
-                </div>
-                <input
-                  type="text"
-                  value={pjName}
-                  onChange={(e) => setPjName(e.target.value)}
-                  placeholder="Ketik nama PJ ruangan"
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-sm text-white outline-none focus:border-blue-500/50 transition-all"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-              <div className="space-y-3">
-                <div className="flex justify-between items-center px-1">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500/80">
-                    {pjLabel}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => sigPadPJ.current?.clear()}
-                    className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 hover:text-slate-300 transition-colors"
-                  >
-                    <Eraser className="w-3 h-3" />
-                    CLEAR
-                  </button>
-                </div>
-                <div className="relative rounded-[1.5rem] border border-white/10 bg-black/20 overflow-hidden h-[160px] group/pad hover:border-blue-500/30 transition-all shadow-inner">
-                   <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-[0.03]">
-                    <span className="text-xl font-black uppercase tracking-tighter select-none">Tanda Tangan Di Sini</span>
+            {!hidePj && (
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2 pl-1">
+                  NAMA PJ RUANGAN
+                </label>
+                <div className="relative group/input">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <User className="h-4 w-4 text-slate-500 group-focus-within/input:text-blue-400 transition-colors" />
                   </div>
-                  <SignatureCanvas
-                    ref={sigPadPJ}
-                    penColor="#3b82f6"
-                    canvasProps={{
-                      className: 'sigCanvas w-full h-full cursor-crosshair relative z-10 touch-none',
-                    }}
+                  <input
+                    type="text"
+                    value={pjName}
+                    onChange={(e) => setPjName(e.target.value)}
+                    placeholder="Ketik nama PJ ruangan"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-sm text-white outline-none focus:border-blue-500/50 transition-all"
                   />
                 </div>
               </div>
+            )}
 
-              {/* Kolom 2: IPCN / Supervisor */}
+            <div className={`grid grid-cols-1 ${hidePj ? 'max-w-md mx-auto' : 'md:grid-cols-2'} gap-6 pt-2`}>
+              {!hidePj && (
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center px-1">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500/80">
+                      {pjLabel}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => sigPadPJ.current?.clear()}
+                      className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 hover:text-slate-300 transition-colors"
+                    >
+                      <Eraser className="w-3 h-3" />
+                      CLEAR
+                    </button>
+                  </div>
+                  <div className="relative rounded-[1.5rem] border border-white/10 bg-black/20 overflow-hidden h-[160px] group/pad hover:border-blue-500/30 transition-all shadow-inner">
+                     <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-[0.03]">
+                      <span className="text-xl font-black uppercase tracking-tighter select-none">Tanda Tangan Di Sini</span>
+                    </div>
+                    <SignatureCanvas
+                      ref={sigPadPJ}
+                      penColor="#3b82f6"
+                      canvasProps={{
+                        className: 'sigCanvas w-full h-full cursor-crosshair relative z-10 touch-none',
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Kolom IPCN / Supervisor */}
               <div className="space-y-3">
                 <div className="flex justify-between items-center px-1">
                   <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500/80">

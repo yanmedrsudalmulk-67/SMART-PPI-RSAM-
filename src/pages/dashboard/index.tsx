@@ -990,8 +990,8 @@ export default function DashboardPage() {
   const renderTooltipContent = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white/90 dark:bg-[#0f172a]/95 backdrop-blur-sm border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-xl">
-          <p className="text-sm font-black text-slate-800 dark:text-slate-100 mb-2">
+        <div className="bg-[#0a0f1c]/95 backdrop-blur-xl border border-cyan-500/30 p-4 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] text-white">
+          <p className="text-sm font-black text-cyan-300 mb-2">
             {label}
           </p>
           <div className="space-y-1.5">
@@ -1030,7 +1030,7 @@ export default function DashboardPage() {
                   className="flex justify-between gap-4 text-xs font-bold items-center"
                 >
                   <span style={{ color: color }}>{entry.name}:</span>
-                  <span className="text-slate-700 dark:text-slate-300">
+                  <span className="text-slate-200">
                     {entry.value}{" "}
                     {activeTab === "hais"
                       ? entry.dataKey === "ido" ||
@@ -1040,7 +1040,7 @@ export default function DashboardPage() {
                       : "%"}
                     {std && (
                       <span
-                        className="ml-2 text-[10px] bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded"
+                        className="ml-2 text-[10px] bg-white/10 px-1.5 py-0.5 rounded border border-white/10"
                         style={{ color }}
                       >
                         {status}
@@ -1052,7 +1052,7 @@ export default function DashboardPage() {
             })}
           </div>
           {activeTab !== "hais" && standards[activeTab] && (
-            <div className="mt-3 pt-2 border-t border-slate-200 dark:border-slate-800 text-[10px] text-slate-500 font-medium">
+            <div className="mt-3 pt-2 border-t border-slate-800 text-[10px] text-slate-400 font-medium">
               Standar PPI {standards[activeTab].indikator}:{" "}
               {standards[activeTab].operator}{" "}
               {standards[activeTab].nilai_standar}%
@@ -1217,20 +1217,20 @@ export default function DashboardPage() {
   const renderCustomLegend = (props: any) => {
     const { payload } = props;
     return (
-      <div className="flex flex-wrap items-center justify-center gap-4 pt-6 text-xs font-bold text-slate-600 dark:text-slate-400">
+      <div className="flex flex-wrap items-center justify-center gap-4 pt-6 text-xs font-bold text-slate-300">
         {payload.map((entry: any, index: number) => (
           <div key={`item-${index}`} className="flex items-center gap-2">
             <div
-              className="w-3 h-3 rounded-[3px]"
+              className="w-3 h-3 rounded-[4px] shadow-sm"
               style={{ backgroundColor: entry.color }}
             />
             <span>{entry.value}</span>
           </div>
         ))}
         {activeTab !== "hais" && standards[activeTab] && (
-          <div className="flex items-center gap-2 px-2 py-1 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 shadow-sm">
-            <div className="w-4 border-t-2 border-dashed border-[#06b6d4] drop-shadow-[0_0_2px_rgba(6,182,212,0.8)]" />
-            <span className="text-[#06b6d4]">
+          <div className="flex items-center gap-2 px-2.5 py-1 bg-[#0c1220] rounded-xl border border-cyan-500/30 shadow-inner">
+            <div className="w-4 border-t-2 border-dashed border-[#06b6d4] drop-shadow-[0_0_4px_rgba(6,182,212,0.8)]" />
+            <span className="text-[#06b6d4] font-bold">
               Standar PPI ({standards[activeTab].nilai_standar}%)
             </span>
           </div>
@@ -1265,18 +1265,12 @@ export default function DashboardPage() {
 
       <HeroSlider slides={slides} isLoading={isSlidesLoading} />
 
-      {/* Global Period Filter - Glassmorphism 2.0 Transparan */}
+      {/* Global Period Filter - Glassmorphism 3D Depth */}
       <section className="relative">
-        <div className="group relative bg-[#092540]/30 backdrop-blur-2xl backdrop-saturate-150 rounded-[24px] p-6 md:p-7 border border-sky-400/40 hover:border-sky-300/80 transition-all duration-300 transform-gpu overflow-hidden shadow-[0_8px_32px_0_rgba(14,165,233,0.25)] hover:shadow-[0_12px_40px_rgba(14,165,233,0.38)] before:absolute before:inset-0 before:bg-gradient-to-br before:from-sky-300/15 before:via-sky-500/5 before:to-transparent before:pointer-events-none">
-          {/* Subtle glossy light reflection overlay */}
-          <div className="absolute -top-24 -right-24 w-56 h-56 bg-sky-400/20 rounded-full blur-3xl pointer-events-none group-hover:bg-sky-300/35 transition-all duration-500" />
-          <div className="absolute top-0 right-0 p-4 opacity-[0.10] text-sky-200 group-hover:opacity-[0.22] group-hover:scale-110 transition-all pointer-events-none">
-            <Activity className="w-24 h-24" />
-          </div>
-
+        <div className="group relative bg-[#092540]/30 backdrop-blur-2xl backdrop-saturate-150 rounded-[24px] p-6 md:p-7 border border-sky-400/40 hover:border-sky-300/80 transition-all duration-300 transform-gpu overflow-hidden shadow-[0_16px_36px_-6px_rgba(2,8,20,0.7),0_4px_12px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.18)] hover:shadow-[0_22px_44px_-6px_rgba(2,8,20,0.85),0_6px_16px_rgba(0,0,0,0.5),inset_0_1px_2px_rgba(255,255,255,0.25)] before:absolute before:inset-0 before:bg-gradient-to-br before:from-sky-300/15 before:via-sky-500/5 before:to-transparent before:pointer-events-none">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-sky-400/20 backdrop-blur-md border border-sky-300/40 flex items-center justify-center text-sky-200 shadow-[0_0_15px_rgba(56,189,248,0.25)]">
+              <div className="w-12 h-12 rounded-2xl bg-sky-400/20 backdrop-blur-md border border-sky-300/40 flex items-center justify-center text-sky-200 shadow-[0_4px_12px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.2)]">
                 <BarChart2 className="w-6 h-6" />
               </div>
               <div>
@@ -1286,7 +1280,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="w-full md:w-auto lg:min-w-[580px] bg-[#081B33]/40 backdrop-blur-xl rounded-2xl p-3 border border-sky-400/30 shadow-[0_4px_24px_rgba(0,0,0,0.25)]">
+            <div className="w-full md:w-auto lg:min-w-[580px] bg-[#081B33]/40 backdrop-blur-xl rounded-2xl p-3 border border-sky-400/30 shadow-[0_4px_16px_rgba(0,0,0,0.35),inset_0_1px_1px_rgba(255,255,255,0.1)]">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
                 {/* Select Period Type */}
                 <div className="relative group/select">
@@ -1421,15 +1415,10 @@ export default function DashboardPage() {
       </section>
 
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-3 gap-6">
-        {/* HH Card - Glassmorphism 2.0 Transparan */}
-        <div className="group relative bg-[#063440]/30 backdrop-blur-2xl backdrop-saturate-150 p-7 rounded-[24px] border border-cyan-400/40 hover:border-cyan-300/80 transition-all duration-300 transform-gpu hover:-translate-y-1 overflow-hidden shadow-[0_8px_32px_0_rgba(6,182,212,0.25)] hover:shadow-[0_12px_40px_rgba(6,182,212,0.38)] before:absolute before:inset-0 before:bg-gradient-to-br before:from-cyan-300/15 before:via-cyan-500/5 before:to-transparent before:pointer-events-none">
-          {/* Subtle glossy light reflection overlay */}
-          <div className="absolute -top-24 -right-24 w-48 h-48 bg-cyan-400/20 rounded-full blur-3xl pointer-events-none group-hover:bg-cyan-300/35 transition-all duration-500" />
-          <div className="absolute top-0 right-0 p-4 opacity-[0.10] text-cyan-200 group-hover:opacity-[0.22] group-hover:scale-110 transition-all pointer-events-none">
-            <Droplets className="w-16 h-16" />
-          </div>
+        {/* HH Card - Glassmorphism 3D Depth */}
+        <div className="group relative bg-[#063440]/30 backdrop-blur-2xl backdrop-saturate-150 p-7 rounded-[24px] border border-cyan-400/40 hover:border-cyan-300/80 transition-all duration-300 transform-gpu hover:-translate-y-1.5 overflow-hidden shadow-[0_16px_36px_-6px_rgba(2,8,20,0.75),0_4px_12px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:shadow-[0_24px_48px_-6px_rgba(2,8,20,0.9),0_8px_18px_rgba(0,0,0,0.55),inset_0_1px_2px_rgba(255,255,255,0.3)] before:absolute before:inset-0 before:bg-gradient-to-br before:from-cyan-300/15 before:via-cyan-500/5 before:to-transparent before:pointer-events-none">
           <div className="flex items-center gap-4 mb-7 relative z-10">
-            <div className="w-12 h-12 rounded-xl bg-cyan-400/20 backdrop-blur-md border border-cyan-300/40 flex items-center justify-center text-cyan-200 shadow-[0_0_15px_rgba(34,211,238,0.25)]">
+            <div className="w-12 h-12 rounded-xl bg-cyan-400/20 backdrop-blur-md border border-cyan-300/40 flex items-center justify-center text-cyan-200 shadow-[0_4px_12px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.2)]">
               <Droplets className="w-6 h-6" />
             </div>
             <div>
@@ -1457,7 +1446,7 @@ export default function DashboardPage() {
                 Standard: {standards?.hh?.nilai_standar || 85}%
               </span>
               <span
-                className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full backdrop-blur-md ${stats.hh >= (standards?.hh?.nilai_standar || 85) ? "bg-emerald-500/25 text-emerald-200 border border-emerald-400/50 shadow-[0_0_12px_rgba(16,185,129,0.3)]" : "bg-red-500/25 text-red-200 border border-red-400/50 shadow-[0_0_12px_rgba(239,68,68,0.3)]"}`}
+                className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full backdrop-blur-md shadow-[0_2px_8px_rgba(0,0,0,0.3)] ${stats.hh >= (standards?.hh?.nilai_standar || 85) ? "bg-emerald-500/25 text-emerald-200 border border-emerald-400/50 shadow-[0_0_12px_rgba(16,185,129,0.3)]" : "bg-red-500/25 text-red-200 border border-red-400/50 shadow-[0_0_12px_rgba(239,68,68,0.3)]"}`}
               >
                 {stats.hh >= (standards?.hh?.nilai_standar || 85)
                   ? "Tercapai"
@@ -1467,15 +1456,10 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* APD Card - Glassmorphism 2.0 Transparan */}
-        <div className="group relative bg-[#092540]/30 backdrop-blur-2xl backdrop-saturate-150 p-7 rounded-[24px] border border-sky-400/40 hover:border-sky-300/80 transition-all duration-300 transform-gpu hover:-translate-y-1 overflow-hidden shadow-[0_8px_32px_0_rgba(14,165,233,0.25)] hover:shadow-[0_12px_40px_rgba(14,165,233,0.38)] before:absolute before:inset-0 before:bg-gradient-to-br before:from-sky-300/15 before:via-sky-500/5 before:to-transparent before:pointer-events-none">
-          {/* Subtle glossy light reflection overlay */}
-          <div className="absolute -top-24 -right-24 w-48 h-48 bg-sky-400/20 rounded-full blur-3xl pointer-events-none group-hover:bg-sky-300/35 transition-all duration-500" />
-          <div className="absolute top-0 right-0 p-4 opacity-[0.10] text-sky-200 group-hover:opacity-[0.22] group-hover:scale-110 transition-all pointer-events-none">
-            <Shield className="w-16 h-16" />
-          </div>
+        {/* APD Card - Glassmorphism 3D Depth */}
+        <div className="group relative bg-[#092540]/30 backdrop-blur-2xl backdrop-saturate-150 p-7 rounded-[24px] border border-sky-400/40 hover:border-sky-300/80 transition-all duration-300 transform-gpu hover:-translate-y-1.5 overflow-hidden shadow-[0_16px_36px_-6px_rgba(2,8,20,0.75),0_4px_12px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:shadow-[0_24px_48px_-6px_rgba(2,8,20,0.9),0_8px_18px_rgba(0,0,0,0.55),inset_0_1px_2px_rgba(255,255,255,0.3)] before:absolute before:inset-0 before:bg-gradient-to-br before:from-sky-300/15 before:via-sky-500/5 before:to-transparent before:pointer-events-none">
           <div className="flex items-center gap-4 mb-7 relative z-10">
-            <div className="w-12 h-12 rounded-xl bg-sky-400/20 backdrop-blur-md border border-sky-300/40 flex items-center justify-center text-sky-200 shadow-[0_0_15px_rgba(56,189,248,0.25)]">
+            <div className="w-12 h-12 rounded-xl bg-sky-400/20 backdrop-blur-md border border-sky-300/40 flex items-center justify-center text-sky-200 shadow-[0_4px_12px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.2)]">
               <Shield className="w-6 h-6" />
             </div>
             <div>
@@ -1503,7 +1487,7 @@ export default function DashboardPage() {
                 Standard: {standards?.apd?.nilai_standar || 100}%
               </span>
               <span
-                className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full backdrop-blur-md ${stats.apd >= (standards?.apd?.nilai_standar || 100) ? "bg-emerald-500/25 text-emerald-200 border border-emerald-400/50 shadow-[0_0_12px_rgba(16,185,129,0.3)]" : "bg-red-500/25 text-red-200 border border-red-400/50 shadow-[0_0_12px_rgba(239,68,68,0.3)]"}`}
+                className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full backdrop-blur-md shadow-[0_2px_8px_rgba(0,0,0,0.3)] ${stats.apd >= (standards?.apd?.nilai_standar || 100) ? "bg-emerald-500/25 text-emerald-200 border border-emerald-400/50 shadow-[0_0_12px_rgba(16,185,129,0.3)]" : "bg-red-500/25 text-red-200 border border-red-400/50 shadow-[0_0_12px_rgba(239,68,68,0.3)]"}`}
               >
                 {stats.apd >= (standards?.apd?.nilai_standar || 100)
                   ? "Tercapai"
@@ -1513,15 +1497,10 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* HAIs Card - Glassmorphism 2.0 Transparan */}
-        <div className="group relative bg-[#1B1242]/30 backdrop-blur-2xl backdrop-saturate-150 p-7 rounded-[24px] border border-indigo-400/40 hover:border-indigo-300/80 transition-all duration-300 transform-gpu hover:-translate-y-1 overflow-hidden shadow-[0_8px_32px_0_rgba(99,102,241,0.25)] hover:shadow-[0_12px_40px_rgba(99,102,241,0.38)] before:absolute before:inset-0 before:bg-gradient-to-br before:from-indigo-300/15 before:via-indigo-500/5 before:to-transparent before:pointer-events-none">
-          {/* Subtle glossy light reflection overlay */}
-          <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-400/20 rounded-full blur-3xl pointer-events-none group-hover:bg-indigo-300/35 transition-all duration-500" />
-          <div className="absolute top-0 right-0 p-4 opacity-[0.10] text-indigo-200 group-hover:opacity-[0.22] group-hover:scale-110 transition-all pointer-events-none">
-            <AlertCircle className="w-16 h-16" />
-          </div>
+        {/* HAIs Card - Glassmorphism 3D Depth */}
+        <div className="group relative bg-[#1B1242]/30 backdrop-blur-2xl backdrop-saturate-150 p-7 rounded-[24px] border border-indigo-400/40 hover:border-indigo-300/80 transition-all duration-300 transform-gpu hover:-translate-y-1.5 overflow-hidden shadow-[0_16px_36px_-6px_rgba(2,8,20,0.75),0_4px_12px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:shadow-[0_24px_48px_-6px_rgba(2,8,20,0.9),0_8px_18px_rgba(0,0,0,0.55),inset_0_1px_2px_rgba(255,255,255,0.3)] before:absolute before:inset-0 before:bg-gradient-to-br before:from-indigo-300/15 before:via-indigo-500/5 before:to-transparent before:pointer-events-none">
           <div className="flex items-center gap-4 mb-6 relative z-10">
-            <div className="w-12 h-12 rounded-xl bg-indigo-400/20 backdrop-blur-md border border-indigo-300/40 flex items-center justify-center text-indigo-200 shadow-[0_0_15px_rgba(129,140,248,0.25)]">
+            <div className="w-12 h-12 rounded-xl bg-indigo-400/20 backdrop-blur-md border border-indigo-300/40 flex items-center justify-center text-indigo-200 shadow-[0_4px_12px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.2)]">
               <AlertCircle className="w-6 h-6" />
             </div>
             <div>
@@ -1534,7 +1513,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2.5 mt-4 relative z-10">
-            <div className="bg-[#0C1435]/50 backdrop-blur-md p-2.5 rounded-xl border border-indigo-400/30 hover:border-indigo-300/60 transition-all shadow-inner">
+            <div className="bg-[#0C1435]/50 backdrop-blur-md p-2.5 rounded-xl border border-indigo-400/30 hover:border-indigo-300/60 transition-all shadow-[0_4px_10px_rgba(0,0,0,0.25),inset_0_1px_1px_rgba(255,255,255,0.1)]">
               <p className="text-[8px] font-black text-slate-200/80 uppercase tracking-widest mb-0.5">
                 Phlebitis
               </p>
@@ -1544,7 +1523,7 @@ export default function DashboardPage() {
                 {stats.hais.phlebitis} ‰
               </p>
             </div>
-            <div className="bg-[#0C1435]/50 backdrop-blur-md p-2.5 rounded-xl border border-indigo-400/30 hover:border-indigo-300/60 transition-all shadow-inner">
+            <div className="bg-[#0C1435]/50 backdrop-blur-md p-2.5 rounded-xl border border-indigo-400/30 hover:border-indigo-300/60 transition-all shadow-[0_4px_10px_rgba(0,0,0,0.25),inset_0_1px_1px_rgba(255,255,255,0.1)]">
               <p className="text-[8px] font-black text-slate-200/80 uppercase tracking-widest mb-0.5">
                 ISK
               </p>
@@ -1554,7 +1533,7 @@ export default function DashboardPage() {
                 {stats.hais.isk} ‰
               </p>
             </div>
-            <div className="bg-[#0C1435]/50 backdrop-blur-md p-2.5 rounded-xl border border-indigo-400/30 hover:border-indigo-300/60 transition-all shadow-inner">
+            <div className="bg-[#0C1435]/50 backdrop-blur-md p-2.5 rounded-xl border border-indigo-400/30 hover:border-indigo-300/60 transition-all shadow-[0_4px_10px_rgba(0,0,0,0.25),inset_0_1px_1px_rgba(255,255,255,0.1)]">
               <p className="text-[8px] font-black text-slate-200/80 uppercase tracking-widest mb-0.5">
                 IDO
               </p>
@@ -1564,7 +1543,7 @@ export default function DashboardPage() {
                 {stats.hais.ido}%
               </p>
             </div>
-            <div className="bg-[#0C1435]/50 backdrop-blur-md p-2.5 rounded-xl border border-indigo-400/30 hover:border-indigo-300/60 transition-all shadow-inner">
+            <div className="bg-[#0C1435]/50 backdrop-blur-md p-2.5 rounded-xl border border-indigo-400/30 hover:border-indigo-300/60 transition-all shadow-[0_4px_10px_rgba(0,0,0,0.25),inset_0_1px_1px_rgba(255,255,255,0.1)]">
               <p className="text-[8px] font-black text-slate-200/80 uppercase tracking-widest mb-0.5">
                 VAP
               </p>
@@ -1578,8 +1557,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Chart and Analytics Section - Glassmorphism with Navy Blue Header */}
-      <div className="bg-[#091A30]/85 backdrop-blur-xl rounded-[24px] border border-[#1E437C]/65 overflow-hidden transition-all mt-6 shadow-[0_8px_28px_rgba(7,22,44,0.45)]">
+      {/* Chart and Analytics Section - Glassmorphism with Navy Blue Header & 3D Depth */}
+      <div className="bg-[#091A30]/85 backdrop-blur-xl rounded-[24px] border border-[#1E437C]/65 overflow-hidden transition-all mt-6 shadow-[0_20px_45px_-10px_rgba(2,8,20,0.8),0_4px_16px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)]">
         {/* Navy Blue Header */}
         <div className="p-5 sm:p-6 border-b border-[#1E437C]/70 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-gradient-to-r from-[#0A1E3F] via-[#0D2852] to-[#081833]">
           <div className="flex flex-wrap gap-2">
@@ -2129,7 +2108,7 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Auto Insight & Rekomendasi PPI Card - Glassmorphism 2.0 */}
+        {/* Auto Insight & Rekomendasi PPI Card - Glassmorphism 3D Depth */}
         <div className="px-6 md:px-8 pb-8 pt-2">
           {(() => {
             const insight = getAutoInsightAndRecommendation();
@@ -2138,15 +2117,15 @@ export default function DashboardPage() {
             const isWarning = insight.status === "warning";
 
             const badgeBg = isOptimal
-              ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+              ? "bg-emerald-500/20 text-emerald-300 border-emerald-400/40 shadow-sm"
               : isDanger
-              ? "bg-rose-500/15 text-rose-400 border-rose-500/30"
+              ? "bg-rose-500/20 text-rose-300 border-rose-400/40 shadow-sm"
               : isWarning
-              ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
-              : "bg-sky-500/15 text-sky-400 border-sky-500/30";
+              ? "bg-amber-500/20 text-amber-300 border-amber-400/40 shadow-sm"
+              : "bg-sky-500/20 text-sky-300 border-sky-400/40 shadow-sm";
 
             return (
-              <div className="p-6 rounded-2xl bg-[#06152B]/90 backdrop-blur-xl border border-[#1E437C]/65 space-y-5">
+              <div className="p-6 rounded-2xl bg-[#06152B]/90 backdrop-blur-xl border border-[#1E437C]/65 space-y-5 shadow-[0_12px_28px_-6px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.12)]">
                 {/* Analisa Data Section */}
                 <div className="space-y-2.5">
                   <div className="flex flex-wrap items-center justify-between gap-2">

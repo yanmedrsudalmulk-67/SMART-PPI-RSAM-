@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, ReactElement } from "react";
+import { useState, useEffect, useMemo, useRef, ReactElement } from "react";
 import { useSafeRouter as useRouter } from '@/hooks/useSafeRouter';
 import {
   ArrowLeft,
@@ -15,6 +15,9 @@ import { supabase } from "@/lib/supabase";
 import DashboardLayout from "@/components/DashboardLayout";
 import { LiveStatisticsCard } from "@/components/LiveStatisticsCard";
 import { EditableSelect } from "@/components/EditableSelect";
+import DigitalSignatureSection, {
+  DigitalSignatureRef,
+} from "@/components/DigitalSignatureSection";
 
 const units = [
   "IGD",
@@ -52,6 +55,9 @@ export default function InputPerlindunganPetugasPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const { userRole } = useAppContext();
 
+  const signatureRef = useRef<DigitalSignatureRef>(null);
+  const [preloadedIpcnSignature, setPreloadedIpcnSignature] = useState<string | null>(null);
+
   const [startTime, setStartTime] = useState<Date | null>(null);
 
   const [observer, setObserver] = useState("");
@@ -62,12 +68,12 @@ export default function InputPerlindunganPetugasPage() {
     item_2: null,
   });
 
+  const [keterangan, setKeterangan] = useState<Record<string, string>>({});
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
-    
-
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const id = params.get("id");
@@ -100,7 +106,31 @@ export default function InputPerlindunganPetugasPage() {
               });
             } catch (err) {}
 
-            // No documentation or images in this form
+            // Load Keterangan
+            const savedKeterangan =
+              indicatorsData.keterangan ||
+              indicatorsData.keterangan_json?.data ||
+              ed.keterangan_json?.data ||
+              {};
+            if (savedKeterangan && typeof savedKeterangan === "object") {
+              setKeterangan(savedKeterangan);
+            }
+
+            // Load IPCN signature
+            const sig =
+              ed.ttd_ipcn ||
+              ed.tanda_tangan_2 ||
+              indicatorsData.tanda_tangan_ipcn ||
+              indicatorsData.ttd_ipcn;
+            if (sig) {
+              setPreloadedIpcnSignature(sig);
+              if (signatureRef.current?.setSupervisorSignature) {
+                setTimeout(
+                  () => signatureRef.current?.setSupervisorSignature?.(sig),
+                  400,
+                );
+              }
+            }
           }
         };
         loadEditData();
@@ -151,37 +181,43 @@ export default function InputPerlindunganPetugasPage() {
     setIsSubmitting(true);
 
     try {
+      const ipcnSig =
+        signatureRef.current?.getSupervisorSignature() ||
+        preloadedIpcnSignature;
+
       const payload = {
+        indikator_id: "perlindungan_petugas",
+        nama_indikator: "PERLINDUNGAN KESEHATAN PETUGAS",
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
         observer,
         unit,
-        ...auditData,
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.statusText,
+        data_indikator: {
+          ...auditData,
+          keterangan,
+          tanda_tangan_ipcn: ipcnSig,
+          ttd_ipcn: ipcnSig,
+        },
       };
 
-      const { data: sessionData, error: sessionError } = await supabase
-        .from("audit_sessions")
-        .insert([
-          {
-            indikator_id: "perlindungan_petugas",
-            nama_indikator: "PERLINDUNGAN KESEHATAN PETUGAS",
-            tanggal_waktu: payload.tanggal_waktu,
-            observer,
-            unit,
-            jumlah_dinilai: stats.dinilai,
-            jumlah_patuh: stats.patuh,
-            persentase: stats.persentase,
-            status_kepatuhan: stats.statusText,
-            data_indikator: auditData,
-          },
-        ])
-        .select("*")
-        .single();
+      if (isEditMode && editId) {
+        const { error: errUpdate } = await supabase
+          .from("audit_sessions")
+          .update(payload)
+          .eq("id", editId);
+        if (errUpdate) throw errUpdate;
+      } else {
+        const { error: sessionError } = await supabase
+          .from("audit_sessions")
+          .insert([payload])
+          .select("*")
+          .single();
 
-      if (sessionError) throw sessionError;
+        if (sessionError) throw sessionError;
+      }
 
       setShowToast(true);
       setTimeout(() => {
@@ -219,7 +255,7 @@ export default function InputPerlindunganPetugasPage() {
             className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-blue-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 font-bold uppercase tracking-widest text-xs border border-blue-400/30"
           >
             <CheckCircle2 className="w-5 h-5" />
-            Data Audit Berhasil Disimpan!
+            {isEditMode ? "Data Audit Berhasil Diperbarui!" : "Data Audit Berhasil Disimpan!"}
           </motion.div>
         )}
       </AnimatePresence>
@@ -386,11 +422,37 @@ export default function InputPerlindunganPetugasPage() {
                       })}
                     </div>
                   </div>
+
+                  {/* Input Keterangan Manual */}
+                  <div className="w-full mt-4 pt-3 border-t border-white/5">
+                    <label className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
+                      Keterangan
+                    </label>
+                    <input
+                      type="text"
+                      value={keterangan[item.id] || ""}
+                      onChange={(e) =>
+                        setKeterangan((prev) => ({
+                          ...prev,
+                          [item.id]: e.target.value,
+                        }))
+                      }
+                      placeholder="Ketik keterangan (opsional)..."
+                      className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-500"
+                    />
+                  </div>
                 </div>
               );
             })}
           </div>
         </div>
+
+        {/* Verifikasi Digital IPCN Saja */}
+        <DigitalSignatureSection
+          ref={signatureRef}
+          hidePj={true}
+          supervisorLabel="IPCN / AUDITOR"
+        />
 
         <LiveStatisticsCard
           totalDinilai={stats.dinilai || 0}
@@ -410,7 +472,7 @@ export default function InputPerlindunganPetugasPage() {
           ) : (
             <Save className="w-5 h-5" />
           )}
-          <span>{isEditMode ? 'Update Data Audit' : 'Simpan Data Audit'}</span>
+          <span>{isEditMode ? "Update Data Audit" : "Simpan Data Audit"}</span>
         </button>
       </form>
     </div>

@@ -1,18 +1,15 @@
 'use client';
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { 
   CheckCircle2, Trash2, FileText, Download, Eye, Loader2, Calendar, 
-  MapPin, User, Users, ChevronRight, X, Printer, ShieldCheck 
+  MapPin, User, Users, X, Edit, AlertTriangle, Sparkles, FileSpreadsheet, Presentation
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppContext } from '@/components/Providers';
-
-// Setup react-pdf safely
-// using google docs viewer for all preview
-
+import { useSafeRouter } from '@/hooks/useSafeRouter';
 
 export interface TrainingMaterial {
   id: string;
@@ -38,21 +35,21 @@ interface DiklatSessionData {
 }
 
 export default function DiklatReport({
-  tableName,
-  title,
   filters,
 }: {
   tableName: string;
   title: string;
   filters: { searchQuery: string; periode: string; type: string; unitFilter?: string };
 }) {
+  const router = useSafeRouter();
   const { hospitalLogoUrl } = useAppContext();
   const [sessions, setSessions] = useState<DiklatSessionData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [previewMaterial, setPreviewMaterial] = useState<TrainingMaterial | null>(null);
-  const [numPages, setNumPages] = useState<number | null>(null);
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
+  const [deleteConfirmSession, setDeleteConfirmSession] = useState<DiklatSessionData | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Realtime subscription setup details
   const fetchSessions = useCallback(async () => {
@@ -137,10 +134,6 @@ export default function DiklatReport({
     }
   }, [sessions, selectedSessionId]);
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   const filteredSessions = sessions.filter(session => {
     // 1. Search Query Filter
     const query = (filters.searchQuery || "").toLowerCase();
@@ -179,43 +172,237 @@ export default function DiklatReport({
 
   const selectedSession = filteredSessions.find(s => s.id === selectedSessionId) || filteredSessions[0];
 
-  const handleDeleteSession = async (id: string) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus data pelatihan & dokumen terkait?")) return;
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmSession) return;
+    setIsDeleting(true);
+    const idToDelete = deleteConfirmSession.id;
     try {
-      // Delete from storage files first
-      const session = sessions.find(s => s.id === id);
-      if (session && session.materials.length > 0) {
-        const filePaths = session.materials.map(m => m.storage_path);
-        await supabase.storage.from('public').remove(filePaths);
+      // Remove attached materials from storage if any
+      if (deleteConfirmSession.materials && deleteConfirmSession.materials.length > 0) {
+        const filePaths = deleteConfirmSession.materials
+          .map(m => m.storage_path)
+          .filter(Boolean);
+        if (filePaths.length > 0) {
+          try {
+            await supabase.storage.from('public').remove(filePaths);
+          } catch (storageErr) {
+            console.warn("Storage deletion warning:", storageErr);
+          }
+        }
       }
 
       const { error } = await supabase
         .from('audit_sessions')
         .delete()
-        .eq('id', id);
+        .eq('id', idToDelete);
 
       if (error) throw error;
       
-      setSessions(prev => prev.filter(s => s.id !== id));
-      if (selectedSessionId === id) {
-        setSelectedSessionId(null);
+      setSessions(prev => prev.filter(s => s.id !== idToDelete));
+      if (selectedSessionId === idToDelete) {
+        const remaining = filteredSessions.filter(s => s.id !== idToDelete);
+        setSelectedSessionId(remaining.length > 0 ? remaining[0].id : null);
       }
-      alert("Laporan kegiatan pelatihan berhasil dihapus");
+      setDeleteConfirmSession(null);
     } catch (e: any) {
-      alert("Gagal menghapus: " + e.message);
+      console.error("Gagal menghapus sesi diklat:", e);
+      alert("Gagal menghapus kegiatan: " + (e.message || e));
+    } finally {
+      setIsDeleting(false);
     }
   };
 
-  const getFileIcon = (fileName: string) => {
-    const ext = fileName.split('.').pop()?.toLowerCase();
-    if (ext === 'pdf') {
-      return <span className="text-lg mr-2">📄</span>;
-    } else if (['doc', 'docx'].includes(ext || '')) {
-      return <span className="text-lg mr-2">📘</span>;
-    } else if (['ppt', 'pptx'].includes(ext || '')) {
-      return <span className="text-lg mr-2">📊</span>;
+  const handleEditSession = (sessionId: string) => {
+    router.push(`/dashboard/input/diklat?editId=${sessionId}`);
+  };
+
+  // Helper to render file thumbnail/cover banner
+  const renderMaterialCover = (m: TrainingMaterial) => {
+    const ext = m.nama_file.split('.').pop()?.toLowerCase() || '';
+    const isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext);
+    const isPdf = ext === 'pdf';
+    const isPpt = ['ppt', 'pptx'].includes(ext);
+    const isDoc = ['doc', 'docx'].includes(ext);
+    const isXls = ['xls', 'xlsx', 'csv'].includes(ext);
+
+    if (isImage) {
+      return (
+        <div className="relative w-full h-40 bg-slate-100 overflow-hidden group cursor-pointer" onClick={() => setPreviewMaterial(m)}>
+          <img 
+            src={m.public_url} 
+            alt={m.nama_file} 
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            referrerPolicy="no-referrer"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
+          <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between text-white">
+            <span className="px-2 py-0.5 bg-emerald-600/90 rounded text-[9px] font-black uppercase tracking-wider">
+              GAMBAR / COVER
+            </span>
+            <span className="text-[10px] font-mono font-bold drop-shadow">
+              {(m.ukuran_file / 1024 / 1024).toFixed(2)} MB
+            </span>
+          </div>
+        </div>
+      );
     }
-    return <span className="text-lg mr-2">📎</span>;
+
+    if (isPdf) {
+      return (
+        <div className="relative w-full h-40 bg-gradient-to-br from-rose-600 via-red-600 to-rose-700 p-4 text-white flex flex-col justify-between overflow-hidden shadow-inner">
+          {/* Subtle Document Watermark */}
+          <div className="absolute -right-4 -bottom-6 text-white/10 font-black text-8xl select-none pointer-events-none">
+            PDF
+          </div>
+          
+          <div className="flex items-center justify-between relative z-10">
+            <span className="px-2.5 py-1 bg-white/20 backdrop-blur-md rounded-md text-[10px] font-black tracking-widest uppercase border border-white/20">
+              PDF DOCUMENT
+            </span>
+            <span className="text-[10px] font-mono font-bold text-rose-100">
+              {(m.ukuran_file / 1024 / 1024).toFixed(2)} MB
+            </span>
+          </div>
+
+          <div className="relative z-10 space-y-1 my-auto">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-white/20 backdrop-blur-md rounded-xl">
+                <FileText className="w-6 h-6 text-white" />
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-xs font-black text-white line-clamp-2 leading-snug drop-shadow-sm">
+                  {m.nama_file}
+                </p>
+                <p className="text-[9px] text-rose-200 uppercase font-semibold tracking-wider">
+                  Materi Paparan Resmi PPI
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative z-10 flex items-center gap-1.5 text-[9px] text-rose-100 font-medium">
+            <Sparkles className="w-3 h-3 text-amber-300" />
+            <span>Dokumen Pelatihan Terverifikasi</span>
+          </div>
+        </div>
+      );
+    }
+
+    if (isPpt) {
+      return (
+        <div className="relative w-full h-40 bg-gradient-to-br from-amber-500 via-orange-600 to-amber-700 p-4 text-white flex flex-col justify-between overflow-hidden shadow-inner">
+          {/* Subtle PPT Watermark */}
+          <div className="absolute -right-4 -bottom-6 text-white/10 font-black text-8xl select-none pointer-events-none">
+            PPT
+          </div>
+
+          <div className="flex items-center justify-between relative z-10">
+            <span className="px-2.5 py-1 bg-white/20 backdrop-blur-md rounded-md text-[10px] font-black tracking-widest uppercase border border-white/20">
+              POWERPOINT SLIDE
+            </span>
+            <span className="text-[10px] font-mono font-bold text-amber-100">
+              {(m.ukuran_file / 1024 / 1024).toFixed(2)} MB
+            </span>
+          </div>
+
+          <div className="relative z-10 space-y-1 my-auto">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-white/20 backdrop-blur-md rounded-xl">
+                <Presentation className="w-6 h-6 text-white" />
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-xs font-black text-white line-clamp-2 leading-snug drop-shadow-sm">
+                  {m.nama_file}
+                </p>
+                <p className="text-[9px] text-amber-200 uppercase font-semibold tracking-wider">
+                  Slide Presentasi Pelatihan
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative z-10 flex items-center gap-1.5 text-[9px] text-amber-100 font-medium">
+            <Sparkles className="w-3 h-3 text-yellow-300" />
+            <span>Slide Paparan Materi Diklat</span>
+          </div>
+        </div>
+      );
+    }
+
+    if (isDoc) {
+      return (
+        <div className="relative w-full h-40 bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-800 p-4 text-white flex flex-col justify-between overflow-hidden shadow-inner">
+          <div className="absolute -right-4 -bottom-6 text-white/10 font-black text-8xl select-none pointer-events-none">
+            DOC
+          </div>
+
+          <div className="flex items-center justify-between relative z-10">
+            <span className="px-2.5 py-1 bg-white/20 backdrop-blur-md rounded-md text-[10px] font-black tracking-widest uppercase border border-white/20">
+              WORD DOCUMENT
+            </span>
+            <span className="text-[10px] font-mono font-bold text-blue-100">
+              {(m.ukuran_file / 1024 / 1024).toFixed(2)} MB
+            </span>
+          </div>
+
+          <div className="relative z-10 space-y-1 my-auto">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-white/20 backdrop-blur-md rounded-xl">
+                <FileText className="w-6 h-6 text-white" />
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-xs font-black text-white line-clamp-2 leading-snug drop-shadow-sm">
+                  {m.nama_file}
+                </p>
+                <p className="text-[9px] text-blue-200 uppercase font-semibold tracking-wider">
+                  Modul & Handout Diklat
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative z-10 flex items-center gap-1.5 text-[9px] text-blue-100 font-medium">
+            <Sparkles className="w-3 h-3 text-cyan-300" />
+            <span>Berkas Dokumen Pelatihan</span>
+          </div>
+        </div>
+      );
+    }
+
+    // Default / Generic Cover
+    return (
+      <div className="relative w-full h-40 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 p-4 text-white flex flex-col justify-between overflow-hidden shadow-inner">
+        <div className="flex items-center justify-between relative z-10">
+          <span className="px-2.5 py-1 bg-white/20 backdrop-blur-md rounded-md text-[10px] font-black tracking-widest uppercase border border-white/20">
+            {ext.toUpperCase() || 'FILE'}
+          </span>
+          <span className="text-[10px] font-mono font-bold text-slate-300">
+            {(m.ukuran_file / 1024 / 1024).toFixed(2)} MB
+          </span>
+        </div>
+
+        <div className="relative z-10 space-y-1 my-auto">
+          <div className="flex items-center gap-2">
+            <div className="p-2 bg-white/20 backdrop-blur-md rounded-xl">
+              <FileSpreadsheet className="w-6 h-6 text-white" />
+            </div>
+            <div className="overflow-hidden">
+              <p className="text-xs font-black text-white line-clamp-2 leading-snug drop-shadow-sm">
+                {m.nama_file}
+              </p>
+              <p className="text-[9px] text-slate-300 uppercase font-semibold tracking-wider">
+                Materi Lampiran
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative z-10 flex items-center gap-1.5 text-[9px] text-slate-300 font-medium">
+          <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+          <span>Berkas Lampiran Resmi</span>
+        </div>
+      </div>
+    );
   };
 
   if (loading) {
@@ -232,10 +419,12 @@ export default function DiklatReport({
       <div className="flex flex-col items-center justify-center p-20 text-center bg-white/5 backdrop-blur-sm rounded-3xl border border-white/5">
         <FileText className="w-12 h-12 text-slate-600 mb-4" />
         <h3 className="text-lg font-bold text-white mb-2">Belum Ada Laporan Pendidikan & Pelatihan</h3>
-        <p className="text-xs text-slate-400 max-w-sm mb-4">Maksimal 5MB untuk dokumen PPT, PDF, atau Word yang diunggah di menu input kegiatan pelatihan.</p>
+        <p className="text-xs text-slate-400 max-w-sm mb-4">
+          Data kegiatan pelatihan yang diinput akan muncul di sini lengkap dengan materi dan dokumentasi.
+        </p>
         {sessions.length > 0 && (
            <p className="text-xs text-amber-500 font-bold border border-amber-500/20 bg-amber-500/10 p-2 rounded-lg">
-             DEBUG: Terdapat {sessions.length} data di database, namun tidak sesuai dengan filter tanggal atau unit.
+             Catatan: Terdapat {sessions.length} data tersimpan, namun tidak sesuai dengan filter pencarian / tanggal aktif.
            </p>
         )}
       </div>
@@ -280,14 +469,14 @@ export default function DiklatReport({
                 color: #000 !important;
                 font-weight: bold !important;
               }
-              .print-materi-item {
-                border-bottom: 1px dashed #ccc !important;
-                padding: 8px 0 !important;
+              .print-materi-card {
+                border: 1px solid #cbd5e1 !important;
+                page-break-inside: avoid !important;
               }
             }
           `}} />
 
-          {/* HOSPITAL LOGO & LETTERHEAD */}
+          {/* HOSPITAL LOGO & LETTERHEAD (No PPI-09 code in top right) */}
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 border-b-4 border-slate-900 pb-6 mb-8 text-center sm:text-left">
             {hospitalLogoUrl ? (
               <img 
@@ -312,19 +501,12 @@ export default function DiklatReport({
                 Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota Sukabumi, Jawa Barat.
               </p>
             </div>
-            <div className="hidden sm:block text-right">
-              <span className="px-3 py-1 bg-slate-100 border border-slate-200 text-slate-800 text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-sm">
-                Form No: PPI-09
-              </span>
-            </div>
           </div>
 
-          {/* CONTENT ACCORDING TO USER'S EXACT FLOW:
+          {/* REPORT CONTENT:
               1. Data Pelaksanaan 
-              2. Materi Pelatihan 
-              3. Foto Dokumentasi 
-              4. Tanda Tangan */}
-
+              2. Materi Pelatihan Terlampir (With Visual Covers / Thumbnails)
+              3. Foto Dokumentasi Kegiatan */}
           {selectedSession && (
             <div className="space-y-8">
               
@@ -373,14 +555,14 @@ export default function DiklatReport({
                     <div>
                       <p className="text-[9px] uppercase tracking-wider text-slate-400 font-bold">Profesi Sasaran Peserta</p>
                       <p className="text-xs font-bold text-slate-800">
-                        {selectedSession.peserta.join(', ') || "Belum ditentukan"}
+                        {selectedSession.peserta.join(', ') || "Semua Staf Terkait"}
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* 3. Materi Pelatihan */}
+              {/* 2. Materi Pelatihan Terlampir (Visual Covers / Thumbnails) */}
               <div>
                 <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 border-b-2 border-slate-200 pb-2 mb-4 flex items-center gap-2">
                   <span className="w-1.5 h-3.5 bg-blue-600 rounded-full" />
@@ -391,56 +573,49 @@ export default function DiklatReport({
                   <p className="text-slate-400 italic text-xs py-4 pl-2">Tidak ada berkas materi pelatihan yang dilampirkan.</p>
                 ) : (
                   <div>
-                    {/* DIGITAL EXCLUSIVE CONTROLS */}
-                    <div className="no-print space-y-2 mb-6">
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Materi yang digunakan pada kegiatan:</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {selectedSession.materials.map((m, idx) => (
-                          <div 
-                            key={m.id || idx}
-                            className="p-4 bg-slate-50 border border-slate-200 hover:border-blue-300 rounded-xl flex items-center justify-between gap-3 group transition-all"
-                          >
-                            <div className="flex items-center gap-2 overflow-hidden">
-                              {getFileIcon(m.nama_file)}
-                              <span className="text-xs font-extrabold text-slate-700 truncate max-w-[180px] group-hover:text-blue-600">
+                    {/* VISUAL COVER / THUMBNAILS GRID (Interactive on Web & Print-friendly) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                      {selectedSession.materials.map((m, idx) => (
+                        <div 
+                          key={m.id || idx}
+                          className="bg-white border border-slate-200 hover:border-blue-400 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col justify-between print-materi-card"
+                        >
+                          {/* Cover / Thumbnail Illustration */}
+                          {renderMaterialCover(m)}
+
+                          {/* Card Content & Action Bar */}
+                          <div className="p-4 bg-white flex flex-col justify-between flex-1 gap-3">
+                            <div>
+                              <p className="text-xs font-black text-slate-800 line-clamp-1" title={m.nama_file}>
                                 {m.nama_file}
-                              </span>
+                              </p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[10px] font-mono text-slate-500 uppercase">
+                                  {m.jenis_file || 'Dokumen'} • {(m.ukuran_file / 1024 / 1024).toFixed(2)} MB
+                                </span>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2 shrink-0">
+
+                            {/* Digital Action Buttons */}
+                            <div className="flex items-center gap-2 pt-2 border-t border-slate-100 no-print">
                               <button
+                                type="button"
                                 onClick={() => setPreviewMaterial(m)}
-                                className="p-1 px-2.5 bg-blue-50 hover:bg-blue-100 text-[10px] font-black uppercase text-blue-600 rounded-lg transition-all flex items-center gap-1"
-                                title="Buka Pratinjau"
+                                className="flex-1 py-2 px-3 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-black uppercase rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm"
                               >
-                                <Eye className="w-3 h-3" /> Preview
+                                <Eye className="w-3.5 h-3.5" /> Pratinjau
                               </button>
                               <a
                                 href={m.public_url}
                                 download={m.nama_file}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="p-1 px-2.5 bg-emerald-50 hover:bg-emerald-100 text-[10px] font-black uppercase text-emerald-600 rounded-lg transition-all flex items-center gap-1"
-                                title="Download"
+                                className="flex-1 py-2 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[11px] font-black uppercase rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm"
                               >
-                                <Download className="w-3 h-3" /> Unduh
+                                <Download className="w-3.5 h-3.5" /> Unduh
                               </a>
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* PRINT / PDF VERSION TABLE */}
-                    <div className="hidden print:block space-y-2 font-serif text-slate-900 border border-slate-200 rounded-xl p-4">
-                      <p className="text-xs font-bold italic mb-3">Materi Pelatihan Terlampir pada Berkas Kegiatan Resmi:</p>
-                      {selectedSession.materials.map((m, idx) => (
-                        <div key={m.id || idx} className="flex justify-between items-center print-materi-item py-1">
-                          <span className="text-xs font-bold text-slate-800 print-checkmark">
-                            {m.nama_file}
-                          </span>
-                          <span className="text-[10px] font-mono text-slate-500 uppercase">
-                            [ {m.jenis_file || 'PDF'} • {(m.ukuran_file / 1024 / 1024).toFixed(2)} MB ]
-                          </span>
                         </div>
                       ))}
                     </div>
@@ -448,7 +623,7 @@ export default function DiklatReport({
                 )}
               </div>
 
-              {/* 4. Foto Dokumentasi */}
+              {/* 3. Foto Dokumentasi Kegiatan */}
               <div>
                 <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 border-b-2 border-slate-200 pb-2 mb-4 flex items-center gap-2">
                   <span className="w-1.5 h-3.5 bg-blue-600 rounded-full" />
@@ -486,11 +661,16 @@ export default function DiklatReport({
 
       </div>
 
-      {/* LEFT SIDEBAR -> NOW BOTTOM SECTION: List of records */}
-      <div className="w-full max-w-4xl space-y-4 no-print mt-8">
-        <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">
-          Daftar Kegiatan Pelatihan ({filteredSessions.length})
-        </h3>
+      {/* BOTTOM SECTION: Daftar Kegiatan Pelatihan with Edit & Trash Icons */}
+      <div className="w-full max-w-4xl space-y-4 no-print mt-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">
+            Daftar Kegiatan Pelatihan ({filteredSessions.length})
+          </h3>
+          <span className="text-[10px] text-slate-500 font-medium">
+            Klik kartu untuk melihat detail laporan resmi
+          </span>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[800px] overflow-y-auto pr-2 custom-scrollbar">
           {filteredSessions.map((s) => (
@@ -499,7 +679,7 @@ export default function DiklatReport({
               onClick={() => setSelectedSessionId(s.id)}
               className={`p-4 rounded-2xl border text-left cursor-pointer transition-all relative overflow-hidden ${
                 selectedSession?.id === s.id
-                  ? 'bg-blue-600/10 border-blue-500/30'
+                  ? 'bg-blue-600/10 border-blue-500/40 shadow-lg shadow-blue-500/5'
                   : 'bg-white/2 hover:bg-white/5 border-white/5'
               }`}
             >
@@ -515,16 +695,36 @@ export default function DiklatReport({
                 {s.judul}
               </h4>
               <div className="flex justify-between items-center mt-4 border-t border-white/5 pt-3">
-                <span className="text-[10px] text-slate-400 font-medium truncate max-w-[150px]">
+                <span className="text-[10px] text-slate-400 font-medium truncate max-w-[140px]">
                   👤 {s.observer}
                 </span>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] uppercase font-bold text-cyan-400">
                     📎 {s.materials.length} File
                   </span>
+                  
+                  {/* EDIT BUTTON */}
                   <button 
-                    onClick={(e) => { e.stopPropagation(); handleDeleteSession(s.id); }}
-                    className="p-1 hover:bg-red-500/20 rounded text-slate-500 hover:text-red-400 transition-all"
+                    type="button"
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      handleEditSession(s.id); 
+                    }}
+                    className="p-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 hover:text-blue-300 rounded-lg transition-all"
+                    title="Edit Data Pelatihan"
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                  </button>
+
+                  {/* TRASH / DELETE BUTTON */}
+                  <button 
+                    type="button"
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      setDeleteConfirmSession(s); 
+                    }}
+                    className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 rounded-lg transition-all"
+                    title="Hapus Data Pelatihan"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -534,6 +734,77 @@ export default function DiklatReport({
           ))}
         </div>
       </div>
+
+      {/* CONFIRMATION MODAL: HAPUS DATA PELATIHAN */}
+      <AnimatePresence>
+        {deleteConfirmSession && (
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }} 
+            className="fixed inset-0 z-[350] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-slate-900 border border-white/10 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6"
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-red-500/20 text-red-400 rounded-2xl">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white uppercase tracking-tight">Hapus Data Pelatihan</h3>
+                  <p className="text-xs text-slate-400">Tindakan ini tidak dapat dibatalkan</p>
+                </div>
+              </div>
+
+              <div className="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-1">
+                <p className="text-xs font-bold text-white uppercase line-clamp-2">
+                  {deleteConfirmSession.judul}
+                </p>
+                <p className="text-[10px] text-slate-400">
+                  {deleteConfirmSession.unit} • {format(parseISO(deleteConfirmSession.waktu), 'dd MMMM yyyy', { locale: idLocale })}
+                </p>
+              </div>
+
+              <p className="text-xs text-slate-300">
+                Apakah Anda yakin ingin menghapus data kegiatan pelatihan ini beserta berkas materi dan foto dokumentasi terkait?
+              </p>
+
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={() => setDeleteConfirmSession(null)}
+                  className="flex-1 py-3 bg-white/10 hover:bg-white/15 text-slate-300 font-bold rounded-xl text-xs uppercase tracking-wider transition-colors disabled:opacity-50"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={handleConfirmDelete}
+                  className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 shadow-lg shadow-red-500/20 disabled:opacity-50"
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Menghapus...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4" />
+                      <span>Ya, Hapus</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* MODAL: Zoomed Image Preview */}
       <AnimatePresence>
@@ -569,16 +840,20 @@ export default function DiklatReport({
           <motion.div 
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0 }} 
             className="fixed inset-0 z-[250] flex items-center justify-center p-4 sm:p-10 bg-black/95 backdrop-blur-md"
           >
             <div className="bg-slate-900 w-full max-w-5xl h-full rounded-[2.5rem] border border-white/10 overflow-hidden flex flex-col shadow-2xl relative">
               <div className="p-5 bg-slate-800 border-b border-white/10 flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">📄</span>
+                  <FileText className="w-6 h-6 text-blue-400" />
                   <div>
-                    <h3 className="text-xs font-bold text-white uppercase tracking-widest truncate max-w-xs">Pratinjau Materi Laporan resmi</h3>
-                    <p className="text-[10px] text-slate-400 mt-0.5 truncate max-w-xs">{previewMaterial.nama_file}</p>
+                    <h3 className="text-xs font-bold text-white uppercase tracking-widest truncate max-w-xs sm:max-w-md">
+                      Pratinjau Materi Pelatihan
+                    </h3>
+                    <p className="text-[10px] text-slate-400 mt-0.5 truncate max-w-xs sm:max-w-md">
+                      {previewMaterial.nama_file}
+                    </p>
                   </div>
                 </div>
                 <button 
@@ -590,23 +865,25 @@ export default function DiklatReport({
               </div>
               
               <div className="flex-1 overflow-auto bg-slate-950 flex justify-center p-4">
-                  <div className="w-full h-full flex flex-col justify-between relative bg-slate-950 rounded-xl overflow-hidden p-3 border border-white/5 animate-fade-in">
-                    <iframe 
-                      src={`https://docs.google.com/gview?url=${encodeURIComponent(previewMaterial.public_url)}&embedded=true`}
-                      className="w-full h-full rounded-2xl bg-white border border-white/10 shadow-inner"
-                      title="Google Viewer Frame"
-                    />
-                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 border border-white/10 p-4 rounded-xl flex flex-col sm:flex-row items-center gap-4 text-center">
-                      <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Gunakan download langsung untuk pratinjau penuh.</p>
-                      <a 
-                        href={previewMaterial.public_url} 
-                        download={previewMaterial.nama_file}
-                        className="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-[10px] uppercase tracking-widest transition-all shadow-lg flex items-center gap-2 select-none"
-                      >
-                        <Download className="w-4 h-4" /> Download File
-                      </a>
-                    </div>
+                <div className="w-full h-full flex flex-col justify-between relative bg-slate-950 rounded-xl overflow-hidden p-3 border border-white/5 animate-fade-in">
+                  <iframe 
+                    src={`https://docs.google.com/gview?url=${encodeURIComponent(previewMaterial.public_url)}&embedded=true`}
+                    className="w-full h-full rounded-2xl bg-white border border-white/10 shadow-inner"
+                    title="Google Viewer Frame"
+                  />
+                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 border border-white/10 p-4 rounded-xl flex flex-col sm:flex-row items-center gap-4 text-center shadow-2xl">
+                    <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
+                      Gunakan download langsung untuk pratinjau penuh atau resolusi asli.
+                    </p>
+                    <a 
+                      href={previewMaterial.public_url} 
+                      download={previewMaterial.nama_file}
+                      className="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-[10px] uppercase tracking-widest transition-all shadow-lg flex items-center gap-2 select-none"
+                    >
+                      <Download className="w-4 h-4" /> Download File
+                    </a>
                   </div>
+                </div>
               </div>
             </div>
           </motion.div>

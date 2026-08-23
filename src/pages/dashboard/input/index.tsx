@@ -706,7 +706,7 @@ export default function InputIndexPage() {
               </div>
             </Link>
           </motion.div>
-        ))}{" "}
+        ))}
       </div>
     </div>
   );

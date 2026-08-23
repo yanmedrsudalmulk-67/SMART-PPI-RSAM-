@@ -474,25 +474,7 @@ export default function InputPengelolaanLimbahTajamPage() {
           <div className="space-y-4">
             {auditItems.map((item, idx) => {
               const selected = auditData[item.id];
-              const negativeKeywords = [
-                "berkarat",
-                "kotor",
-                "debu",
-                "genangan",
-                "tercampur",
-                "bercampur",
-                "penumpukan",
-                "bocor",
-                "jarum",
-                "menumpuk",
-                "sampah medis dan non medis",
-                "pembuangan sampah infeksius",
-              ];
-              const isNegativeQuestion = negativeKeywords.some((kw) =>
-                (item.label || (item as any).desc || "")
-                  .toLowerCase()
-                  .includes(kw),
-              );
+              const isNegativeQuestion = false;
               let borderLeftColor = "border-l-transparent";
               if (selected === "na") {
                 borderLeftColor = "border-l-slate-500";

@@ -303,12 +303,21 @@ export default function InputPengendalianLingkunganPage() {
     let patuh = 0;
     let dinilai = 0;
 
-    Object.values(auditData).forEach((val) => {
-      if (val === "ya") {
-        patuh++;
+    auditItems.forEach((item) => {
+      const val = auditData[item.id as keyof typeof auditData];
+      if (val === "ya" || val === "tidak") {
         dinilai++;
-      } else if (val === "tidak") {
-        dinilai++;
+        if (item.id === "item_5" || item.id === "item_11") {
+          // Negative questions: 'tidak' is compliant (patuh)
+          if (val === "tidak") {
+            patuh++;
+          }
+        } else {
+          // Positive questions: 'ya' is compliant (patuh)
+          if (val === "ya") {
+            patuh++;
+          }
+        }
       }
     });
 
@@ -532,7 +541,7 @@ export default function InputPengendalianLingkunganPage() {
               (item.label || (item as any).desc || "")
                 .toLowerCase()
                 .includes(kw),
-            );
+            ) || item.id === "item_5" || item.id === "item_11";
             let borderLeftColor = "border-l-transparent";
             if (selected === "na") {
               borderLeftColor = "border-l-slate-500";

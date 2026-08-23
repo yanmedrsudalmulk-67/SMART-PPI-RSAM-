@@ -6,6 +6,7 @@ import {
   LayoutDashboard, 
   ClipboardCheck, 
   Activity, 
+  BarChart2,
   FileText, 
   Settings, 
   Menu,
@@ -54,11 +55,11 @@ const NavItem = memo(({ item, isActive, onClick }: { item: any, isActive: boolea
 NavItem.displayName = 'NavItem';
 
 const navItems = [
-  { name: 'Beranda', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Input', href: '/dashboard/input', icon: ClipboardCheck },
-  { name: 'Analitik', href: '/dashboard/analytics', icon: Activity },
-  { name: 'Laporan', href: '/dashboard/reports', icon: FileText },
-  { name: 'Pengaturan', href: '/dashboard/settings', icon: Settings },
+  { name: 'Dashboard', shortName: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Input Data', shortName: 'Input', href: '/dashboard/input', icon: ClipboardCheck },
+  { name: 'Grafik Capaian', shortName: 'Grafik', href: '/dashboard/analytics', icon: BarChart2 },
+  { name: 'Laporan PPI', shortName: 'Laporan', href: '/dashboard/reports', icon: FileText },
+  { name: 'Pengaturan', shortName: 'Pengaturan', href: '/dashboard/settings', icon: Settings },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -293,7 +294,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       }`}>
         {/* Page Content */}
         <main ref={mainRef} className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 pb-32 sm:pb-10 relative overscroll-y-none [transform:translateZ(0)] will-change-scroll w-full max-w-full">
-          {/* Header Khusus Mode Portrait untuk Seluruh Menu (Dashboard, Input, Analitik, Laporan, Pengaturan) */}
+          {/* Header Khusus Mode Portrait untuk Seluruh Menu (Dashboard, Input, Grafik, Laporan, Pengaturan) */}
           <div className="flex sm:hidden flex-col mb-4 print:hidden">
             <div className="flex items-center justify-between gap-3 px-1">
               <div className="flex items-center gap-2.5">
@@ -377,7 +378,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       ? 'text-white font-bold drop-shadow-sm' 
                       : 'text-slate-400 font-medium'
                   }`}>
-                    {item.name}
+                    {item.shortName || item.name}
                   </span>
                 </div>
               </Link>

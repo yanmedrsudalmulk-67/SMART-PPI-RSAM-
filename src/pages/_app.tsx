@@ -12,6 +12,60 @@ const poppins = Poppins({
   variable: '--font-sans' 
 });
 
+function isAbortError(err: any) {
+  if (!err) return false;
+  if (err.cancelled) return true;
+  if (err.name === 'AbortError') return true;
+  const str = String(
+    err?.message || err?.reason?.message || err?.reason || err?.error || err || ''
+  );
+  return (
+    str.includes('Abort fetching component') ||
+    str.includes('Route Cancelled') ||
+    str.includes('cancelled') ||
+    str.includes('aborted') ||
+    str.includes('AbortError')
+  );
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener(
+    'unhandledrejection',
+    (event: PromiseRejectionEvent) => {
+      if (
+        isAbortError(event.reason) ||
+        isAbortError(event.reason?.message) ||
+        String(event.reason || '').includes('Abort fetching component')
+      ) {
+        event.preventDefault();
+        event.stopImmediatePropagation?.();
+      }
+    },
+    true
+  );
+
+  window.addEventListener(
+    'error',
+    (event: ErrorEvent) => {
+      if (
+        isAbortError(event.error) ||
+        isAbortError(event.message) ||
+        (event.message && String(event.message).includes('Abort fetching component'))
+      ) {
+        event.preventDefault();
+        event.stopImmediatePropagation?.();
+      }
+    },
+    true
+  );
+
+  Router.events.on('routeChangeError', (err: any) => {
+    if (isAbortError(err)) {
+      // Silently ignore user-cancelled or aborted route changes
+    }
+  });
+}
+
 export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
   getLayout?: (page: ReactElement) => ReactNode;
 };
@@ -22,25 +76,9 @@ type AppPropsWithLayout = AppProps & {
 
 export default function App({ Component, pageProps }: AppPropsWithLayout) {
   useEffect(() => {
-    const isAbortError = (err: any) => {
-      if (!err) return false;
-      if (err.cancelled) return true;
-      if (err.name === 'AbortError') return true;
-      const str = String(
-        err?.message || err?.reason?.message || err?.reason || err?.error || err || ''
-      );
-      return (
-        str.includes('Abort fetching component') ||
-        str.includes('Route Cancelled') ||
-        str.includes('cancelled') ||
-        str.includes('aborted') ||
-        str.includes('AbortError')
-      );
-    };
-
     const handleRouteChangeError = (err: any) => {
       if (isAbortError(err)) {
-        // Silently ignore user-cancelled or aborted route changes
+        // Silently ignore
       }
     };
 
@@ -51,7 +89,7 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
         (event.message && String(event.message).includes('Abort fetching component'))
       ) {
         event.preventDefault();
-        event.stopImmediatePropagation();
+        event.stopImmediatePropagation?.();
       }
     };
 
@@ -62,16 +100,17 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
         String(event.reason || '').includes('Abort fetching component')
       ) {
         event.preventDefault();
+        event.stopImmediatePropagation?.();
       }
     };
 
-    window.addEventListener('error', handleWindowError);
-    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    window.addEventListener('error', handleWindowError, true);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection, true);
     Router.events.on('routeChangeError', handleRouteChangeError);
 
     return () => {
-      window.removeEventListener('error', handleWindowError);
-      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      window.removeEventListener('error', handleWindowError, true);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection, true);
       Router.events.off('routeChangeError', handleRouteChangeError);
     };
   }, []);
