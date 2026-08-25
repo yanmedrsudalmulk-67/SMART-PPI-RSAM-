@@ -645,36 +645,8 @@ export default function RadiologiInputPage() {
         <div className="bg-white/5 p-5 sm:p-6 lg:p-8 rounded-[24px] border border-white/5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2">
-              📋 Indikator Kepatuhan Monitoring Radiologi
+              📋 Indikator Radiologi
             </h2>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  const updated: Record<string, AuditStatus> = {};
-                  checklistGroups.forEach((g) =>
-                    g.items.forEach((it) => (updated[it.id] = "ya"))
-                  );
-                  setData((prev) => ({ ...prev, ...updated }));
-                }}
-                className="px-3 py-1.5 rounded-xl bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 text-xs font-semibold tracking-wide transition-all border border-blue-500/30"
-              >
-                ✓ Set Semua YA
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const updated: Record<string, AuditStatus> = {};
-                  checklistGroups.forEach((g) =>
-                    g.items.forEach((it) => (updated[it.id] = null))
-                  );
-                  setData((prev) => ({ ...prev, ...updated }));
-                }}
-                className="px-3 py-1.5 rounded-xl bg-slate-500/20 text-slate-300 hover:bg-slate-500/30 text-xs font-semibold tracking-wide transition-all border border-white/10"
-              >
-                ↺ Reset
-              </button>
-            </div>
           </div>
           <div className="space-y-10">
             {checklistGroups.map((group, groupIdx) => {

@@ -283,7 +283,7 @@ export default function EtikaBatukReport({
       {selectedRecord ? (
         <div 
           id="etika-batuk-official-report"
-          className="p-4 sm:p-8 rounded-none sm:rounded-2xl shadow-xl print-container print:shadow-none print:w-full print:p-0 min-h-[800px] print:min-h-0 mx-auto max-w-[210mm] border border-slate-200 bg-force-white text-force-black report-card-premium relative"
+          className="p-4 sm:p-8 rounded-none sm:rounded-2xl shadow-[0_15px_35px_-8px_rgba(0,0,0,0.15),0_6px_15px_-4px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.9)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.95),0_10px_25px_-6px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] print-container print:shadow-none print:w-full print:p-0 min-h-[800px] print:min-h-0 mx-auto max-w-[210mm] border border-slate-200/80 dark:border-white/10 bg-force-white text-force-black report-card-premium relative"
           style={{
             backgroundColor: "#ffffff",
             color: "#000000",
@@ -337,7 +337,7 @@ export default function EtikaBatukReport({
               </div>
             </div>
             <div className="border-r border-slate-800 p-2 text-center flex flex-col items-center justify-center" style={{ borderRightColor: "#000000", backgroundColor: "#f8fafc" }}>
-              <p className="text-[8px] font-black uppercase tracking-widest text-force-black mb-0.5" style={{ color: "#000000" }}>Supervisor / IPCN</p>
+              <p className="text-[8px] font-black uppercase tracking-widest text-force-black mb-0.5" style={{ color: "#000000" }}>Supervisor</p>
               <div className="font-bold text-[10px] sm:text-[11px] text-force-black" style={{ color: "#000000" }}>{selectedRecord.observer}</div>
             </div>
             <div className="p-2 text-center flex flex-col items-center justify-center" style={{ backgroundColor: "#f8fafc" }}>
@@ -429,7 +429,7 @@ export default function EtikaBatukReport({
             </div>
 
             <div className="text-center space-y-2">
-              <p className="text-[10px] font-black uppercase tracking-widest text-force-black mb-2" style={{ color: "#000000" }}>IPCN / Auditor</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-force-black mb-2" style={{ color: "#000000" }}>TIM PPI RS</p>
               <div className="h-16 lg:h-20 relative w-full flex justify-center items-center">
                 {selectedRecord.tanda_tangan_2 ? (
                   <img src={selectedRecord.tanda_tangan_2} className="object-contain h-full relative z-10 mix-blend-multiply" alt="TTD IPCN" />
@@ -479,7 +479,7 @@ export default function EtikaBatukReport({
       )}
 
       {/* Tabel Riwayat Laporan (Posisinya Di Bawah Laporan Resmi) */}
-      <div className="bg-white dark:bg-[#111827] rounded-3xl border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden relative group print:hidden">
+      <div className="bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-[0_15px_35px_-8px_rgba(0,0,0,0.12),0_6px_15px_-4px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.95),0_10px_25px_-6px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] overflow-hidden relative group print:hidden">
         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500" />
         <div className="p-6 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
           <div>

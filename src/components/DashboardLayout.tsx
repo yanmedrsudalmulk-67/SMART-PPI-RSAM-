@@ -24,8 +24,8 @@ import { supabase } from '@/lib/supabase';
 const NavItem = memo(({ item, isActive, onClick }: { item: any, isActive: boolean, onClick?: () => void }) => {
   const baseClasses = "relative flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 ease-in-out group antialiased hover:scale-[1.01] active:scale-[0.98] transform-gpu will-change-transform";
   
-  // Clean solid blue active styling like "Grafik Capaian" in the image, without glowing neon borders or neon shadows
-  const activeClasses = "bg-[#1864ab] text-white font-bold shadow-md";
+  // Vibrant Royal Blue active styling matching the "Input Sekarang" button with realistic 3D dark shadow and specular highlight
+  const activeClasses = "bg-[#2563EB] bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] text-white font-bold border border-blue-400/40 shadow-[0_10px_22px_-4px_rgba(0,0,0,0.45),0_4px_8px_-2px_rgba(0,0,0,0.35),0_0_15px_rgba(37,99,235,0.35),inset_0_1px_1.5px_rgba(255,255,255,0.35),inset_0_-1px_1.5px_rgba(0,0,0,0.25)]";
   const inactiveClasses = "text-slate-300/90 hover:bg-white/10 hover:text-white border border-transparent";
 
   const iconBase = "w-[22px] h-[22px]";
@@ -366,7 +366,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {isActive && (
                   <motion.div
                     layoutId="mobileNavIndicator"
-                    className="absolute inset-x-1.5 inset-y-1.5 rounded-[22px] bg-[#1864ab] shadow-md"
+                    className="absolute inset-x-1.5 inset-y-1.5 rounded-[22px] bg-[#2563EB] bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] border border-blue-400/40 shadow-[0_8px_18px_-3px_rgba(0,0,0,0.45),0_3px_6px_-2px_rgba(0,0,0,0.35),0_0_12px_rgba(37,99,235,0.35),inset_0_1px_1.5px_rgba(255,255,255,0.35),inset_0_-1px_1.5px_rgba(0,0,0,0.25)]"
                     transition={{ type: "spring", stiffness: 380, damping: 30 }}
                   />
                 )}

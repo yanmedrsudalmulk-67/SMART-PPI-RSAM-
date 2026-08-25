@@ -393,7 +393,7 @@ export default function UnifiedSurveilansHaisReport() {
       </div>
 
       {/* TOP FILTER SECTION */}
-      <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-lg flex flex-col md:flex-row gap-4 justify-between items-center w-full">
+      <div className="bg-white/95 dark:bg-[#0f172a]/95 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-2xl p-4 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_4px_10px_-2px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_16px_32px_-8px_rgba(0,0,0,0.85),0_6px_16px_-4px_rgba(0,0,0,0.75),inset_0_1px_1px_rgba(255,255,255,0.12)] flex flex-col md:flex-row gap-4 justify-between items-center w-full">
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           {/* Periode */}
           <div className="glowing-border-container w-full sm:w-auto">
@@ -457,7 +457,7 @@ export default function UnifiedSurveilansHaisReport() {
       ) : (
         <>
           {/* MAIN CONTAINER AND SUMMARY CARDS */}
-          <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-sm rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm transition-all mt-4">
+          <div className="bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md rounded-[2rem] border border-slate-200/80 dark:border-white/10 overflow-hidden shadow-[0_15px_35px_-8px_rgba(0,0,0,0.12),0_6px_15px_-4px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.95),0_10px_25px_-6px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] transition-all mt-4">
             
             {/* Logo, Header Laporan */}
             <div className="p-8 border-b border-slate-100 dark:border-white/5 bg-white dark:bg-[#0f172a]">
@@ -608,7 +608,7 @@ export default function UnifiedSurveilansHaisReport() {
           </div>
 
           {/* CHART SECTION */}
-          <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/5 rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden mt-4">
+          <div className="bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-3xl p-5 sm:p-6 shadow-[0_15px_35px_-8px_rgba(0,0,0,0.12),0_6px_15px_-4px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.95),0_10px_25px_-6px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] relative overflow-hidden mt-4">
              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                 <div>
                   <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 whitespace-nowrap font-sans">

@@ -870,7 +870,7 @@ export default function GenericAuditReport({
 
       {filteredRecords.length > 0 && selectedRecord ? (
         <div
-          className="p-4 md:p-6 print:p-0 relative break-inside-avoid w-full max-w-[800px] mx-auto bg-force-white mb-8 border border-slate-200 dark:border-white/10 rounded-2xl print:border-none print:rounded-none print:mb-0 font-sans report-card-premium"
+          className="p-4 md:p-6 print:p-0 relative break-inside-avoid w-full max-w-[800px] mx-auto bg-force-white mb-8 border border-slate-200/80 dark:border-white/10 rounded-2xl print:border-none print:rounded-none print:mb-0 font-sans report-card-premium shadow-[0_15px_35px_-8px_rgba(0,0,0,0.15),0_6px_15px_-4px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.9)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.95),0_10px_25px_-6px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)]"
           style={{
             pageBreakAfter: "always",
             fontFamily: "var(--font-sans), Poppins, sans-serif",
@@ -915,8 +915,8 @@ export default function GenericAuditReport({
             </h2>
           </div>
 
-          <div className="w-full mb-4 border-2 border-slate-800 border-collapse grid grid-cols-2 sm:grid-cols-4">
-            <div className="border-r border-b sm:border-b-0 border-slate-800 p-2 text-center flex flex-col items-center justify-center bg-slate-50">
+          <div className="w-full mb-4 border-2 border-slate-800 border-collapse grid grid-cols-3">
+            <div className="border-r border-slate-800 p-2 text-center flex flex-col items-center justify-center bg-slate-50">
               <p className="text-[8px] font-black uppercase tracking-widest text-force-black flex items-center justify-center gap-1 mb-0.5">
                 Waktu Pelaksanaan
               </p>
@@ -930,20 +930,12 @@ export default function GenericAuditReport({
                   : "-"}
               </div>
             </div>
-            <div className="border-r border-b sm:border-b-0 border-slate-800 p-2 text-center flex flex-col items-center justify-center bg-slate-50">
+            <div className="border-r border-slate-800 p-2 text-center flex flex-col items-center justify-center bg-slate-50">
               <p className="text-[8px] font-black uppercase tracking-widest text-force-black flex items-center justify-center gap-1 mb-0.5">
-                Supervisor / IPCN
+                Supervisor
               </p>
               <p className="font-bold text-[10px] sm:text-[11px] uppercase text-force-black">
                 {selectedRecord.supervisor || selectedRecord.observer || "-"}
-              </p>
-            </div>
-            <div className="border-r border-slate-800 p-2 text-center flex flex-col items-center justify-center bg-slate-50">
-              <p className="text-[8px] font-black uppercase tracking-widest text-force-black flex items-center justify-center gap-1 mb-0.5">
-                PJ Ruangan / Auditee
-              </p>
-              <p className="font-bold text-[10px] sm:text-[11px] uppercase text-force-black">
-                {selectedRecord.nama_pj_ruangan || selectedRecord.nama_pj || "-"}
               </p>
             </div>
             <div className="p-2 text-center flex flex-col items-center justify-center bg-slate-50">
@@ -1174,7 +1166,7 @@ export default function GenericAuditReport({
             <div className="flex justify-end mt-4 mb-2 break-inside-avoid">
               <div className="text-center space-y-2 w-64">
                 <p className="text-[9px] font-black uppercase tracking-widest text-force-black mb-2">
-                  IPCN / Auditor
+                  TIM PPI RS
                 </p>
                 <div className="h-16 relative w-full flex justify-center items-center">
                   {(selectedRecord.tanda_tangan_2 || selectedRecord.tanda_tangan_1) ? (
@@ -1238,7 +1230,7 @@ export default function GenericAuditReport({
 
               <div className="text-center space-y-2">
                 <p className="text-[9px] font-black uppercase tracking-widest text-force-black mb-2">
-                  IPCN / Auditor
+                  TIM PPI RS
                 </p>
                 <div className="h-16 relative w-full flex justify-center items-center">
                   {selectedRecord.tanda_tangan_2 ? (
@@ -1273,7 +1265,7 @@ export default function GenericAuditReport({
 
         </div>
       ) : (
-        <div className="h-full bg-slate-50 dark:bg-[#111827]/80 rounded-[2rem] border border-slate-200 dark:border-white/10 flex flex-col items-center justify-center p-12 md:p-20 text-center text-slate-500 shadow-sm min-h-[400px]">
+        <div className="h-full bg-slate-50 dark:bg-[#111827]/80 rounded-[2rem] border border-slate-200/80 dark:border-white/10 flex flex-col items-center justify-center p-12 md:p-20 text-center text-slate-500 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.08),0_4px_10px_-2px_rgba(0,0,0,0.04)] dark:shadow-[0_16px_32px_-8px_rgba(0,0,0,0.8)] min-h-[400px]">
           <FileText className="w-16 h-16 md:w-20 md:h-20 mb-6 text-slate-300 dark:text-slate-700" />
           <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white mb-2">
             Belum Ada Data Audit
@@ -1286,15 +1278,15 @@ export default function GenericAuditReport({
       )}
 
       {/* Tabel Riwayat Laporan */}
-      <div className="bg-white/5 backdrop-blur-md rounded-3xl border border-white/5 shadow-2xl overflow-hidden relative group">
+      <div className="bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-[0_15px_35px_-8px_rgba(0,0,0,0.12),0_6px_15px_-4px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.95),0_10px_25px_-6px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] overflow-hidden relative group">
         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500" />
-        <div className="p-6 border-b border-white/5 flex items-center justify-between">
+        <div className="p-6 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
-              <ClipboardCheck className="w-5 h-5 text-blue-400" />
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+              <ClipboardCheck className="w-5 h-5 text-blue-500" />
               Tabel Riwayat Laporan
             </h3>
-            <p className="text-xs text-slate-400 mt-1">Daftar laporan kepatuhan yang tercatat pada sistem</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Daftar laporan kepatuhan yang tercatat pada sistem</p>
           </div>
         </div>
 

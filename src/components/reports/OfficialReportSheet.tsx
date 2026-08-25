@@ -82,7 +82,7 @@ export default function OfficialReportSheet({
   const images = Array.isArray(data.foto) ? data.foto : (typeof data.foto === 'string' ? [data.foto] : []);
 
   return (
-    <div className="relative w-full font-sans bg-white text-slate-900 border border-slate-300 print:border-none p-8">
+    <div className="relative w-full font-sans bg-white text-slate-900 border border-slate-300 print:border-none p-8 rounded-2xl shadow-[0_15px_35px_-8px_rgba(0,0,0,0.15),0_6px_15px_-4px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.9)]">
       <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8 border-b-4 border-slate-300 pb-6">
           <div className="flex items-center gap-5 w-full justify-center text-center">
              <div className="w-20 h-20 bg-white flex items-center justify-center relative">
@@ -103,18 +103,14 @@ export default function OfficialReportSheet({
         <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-black w-full text-center">LAPORAN AUDIT <br className="md:hidden" /> {title}</h2>
       </div>
 
-      <div className="w-full mb-8 border-t border-l border-r border-slate-300 grid grid-cols-2 md:grid-cols-4 bg-white">
+      <div className="w-full mb-8 border-t border-l border-r border-slate-300 grid grid-cols-1 md:grid-cols-3 bg-white">
         <div className="border-b border-slate-300 p-3 border-r text-center">
           <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Waktu Pelaksanaan</p>
           <div className="font-bold text-sm text-black">{auditDate ? format(new Date(auditDate), 'dd MMM yyyy HH:mm', { locale: idLocale }) : '-'}</div>
         </div>
         <div className="border-b border-slate-300 p-3 border-r text-center">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Supervisor / IPCN</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Supervisor</p>
           <p className="font-bold text-sm uppercase text-black">{inspector || '-'}</p>
-        </div>
-        <div className="border-b border-slate-300 p-3 border-r text-center">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">PJ Ruangan / Auditee</p>
-          <p className="font-bold text-sm uppercase text-black">{data.nama_pj_ruangan || data.nama_pj || '-'}</p>
         </div>
         <div className="border-b border-slate-300 p-3 text-center">
           <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Unit / Ruangan</p>
@@ -204,7 +200,7 @@ export default function OfficialReportSheet({
           </div>
         </div>
         <div className="text-center space-y-4">
-          <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">Auditor / IPCN</p>
+          <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">TIM PPI RS</p>
           <div className="h-20 relative w-full flex justify-center items-center">
             {data.ttd_ipcn && <Image src={data.ttd_ipcn} fill sizes="200px" className="object-contain" alt="TTD IPCN" referrerPolicy="no-referrer" />}
           </div>

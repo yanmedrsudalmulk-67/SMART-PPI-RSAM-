@@ -167,9 +167,9 @@ const SummaryCard = ({ indicator, stats, onClick }: any) => {
 
   return (
     <motion.div 
-      whileHover={{ y: -5, scale: 1.02 }} 
+      whileHover={{ y: -6, scale: 1.02 }} 
       onClick={onClick}
-      className={`bg-white dark:bg-[#111827]/80 backdrop-blur-sm p-5 sm:p-6 rounded-3xl border ${borderClass} cursor-pointer group relative overflow-hidden transition-all shadow-sm hover:shadow-lg dark:hover:shadow-[0_0_30px_rgba(59,130,246,0.15)] flex flex-col justify-between min-h-[220px]`}
+      className={`bg-gradient-to-b from-white/95 via-white/90 to-slate-50/90 dark:from-[#111C36] dark:via-[#0D152A] dark:to-[#080D1A] backdrop-blur-md p-5 sm:p-6 rounded-3xl border border-slate-200/80 dark:border-white/10 ${borderClass} cursor-pointer group relative overflow-hidden flex flex-col justify-between min-h-[220px] shadow-[0_12px_24px_-6px_rgba(0,0,0,0.12),0_6px_12px_-4px_rgba(0,0,0,0.08),inset_0_1px_1.5px_rgba(255,255,255,0.8)] dark:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.9),0_10px_20px_-6px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.2),0_12px_24px_-6px_rgba(0,0,0,0.15),inset_0_1px_2px_rgba(255,255,255,0.95)] dark:hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.95),0_16px_30px_-8px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.2)] transition-all duration-300 transform-gpu`}
     >
       <div className={`absolute top-0 right-0 w-32 h-32 blur-[60px] rounded-full -z-10 opacity-20 transition-all duration-500 group-hover:opacity-40 group-hover:scale-150 ${bgClass.replace('/10', '')}`} />
       
@@ -243,9 +243,9 @@ const SurveilansSummaryCard = ({ indicator, stats, onClick }: any) => {
 
   return (
     <motion.div 
-      whileHover={{ y: -5, scale: 1.02 }} 
+      whileHover={{ y: -6, scale: 1.02 }} 
       onClick={onClick}
-      className={`bg-slate-900/40 backdrop-blur-sm p-5 sm:p-6 rounded-3xl border ${borderClass} cursor-pointer group relative overflow-hidden transition-all shadow-lg hover:shadow-[0_0_30px_rgba(59,130,246,0.15)] flex flex-col justify-between min-h-[240px]`}
+      className={`bg-gradient-to-b from-slate-900/90 via-slate-900/80 to-[#0A0F1E]/95 dark:from-[#111C36] dark:via-[#0D152A] dark:to-[#080D1A] backdrop-blur-md p-5 sm:p-6 rounded-3xl border border-slate-700/50 dark:border-white/10 ${borderClass} cursor-pointer group relative overflow-hidden flex flex-col justify-between min-h-[240px] shadow-[0_12px_24px_-6px_rgba(0,0,0,0.4),0_6px_12px_-4px_rgba(0,0,0,0.3),inset_0_1px_1.5px_rgba(255,255,255,0.15)] dark:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.9),0_10px_20px_-6px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6),0_12px_24px_-6px_rgba(0,0,0,0.4),inset_0_1px_2px_rgba(255,255,255,0.25)] dark:hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.95),0_16px_30px_-8px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.2)] transition-all duration-300 transform-gpu`}
     >
       <div className={`absolute top-0 right-0 w-40 h-40 blur-[80px] rounded-full -z-10 opacity-20 transition-all duration-500 group-hover:opacity-40 group-hover:scale-150 ${bgClass.replace('/10', '')}`} />
       
@@ -597,13 +597,13 @@ export default function ReportsPage() {
                   <motion.div
                     key={detail.id}
                     id={`cat-card-${detail.id.toLowerCase().replace(/\s+/g, '-')}`}
-                    whileHover={{ y: -4, scale: 1.01 }}
+                    whileHover={{ y: -5, scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => handleCategoryChange(detail.id)}
-                    className={`cursor-pointer rounded-2xl p-5 border transition-all duration-300 relative overflow-hidden backdrop-blur-md flex flex-col justify-between min-h-[140px] select-none ${
+                    className={`cursor-pointer rounded-2xl p-5 border transition-all duration-300 relative overflow-hidden backdrop-blur-md flex flex-col justify-between min-h-[140px] select-none shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_4px_10px_-2px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_16px_32px_-8px_rgba(0,0,0,0.85),0_6px_16px_-4px_rgba(0,0,0,0.75),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] hover:shadow-[0_20px_35px_-8px_rgba(0,0,0,0.18),0_10px_18px_-4px_rgba(0,0,0,0.12)] dark:hover:shadow-[0_25px_50px_-10px_rgba(0,0,0,0.95),0_12px_24px_-6px_rgba(0,0,0,0.85)] ${
                       isActive 
                         ? `bg-[#0f172a]/90 dark:bg-slate-900/95 bg-gradient-to-br ${detail.activeGradient} ${detail.activeBorder} z-10` 
-                        : `bg-white/80 dark:bg-[#111827]/80 hover:bg-slate-50 dark:hover:bg-white/5 ${detail.border} ${detail.textGlow}`
+                        : `bg-white/90 dark:bg-[#111827]/90 hover:bg-slate-50 dark:hover:bg-white/5 ${detail.border} ${detail.textGlow}`
                     }`}
                   >
                     {/* Glow Accent Background Ornaments */}
@@ -776,7 +776,7 @@ export default function ReportsPage() {
           <motion.div key="detail" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} onAnimationComplete={forceScrollToTop} className="space-y-6">
             
             {/* Header Detail View */}
-            <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-3xl p-4 sm:p-6 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-3xl p-4 sm:p-6 shadow-[0_12px_28px_-6px_rgba(0,0,0,0.12),0_6px_14px_-4px_rgba(0,0,0,0.06),inset_0_1px_1.5px_rgba(255,255,255,0.8)] dark:shadow-[0_20px_45px_-10px_rgba(0,0,0,0.9),0_8px_20px_-6px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] flex flex-col md:flex-row md:items-center justify-between gap-4">
                <div className="flex items-center gap-4">
                  <button onClick={handleBack} className="p-3 bg-slate-100 dark:bg-white/5 rounded-2xl hover:bg-slate-200 dark:hover:bg-white/10 transition-colors text-slate-600 dark:text-slate-300">
                    <ArrowLeft className="w-5 h-5" />

@@ -341,7 +341,7 @@ export default function ApdReport({
          </div>
       </div>
 
-      <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-sm rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm transition-all -mx-4 sm:mx-0 print:border-none print:shadow-none print:rounded-none">
+      <div className="bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md rounded-[2rem] border border-slate-200/80 dark:border-white/10 overflow-hidden shadow-[0_15px_35px_-8px_rgba(0,0,0,0.12),0_6px_15px_-4px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.95),0_10px_25px_-6px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] transition-all -mx-4 sm:mx-0 print:border-none print:shadow-none print:rounded-none">
         
         <div className="p-6 sm:p-8 border-b border-slate-100 dark:border-white/5 bg-white dark:bg-[#0f172a]">
            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -465,32 +465,32 @@ export default function ApdReport({
       {/* Ringkasan Monitoring APD */}
       <div>
          <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white mb-4">Rekapan Monitoring Kepatuhan APD</h3>
-         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="p-5 bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center items-center text-center">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="p-5 bg-white/90 dark:bg-[#111827]/90 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_16px_32px_-8px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.1)] flex flex-col justify-center items-center text-center">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total Observasi</span>
               <span className="text-3xl font-black text-slate-800 dark:text-white">{summaryStats.count}</span>
             </div>
-            <div className="p-5 bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center items-center text-center">
+            <div className="p-5 bg-white/90 dark:bg-[#111827]/90 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_16px_32px_-8px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.1)] flex flex-col justify-center items-center text-center">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total APD Dinilai</span>
               <span className="text-3xl font-black text-slate-800 dark:text-white">{summaryStats.dinilai}</span>
             </div>
-            <div className="p-5 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 shadow-sm flex flex-col justify-center items-center text-center text-emerald-600 dark:text-emerald-400">
+            <div className="p-5 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 shadow-[0_10px_25px_-5px_rgba(16,185,129,0.15)] dark:shadow-[0_16px_32px_-8px_rgba(0,0,0,0.85)] flex flex-col justify-center items-center text-center text-emerald-600 dark:text-emerald-400">
               <span className="text-[10px] font-bold uppercase tracking-widest mb-1">Total Patuh</span>
               <span className="text-3xl font-black">{summaryStats.patuh}</span>
             </div>
-            <div className="p-5 bg-rose-50 dark:bg-rose-500/10 rounded-2xl border border-rose-200 dark:border-rose-500/20 shadow-sm flex flex-col justify-center items-center text-center text-rose-600 dark:text-rose-400">
+            <div className="p-5 bg-rose-50 dark:bg-rose-500/10 rounded-2xl border border-rose-200 dark:border-rose-500/20 shadow-[0_10px_25px_-5px_rgba(244,63,94,0.15)] dark:shadow-[0_16px_32px_-8px_rgba(0,0,0,0.85)] flex flex-col justify-center items-center text-center text-rose-600 dark:text-rose-400">
               <span className="text-[10px] font-bold uppercase tracking-widest mb-1">Total Tidak Patuh</span>
               <span className="text-3xl font-black">{summaryStats.tidakPatuh}</span>
             </div>
-            <div className="p-5 bg-blue-50 dark:bg-blue-500/10 rounded-2xl border border-blue-200 dark:border-blue-500/20 shadow-sm flex flex-col justify-center items-center text-center text-blue-600 dark:text-blue-400">
+            <div className="p-5 bg-blue-50 dark:bg-blue-500/10 rounded-2xl border border-blue-200 dark:border-blue-500/20 shadow-[0_10px_25px_-5px_rgba(59,130,246,0.15)] dark:shadow-[0_16px_32px_-8px_rgba(0,0,0,0.85)] flex flex-col justify-center items-center text-center text-blue-600 dark:text-blue-400">
               <span className="text-[10px] font-bold uppercase tracking-widest mb-1">Kepatuhan</span>
               <span className="text-3xl font-black">{summaryStats.avg}%</span>
             </div>
-         </div>
-      </div>
+          </div>
+       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-          <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-sm p-6 sm:p-8 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col">
+       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+          <div className="bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md p-6 sm:p-8 rounded-[2rem] border border-slate-200/80 dark:border-white/10 shadow-[0_15px_35px_-8px_rgba(0,0,0,0.12),0_6px_15px_-4px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.95),0_10px_25px_-6px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] flex flex-col">
              <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
                <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-3">
                  <TrendingUp className="w-5 h-5 text-emerald-500" /> Grafik Capaian Kepatuhan APD
@@ -526,7 +526,7 @@ export default function ApdReport({
           </div>
           
          {/* Analysis Otomatis */}
-         <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-sm p-6 sm:p-8 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col">
+         <div className="bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md p-6 sm:p-8 rounded-[2rem] border border-slate-200/80 dark:border-white/10 shadow-[0_15px_35px_-8px_rgba(0,0,0,0.12),0_6px_15px_-4px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.95),0_10px_25px_-6px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] flex flex-col">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-3 mb-6">
                Analisa Data
             </h3>

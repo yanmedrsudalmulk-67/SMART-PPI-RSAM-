@@ -528,7 +528,7 @@ export default function HandHygieneReport({
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-500">
       
       {/* Filter Bar */}
-      <div className="flex gap-4 p-4 bg-white/80 dark:bg-white/5 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-white/10 overflow-x-auto">
+      <div className="flex gap-4 p-4 bg-white/90 dark:bg-white/5 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-[0_8px_20px_-4px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_12px_24px_-6px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.1)] overflow-x-auto">
         <ProfessionFilter 
            selectedProfessions={selectedProfessions}
            setSelectedProfessions={setSelectedProfessions}
@@ -536,7 +536,7 @@ export default function HandHygieneReport({
         />
       </div>
       
-      <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-sm rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm transition-all -mx-4 sm:mx-0">
+      <div className="bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md rounded-[2rem] border border-slate-200/80 dark:border-white/10 overflow-hidden shadow-[0_15px_35px_-8px_rgba(0,0,0,0.12),0_6px_15px_-4px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.95),0_10px_25px_-6px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] transition-all -mx-4 sm:mx-0">
         <div className="p-8 border-b border-slate-100 dark:border-white/5 bg-white dark:bg-[#0f172a]">
            <div className="flex flex-col md:flex-row items-center gap-6">
              {hospitalLogoUrl && (
@@ -645,7 +645,7 @@ export default function HandHygieneReport({
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-         <div className="bg-white/80 dark:bg-white/5 backdrop-blur-sm rounded-[2rem] p-6 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden group">
+         <div className="bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md rounded-[2rem] p-6 border border-slate-200/80 dark:border-white/10 shadow-[0_12px_28px_-6px_rgba(0,0,0,0.1),0_6px_12px_-4px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.12)] relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[40px] group-hover:bg-blue-500/20 transition-all" />
             <div className="flex items-center gap-4 mb-4">
               <div className="p-3 bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl">
@@ -658,7 +658,7 @@ export default function HandHygieneReport({
             </div>
          </div>
          
-         <div className="bg-white/80 dark:bg-white/5 backdrop-blur-sm rounded-[2rem] p-6 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden group">
+         <div className="bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md rounded-[2rem] p-6 border border-slate-200/80 dark:border-white/10 shadow-[0_12px_28px_-6px_rgba(0,0,0,0.1),0_6px_12px_-4px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.12)] relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[40px] group-hover:bg-emerald-500/20 transition-all" />
             <div className="flex items-center gap-4 mb-4">
               <div className="p-3 bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl">
@@ -671,7 +671,7 @@ export default function HandHygieneReport({
             </div>
          </div>
 
-         <div className="bg-gradient-to-br from-emerald-500 to-blue-600 rounded-[2rem] p-6 border border-white/20 shadow-lg relative overflow-hidden group text-white h-full flex flex-col justify-center">
+         <div className="bg-gradient-to-br from-emerald-500 to-blue-600 rounded-[2rem] p-6 border border-white/20 shadow-[0_15px_35px_-8px_rgba(16,185,129,0.35),0_6px_15px_-4px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.4)] dark:shadow-[0_20px_45px_-10px_rgba(0,0,0,0.9)] relative overflow-hidden group text-white h-full flex flex-col justify-center">
             <div className="flex items-center gap-4 mb-2">
               <div className="p-3 bg-white/20 rounded-xl">
                 <ShieldCheck className="w-6 h-6" />
@@ -685,7 +685,7 @@ export default function HandHygieneReport({
       </div>
 
       {/* Recaps Percentage Per Moment (Circular Progress) */}
-      <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-sm border border-slate-200 dark:border-white/10 rounded-[2rem] p-6 shadow-sm">
+      <div className="bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-[2rem] p-6 shadow-[0_12px_28px_-6px_rgba(0,0,0,0.1),0_6px_12px_-4px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.12)]">
         <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-widest mb-6 px-2">Analisis Persentase Per Momen</h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {Object.entries(momentStats).map(([moment, perc], idx) => {
@@ -706,7 +706,7 @@ export default function HandHygieneReport({
         </div>
       </div>
 
-      <div className="bg-white/80 dark:bg-[#111827]/80 backdrop-blur-sm pt-6 sm:pt-8 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-sm">
+      <div className="bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md pt-6 sm:pt-8 rounded-[2rem] border border-slate-200/80 dark:border-white/10 shadow-[0_15px_35px_-8px_rgba(0,0,0,0.12),0_6px_15px_-4px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.95),0_10px_25px_-6px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)]">
         <div className="flex px-6 sm:px-8 justify-between items-center mb-8">
            <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-3">
              <BarChart2 className="w-5 h-5 text-emerald-500" /> Grafik Tren Kepatuhan
