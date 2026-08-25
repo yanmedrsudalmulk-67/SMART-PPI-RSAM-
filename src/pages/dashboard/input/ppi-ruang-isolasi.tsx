@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { supabase, broadcastChannelMessage } from "@/lib/supabase";
 import DashboardLayout from "@/components/DashboardLayout";
 import { LiveStatisticsCard } from "@/components/LiveStatisticsCard";
 import DigitalSignatureSection, {
@@ -298,16 +298,11 @@ export default function InputPPIRuangIsolasiPage() {
       } catch (err) {
         console.warn("Failed to insert/update native table, but saved to generic session.", err);
       }
-      const ch = supabase.channel('changes_ppi_ruang_isolasi');
-      ch.subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          ch.send({
-            type: 'broadcast',
-            event: 'audit_submitted',
-            payload: { tableName: 'ppi_ruang_isolasi', indikator_id: 'ppi_ruang_isolasi' }
-          }).then(() => supabase.removeChannel(ch));
-        }
-      });
+      await broadcastChannelMessage(
+        'changes_ppi_ruang_isolasi',
+        'audit_submitted',
+        { tableName: 'ppi_ruang_isolasi', indikator_id: 'ppi_ruang_isolasi' }
+      );
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);

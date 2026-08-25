@@ -34,13 +34,13 @@ const STATIC_MODULES = [
     colorTheme: {
       bgActive: "bg-[#2563EB]",
       textActive: "text-[#2563EB]",
-      shadowActive: "shadow-[0_8px_16px_-6px_rgba(37,99,235,0.4)]",
+      shadowActive: "shadow-[0_12px_24px_-6px_rgba(37,99,235,0.5)]",
       btnHoverBg: "group-hover:bg-[#2563EB]",
       watermark: "text-blue-500/5 dark:text-blue-500/10",
       progressColor: "bg-blue-600",
-      mainIconBox: "bg-blue-500/5 dark:bg-blue-500/10 border-[1.5px] border-blue-500/60 shadow-[inset_0_0_20px_rgba(37,99,235,0.1),0_0_15px_rgba(37,99,235,0.15)] text-blue-600 dark:text-blue-400",
+      mainIconBox: "bg-blue-500/10 dark:bg-blue-500/15 border-[1.5px] border-blue-500/60 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_8px_16px_-4px_rgba(0,0,0,0.3),0_0_15px_rgba(37,99,235,0.25)] text-blue-600 dark:text-blue-400",
       colBorder: "border-blue-500/20 dark:border-blue-500/25 group-hover:border-blue-500/50",
-      colIconBox: "bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/30 text-blue-600 dark:text-blue-400"
+      colIconBox: "bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/30 text-blue-600 dark:text-blue-400"
     },
     href: "/dashboard/input/isolasi",
     standard: 85,
@@ -54,13 +54,13 @@ const STATIC_MODULES = [
     colorTheme: {
       bgActive: "bg-[#10B981]",
       textActive: "text-[#10B981]",
-      shadowActive: "shadow-[0_8px_16px_-6px_rgba(16,185,129,0.4)]",
+      shadowActive: "shadow-[0_12px_24px_-6px_rgba(16,185,129,0.5)]",
       btnHoverBg: "group-hover:bg-[#10B981]",
       watermark: "text-emerald-500/5 dark:text-emerald-500/10",
       progressColor: "bg-emerald-500", // Although less means better, we map rate slightly differently
-      mainIconBox: "bg-emerald-500/5 dark:bg-emerald-500/10 border-[1.5px] border-emerald-500/60 shadow-[inset_0_0_20px_rgba(16,185,129,0.1),0_0_15px_rgba(16,185,129,0.15)] text-emerald-600 dark:text-emerald-400",
+      mainIconBox: "bg-emerald-500/10 dark:bg-emerald-500/15 border-[1.5px] border-emerald-500/60 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_8px_16px_-4px_rgba(0,0,0,0.3),0_0_15px_rgba(16,185,129,0.25)] text-emerald-600 dark:text-emerald-400",
       colBorder: "border-emerald-500/20 dark:border-emerald-500/25 group-hover:border-emerald-500/50",
-      colIconBox: "bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+      colIconBox: "bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
     },
     href: "/dashboard/input/surveilans",
     standard: 1.5,
@@ -74,13 +74,13 @@ const STATIC_MODULES = [
     colorTheme: {
       bgActive: "bg-[#7C3AED]",
       textActive: "text-[#7C3AED]",
-      shadowActive: "shadow-[0_8px_16px_-6px_rgba(124,58,237,0.4)]",
+      shadowActive: "shadow-[0_12px_24px_-6px_rgba(124,58,237,0.5)]",
       btnHoverBg: "group-hover:bg-[#7C3AED]",
       watermark: "text-purple-500/5 dark:text-purple-500/10",
       progressColor: "bg-purple-600",
-      mainIconBox: "bg-purple-500/5 dark:bg-purple-500/10 border-[1.5px] border-purple-500/60 shadow-[inset_0_0_20px_rgba(124,58,237,0.1),0_0_15px_rgba(124,58,237,0.15)] text-purple-600 dark:text-purple-400",
+      mainIconBox: "bg-purple-500/10 dark:bg-purple-500/15 border-[1.5px] border-purple-500/60 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_8px_16px_-4px_rgba(0,0,0,0.3),0_0_15px_rgba(124,58,237,0.25)] text-purple-600 dark:text-purple-400",
       colBorder: "border-purple-500/20 dark:border-purple-500/25 group-hover:border-purple-500/50",
-      colIconBox: "bg-purple-500/5 dark:bg-purple-500/10 border border-purple-500/30 text-purple-600 dark:text-purple-400"
+      colIconBox: "bg-purple-500/10 dark:bg-purple-500/15 border border-purple-500/30 text-purple-600 dark:text-purple-400"
     },
     href: "/dashboard/input/bundles",
     standard: 90,
@@ -94,13 +94,13 @@ const STATIC_MODULES = [
     colorTheme: {
       bgActive: "bg-[#F59E0B]",
       textActive: "text-[#F59E0B]",
-      shadowActive: "shadow-[0_8px_16px_-6px_rgba(245,158,11,0.4)]",
+      shadowActive: "shadow-[0_12px_24px_-6px_rgba(245,158,11,0.5)]",
       btnHoverBg: "group-hover:bg-[#F59E0B]",
       watermark: "text-amber-500/5 dark:text-amber-500/10",
       progressColor: "bg-amber-500",
-      mainIconBox: "bg-amber-500/5 dark:bg-amber-500/10 border-[1.5px] border-amber-500/60 shadow-[inset_0_0_20px_rgba(245,158,11,0.1),0_0_15px_rgba(245,158,11,0.15)] text-amber-600 dark:text-amber-400",
+      mainIconBox: "bg-amber-500/10 dark:bg-amber-500/15 border-[1.5px] border-amber-500/60 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_8px_16px_-4px_rgba(0,0,0,0.3),0_0_15px_rgba(245,158,11,0.25)] text-amber-600 dark:text-amber-400",
       colBorder: "border-amber-500/20 dark:border-amber-500/25 group-hover:border-amber-500/50",
-      colIconBox: "bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400"
+      colIconBox: "bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400"
     },
     href: "/dashboard/input/diklat",
     standard: 80,
@@ -609,11 +609,14 @@ export default function InputIndexPage() {
             <Link
               href={mod.href}
               prefetch={false}
-              className="relative group p-6 rounded-[28px] bg-white/70 dark:bg-[#0F172A]/80 backdrop-blur-sm border border-slate-200 dark:border-white/5 flex flex-col overflow-hidden shadow-sm hover:shadow-xl dark:shadow-none dark:hover:shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all duration-300 w-full"
+              className="relative group p-6 sm:p-7 rounded-[28px] bg-gradient-to-b from-white/95 via-white/90 to-slate-50/90 dark:from-[#131F3B] dark:via-[#0F172C] dark:to-[#0A0F1E] backdrop-blur-md border border-slate-200/80 dark:border-white/10 flex flex-col overflow-hidden shadow-[0_15px_30px_-5px_rgba(0,0,0,0.15),0_8px_16px_-6px_rgba(0,0,0,0.1),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.95),0_12px_24px_-8px_rgba(0,0,0,0.85),0_4px_8px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_0_0_1px_rgba(255,255,255,0.05)] hover:-translate-y-2 hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.25),0_16px_28px_-8px_rgba(0,0,0,0.18),inset_0_1px_1.5px_rgba(255,255,255,1)] dark:hover:shadow-[0_38px_75px_-15px_rgba(0,0,0,0.98),0_20px_40px_-10px_rgba(0,0,0,0.9),0_6px_14px_rgba(0,0,0,0.8),inset_0_1px_2px_rgba(255,255,255,0.25),inset_0_0_0_1px_rgba(255,255,255,0.12)] transition-all duration-300 ease-out transform-gpu w-full"
             >
+              {/* Top 3D Specular Highlight */}
+              <div className="absolute top-0 inset-x-8 h-[1px] bg-gradient-to-r from-transparent via-white/60 dark:via-white/20 to-transparent pointer-events-none" />
+
               {/* Background gradient hint */}
               <div
-                className={`absolute top-0 right-0 w-64 h-64 opacity-5 pointer-events-none rounded-bl-full filter blur-3xl transition-opacity duration-700 group-hover:opacity-20 ${mod.colorTheme.bgActive}`}
+                className={`absolute top-0 right-0 w-64 h-64 opacity-10 pointer-events-none rounded-bl-full filter blur-3xl transition-opacity duration-700 group-hover:opacity-30 ${mod.colorTheme.bgActive}`}
               />
 
               <div className="flex justify-between items-start gap-4 mb-6 relative z-10 flex-1">
@@ -666,7 +669,7 @@ export default function InputIndexPage() {
                     {Math.round(mod.computed.progress)}%
                   </span>
                 </div>
-                <div className="h-1.5 w-full bg-slate-100 dark:bg-black/30 rounded-full overflow-hidden shrink-0 border border-black/5 dark:border-white/5">
+                <div className="h-1.5 w-full bg-slate-100 dark:bg-black/40 rounded-full overflow-hidden shrink-0 border border-black/5 dark:border-white/5 shadow-[inset_0_1px_2px_rgba(0,0,0,0.2)]">
                   <div
                     className={`h-full rounded-full transition-all duration-[1500ms] shadow-[0_0_10px_currentcolor] ${mod.computed.progressColor}`}
                     style={{ width: `${Math.max(mod.computed.progress, 2)}%` }}
@@ -675,11 +678,11 @@ export default function InputIndexPage() {
               </div>
 
               {/* Stats Bar */}
-              <div className="grid grid-cols-3 gap-2 mb-6">
+              <div className="grid grid-cols-3 gap-2.5 mb-6">
                 {mod.computed.subStats.map((stat, idx) => (
                   <div
                     key={idx}
-                    className={`flex flex-col items-center bg-slate-50/50 dark:bg-slate-800/20 rounded-2xl py-3 border ${mod.colorTheme.colBorder} transition-colors`}
+                    className={`flex flex-col items-center bg-slate-100/80 dark:bg-[#0B1220]/90 rounded-2xl py-3 border ${mod.colorTheme.colBorder} shadow-[0_2px_6px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.6)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.08),inset_0_0_0_1px_rgba(0,0,0,0.4)] transition-all duration-200`}
                   >
                     <div
                       className={`w-8 h-8 flex items-center justify-center rounded-xl ${stat.iconColor} mb-2`}
@@ -693,12 +696,12 @@ export default function InputIndexPage() {
                       {stat.value}
                     </span>
                   </div>
-                ))}{" "}
+                ))}
               </div>
 
               <div className="mt-0 pt-2 shrink-0">
                 <div
-                  className={`w-full py-3.5 rounded-full flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-300 ${mod.colorTheme.bgActive} text-white hover:opacity-90 shadow-lg ${mod.colorTheme.shadowActive}`}
+                  className={`w-full py-3.5 rounded-full flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-300 ${mod.colorTheme.bgActive} text-white hover:opacity-95 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.3),inset_0_1px_1.5px_rgba(255,255,255,0.35)] active:translate-y-0.5 active:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.4)] ${mod.colorTheme.shadowActive}`}
                 >
                   <span>INPUT SEKARANG</span>
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />

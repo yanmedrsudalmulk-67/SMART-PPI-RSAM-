@@ -265,6 +265,12 @@ export default function InputPenempatanPasienPage() {
             tanggal_waktu: payload.tanggal_waktu,
             observer,
             unit,
+            nama_pj: pjName.trim(),
+            nama_pj_ruangan: pjName.trim(),
+            ttd_pj_ruangan: pjSig,
+            ttd_ipcn: ipcnSig,
+            temuan,
+            rekomendasi,
             jumlah_dinilai: stats.dinilai,
             jumlah_patuh: stats.patuh,
             persentase: stats.persentase,
@@ -276,9 +282,17 @@ export default function InputPenempatanPasienPage() {
               dokumentasi: uploadedImages,
               tanda_tangan_pj: pjSig,
               tanda_tangan_ipcn: ipcnSig,
+              nama_pj: pjName.trim(),
               nama_pj_ruangan: pjName.trim(),
+              ttd_pj: pjSig,
+              ttd_ipcn: ipcnSig,
+              tanda_tangan: [pjSig, ipcnSig].filter(Boolean),
+              unit,
+              ruangan: unit,
+              observer,
+              supervisor: observer,
             },
-                      })
+          })
           .eq("id", editId);
         sessionError = error;
       } else {
@@ -291,6 +305,10 @@ export default function InputPenempatanPasienPage() {
               tanggal_waktu: payload.tanggal_waktu,
               observer,
               unit,
+              nama_pj: pjName.trim(),
+              nama_pj_ruangan: pjName.trim(),
+              ttd_pj_ruangan: pjSig,
+              ttd_ipcn: ipcnSig,
               temuan,
               rekomendasi,
               jumlah_dinilai: stats.dinilai,
@@ -304,9 +322,17 @@ export default function InputPenempatanPasienPage() {
                 dokumentasi: uploadedImages,
                 tanda_tangan_pj: pjSig,
                 tanda_tangan_ipcn: ipcnSig,
+                nama_pj: pjName.trim(),
                 nama_pj_ruangan: pjName.trim(),
+                ttd_pj: pjSig,
+                ttd_ipcn: ipcnSig,
+                tanda_tangan: [pjSig, ipcnSig].filter(Boolean),
+                unit,
+                ruangan: unit,
+                observer,
+                supervisor: observer,
               },
-                          },
+            },
           ]);
         sessionError = error;
       }

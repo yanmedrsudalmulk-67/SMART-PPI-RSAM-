@@ -348,7 +348,7 @@ export default function IsolasiInputPage() {
             return (
               <div
                 key={ind.id}
-                className={`bg-white/80 dark:bg-[#0B1120]/80 backdrop-blur-sm p-6 rounded-[24px] border border-slate-200 dark:border-white/5 flex flex-col justify-between group ${tabColors.hoverBorder} ${tabColors.hoverShadow} transition-all duration-300 transform hover:-translate-y-1`}
+                className={`bg-gradient-to-b from-white/95 via-white/90 to-slate-50/90 dark:from-[#111C36] dark:via-[#0D152A] dark:to-[#080D1A] backdrop-blur-md p-6 rounded-[24px] border border-slate-200/80 dark:border-white/10 flex flex-col justify-between group ${tabColors.hoverBorder} shadow-[0_12px_24px_-6px_rgba(0,0,0,0.12),0_6px_12px_-4px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.9),0_10px_20px_-6px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] hover:-translate-y-1.5 hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.2),0_12px_24px_-6px_rgba(0,0,0,0.15),inset_0_1px_1.5px_rgba(255,255,255,0.9)] dark:hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.95),0_16px_30px_-8px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.2)] transition-all duration-300 transform-gpu`}
               >
                 <div className="space-y-4">
                   <div

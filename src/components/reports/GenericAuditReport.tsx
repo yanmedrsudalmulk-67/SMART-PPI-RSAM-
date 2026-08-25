@@ -73,6 +73,7 @@ interface GenericAuditData {
   ttd_ipcn?: string;
   tanda_tangan?: string[];
   nama_pj_ruangan?: string;
+  nama_pj?: string;
   keterangan_json?: any;
   keterangan?: any;
 }
@@ -98,7 +99,9 @@ const INDICATOR_TO_FORM_PATH: Record<string, string> = {
   'ppi_ruang_isolasi': '/dashboard/input/ppi-ruang-isolasi',
   'monitoring_immuno': '/dashboard/input/monitoring-immuno',
   'monitoring_fasilitas_hand_hygiene': '/dashboard/input/monitoring-fasilitas_hh',
+  'fasilitas_hh': '/dashboard/input/monitoring-fasilitas_hh',
   'monitoring_fasilitas_apd': '/dashboard/input/monitoring-fasilitas_apd',
+  'fasilitas_apd': '/dashboard/input/monitoring-fasilitas_apd',
   'monitoring_farmasi': '/dashboard/input/monitoring-farmasi',
   'monitoring_ibs': '/dashboard/input/monitoring-ibs',
   'monitoring_cssd': '/dashboard/input/monitoring-cssd',
@@ -120,6 +123,7 @@ export default function GenericAuditReport({
     id: string;
     label: string;
     key: string;
+    section?: string;
     isNegative?: boolean;
   }[];
   title: string;
@@ -193,12 +197,24 @@ export default function GenericAuditReport({
         item.nama_pj_ruangan ||
         item.nama_pj ||
         item.auditee ||
+        item.penanggung_jawab ||
+        item.nama_penanggung_jawab ||
+        item.pj_ruangan ||
+        item.pj_name ||
+        item.pjName ||
         jsonFallback.nama_pj_ruangan ||
         jsonFallback.nama_pj ||
+        jsonFallback.penanggung_jawab ||
+        jsonFallback.nama_penanggung_jawab ||
+        jsonFallback.pj_name ||
+        jsonFallback.pjName ||
+        jsonFallback.pj_ruangan ||
+        jsonFallback.auditee ||
         "",
-      observer: item.observer || item.supervisor || item.ipcn || "",
-      unit: item.unit || item.ruangan || (tableName === "monitoring_jenazah" ? "Kamar Jenazah" : tableName === "monitoring_ambulance" ? "Ambulance" : ""),
-      ruangan: item.ruangan || item.unit || (tableName === "monitoring_jenazah" ? "Kamar Jenazah" : tableName === "monitoring_ambulance" ? "Ambulance" : ""),
+      supervisor: item.supervisor || item.observer || item.ipcn || jsonFallback.supervisor || jsonFallback.observer || jsonFallback.ipcn || "",
+      observer: item.observer || item.supervisor || item.ipcn || jsonFallback.observer || jsonFallback.supervisor || jsonFallback.ipcn || "",
+      unit: item.unit || item.ruangan || jsonFallback.unit || jsonFallback.ruangan || (tableName === "monitoring_airborne" ? "Ruang Isolasi" : tableName === "monitoring_immuno" ? "Ruang Isolasi" : tableName === "monitoring_jenazah" ? "Kamar Jenazah" : tableName === "monitoring_ambulance" ? "Ambulance" : ""),
+      ruangan: item.ruangan || item.unit || jsonFallback.ruangan || jsonFallback.unit || (tableName === "monitoring_airborne" ? "Ruang Isolasi" : tableName === "monitoring_immuno" ? "Ruang Isolasi" : tableName === "monitoring_jenazah" ? "Kamar Jenazah" : tableName === "monitoring_ambulance" ? "Ambulance" : ""),
       temuan: item.temuan || jsonFallback.temuan || "",
       rekomendasi: item.rekomendasi || jsonFallback.rekomendasi || "",
     };
@@ -562,65 +578,98 @@ export default function GenericAuditReport({
 
   const getStatus = (itemId: string) => {
     if (!selectedRecord) return undefined;
-    const val: any = selectedRecord.checklist_json?.[itemId];
-    if (val === undefined || val === null) return undefined;
-    if (typeof val === "string") return val.toLowerCase();
-    if (typeof val === "boolean") return val ? "ya" : "tidak";
-    if (
-      val &&
-      typeof val === "object" &&
-      "status" in val &&
-      typeof val.status === "string"
-    ) {
-      return val.status.toLowerCase();
+    const checklistJson: any = selectedRecord.checklist_json || (selectedRecord as any).data_indikator || {};
+    
+    // Check direct or key variants (e.g. '1', 1, 'item_1', 'fapd_1', 'fasilitas_apd_1')
+    const keyCandidates = [
+      itemId,
+      String(itemId),
+      Number(itemId),
+      `item_${itemId}`,
+      `fapd_${itemId}`,
+      `fasilitas_apd_${itemId}`,
+      itemId.replace(/^item_/, ''),
+      itemId.replace(/^fapd_/, ''),
+      itemId.replace(/^fasilitas_apd_/, '')
+    ];
+
+    for (const key of keyCandidates) {
+      if (key !== undefined && key !== null && checklistJson[key] !== undefined) {
+        const val = checklistJson[key];
+        if (typeof val === "string") return val.toLowerCase();
+        if (typeof val === "boolean") return val ? "ya" : "tidak";
+        if (val && typeof val === "object") {
+          if ("status" in val && typeof val.status === "string") return val.status.toLowerCase();
+          if ("jawaban" in val && typeof val.jawaban === "string") return val.jawaban.toLowerCase();
+        }
+      }
     }
     return undefined;
   };
 
   const checkIsNegative = (itemId: string) => {
-    const found = indicatorItems?.find((i) => i.id === itemId || i.key === itemId);
-    if (found) return !!found.isNegative;
-    return itemId === "peralatan_berkarat" || itemId === "jarum_suntik_bekas" || itemId === "item_5" || itemId === "item_11";
+    const configItems = (indicatorItems && indicatorItems.length > 0)
+      ? indicatorItems
+      : genericAuditConfigs[tableName]?.items || [];
+    const found = configItems?.find((i) => i.id === itemId || i.key === itemId);
+    if (found && typeof found.isNegative === "boolean") return found.isNegative;
+    return (
+      itemId === "peralatan_berkarat" ||
+      itemId === "jarum_suntik_bekas" ||
+      itemId === "item_5" ||
+      itemId === "item_11" ||
+      itemId === "e_debu"
+    );
   };
 
   const getKeterangan = (itemId: string) => {
     if (!selectedRecord) return "";
     
     // Cast checklist_json to any for flexible nested object navigation
-    const checklistJson: any = selectedRecord.checklist_json || {};
+    const checklistJson: any = selectedRecord.checklist_json || (selectedRecord as any).data_indikator || {};
     
+    const keyCandidates = [
+      itemId,
+      String(itemId),
+      `item_${itemId}`,
+      `fapd_${itemId}`,
+      `fasilitas_apd_${itemId}`,
+      itemId.replace(/^item_/, ''),
+      itemId.replace(/^fapd_/, ''),
+      itemId.replace(/^fasilitas_apd_/, '')
+    ];
+
     // Check if there is a flat keterangan object mapping from itemId inside checklist_json
     if (checklistJson.keterangan && typeof checklistJson.keterangan === 'object') {
-       const ketVal = (checklistJson.keterangan as any)[itemId];
-       if (ketVal && typeof ketVal === "string") return ketVal;
+       for (const k of keyCandidates) {
+         const ketVal = checklistJson.keterangan[k];
+         if (ketVal && typeof ketVal === "string") return ketVal;
+       }
     }
 
-    // Check if there is keterangan nested as custom column keterangan_json (common in audit_tps)
+    // Check if there is keterangan nested as custom column keterangan_json
     if (selectedRecord.keterangan_json?.data && typeof selectedRecord.keterangan_json.data === 'object') {
-       const ketVal = (selectedRecord.keterangan_json.data as any)[itemId];
-       if (ketVal && typeof ketVal === "string") return ketVal;
+       for (const k of keyCandidates) {
+         const ketVal = (selectedRecord.keterangan_json.data as any)[k];
+         if (ketVal && typeof ketVal === "string") return ketVal;
+       }
     } else if (selectedRecord.keterangan_json && typeof selectedRecord.keterangan_json === 'object') {
-       const ketVal = (selectedRecord.keterangan_json as any)[itemId];
-       if (ketVal && typeof ketVal === "string") return ketVal;
+       for (const k of keyCandidates) {
+         const ketVal = (selectedRecord.keterangan_json as any)[k];
+         if (ketVal && typeof ketVal === "string") return ketVal;
+       }
     }
 
-    // Check if nested in checklist_json.keterangan_json
-    if (checklistJson.keterangan_json?.data && typeof checklistJson.keterangan_json.data === 'object') {
-       const ketVal = (checklistJson.keterangan_json.data as any)[itemId];
-       if (ketVal && typeof ketVal === "string") return ketVal;
-    } else if (checklistJson.keterangan_json && typeof checklistJson.keterangan_json === 'object') {
-       const ketVal = (checklistJson.keterangan_json as any)[itemId];
-       if (ketVal && typeof ketVal === "string") return ketVal;
-    }
-    
-    const val: any = checklistJson[itemId];
-    if (
-      val &&
-      typeof val === "object" &&
-      "keterangan" in val &&
-      typeof val.keterangan === "string"
-    ) {
-      return val.keterangan;
+    for (const k of keyCandidates) {
+      const val: any = checklistJson[k];
+      if (
+        val &&
+        typeof val === "object" &&
+        "keterangan" in val &&
+        typeof val.keterangan === "string"
+      ) {
+        return val.keterangan;
+      }
     }
     return "";
   };
@@ -631,7 +680,13 @@ export default function GenericAuditReport({
     return cleaned.charAt(0).toUpperCase() + cleaned.slice(1).toLowerCase();
   };
 
-  const [dynamicChecklist, setDynamicChecklist] = useState<{id: string, label: string}[] | null>(null);
+  const [dynamicChecklist, setDynamicChecklist] = useState<{
+    id: string;
+    label: string;
+    key?: string;
+    section?: string;
+    isNegative?: boolean;
+  }[] | null>(null);
 
   useEffect(() => {
     if (!selectedRecordId) {
@@ -647,13 +702,12 @@ export default function GenericAuditReport({
           .order("id", { ascending: true });
         
         if (!error && data && data.length > 0) {
-          // Sort or preserve order? The database doesn't have an order column but usually inserted in order.
-          // We can assume insertion order or natural sort of IDs.
           const uniqueItems = Array.from(new Set(data.map(d => d.pertanyaan_id))).map(id => {
             const item = data.find(d => d.pertanyaan_id === id);
             return {
               id: item!.pertanyaan_id,
-              label: item!.pertanyaan
+              label: item!.pertanyaan,
+              key: item!.pertanyaan_id
             };
           });
           setDynamicChecklist(uniqueItems);
@@ -667,32 +721,44 @@ export default function GenericAuditReport({
     fetchDetails();
   }, [selectedRecordId]);
 
-  const checklistItems = useMemo(() => {
-    let rawItems =
-      dynamicChecklist && dynamicChecklist.length > 0
-        ? dynamicChecklist
-        : indicatorItems && indicatorItems.length > 0
-          ? indicatorItems.map((i) => ({ id: i.key, label: i.label }))
-          : Object.keys(selectedRecord?.checklist_json || {}).map((k) => ({
-              id: k,
-              label: toSentenceCase(k),
-            }));
+  const checklistItems = useMemo<{
+    id: string;
+    label: string;
+    key?: string;
+    section?: string;
+    isNegative?: boolean;
+  }[]>(() => {
+    // 1. Get predefined config items if available
+    const configItems = (indicatorItems && indicatorItems.length > 0)
+      ? indicatorItems
+      : genericAuditConfigs[tableName]?.items || [];
 
-    if (indicatorItems && indicatorItems.length > 0) {
-      const orderMap = new Map<string, number>();
-      indicatorItems.forEach((item, index) => {
-        orderMap.set(item.key || item.id, index);
-      });
-
-      rawItems = [...rawItems].sort((a, b) => {
-        const indexA = orderMap.has(a.id) ? orderMap.get(a.id)! : 9999;
-        const indexB = orderMap.has(b.id) ? orderMap.get(b.id)! : 9999;
-        return indexA - indexB;
-      });
+    if (configItems && configItems.length > 0) {
+      return configItems.map((item, idx) => ({
+        id: item.key || item.id || String(idx + 1),
+        label: item.label || `Indikator ${idx + 1}`,
+        key: item.key || item.id || String(idx + 1),
+        section: item.section,
+        isNegative: item.isNegative
+      }));
     }
 
-    return rawItems;
-  }, [dynamicChecklist, indicatorItems, selectedRecord]);
+    if (dynamicChecklist && dynamicChecklist.length > 0) {
+      return dynamicChecklist;
+    }
+
+    if (selectedRecord?.checklist_json) {
+      return Object.keys(selectedRecord.checklist_json)
+        .filter(k => !['temuan', 'rekomendasi', 'dokumentasi', 'tanda_tangan', 'ttd_pj', 'ttd_ipcn', 'nama_pj', 'nama_pj_ruangan', 'keterangan', 'keterangan_json'].includes(k))
+        .map((k) => ({
+          id: k,
+          label: toSentenceCase(k),
+          key: k
+        }));
+    }
+
+    return [];
+  }, [dynamicChecklist, indicatorItems, tableName, selectedRecord]);
 
   useEffect(() => {
     window.dispatchEvent(
@@ -849,8 +915,8 @@ export default function GenericAuditReport({
             </h2>
           </div>
 
-          <div className="w-full mb-4 border-2 border-slate-800 border-collapse grid grid-cols-3">
-            <div className="border-r border-slate-800 p-2 text-center flex flex-col items-center justify-center bg-slate-50">
+          <div className="w-full mb-4 border-2 border-slate-800 border-collapse grid grid-cols-2 sm:grid-cols-4">
+            <div className="border-r border-b sm:border-b-0 border-slate-800 p-2 text-center flex flex-col items-center justify-center bg-slate-50">
               <p className="text-[8px] font-black uppercase tracking-widest text-force-black flex items-center justify-center gap-1 mb-0.5">
                 Waktu Pelaksanaan
               </p>
@@ -864,12 +930,20 @@ export default function GenericAuditReport({
                   : "-"}
               </div>
             </div>
-            <div className="border-r border-slate-800 p-2 text-center flex flex-col items-center justify-center bg-slate-50">
+            <div className="border-r border-b sm:border-b-0 border-slate-800 p-2 text-center flex flex-col items-center justify-center bg-slate-50">
               <p className="text-[8px] font-black uppercase tracking-widest text-force-black flex items-center justify-center gap-1 mb-0.5">
                 Supervisor / IPCN
               </p>
               <p className="font-bold text-[10px] sm:text-[11px] uppercase text-force-black">
                 {selectedRecord.supervisor || selectedRecord.observer || "-"}
+              </p>
+            </div>
+            <div className="border-r border-slate-800 p-2 text-center flex flex-col items-center justify-center bg-slate-50">
+              <p className="text-[8px] font-black uppercase tracking-widest text-force-black flex items-center justify-center gap-1 mb-0.5">
+                PJ Ruangan / Auditee
+              </p>
+              <p className="font-bold text-[10px] sm:text-[11px] uppercase text-force-black">
+                {selectedRecord.nama_pj_ruangan || selectedRecord.nama_pj || "-"}
               </p>
             </div>
             <div className="p-2 text-center flex flex-col items-center justify-center bg-slate-50">
@@ -910,46 +984,60 @@ export default function GenericAuditReport({
                 {checklistItems.map((item, itemIdx) => {
                   const status = getStatus(item.id);
                   const ket = getKeterangan(item.id);
+                  const prevItem = itemIdx > 0 ? checklistItems[itemIdx - 1] : null;
+                  const showSectionHeader = Boolean(item.section && (!prevItem || prevItem.section !== item.section));
+
                   return (
-                    <tr
-                      key={item.id}
-                      className="border-b border-slate-800 hover:bg-slate-50/50 transition-colors text-force-black"
-                    >
-                      <td className="px-1 py-1 sm:px-2 sm:py-2 text-center border border-slate-800 font-bold leading-tight">
-                        {itemIdx + 1}
-                      </td>
-                      <td className="px-1.5 py-1 sm:px-3 sm:py-2 font-medium border border-slate-800 leading-tight">
-                        {item.label.replace(/^\d+\.\s*/, "")}
-                      </td>
-                      <td className="px-1 py-1 sm:px-2 sm:py-2 text-center border border-slate-800 align-middle">
-                        {status === "ya" && (
-                          <span
-                            className={`font-black text-[10px] sm:text-[14px] ${checkIsNegative(item.id) ? "text-red-600" : "text-emerald-600"}`}
+                    <React.Fragment key={item.id}>
+                      {showSectionHeader && (
+                        <tr className="bg-slate-100 font-bold border-y-2 border-slate-800 text-force-black">
+                          <td
+                            colSpan={6}
+                            className="px-2 py-1.5 sm:px-3 sm:py-2 font-black uppercase text-[9px] sm:text-[11px] tracking-wider bg-slate-100/90 border border-slate-800 text-force-black"
                           >
-                            {checkIsNegative(item.id) ? "✗" : "✓"}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-1 py-1 sm:px-2 sm:py-2 text-center border border-slate-800 align-middle">
-                        {status === "tidak" && (
-                          <span
-                            className={`font-black text-[10px] sm:text-[14px] ${checkIsNegative(item.id) ? "text-emerald-600" : "text-red-600"}`}
-                          >
-                            {checkIsNegative(item.id) ? "✓" : "✗"}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-1 py-1 sm:px-2 sm:py-2 text-center border border-slate-800 align-middle">
-                        {(status === "na" || status === "n/a") && (
-                          <span className="font-black text-[12px] sm:text-[16px] text-slate-500">
-                            -
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-1.5 py-1 sm:px-3 sm:py-2 text-[7px] sm:text-[10px] italic border border-slate-800 leading-tight break-words">
-                        {ket}
-                      </td>
-                    </tr>
+                            {item.section}
+                          </td>
+                        </tr>
+                      )}
+                      <tr
+                        className="border-b border-slate-800 hover:bg-slate-50/50 transition-colors text-force-black"
+                      >
+                        <td className="px-1 py-1 sm:px-2 sm:py-2 text-center border border-slate-800 font-bold leading-tight">
+                          {itemIdx + 1}
+                        </td>
+                        <td className="px-1.5 py-1 sm:px-3 sm:py-2 font-medium border border-slate-800 leading-tight">
+                          {item.label.replace(/^\d+\.\s*/, "")}
+                        </td>
+                        <td className="px-1 py-1 sm:px-2 sm:py-2 text-center border border-slate-800 align-middle">
+                          {status === "ya" && (
+                            <span
+                              className={`font-black text-[10px] sm:text-[14px] ${checkIsNegative(item.id) ? "text-red-600" : "text-emerald-600"}`}
+                            >
+                              {checkIsNegative(item.id) ? "✗" : "✓"}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-1 py-1 sm:px-2 sm:py-2 text-center border border-slate-800 align-middle">
+                          {status === "tidak" && (
+                            <span
+                              className={`font-black text-[10px] sm:text-[14px] ${checkIsNegative(item.id) ? "text-emerald-600" : "text-red-600"}`}
+                            >
+                              {checkIsNegative(item.id) ? "✓" : "✗"}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-1 py-1 sm:px-2 sm:py-2 text-center border border-slate-800 align-middle">
+                          {(status === "na" || status === "n/a") && (
+                            <span className="font-black text-[12px] sm:text-[16px] text-slate-500">
+                              -
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-1.5 py-1 sm:px-3 sm:py-2 text-[7px] sm:text-[10px] italic border border-slate-800 leading-tight break-words">
+                          {ket}
+                        </td>
+                      </tr>
+                    </React.Fragment>
                   );
                 })}
               </tbody>
@@ -1141,8 +1229,8 @@ export default function GenericAuditReport({
                 </div>
                 <div className="pt-1 border-t border-slate-300 w-[90%] md:w-48 mx-auto">
                   <p className="font-bold text-[10px] uppercase tracking-wider text-force-black mt-1 text-wrap">
-                    {selectedRecord.nama_pj_ruangan
-                      ? `( ${selectedRecord.nama_pj_ruangan} )`
+                    {selectedRecord.nama_pj_ruangan || selectedRecord.nama_pj
+                      ? `( ${selectedRecord.nama_pj_ruangan || selectedRecord.nama_pj} )`
                       : "( ........................................ )"}
                   </p>
                 </div>

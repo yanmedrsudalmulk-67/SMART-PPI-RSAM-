@@ -14,21 +14,48 @@ const poppins = Poppins({
 
 function isAbortError(err: any) {
   if (!err) return false;
-  if (err.cancelled) return true;
-  if (err.name === 'AbortError') return true;
-  const str = String(
-    err?.message || err?.reason?.message || err?.reason || err?.error || err || ''
-  );
+  if (typeof err === 'object') {
+    if (err.cancelled === true) return true;
+    if (err.name === 'AbortError') return true;
+  }
+  const str = typeof err === 'string' 
+    ? err 
+    : String(
+        err?.message || 
+        err?.reason?.message || 
+        err?.reason || 
+        err?.error?.message || 
+        err?.error || 
+        err?.stack || 
+        ''
+      );
   return (
     str.includes('Abort fetching component') ||
     str.includes('Route Cancelled') ||
     str.includes('cancelled') ||
     str.includes('aborted') ||
-    str.includes('AbortError')
+    str.includes('AbortError') ||
+    str.includes('Loading initial props cancelled')
   );
 }
 
 if (typeof window !== 'undefined') {
+  const originalConsoleError = console.error;
+  console.error = (...args: any[]) => {
+    if (args.some((arg) => isAbortError(arg))) {
+      return;
+    }
+    originalConsoleError.apply(console, args);
+  };
+
+  const originalConsoleWarn = console.warn;
+  console.warn = (...args: any[]) => {
+    if (args.some((arg) => isAbortError(arg))) {
+      return;
+    }
+    originalConsoleWarn.apply(console, args);
+  };
+
   window.addEventListener(
     'unhandledrejection',
     (event: PromiseRejectionEvent) => {

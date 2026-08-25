@@ -25,6 +25,8 @@ interface AuditRecord {
   observer?: string;
   unit?: string;
   ruangan?: string;
+  nama_pj_ruangan?: string;
+  nama_pj?: string;
   profesi?: string;
   checklist_json?: Record<string, any>;
   data_indikator?: Record<string, any>;
@@ -101,7 +103,7 @@ export default function OfficialReportSheet({
         <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-black w-full text-center">LAPORAN AUDIT <br className="md:hidden" /> {title}</h2>
       </div>
 
-      <div className="w-full mb-8 border-t border-l border-r border-slate-300 grid grid-cols-3 bg-white">
+      <div className="w-full mb-8 border-t border-l border-r border-slate-300 grid grid-cols-2 md:grid-cols-4 bg-white">
         <div className="border-b border-slate-300 p-3 border-r text-center">
           <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Waktu Pelaksanaan</p>
           <div className="font-bold text-sm text-black">{auditDate ? format(new Date(auditDate), 'dd MMM yyyy HH:mm', { locale: idLocale }) : '-'}</div>
@@ -109,6 +111,10 @@ export default function OfficialReportSheet({
         <div className="border-b border-slate-300 p-3 border-r text-center">
           <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Supervisor / IPCN</p>
           <p className="font-bold text-sm uppercase text-black">{inspector || '-'}</p>
+        </div>
+        <div className="border-b border-slate-300 p-3 border-r text-center">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">PJ Ruangan / Auditee</p>
+          <p className="font-bold text-sm uppercase text-black">{data.nama_pj_ruangan || data.nama_pj || '-'}</p>
         </div>
         <div className="border-b border-slate-300 p-3 text-center">
           <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Unit / Ruangan</p>
@@ -190,7 +196,11 @@ export default function OfficialReportSheet({
             {data.ttd_pj && <Image src={data.ttd_pj} fill sizes="200px" className="object-contain" alt="TTD PJ" referrerPolicy="no-referrer" />}
           </div>
           <div className="pt-2 border-t border-slate-300 w-full">
-            <p className="font-bold text-xs uppercase tracking-wider text-black">( ............................... )</p>
+            <p className="font-bold text-xs uppercase tracking-wider text-black">
+              {data.nama_pj_ruangan || data.nama_pj
+                ? `( ${data.nama_pj_ruangan || data.nama_pj} )`
+                : "( ............................... )"}
+            </p>
           </div>
         </div>
         <div className="text-center space-y-4">

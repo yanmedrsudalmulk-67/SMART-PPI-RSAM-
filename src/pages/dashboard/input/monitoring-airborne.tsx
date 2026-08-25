@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { supabase, broadcastChannelMessage } from "@/lib/supabase";
 import { uploadImagesToSupabase } from "@/lib/upload";
 import {
   DocumentationUploader,
@@ -70,21 +70,42 @@ export default function MonitoringAirbornePage() {
         setIsEditMode(true);
         setEditId(id);
         const loadEditData = async () => {
-          const { data: ed, error } = await supabase
+          let ed: any = null;
+          const { data: sData } = await supabase
             .from("audit_sessions")
             .select("*")
             .eq("id", id)
-            .single();
-          if (ed && !error) {
-            if (ed.tanggal_waktu) setStartTime(new Date(ed.tanggal_waktu));
-            if (ed.observer) setObserver(ed.observer);
-            
+            .maybeSingle();
 
-            const indicatorsData = ed.data_indikator || ed.checklist_json || {};
-            if (indicatorsData.temuan) setTemuan(indicatorsData.temuan);
-            if (indicatorsData.rekomendasi) setRekomendasi(indicatorsData.rekomendasi);
+          if (sData) {
+            ed = sData;
+          } else {
+            const { data: tData } = await supabase
+              .from(tableName || "penempatan_pasien_airbone")
+              .select("*")
+              .eq("id", id)
+              .maybeSingle();
+            if (tData) ed = tData;
+          }
+
+          if (ed) {
+            if (ed.tanggal_waktu || ed.waktu) setStartTime(new Date(ed.tanggal_waktu || ed.waktu));
+            if (ed.observer || ed.supervisor) setObserver(ed.observer || ed.supervisor);
             
-            const displayPjName = indicatorsData.nama_pj || indicatorsData.nama_pj_ruangan || ed.nama_pj_ruangan || "";
+            const indicatorsData = ed.data_indikator || ed.checklist_json || {};
+            if (ed.temuan || indicatorsData.temuan) setTemuan(ed.temuan || indicatorsData.temuan);
+            if (ed.rekomendasi || indicatorsData.rekomendasi) setRekomendasi(ed.rekomendasi || indicatorsData.rekomendasi);
+            
+            const displayPjName =
+              ed.nama_pj_ruangan ||
+              ed.nama_pj ||
+              indicatorsData.nama_pj ||
+              indicatorsData.nama_pj_ruangan ||
+              indicatorsData.pj_name ||
+              indicatorsData.pjName ||
+              indicatorsData.penanggung_jawab ||
+              ed.penanggung_jawab ||
+              "";
             if (typeof setPjName === "function") setPjName(displayPjName);
 
             try {
@@ -99,12 +120,20 @@ export default function MonitoringAirbornePage() {
               });
             } catch (err) {}
 
-            
-
             // Prefill signatures
             setTimeout(() => {
-              const t1 = ed.ttd_pj_ruangan || indicatorsData.ttd_pj || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
-              const t2 = ed.ttd_ipcn || indicatorsData.ttd_ipcn || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
+              const t1 =
+                ed.ttd_pj_ruangan ||
+                ed.ttd_pj ||
+                indicatorsData.ttd_pj ||
+                indicatorsData.ttd_pj_ruangan ||
+                (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
+              const t2 =
+                ed.ttd_ipcn ||
+                indicatorsData.ttd_ipcn ||
+                ed.ttd_supervisor ||
+                indicatorsData.ttd_supervisor ||
+                (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
               if (t1 && sigRef.current?.setPjSignature) {
                 sigRef.current.setPjSignature(t1);
               }
@@ -114,9 +143,10 @@ export default function MonitoringAirbornePage() {
             }, 800);
 
             // Prefill documentation
-            if (indicatorsData.dokumentasi) {
+            const docList = ed.foto || indicatorsData.dokumentasi || [];
+            if (Array.isArray(docList) && docList.length > 0) {
               setImages(
-                indicatorsData.dokumentasi.map((url: string) => ({
+                docList.map((url: string) => ({
                   url,
                   file: null as any,
                 }))
@@ -255,6 +285,13 @@ export default function MonitoringAirbornePage() {
         nama_indikator: "MONITORING PENEMPATAN PASIEN AIRBORNE",
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
         observer,
+        unit: "Ruang Isolasi",
+        nama_pj: pjName.trim(),
+        nama_pj_ruangan: pjName.trim(),
+        ttd_pj_ruangan: ttd_pj,
+        ttd_ipcn: ttd_ipcn,
+        temuan,
+        rekomendasi,
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
@@ -263,8 +300,17 @@ export default function MonitoringAirbornePage() {
           ...data,
           temuan,
           rekomendasi,
+          nama_pj: pjName.trim(),
+          nama_pj_ruangan: pjName.trim(),
+          observer,
+          supervisor: observer,
+          unit: "Ruang Isolasi",
+          ruangan: "Ruang Isolasi",
           dokumentasi: uploadedUrls,
           tanda_tangan: [ttd_pj, ttd_ipcn].filter(Boolean),
+          ttd_pj,
+          ttd_ipcn,
+          ttd_pj_ruangan: ttd_pj,
         },
       };
       let sessionId = editId;
@@ -298,7 +344,11 @@ export default function MonitoringAirbornePage() {
           {
             waktu: sessionPayload.tanggal_waktu,
             ruangan: "Ruang Isolasi",
+            unit: "Ruang Isolasi",
             supervisor: sessionPayload.observer,
+            observer: sessionPayload.observer,
+            nama_pj: pjName.trim(),
+            nama_pj_ruangan: pjName.trim(),
             checklist_json: sessionPayload.data_indikator,
             persentase: sessionPayload.persentase,
             temuan: temuan,
@@ -312,20 +362,19 @@ export default function MonitoringAirbornePage() {
       } catch (tableErr) {
         console.warn("Failed to insert into native table, but session was saved:", tableErr);
       }
-      const ch = supabase.channel('changes_monitoring_airborne');
-      ch.subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          ch.send({
-            type: 'broadcast',
-            event: 'audit_submitted',
-            payload: { tableName: 'monitoring_airborne' }
-          }).then(() => supabase.removeChannel(ch));
-        }
-      });
+      await broadcastChannelMessage(
+        'changes_monitoring_airborne',
+        'audit_submitted',
+        { tableName: 'monitoring_airborne', indikator_id: 'monitoring_airborne' }
+      );
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
-        router.push("/dashboard/input/isolasi");
+        if (isEditMode) {
+          router.push("/dashboard/reports");
+        } else {
+          router.push("/dashboard/input/isolasi");
+        }
       }, 2000);
     } catch (err: any) {
       console.error(err);

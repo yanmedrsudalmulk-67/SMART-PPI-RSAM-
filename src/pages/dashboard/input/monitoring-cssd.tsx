@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { supabase, broadcastChannelMessage } from "@/lib/supabase";
 import { uploadImagesToSupabase } from "@/lib/upload";
 import {
   DocumentationUploader,
@@ -27,136 +27,167 @@ import { LiveStatisticsCard } from "@/components/LiveStatisticsCard";
 import DigitalSignatureSection, {
   DigitalSignatureRef,
 } from "@/components/DigitalSignatureSection";
+
 const checklistItems = [
   {
-    group: "PENERIMAAN ALAT",
-    id: "cssd_penerimaan_1",
-    label: "Petugas menggunakan APD",
+    section: "A. PENERIMAAN ALAT",
+    items: [
+      {
+        id: "cssd_penerimaan_1",
+        label: "Petugas menggunakan APD",
+      },
+      {
+        id: "cssd_penerimaan_2",
+        label: "Pengiriman barang kotor menggunakan container khusus dan tertutup",
+      },
+      {
+        id: "cssd_penerimaan_3",
+        label: "Container alat kotor dibersihkan secara rutin",
+      },
+    ],
   },
   {
-    group: "PENERIMAAN ALAT",
-    id: "cssd_penerimaan_2",
-    label: "Pengiriman barang kotor menggunakan container khusus dan tertutup",
+    section: "B. PRE CLEANING",
+    items: [
+      {
+        id: "cssd_precleaning_1",
+        label: "Petugas menggunakan APD",
+      },
+      {
+        id: "cssd_precleaning_2",
+        label:
+          "Bersihkan semua kotoran dan dilakukan perendaman menggunakan larutan enzymatic",
+      },
+      {
+        id: "cssd_precleaning_3",
+        label: "Buang / ganti larutan enzymatic setelah dipakai",
+      },
+    ],
   },
   {
-    group: "PENERIMAAN ALAT",
-    id: "cssd_penerimaan_3",
-    label: "Container alat kotor dibersihkan secara rutin",
+    section: "C. PEMBERSIHAN",
+    items: [
+      {
+        id: "cssd_pembersihan_1",
+        label: "Lakukan kebersihan tangan",
+      },
+      {
+        id: "cssd_pembersihan_2",
+        label:
+          "Petugas menggunakan APD (kacamata google, sarung tangan, sepatu/alas kaki, apron)",
+      },
+    ],
   },
   {
-    group: "PRE CLEANING",
-    id: "cssd_precleaning_1",
-    label: "Petugas menggunakan APD",
+    section: "D. VENTILASI",
+    items: [
+      { id: "cssd_ventilasi_1", label: "House fan tersedia" },
+      {
+        id: "cssd_ventilasi_2",
+        label: "Pertukaran udara 10 x/jam",
+      },
+    ],
   },
   {
-    group: "PRE CLEANING",
-    id: "cssd_precleaning_2",
-    label:
-      "Bersihkan semua kotoran dan dilakukan perendaman menggunakan larutan enzymatic",
+    section: "E. SUHU DAN KELEMBABAN",
+    items: [
+      { id: "cssd_suhu_1", label: "Suhu 18 – 22 °C" },
+      {
+        id: "cssd_suhu_2",
+        label: "Kelembaban 35 – 75 %",
+      },
+      {
+        id: "cssd_suhu_3",
+        label: "Tersedia alur pasca pajanan / SOP",
+      },
+    ],
   },
   {
-    group: "PRE CLEANING",
-    id: "cssd_precleaning_3",
-    label: "Buang / ganti larutan enzymatic setelah dipakai",
+    section: "F. PENGELOLAAN LIMBAH",
+    items: [
+      {
+        id: "cssd_limbah_1",
+        label: "Tersedia tempat limbah infeksius, non infeksius, benda tajam",
+      },
+      {
+        id: "cssd_limbah_2",
+        label: "Ada label tempat sampah sesuai peruntukan",
+      },
+      {
+        id: "cssd_limbah_3",
+        label: "Tidak melebihi ¾ penuh atau 3 hari",
+      },
+    ],
   },
   {
-    group: "PEMBERSIHAN",
-    id: "cssd_pembersihan_1",
-    label: "Lakukan kebersihan tangan",
+    section: "G. PENGEMASAN DAN STERILISASI",
+    items: [
+      {
+        id: "cssd_pengemasan_1",
+        label: "Petugas menggunakan APD",
+      },
+      {
+        id: "cssd_pengemasan_2",
+        label: "Mesin sterilisator dibersihkan rutin",
+      },
+      {
+        id: "cssd_pengemasan_3",
+        label:
+          "Pemantauan indikator sterilisasi: mekanik, kimia eksternal, kimia internal, biological",
+      },
+    ],
   },
   {
-    group: "PEMBERSIHAN",
-    id: "cssd_pembersihan_2",
-    label:
-      "Petugas menggunakan APD (kacamata google, sarung tangan, sepatu/alas kaki, apron)",
-  },
-  { group: "VENTILASI", id: "cssd_ventilasi_1", label: "House fan tersedia" },
-  {
-    group: "VENTILASI",
-    id: "cssd_ventilasi_2",
-    label: "Pertukaran udara 10 x/jam",
-  },
-  { group: "SUHU DAN KELEMBABAN", id: "cssd_suhu_1", label: "Suhu 18 – 22 °C" },
-  {
-    group: "SUHU DAN KELEMBABAN",
-    id: "cssd_suhu_2",
-    label: "Kelembaban 35 – 75 %",
-  },
-  {
-    group: "SUHU DAN KELEMBABAN",
-    id: "cssd_suhu_3",
-    label: "Tersedia alur pasca pajanan / SOP",
+    section: "H. PENYIMPANAN BARANG STERIL",
+    items: [
+      {
+        id: "cssd_penyimpanan_1",
+        label: "Suhu 18 – 22 °C",
+      },
+      {
+        id: "cssd_penyimpanan_2",
+        label: "Kelembaban 35 – 75 %",
+      },
+      {
+        id: "cssd_penyimpanan_3",
+        label: "Ruangan bertekanan positif (+)",
+      },
+    ],
   },
   {
-    group: "PENGELOLAAN LIMBAH",
-    id: "cssd_limbah_1",
-    label: "Tersedia tempat limbah infeksius, non infeksius, benda tajam",
+    section: "I. RAK PENYIMPANAN",
+    items: [
+      {
+        id: "cssd_rak_1",
+        label:
+          "8 inc / 20.3 cm dr lantai, 2 inc / 4.5 cm dr dinding, 18 inc / 45.7 cm dr langit-langit",
+      },
+      {
+        id: "cssd_rak_2",
+        label: "Petugas menggunakan APD",
+      },
+    ],
   },
   {
-    group: "PENGELOLAAN LIMBAH",
-    id: "cssd_limbah_2",
-    label: "Ada label tempat sampah sesuai peruntukan",
-  },
-  {
-    group: "PENGELOLAAN LIMBAH",
-    id: "cssd_limbah_3",
-    label: "Tidak melebihi ¾ penuh atau 3 hari",
-  },
-  {
-    group: "PENGEMASAN DAN STERILISASI",
-    id: "cssd_pengemasan_1",
-    label: "Petugas menggunakan APD",
-  },
-  {
-    group: "PENGEMASAN DAN STERILISASI",
-    id: "cssd_pengemasan_2",
-    label: "Mesin sterilisator dibersihkan rutin",
-  },
-  {
-    group: "PENGEMASAN DAN STERILISASI",
-    id: "cssd_pengemasan_3",
-    label:
-      "Pemantauan indikator sterilisasi: mekanik, kimia eksternal, kimia internal, biological",
-  },
-  {
-    group: "PENYIMPANAN BARANG STERIL",
-    id: "cssd_penyimpanan_1",
-    label: "Suhu 18 – 22 °C",
-  },
-  {
-    group: "PENYIMPANAN BARANG STERIL",
-    id: "cssd_penyimpanan_2",
-    label: "Kelembaban 35 – 75 %",
-  },
-  {
-    group: "PENYIMPANAN BARANG STERIL",
-    id: "cssd_penyimpanan_3",
-    label: "Ruangan bertekanan positif (+)",
-  },
-  {
-    group: "RAK PENYIMPANAN",
-    id: "cssd_rak_1",
-    label:
-      "8 inc / 20.3 cm dr lantai, 2 inc / 4.5 cm dr dinding, 18 inc / 45.7 cm dr langit-langit",
-  },
-  {
-    group: "RAK PENYIMPANAN",
-    id: "cssd_rak_2",
-    label: "Petugas menggunakan APD",
-  },
-  {
-    group: "PENGAMBILAN ALAT STERIL",
-    id: "cssd_pengambilan_1",
-    label: "Menggunakan container khusus steril dan tertutup",
-  },
-  {
-    group: "PENGAMBILAN ALAT STERIL",
-    id: "cssd_pengambilan_2",
-    label: "Kondisi container bersih",
+    section: "J. PENGAMBILAN ALAT STERIL",
+    items: [
+      {
+        id: "cssd_pengambilan_1",
+        label: "Menggunakan container khusus steril dan tertutup",
+      },
+      {
+        id: "cssd_pengambilan_2",
+        label: "Kondisi container bersih",
+      },
+    ],
   },
 ];
+
+const allChecklistItems = checklistItems.flatMap((s) => s.items);
+
 type AuditStatus = "ya" | "tidak" | "na" | null;
 type Observer = { id: string; nama: string };
+
 export default function MonitoringCSSDPage() {
   const router = useRouter();
   const [isEditMode, setIsEditMode] = useState(false);
@@ -175,10 +206,11 @@ export default function MonitoringCSSDPage() {
   const sigRef = useRef<DigitalSignatureRef>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
+
   useEffect(() => {
     fetchObservers();
     const initialData: Record<string, AuditStatus> = {};
-    checklistItems.forEach((item) => (initialData[item.id] = null));
+    allChecklistItems.forEach((item) => (initialData[item.id] = null));
     
     setData(initialData);
 
@@ -186,44 +218,61 @@ export default function MonitoringCSSDPage() {
       const params = new URLSearchParams(window.location.search);
       const id = params.get("id");
       const mode = params.get("mode");
-      if (id && mode === "edit") {
+      if (id && (mode === "edit" || params.get("edit") === "true")) {
         setIsEditMode(true);
         setEditId(id);
         const loadEditData = async () => {
-          const { data: ed, error } = await supabase
+          let ed: any = null;
+          const { data: sessionData } = await supabase
             .from("audit_sessions")
             .select("*")
             .eq("id", id)
-            .single();
-          if (ed && !error) {
-            if (ed.tanggal_waktu) setStartTime(new Date(ed.tanggal_waktu));
-            if (ed.observer) setObserver(ed.observer);
-            
+            .maybeSingle();
+
+          if (sessionData) {
+            ed = sessionData;
+          } else {
+            const { data: nativeData } = await supabase
+              .from("audit_cssd_monitoring")
+              .select("*")
+              .eq("id", id)
+              .maybeSingle();
+            if (nativeData) ed = nativeData;
+          }
+
+          if (ed) {
+            if (ed.tanggal_waktu || ed.waktu) setStartTime(new Date(ed.tanggal_waktu || ed.waktu));
+            if (ed.observer || ed.supervisor) setObserver(ed.observer || ed.supervisor);
 
             const indicatorsData = ed.data_indikator || ed.checklist_json || {};
-            if (indicatorsData.temuan) setTemuan(indicatorsData.temuan);
-            if (indicatorsData.rekomendasi) setRekomendasi(indicatorsData.rekomendasi);
+            if (indicatorsData.temuan || ed.temuan) setTemuan(indicatorsData.temuan || ed.temuan || "");
+            if (indicatorsData.rekomendasi || ed.rekomendasi) setRekomendasi(indicatorsData.rekomendasi || ed.rekomendasi || "");
             
-            const displayPjName = indicatorsData.nama_pj || indicatorsData.nama_pj_ruangan || ed.nama_pj_ruangan || "";
+            const displayPjName = indicatorsData.nama_pj || indicatorsData.nama_pj_ruangan || ed.nama_pj_ruangan || ed.nama_pj || "";
             if (typeof setPjName === "function") setPjName(displayPjName);
 
             try {
-              setData((prev: any) => {
-                const updated = { ...prev };
-                Object.keys(updated).forEach((key) => {
-                  if (indicatorsData[key] !== undefined) {
-                    updated[key] = indicatorsData[key];
+              const parsedData: Record<string, AuditStatus> = {};
+              allChecklistItems.forEach((item) => {
+                const candidates = [item.id, item.id.replace('cssd_', ''), String(item.id)];
+                for (const c of candidates) {
+                  if (indicatorsData[c] !== undefined) {
+                    const val = indicatorsData[c];
+                    if (typeof val === "string" && ["ya", "tidak", "na"].includes(val.toLowerCase())) {
+                      parsedData[item.id] = val.toLowerCase() as AuditStatus;
+                    } else if (typeof val === "boolean") {
+                      parsedData[item.id] = val ? "ya" : "tidak";
+                    }
+                    break;
                   }
-                });
-                return updated;
+                }
               });
+              setData((prev: any) => ({ ...prev, ...parsedData }));
             } catch (err) {}
-
-            
 
             // Prefill signatures
             setTimeout(() => {
-              const t1 = ed.ttd_pj_ruangan || indicatorsData.ttd_pj || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
+              const t1 = ed.ttd_pj_ruangan || ed.ttd_pj || indicatorsData.ttd_pj || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
               const t2 = ed.ttd_ipcn || indicatorsData.ttd_ipcn || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
               if (t1 && sigRef.current?.setPjSignature) {
                 sigRef.current.setPjSignature(t1);
@@ -234,9 +283,11 @@ export default function MonitoringCSSDPage() {
             }, 800);
 
             // Prefill documentation
-            if (indicatorsData.dokumentasi) {
+            const docs = ed.foto || indicatorsData.dokumentasi;
+            if (docs) {
+              const docArr = Array.isArray(docs) ? docs : [docs];
               setImages(
-                indicatorsData.dokumentasi.map((url: string) => ({
+                docArr.map((url: string) => ({
                   url,
                   file: null as any,
                 }))
@@ -252,6 +303,7 @@ export default function MonitoringCSSDPage() {
       setStartTime(new Date());
     }
   }, []);
+
   const fetchObservers = async () => {
     try {
       const { data, error } = await supabase
@@ -264,6 +316,7 @@ export default function MonitoringCSSDPage() {
       setObservers([{ id: "1", nama: "IPCN_Adi Tresa Purnama" }]);
     }
   };
+
   const saveObserver = async () => {
     if (!newObserverName.trim()) return;
     try {
@@ -305,6 +358,7 @@ export default function MonitoringCSSDPage() {
       console.error(err);
     }
   };
+
   const deleteObserver = async (id: string) => {
     if (!confirm("Hapus observer ini?")) return;
     try {
@@ -317,18 +371,23 @@ export default function MonitoringCSSDPage() {
       console.error(err);
     }
   };
+
   const toggleItem = (id: string, stat: AuditStatus) => {
     setData((prev) => ({ ...prev, [id]: stat }));
   };
+
   const stats = useMemo(() => {
     let patuh = 0;
     let dinilai = 0;
-    Object.values(data).forEach((val) => {
-      if (val === "ya") {
-        patuh++;
-        dinilai++;
-      } else if (val === "tidak") {
-        dinilai++;
+    allChecklistItems.forEach((item) => {
+      const val = data[item.id];
+      if (!val || val === "na") return;
+      dinilai++;
+      const isNeg = Boolean((item as any).isNegative);
+      if (isNeg) {
+        if (val === "tidak") patuh++;
+      } else {
+        if (val === "ya") patuh++;
       }
     });
     const persentase = dinilai > 0 ? Math.round((patuh / dinilai) * 100) : 0;
@@ -338,109 +397,195 @@ export default function MonitoringCSSDPage() {
         persentase >= 85 ? "Patuh" : persentase >= 70 ? "Cukup" : "Tidak Patuh";
     return { patuh, dinilai, persentase, status };
   }, [data]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!observer) {
       alert("Harap pilih Supervisor!");
       return;
     }
-    if (Object.values(data).some((v) => v === null)) {
-      alert("Harap isi semua checklist!");
+
+    const unfilled = allChecklistItems.filter((item) => !data[item.id]);
+    if (unfilled.length > 0) {
+      alert(`Mohon lengkapi semua checklist! Masih ada ${unfilled.length} indikator yang belum dinilai.`);
       return;
     }
+
     setIsSubmitting(true);
     try {
-      const ttd_pj = sigRef.current?.getPjSignature();
-      const ttd_ipcn = sigRef.current?.getSupervisorSignature();
-      const uploadedUrls = await uploadImagesToSupabase(
-        supabase,
-        images,
-        "logos",
-        "audit",
-      );
-      const payload = {
-        waktu: startTime?.toISOString() || new Date().toISOString(),
-        checklist_json: data,
-        persentase: stats.persentase,
-        temuan,
-        rekomendasi,
-        ttd_pj,
-        ttd_ipcn,
-      };
+      const ttd_pj = sigRef.current?.getPjSignature() || null;
+      const ttd_ipcn = sigRef.current?.getSupervisorSignature() || null;
+
+      // Safe image handling with fallback
+      let uploadedUrls: string[] = [];
+      const existingUrls = images
+        .filter((img: any) => typeof img === "string" || img?.url)
+        .map((img: any) => (typeof img === "string" ? img : img.url));
+
+      const newFileObjects = images
+        .filter((img: any) => img instanceof File || img?.file instanceof File)
+        .map((img: any) => (img instanceof File ? img : img.file));
+
+      if (newFileObjects.length > 0) {
+        try {
+          const res = await uploadImagesToSupabase(
+            supabase,
+            newFileObjects.map((f) => ({ file: f })),
+            "audit_images",
+            "monitoring_cssd"
+          );
+          uploadedUrls = res || [];
+        } catch (uploadErr1) {
+          try {
+            const res2 = await uploadImagesToSupabase(
+              supabase,
+              newFileObjects.map((f) => ({ file: f })),
+              "logos",
+              "audit"
+            );
+            uploadedUrls = res2 || [];
+          } catch (uploadErr2) {
+            console.warn("Storage upload notice (proceeding without upload):", uploadErr2);
+          }
+        }
+      }
+
+      const finalDocUrls = [...existingUrls, ...uploadedUrls];
+      const auditTime = startTime?.toISOString() || new Date().toISOString();
+      const recordId = isEditMode && editId ? editId : crypto.randomUUID();
+
       const sessionPayload = {
+        id: recordId,
         indikator_id: "monitoring_cssd",
         kategori: "Kewaspadaan Isolasi",
         nama_indikator: "MONITORING CSSD",
-        tanggal_waktu: payload.waktu,
+        tanggal_waktu: auditTime,
         observer,
+        unit: "CSSD",
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.status,
         data_indikator: {
           ...data,
+          checklist_json: { ...data },
           temuan,
           rekomendasi,
-          dokumentasi: uploadedUrls,
+          dokumentasi: finalDocUrls,
+          foto: finalDocUrls,
           tanda_tangan: [ttd_pj || null, ttd_ipcn || null],
+          ttd_pj: ttd_pj || null,
+          ttd_ipcn: ttd_ipcn || null,
           nama_pj: pjName.trim(),
           nama_pj_ruangan: pjName.trim(),
+          observer,
+          supervisor: observer,
+          unit: "CSSD",
+          ruangan: "CSSD",
         },
       };
-      let sessionId = editId;
 
       if (isEditMode && editId) {
         const { error: sessionError } = await supabase
           .from("audit_sessions")
-          .update(sessionPayload)
-          .eq("id", editId);
-        if (sessionError) throw sessionError;
+          .upsert([sessionPayload], { onConflict: "id" });
+        if (sessionError) {
+          console.error("Upsert audit_sessions error:", sessionError);
+          throw sessionError;
+        }
 
-        await supabase.from("audit_details").delete().eq("session_id", editId);
+        try {
+          await supabase.from("audit_details").delete().eq("session_id", recordId);
+        } catch (delErr) {
+          console.warn("audit_details delete notice:", delErr);
+        }
       } else {
-        const { data: sessionData, error: sessionError } = await supabase
+        const { error: sessionError } = await supabase
           .from("audit_sessions")
-          .insert([sessionPayload])
-          .select("id")
-          .single();
-        if (sessionError) throw sessionError;
-        sessionId = sessionData.id;
+          .insert([sessionPayload]);
+        if (sessionError) {
+          console.error("Insert audit_sessions error:", sessionError);
+          throw sessionError;
+        }
       }
-      const detailPayloads = Object.keys(data).map((key) => ({
-        session_id: sessionId,
-        pertanyaan_id: key,
-        pertanyaan: checklistItems.find((i) => i.id === key)?.label || key,
-        jawaban: String(data[key]),
+
+      // Save audit details breakdown
+      const detailPayloads = allChecklistItems.map((item) => ({
+        session_id: recordId,
+        pertanyaan_id: item.id,
+        pertanyaan: item.label,
+        jawaban: String(data[item.id] || ""),
       }));
-      await supabase.from("audit_details").insert(detailPayloads);
-      // Safe native table insert
       try {
-        await supabase
-          .from("audit_cssd_monitoring")
-          .insert([{ ...payload, created_at: new Date().toISOString() }]);
-      } catch (err) {
-        console.warn("Failed to insert native table", err);
+        await supabase.from("audit_details").insert(detailPayloads);
+      } catch (detailErr) {
+        console.warn("audit_details insert notice:", detailErr);
       }
+
+      // Safe native table insert / update for audit_cssd_monitoring
+      try {
+        const nativePayload = {
+          id: recordId,
+          waktu: auditTime,
+          checklist_json: {
+            ...data,
+            temuan,
+            rekomendasi,
+            foto: finalDocUrls,
+            ttd_pj,
+            ttd_ipcn,
+          },
+          persentase: stats.persentase,
+          temuan,
+          rekomendasi,
+          foto: finalDocUrls,
+          ttd_pj: ttd_pj || null,
+          ttd_ipcn: ttd_ipcn || null,
+          created_at: new Date().toISOString(),
+        };
+
+        if (isEditMode && editId) {
+          await supabase
+            .from("audit_cssd_monitoring")
+            .upsert([nativePayload], { onConflict: "id" });
+        } else {
+          await supabase
+            .from("audit_cssd_monitoring")
+            .insert([nativePayload]);
+        }
+      } catch (nativeErr) {
+        console.warn("audit_cssd_monitoring notice (session was saved):", nativeErr);
+      }
+
+      // Broadcast real-time update using httpSend
+      try {
+        await broadcastChannelMessage(
+          "changes_audit_cssd_monitoring",
+          "audit_submitted",
+          { tableName: "audit_cssd_monitoring", indikator_id: "monitoring_cssd", id: recordId }
+        );
+        await broadcastChannelMessage(
+          "audit_sessions_changes",
+          "audit_submitted",
+          { tableName: "audit_sessions", indikator_id: "monitoring_cssd", id: recordId }
+        );
+      } catch (bErr) {
+        console.warn("Broadcast notice:", bErr);
+      }
+
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
         router.push("/dashboard/input/isolasi");
       }, 2000);
     } catch (err: any) {
-      console.error(err);
-      alert(`Gagal menyimpan: ${err.message}`);
+      console.error("Save audit CSSD failed:", err);
+      alert(`Gagal menyimpan data audit CSSD: ${err.message || "Terjadi kesalahan koneksi"}`);
     } finally {
       setIsSubmitting(false);
     }
   };
-  const groupedChecklist = checklistItems.reduce(
-    (acc, item) => {
-      if (!acc[item.group]) acc[item.group] = [];
-      acc[item.group].push(item);
-      return acc;
-    },
-    {} as Record<string, typeof checklistItems>,
-  );
+
   return (
     <div className="max-w-7xl mx-auto pb-32">
       <AnimatePresence>
@@ -449,248 +594,232 @@ export default function MonitoringCSSDPage() {
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -50 }}
-            className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-emerald-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 font-bold uppercase tracking-widest text-xs border border-white/20"
+            className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-blue-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 font-bold uppercase tracking-widest text-xs border border-white/20"
           >
             <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
             Data Monitoring CSSD Berhasil Disimpan
           </motion.div>
         )}
       </AnimatePresence>
-      <div className="flex items-center gap-6 py-6 border-b border-slate-200 dark:border-white/5">
+      <div className="flex items-center gap-6 py-6 border-b border-white/5">
         <Link
           href="/dashboard/input/isolasi"
-          className="p-3 bg-white dark:bg-white/5 shadow-sm rounded-2xl border border-slate-200 dark:border-white/10 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-all"
+          className="p-3 bg-white/5 rounded-2xl border border-white/10 text-slate-400 hover:text-white transition-all"
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 dark:from-blue-400 dark:via-blue-300 dark:to-indigo-400 uppercase">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-500 uppercase">
             AUDIT CSSD
           </h1>
-          <p className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-blue-400 mt-1">
+          <p className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-400 mt-1">
             Monitoring Pencegahan & Pengendalian Infeksi Area CSSD
           </p>
         </div>
       </div>
-      <form
-        onSubmit={handleSubmit}
-        className="mt-8 grid xl:grid-cols-12 gap-8 items-start"
-      >
-        <div className="xl:col-span-8 space-y-8">
-          <div className="bg-white dark:bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2rem] border border-slate-200 dark:border-white/5 shadow-sm">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 border-b border-slate-200 dark:border-white/5 pb-4 mb-6">
-              1. INFORMASI UMUM
-            </h2>
-            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
-              <div className="space-y-3">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
-                  Waktu
-                </label>
-                <input
-                  type="datetime-local"
-                  value={
-                    startTime
-                      ? new Date(
-                          startTime.getTime() -
-                            startTime.getTimezoneOffset() * 60000,
-                        )
-                          .toISOString()
-                          .slice(0, 16)
-                      : ""
-                  }
-                  onChange={(e) => setStartTime(new Date(e.target.value))}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500/50 [color-scheme:light] dark:[color-scheme:dark]"
-                />
-              </div>
-              <div className="space-y-3">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
-                  Ruangan
-                </label>
-                <div className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-500 dark:text-slate-400 font-medium h-[46px] flex items-center">
-                  CSSD
-                </div>
-              </div>
-              <div className="space-y-3 sm:col-span-2 md:col-span-1">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex justify-between items-center">
-                  Supervisor
-                  <button
-                    type="button"
-                    onClick={() => setIsObserverModalOpen(true)}
-                    className="text-blue-400 hover:text-blue-300 font-bold uppercase tracking-widest flex items-center gap-1"
-                  >
-                    <User className="w-3 h-3" /> Tambah / Kelola
-                  </button>
-                </label>
-                <div className="relative">
-                  <select
-                    value={observer}
-                    onChange={(e) => setObserver(e.target.value)}
-                    className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white appearance-none outline-none focus:border-blue-500/50"
-                  >
-                    <option value="">Pilih Supervisor...</option>
-                    {observers.map((o) => (
-                      <option key={o.id} value={o.nama}>
-                        {o.nama}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
-              📋 Indikator Kepatuhan
-            </h2>
-            <div className="space-y-4">
-              {checklistItems.map((item, idx) => {
-                const selected = data[item.id];
-                const negativeKeywords = [
-                  "berkarat",
-                  "kotor",
-                  "debu",
-                  "genangan",
-                  "tercampur",
-                  "bercampur",
-                  "penumpukan",
-                  "bocor",
-                  "jarum",
-                  "menumpuk",
-                  "sampah medis dan non medis",
-                  "pembuangan sampah infeksius",
-                ];
-                const isNegativeQuestion = negativeKeywords.some((kw) =>
-                  (item.label || (item as any).desc || "")
-                    .toLowerCase()
-                    .includes(kw),
-                );
-                let borderLeftColor = "border-l-transparent";
-                if (selected === "na") {
-                  borderLeftColor = "border-l-slate-500";
-                } else if (selected) {
-                  borderLeftColor =
-                    selected === "ya"
-                      ? isNegativeQuestion
-                        ? "border-l-red-500"
-                        : "border-l-blue-500"
-                      : isNegativeQuestion
-                        ? "border-l-blue-500"
-                        : "border-l-red-500";
+
+      <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+        <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2rem] border border-white/5 space-y-6 shadow-sm">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
+                Waktu Input
+              </label>
+              <input
+                type="datetime-local"
+                value={
+                  startTime
+                    ? new Date(
+                        startTime.getTime() -
+                          startTime.getTimezoneOffset() * 60000,
+                      )
+                        .toISOString()
+                        .slice(0, 16)
+                    : ""
                 }
-                return (
-                  <div
-                    key={item.id}
-                    className={`bg-white/5 p-6 rounded-[24px] border border-white/5 border-l-4 ${borderLeftColor} transition-colors duration-300 relative overflow-hidden group`}
-                  >
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-                      <div className="flex gap-4">
-                        <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border transition-all duration-500 bg-white/5 border-white/10 text-slate-500">
-                          <span className="text-xs font-black">{idx + 1}</span>
-                        </div>
-                        <div>
-                          <h3 className="text-sm font-bold text-white mb-2">
-                            {item.label}
-                          </h3>
-                        </div>
-                      </div>
-                      <div className="flex p-1.5 bg-white/5 rounded-2xl border border-white/5 w-fit self-end md:self-center">
-                        {["ya", "tidak", "na"].map((choice) => {
-                          let activeClass = "";
-                          if (choice === "na") {
-                            activeClass =
-                              "bg-slate-500 text-white shadow-[0_0_15px_rgba(100,116,139,0.3)] transform scale-105";
-                          } else if (isNegativeQuestion) {
-                            activeClass =
-                              choice === "ya"
-                                ? "bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)] transform scale-105"
-                                : "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] transform scale-105";
-                          } else {
-                            activeClass =
-                              choice === "ya"
-                                ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] transform scale-105"
-                                : "bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)] transform scale-105";
-                          }
-                          return (
-                            <button
-                              key={choice}
-                              type="button"
-                              onClick={() => toggleItem(item.id, choice as any)}
-                              className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${
-                                data[item.id] === choice
-                                  ? activeClass
-                                  : "bg-transparent text-slate-400 hover:bg-white/10"
-                              }`}
-                            >
-                              {choice === "na" ? "N/A" : choice}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          <LiveStatisticsCard
-            totalDinilai={stats.dinilai}
-            totalPatuh={stats.patuh}
-            totalTidakPatuh={stats.dinilai - stats.patuh}
-            persentase={stats.persentase}
-            statusText={stats.status}
-          />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-              <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
-                📝 Temuan Audit
-              </h2>
-              <textarea
-                value={temuan}
-                onChange={(e) => setTemuan(e.target.value)}
-                placeholder="Tuliskan temuan audit..."
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600"
+                onChange={(e) => setStartTime(new Date(e.target.value))}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 [color-scheme:dark] transition-colors"
               />
             </div>
-            <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-              <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
-                💡 Rekomendasi
-              </h2>
-              <textarea
-                value={rekomendasi}
-                onChange={(e) => setRekomendasi(e.target.value)}
-                placeholder="Tuliskan rekomendasi tindak lanjut..."
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600"
-              />
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
+                Ruangan
+              </label>
+              <div className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-slate-300 font-medium h-[46px] flex items-center">
+                CSSD
+              </div>
+            </div>
+            <div className="space-y-3 sm:col-span-2 md:col-span-1">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex justify-between items-center">
+                Supervisor
+                <button
+                  type="button"
+                  onClick={() => setIsObserverModalOpen(true)}
+                  className="text-blue-400 hover:text-blue-300 font-bold uppercase tracking-widest flex items-center gap-1"
+                >
+                  <User className="w-3 h-3" /> Tambah / Kelola
+                </button>
+              </label>
+              <div className="relative">
+                <select
+                  value={observer}
+                  onChange={(e) => setObserver(e.target.value)}
+                  className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white appearance-none outline-none focus:border-blue-500/50"
+                >
+                  <option value="">Pilih Supervisor...</option>
+                  {observers.map((o) => (
+                    <option key={o.id} value={o.nama}>
+                      {o.nama}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
-          <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
-            <DocumentationUploader images={images} setImages={setImages} />
+        </div>
+
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 space-y-8">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2">
+            📋 Indikator Kepatuhan (Checklist)
+          </h2>
+          <div className="space-y-8">
+            {checklistItems.map((sec) => (
+              <div key={sec.section} className="space-y-4">
+                <div className="flex items-center gap-3 border-b border-white/10 pb-2.5 px-1">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)]" />
+                  <h3 className="text-xs sm:text-sm font-black uppercase tracking-[0.2em] text-blue-400">
+                    {sec.section}
+                  </h3>
+                </div>
+                <div className="space-y-4">
+                  {sec.items.map((item) => {
+                    const idx = allChecklistItems.findIndex((q) => q.id === item.id);
+                    const selected = data[item.id];
+                    let borderLeftColor = "border-l-transparent";
+                    if (selected === "na") {
+                      borderLeftColor = "border-l-slate-500";
+                    } else if (selected === "ya") {
+                      borderLeftColor = "border-l-blue-500";
+                    } else if (selected === "tidak") {
+                      borderLeftColor = "border-l-red-500";
+                    }
+
+                    return (
+                      <div
+                        key={item.id}
+                        className={`bg-white/5 p-5 sm:p-6 rounded-[24px] border border-white/5 border-l-4 ${borderLeftColor} transition-colors duration-300 relative overflow-hidden group`}
+                      >
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 relative z-10">
+                          <div className="flex gap-4 items-start">
+                            <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border transition-all duration-500 bg-white/5 border-white/10 text-slate-400 font-black text-xs">
+                              {idx + 1}
+                            </div>
+                            <h4 className="text-sm font-bold text-white leading-relaxed pt-1">
+                              {item.label}
+                            </h4>
+                          </div>
+                          <div className="flex p-1.5 bg-white/5 rounded-2xl border border-white/5 w-fit self-end md:self-center shrink-0">
+                            {["ya", "tidak", "na"].map((choice) => {
+                              let activeClass = "";
+                              if (choice === "na") {
+                                activeClass =
+                                  "bg-slate-500 text-white shadow-[0_0_15px_rgba(100,116,139,0.3)] transform scale-105";
+                              } else if (choice === "ya") {
+                                activeClass =
+                                  "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] transform scale-105";
+                              } else {
+                                activeClass =
+                                  "bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)] transform scale-105";
+                              }
+                              return (
+                                <button
+                                  key={choice}
+                                  type="button"
+                                  onClick={() => toggleItem(item.id, choice as any)}
+                                  className={`px-5 sm:px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${
+                                    selected === choice
+                                      ? activeClass
+                                      : "bg-transparent text-slate-400 hover:bg-white/10"
+                                  }`}
+                                >
+                                  {choice === "na" ? "N/A" : choice}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
+        </div>
+
+        <LiveStatisticsCard
+          totalDinilai={stats.dinilai}
+          totalPatuh={stats.patuh}
+          totalTidakPatuh={stats.dinilai - stats.patuh}
+          persentase={stats.persentase}
+          statusText={stats.status}
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
-              ✍️ TANDA TANGAN DIGITAL
+            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
+              📝 Temuan Audit
             </h2>
-            <DigitalSignatureSection
-              ref={sigRef}
-              pjName={pjName}
-              setPjName={setPjName}
-              pjLabel="PJ RUANGAN"
+            <textarea
+              value={temuan}
+              onChange={(e) => setTemuan(e.target.value)}
+              placeholder="Tuliskan temuan audit..."
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600"
             />
           </div>
-          <button
-            type="submit"
-            disabled={isSubmitting || !observer || stats.dinilai === 0}
-            className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg disabled:opacity-50"
-          >
-            {isSubmitting ? (
-              <RefreshCw className="w-5 h-5 animate-spin" />
-            ) : (
-              <Save className="w-5 h-5" />
-            )}
-            <span>{isEditMode ? 'Update Data Audit' : 'Simpan Data Audit'}</span>
-          </button>
+          <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
+              💡 Rekomendasi
+            </h2>
+            <textarea
+              value={rekomendasi}
+              onChange={(e) => setRekomendasi(e.target.value)}
+              placeholder="Tuliskan rekomendasi tindak lanjut..."
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600"
+            />
+          </div>
         </div>
+
+        <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
+          <DocumentationUploader images={images} setImages={setImages} />
+        </div>
+
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+          <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
+            ✍️ TANDA TANGAN DIGITAL
+          </h2>
+          <DigitalSignatureSection
+            ref={sigRef}
+            pjName={pjName}
+            setPjName={setPjName}
+            pjLabel="PJ RUANGAN"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={isSubmitting || !observer || stats.dinilai === 0}
+          className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg disabled:opacity-50"
+        >
+          {isSubmitting ? (
+            <RefreshCw className="w-5 h-5 animate-spin" />
+          ) : (
+            <Save className="w-5 h-5" />
+          )}
+          <span>{isEditMode ? 'Update Data Audit' : 'Simpan Data Audit'}</span>
+        </button>
       </form>
+
       <AnimatePresence>
         {isObserverModalOpen && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
@@ -773,6 +902,7 @@ export default function MonitoringCSSDPage() {
     </div>
   );
 }
+
 MonitoringCSSDPage.getLayout = function getLayout(page: ReactElement) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };

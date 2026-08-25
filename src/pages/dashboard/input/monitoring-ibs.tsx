@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { supabase, broadcastChannelMessage } from "@/lib/supabase";
 import { uploadImagesToSupabase } from "@/lib/upload";
 import {
   DocumentationUploader,
@@ -70,44 +70,76 @@ export default function MonitoringIBSPage() {
       const params = new URLSearchParams(window.location.search);
       const id = params.get("id");
       const mode = params.get("mode");
-      if (id && mode === "edit") {
+      if (id && (mode === "edit" || params.get("edit") === "true")) {
         setIsEditMode(true);
         setEditId(id);
         const loadEditData = async () => {
-          const { data: ed, error } = await supabase
+          let ed: any = null;
+          const { data: sessionData } = await supabase
             .from("audit_sessions")
             .select("*")
             .eq("id", id)
-            .single();
-          if (ed && !error) {
-            if (ed.tanggal_waktu) setStartTime(new Date(ed.tanggal_waktu));
-            if (ed.observer) setObserver(ed.observer);
-            
+            .maybeSingle();
+          if (sessionData) {
+            ed = sessionData;
+          } else {
+            const { data: nativeData } = await supabase
+              .from(tableName || "audit_ruangan_ibs")
+              .select("*")
+              .eq("id", id)
+              .maybeSingle();
+            if (nativeData) ed = nativeData;
+          }
+
+          if (ed) {
+            if (ed.tanggal_waktu || ed.waktu) setStartTime(new Date(ed.tanggal_waktu || ed.waktu));
+            if (ed.observer || ed.supervisor) setObserver(ed.observer || ed.supervisor);
 
             const indicatorsData = ed.data_indikator || ed.checklist_json || {};
-            if (indicatorsData.temuan) setTemuan(indicatorsData.temuan);
-            if (indicatorsData.rekomendasi) setRekomendasi(indicatorsData.rekomendasi);
+            if (indicatorsData.temuan || ed.temuan) setTemuan(indicatorsData.temuan || ed.temuan || "");
+            if (indicatorsData.rekomendasi || ed.rekomendasi) setRekomendasi(indicatorsData.rekomendasi || ed.rekomendasi || "");
             
-            const displayPjName = indicatorsData.nama_pj || indicatorsData.nama_pj_ruangan || ed.nama_pj_ruangan || "";
+            const displayPjName = indicatorsData.nama_pj || indicatorsData.nama_pj_ruangan || ed.nama_pj_ruangan || ed.nama_pj || "";
             if (typeof setPjName === "function") setPjName(displayPjName);
 
             try {
-              setData((prev: any) => {
-                const updated = { ...prev };
-                Object.keys(updated).forEach((key) => {
-                  if (indicatorsData[key] !== undefined) {
-                    updated[key] = indicatorsData[key];
+              const parsedData: Record<string, AuditStatus> = {};
+              const parsedNotes: Record<string, string> = {};
+
+              checklistItems.forEach((item) => {
+                const candidates = [
+                  item.id,
+                  item.key,
+                  String(item.id),
+                  Number(item.id)
+                ];
+                for (const c of candidates) {
+                  if (c !== undefined && indicatorsData[c] !== undefined) {
+                    const val = indicatorsData[c];
+                    if (typeof val === "string" && ["ya", "tidak", "na"].includes(val.toLowerCase())) {
+                      parsedData[item.id] = val.toLowerCase() as AuditStatus;
+                    } else if (typeof val === "boolean") {
+                      parsedData[item.id] = val ? "ya" : "tidak";
+                    } else if (val && typeof val === "object") {
+                      if (val.status) parsedData[item.id] = val.status.toLowerCase() as AuditStatus;
+                      if (val.keterangan) parsedNotes[item.id] = val.keterangan;
+                    }
+                    break;
                   }
-                });
-                return updated;
+                }
               });
+
+              setData((prev: any) => ({ ...prev, ...parsedData }));
+              setNotes((prev: any) => ({ ...prev, ...parsedNotes }));
             } catch (err) {}
 
-            if (indicatorsData.notes_json) setNotes(indicatorsData.notes_json);
+            if (indicatorsData.notes_json) {
+              setNotes((prev) => ({ ...prev, ...indicatorsData.notes_json }));
+            }
 
             // Prefill signatures
             setTimeout(() => {
-              const t1 = ed.ttd_pj_ruangan || indicatorsData.ttd_pj || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
+              const t1 = ed.ttd_pj_ruangan || ed.ttd_pj || indicatorsData.ttd_pj || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
               const t2 = ed.ttd_ipcn || indicatorsData.ttd_ipcn || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
               if (t1 && sigRef.current?.setPjSignature) {
                 sigRef.current.setPjSignature(t1);
@@ -118,9 +150,11 @@ export default function MonitoringIBSPage() {
             }, 800);
 
             // Prefill documentation
-            if (indicatorsData.dokumentasi) {
+            const docs = ed.foto || indicatorsData.dokumentasi;
+            if (docs) {
+              const docArr = Array.isArray(docs) ? docs : [docs];
               setImages(
-                indicatorsData.dokumentasi.map((url: string) => ({
+                docArr.map((url: string) => ({
                   url,
                   file: null as any,
                 }))
@@ -213,12 +247,15 @@ export default function MonitoringIBSPage() {
   const stats = useMemo(() => {
     let patuh = 0;
     let dinilai = 0;
-    Object.values(data).forEach((val) => {
-      if (val === "ya") {
-        patuh++;
-        dinilai++;
-      } else if (val === "tidak") {
-        dinilai++;
+    checklistItems.forEach((item) => {
+      const val = data[item.id];
+      if (!val || val === "na") return;
+      dinilai++;
+      const isNeg = Boolean(item.isNegative || item.id === 'e_debu' || item.key === 'e_debu');
+      if (isNeg) {
+        if (val === "tidak") patuh++;
+      } else {
+        if (val === "ya") patuh++;
       }
     });
     const persentase = dinilai > 0 ? Math.round((patuh / dinilai) * 100) : 0;
@@ -260,7 +297,7 @@ export default function MonitoringIBSPage() {
           keterangan: notes[key] || "",
         };
       });
-      const recordId = crypto.randomUUID();
+      const recordId = isEditMode && editId ? editId : crypto.randomUUID();
       const sessionPayloadStats = {
         id: recordId,
         indikator_id: "monitoring_ibs",
@@ -284,8 +321,15 @@ export default function MonitoringIBSPage() {
           nama_pj_ruangan: pjName,
         }
       };
-      const { error: sessionError } = await supabase.from("audit_sessions").insert([sessionPayloadStats]);
-      if (sessionError) throw sessionError;
+
+      if (isEditMode && editId) {
+        await supabase.from("audit_sessions").upsert([sessionPayloadStats], { onConflict: "id" });
+        await supabase.from("audit_details").delete().eq("session_id", recordId);
+      } else {
+        const { error: sessionError } = await supabase.from("audit_sessions").insert([sessionPayloadStats]);
+        if (sessionError) throw sessionError;
+      }
+
       // insert to audit_details
       const detailPayloads = Object.keys(data).map((key) => ({
         session_id: recordId,
@@ -294,9 +338,11 @@ export default function MonitoringIBSPage() {
         jawaban: String(data[key] || ""),
       }));
       await supabase.from("audit_details").insert(detailPayloads);
-      // Safe native table insert
+
+      // Safe native table insert / upsert
       try {
         const sessionPayload = {
+          id: recordId,
           waktu: startTime?.toISOString() || new Date().toISOString(),
           checklist_json: payloadIndikator,
           persentase: stats.persentase,
@@ -305,14 +351,25 @@ export default function MonitoringIBSPage() {
           ttd_pj,
           ttd_ipcn,
           foto: uploadedUrls,
+          nama_pj_ruangan: pjName,
           created_at: new Date().toISOString(),
         };
-        await supabase
-          .from(tableName || "audit_ruangan_ibs")
-          .insert([sessionPayload]);
+        if (isEditMode && editId) {
+          await supabase.from(tableName || "audit_ruangan_ibs").upsert([sessionPayload], { onConflict: "id" });
+        } else {
+          await supabase.from(tableName || "audit_ruangan_ibs").insert([sessionPayload]);
+        }
       } catch (err) {
         console.warn("Failed to insert native table", err);
       }
+
+      // Broadcast real-time update
+      await broadcastChannelMessage(
+        `changes_${tableName}`,
+        'audit_submitted',
+        { indikator_id: 'monitoring_ibs', tableName, id: recordId }
+      );
+
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
@@ -423,24 +480,8 @@ export default function MonitoringIBSPage() {
           <div className="space-y-4">
             {checklistItems.map((item, idx) => {
               const selected = data[item.id];
-              const negativeKeywords = [
-                "berkarat",
-                "kotor",
-                "debu",
-                "genangan",
-                "tercampur",
-                "bercampur",
-                "penumpukan",
-                "bocor",
-                "jarum",
-                "menumpuk",
-                "sampah medis dan non medis",
-                "pembuangan sampah infeksius",
-              ];
-              const isNegativeQuestion = negativeKeywords.some((kw) =>
-                (item.label || (item as any).desc || "")
-                  .toLowerCase()
-                  .includes(kw),
+              const isNegativeQuestion = Boolean(
+                item.isNegative || item.id === "e_debu" || item.key === "e_debu"
               );
               let borderLeftColor = "border-l-transparent";
               if (selected === "na") {

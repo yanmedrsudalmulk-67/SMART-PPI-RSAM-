@@ -74,7 +74,7 @@ export default function BundlesMenuPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {group.items.map((item, iDx) => (
                 <motion.div key={item.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: (gIdx * 0.1) + (iDx * 0.05) }}
-                  className="bg-white dark:bg-white/5 backdrop-blur-sm p-6 rounded-[2rem] border border-slate-200 dark:border-white/5 flex flex-col justify-between group hover:border-blue-500/30 transition-all shadow-sm"
+                  className="bg-gradient-to-b from-white/95 via-white/90 to-slate-50/90 dark:from-[#111C36] dark:via-[#0D152A] dark:to-[#080D1A] backdrop-blur-md p-6 rounded-[2rem] border border-slate-200/80 dark:border-white/10 flex flex-col justify-between group hover:border-blue-500/40 shadow-[0_12px_24px_-6px_rgba(0,0,0,0.12),0_6px_12px_-4px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.9),0_10px_20px_-6px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] hover:-translate-y-1.5 hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.2),0_12px_24px_-6px_rgba(0,0,0,0.15),inset_0_1px_1.5px_rgba(255,255,255,0.9)] dark:hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.95),0_16px_30px_-8px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.2)] transition-all duration-300 transform-gpu"
                 >
                   <div className="space-y-4 mb-6">
                     <div className={`p-3 rounded-2xl inline-block group-hover:scale-110 transition-transform ${group.bg.replace('/10', '')} shadow-lg shadow-blue-500/10`}>

@@ -486,7 +486,7 @@ export default function LaboratoriumInputPage() {
     }
   };
   return (
-    <div className="max-w-4xl mx-auto pb-40">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32">
       <AnimatePresence>
         {showToast && (
           <motion.div
@@ -522,7 +522,7 @@ export default function LaboratoriumInputPage() {
           <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 border-b border-slate-200 dark:border-white/5 pb-4">
             1. INFORMASI UMUM
           </h2>
-          <div className="grid sm:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <div className="space-y-3">
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
                 Waktu Audit
@@ -557,7 +557,7 @@ export default function LaboratoriumInputPage() {
                 </option>
               </select>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-3 sm:col-span-2 lg:col-span-1">
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex justify-between items-center">
                 Supervisor
                 <button
@@ -585,16 +585,19 @@ export default function LaboratoriumInputPage() {
             </div>
           </div>
         </div>
-        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
+        <div className="bg-white/5 p-5 sm:p-6 lg:p-8 rounded-[24px] border border-white/5">
           <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
             📋 Indikator Kepatuhan
           </h2>
           <div className="space-y-8">
             {checklistItems.map((section) => (
               <div key={section.section} className="space-y-4">
-                <h2 className="text-xs font-black uppercase tracking-[0.2em] text-blue-400/80 mb-4 px-2">
-                  {section.section}
-                </h2>
+                <div className="flex items-center gap-3 border-b border-white/10 pb-2.5 px-1">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)]" />
+                  <h3 className="text-xs sm:text-sm font-black uppercase tracking-[0.2em] text-blue-400">
+                    {section.section}
+                  </h3>
+                </div>
                 <div className="grid gap-4">
                   {section.items.map((item) => {
                     const selectedOpt = data[item.id];
@@ -610,30 +613,32 @@ export default function LaboratoriumInputPage() {
                     return (
                       <div
                         key={item.id}
-                        className={`p-6 rounded-[24px] border border-white/5 group hover:border-blue-500/30 transition-all duration-300 border-l-4 ${activeColorLine}`}
+                        className={`p-5 sm:p-6 rounded-[20px] sm:rounded-[24px] border border-white/5 group hover:border-blue-500/30 transition-all duration-300 border-l-4 ${activeColorLine}`}
                       >
-                        <h3 className="text-sm font-bold text-white mb-4 group-hover:text-blue-400 transition-colors">
-                          {item.label}
-                        </h3>
-                        <div className="grid grid-cols-3 gap-3">
-                          {["ya", "tidak", "na"].map((choice) => (
-                            <button
-                              type="button"
-                              key={choice}
-                              onClick={() => toggleItem(item.id, choice as any)}
-                              className={`py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                                data[item.id] === choice
-                                  ? choice === "ya"
-                                    ? "bg-blue-600 text-white border-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.3)]"
-                                    : choice === "tidak"
-                                      ? "bg-red-600 text-white border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.3)]"
-                                      : "bg-slate-600 text-white border-slate-500 shadow-[0_0_20px_rgba(100,116,139,0.3)]"
-                                  : "bg-white/5 text-slate-400 border-transparent hover:bg-white/10"
-                              }`}
-                            >
-                              {choice === "na" ? "N/A" : choice}
-                            </button>
-                          ))}
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+                          <h4 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors leading-relaxed">
+                            {item.label}
+                          </h4>
+                          <div className="flex p-1.5 bg-slate-900/80 rounded-2xl border border-white/10 w-full sm:w-fit self-end md:self-center shrink-0">
+                            {["ya", "tidak", "na"].map((choice) => (
+                              <button
+                                type="button"
+                                key={choice}
+                                onClick={() => toggleItem(item.id, choice as any)}
+                                className={`flex-1 sm:flex-initial px-5 sm:px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${
+                                  data[item.id] === choice
+                                    ? choice === "ya"
+                                      ? "bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] transform scale-105"
+                                      : choice === "tidak"
+                                        ? "bg-red-600 text-white shadow-[0_0_20px_rgba(239,68,68,0.3)] transform scale-105"
+                                        : "bg-slate-600 text-white shadow-[0_0_20px_rgba(100,116,139,0.3)] transform scale-105"
+                                    : "bg-transparent text-slate-400 hover:bg-white/10"
+                                }`}
+                              >
+                                {choice === "na" ? "N/A" : choice}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     );

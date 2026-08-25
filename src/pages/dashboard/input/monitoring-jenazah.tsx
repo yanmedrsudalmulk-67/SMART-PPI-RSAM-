@@ -356,7 +356,7 @@ export default function MonitoringJenazahPage() {
     }
   };
   return (
-    <div className="max-w-7xl mx-auto pb-32">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32">
       <AnimatePresence>
         {showToast && (
           <motion.div
@@ -389,133 +389,136 @@ export default function MonitoringJenazahPage() {
       </div>
       <form
         onSubmit={handleSubmit}
-        className="mt-8 grid xl:grid-cols-12 gap-8 items-start"
+        className="mt-8 space-y-8 w-full"
       >
-        <div className="xl:col-span-8 space-y-8">
-          <div className="bg-white dark:bg-[#111827] shadow-sm p-6 lg:p-8 rounded-[2rem] border border-slate-200 dark:border-white/5">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-white/5 pb-4 mb-6">
-              1. INFORMASI UMUM
-            </h2>
-            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
-              <div className="space-y-3">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
-                  Waktu Audit
-                </label>
-                <input
-                  type="datetime-local"
-                  value={
-                    startTime
-                      ? new Date(
-                          startTime.getTime() -
-                            startTime.getTimezoneOffset() * 60000,
-                        )
-                          .toISOString()
-                          .slice(0, 16)
-                      : ""
-                  }
-                  onChange={(e) => setStartTime(new Date(e.target.value))}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-slate-500/50 [color-scheme:light] dark:[color-scheme:dark]"
-                />
-              </div>
-              <div className="space-y-3">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
-                  Ruangan
-                </label>
-                <select
-                  value={ruangan}
-                  onChange={(e) => setRuangan(e.target.value)}
-                  required
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-white outline-none"
+        <div className="bg-white dark:bg-[#111827] shadow-sm p-6 lg:p-8 rounded-[2rem] border border-slate-200 dark:border-white/5">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-white/5 pb-4 mb-6">
+            1. INFORMASI UMUM
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
+                Waktu Audit
+              </label>
+              <input
+                type="datetime-local"
+                value={
+                  startTime
+                    ? new Date(
+                        startTime.getTime() -
+                          startTime.getTimezoneOffset() * 60000,
+                      )
+                        .toISOString()
+                        .slice(0, 16)
+                    : ""
+                }
+                onChange={(e) => setStartTime(new Date(e.target.value))}
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-slate-500/50 [color-scheme:light] dark:[color-scheme:dark]"
+              />
+            </div>
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
+                Ruangan
+              </label>
+              <select
+                value={ruangan}
+                onChange={(e) => setRuangan(e.target.value)}
+                required
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-white outline-none"
+              >
+                <option value="Kamar Jenazah" className="dark:bg-slate-900">
+                  Kamar Jenazah
+                </option>
+              </select>
+            </div>
+            <div className="space-y-3 sm:col-span-2 lg:col-span-1">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex justify-between items-center">
+                Supervisor
+                <button
+                  type="button"
+                  onClick={() => setIsObserverModalOpen(true)}
+                  className="text-blue-400 hover:text-blue-300 font-bold uppercase tracking-widest flex items-center gap-1"
                 >
-                  <option value="Kamar Jenazah" className="dark:bg-slate-900">
-                    Kamar Jenazah
-                  </option>
+                  <User className="w-3 h-3" /> Tambah / Kelola
+                </button>
+              </label>
+              <div className="relative">
+                <select
+                  value={observer}
+                  onChange={(e) => setObserver(e.target.value)}
+                  className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white appearance-none outline-none focus:border-blue-500/50"
+                >
+                  <option value="">Pilih Supervisor...</option>
+                  {observers.map((o) => (
+                    <option key={o.id} value={o.nama}>
+                      {o.nama}
+                    </option>
+                  ))}
                 </select>
-              </div>
-              <div className="space-y-3 sm:col-span-2 md:col-span-1">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex justify-between items-center">
-                  Supervisor
-                  <button
-                    type="button"
-                    onClick={() => setIsObserverModalOpen(true)}
-                    className="text-blue-400 hover:text-blue-300 font-bold uppercase tracking-widest flex items-center gap-1"
-                  >
-                    <User className="w-3 h-3" /> Tambah / Kelola
-                  </button>
-                </label>
-                <div className="relative">
-                  <select
-                    value={observer}
-                    onChange={(e) => setObserver(e.target.value)}
-                    className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white appearance-none outline-none focus:border-blue-500/50"
-                  >
-                    <option value="">Pilih Supervisor...</option>
-                    {observers.map((o) => (
-                      <option key={o.id} value={o.nama}>
-                        {o.nama}
-                      </option>
-                    ))}
-                  </select>
-                </div>
               </div>
             </div>
           </div>
-          <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
-              📋 Indikator Kepatuhan
-            </h2>
-            <div className="space-y-8">
-              {checklistItems.map((section) => (
-                <div key={section.section} className="space-y-4">
-                  <h2 className="text-xs font-black uppercase tracking-[0.2em] text-blue-400/80 mb-4 px-2">
+        </div>
+        <div className="bg-white/5 p-5 sm:p-6 lg:p-8 rounded-[24px] border border-white/5">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
+            📋 Indikator Kepatuhan
+          </h2>
+          <div className="space-y-8">
+            {checklistItems.map((section) => (
+              <div key={section.section} className="space-y-4">
+                <div className="flex items-center gap-3 border-b border-white/10 pb-2.5 px-1">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)]" />
+                  <h3 className="text-xs sm:text-sm font-black uppercase tracking-[0.2em] text-blue-400">
                     {section.section}
-                  </h2>
-                  <div className="grid gap-4">
-                    {section.items.map((item) => {
-                      const selectedOpt = data[item.id];
-                      const activeColorLine =
-                        selectedOpt === "ya"
-                          ? "border-l-blue-500 bg-blue-500/5"
-                          : selectedOpt === "tidak"
-                            ? "border-l-red-500 bg-red-500/5"
-                            : selectedOpt === "na"
-                              ? "border-l-slate-400 bg-slate-500/5"
-                              : "border-l-transparent";
+                  </h3>
+                </div>
+                <div className="grid gap-4">
+                  {section.items.map((item) => {
+                    const selectedOpt = data[item.id];
+                    const activeColorLine =
+                      selectedOpt === "ya"
+                        ? "border-l-blue-500 bg-blue-500/5"
+                        : selectedOpt === "tidak"
+                          ? "border-l-red-500 bg-red-500/5"
+                          : selectedOpt === "na"
+                            ? "border-l-slate-400 bg-slate-500/5"
+                            : "border-l-transparent bg-white/5";
 
-                      return (
-                        <div
-                          key={item.id}
-                          className={`bg-white/5 p-6 rounded-[24px] border border-white/5 group hover:border-blue-500/30 transition-all duration-300 border-l-4 relative overflow-hidden ${activeColorLine}`}
-                        >
-                          <h3 className="text-sm font-bold text-white mb-4 group-hover:text-blue-400 transition-colors">
+                    return (
+                      <div
+                        key={item.id}
+                        className={`p-5 sm:p-6 rounded-[20px] sm:rounded-[24px] border border-white/5 group hover:border-blue-500/30 transition-all duration-300 border-l-4 relative overflow-hidden ${activeColorLine}`}
+                      >
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+                          <h4 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors leading-relaxed">
                             {item.label}
-                          </h3>
-                          <div className="grid grid-cols-3 gap-3">
+                          </h4>
+                          <div className="flex p-1.5 bg-slate-900/80 rounded-2xl border border-white/10 w-full sm:w-fit self-end md:self-center shrink-0">
                             {[
                               {
                                 id: "ya",
                                 label: "Ya",
-                                activeClass: "bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-500/20",
+                                activeClass: "bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] transform scale-105",
                               },
                               {
                                 id: "tidak",
                                 label: "Tidak",
-                                activeClass: "bg-red-600 text-white border-red-500 shadow-lg shadow-red-500/20",
+                                activeClass: "bg-red-600 text-white shadow-[0_0_20px_rgba(239,68,68,0.3)] transform scale-105",
                               },
                               {
                                 id: "na",
                                 label: "N/A",
-                                activeClass: "bg-slate-500 text-white border-slate-400 shadow-lg shadow-slate-500/20",
+                                activeClass: "bg-slate-600 text-white shadow-[0_0_20px_rgba(100,116,139,0.3)] transform scale-105",
                               },
                             ].map((btn) => (
                               <button
                                 type="button"
                                 key={btn.id}
                                 onClick={() => toggleItem(item.id, btn.id as any)}
-                                className={`py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                                className={`flex-1 sm:flex-initial px-5 sm:px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${
                                   data[item.id] === btn.id
                                     ? btn.activeClass
-                                    : "bg-white/5 text-slate-400 border-transparent hover:bg-white/10"
+                                    : "bg-transparent text-slate-400 hover:bg-white/10"
                                 }`}
                               >
                                 {btn.label}
@@ -523,71 +526,71 @@ export default function MonitoringJenazahPage() {
                             ))}
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-          <LiveStatisticsCard
-            totalDinilai={stats.dinilai}
-            totalPatuh={stats.patuh}
-            totalTidakPatuh={stats.dinilai - stats.patuh}
-            persentase={stats.persentase}
-            statusText={stats.status}
-          />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-              <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
-                📝 Temuan Audit
-              </h2>
-              <textarea
-                value={temuan}
-                onChange={(e) => setTemuan(e.target.value)}
-                placeholder="Tuliskan temuan audit..."
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600"
-              />
-            </div>
-            <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-              <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
-                💡 Rekomendasi
-              </h2>
-              <textarea
-                value={rekomendasi}
-                onChange={(e) => setRekomendasi(e.target.value)}
-                placeholder="Tuliskan rekomendasi tindak lanjut..."
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600"
-              />
-            </div>
-          </div>
-          <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
-            <DocumentationUploader images={images} setImages={setImages} />
-          </div>
+        </div>
+        <LiveStatisticsCard
+          totalDinilai={stats.dinilai}
+          totalPatuh={stats.patuh}
+          totalTidakPatuh={stats.dinilai - stats.patuh}
+          persentase={stats.persentase}
+          statusText={stats.status}
+        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
-              ✍️ TANDA TANGAN DIGITAL
+            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
+              📝 Temuan Audit
             </h2>
-            <DigitalSignatureSection
-              ref={sigRef}
-              pjName={pjName}
-              setPjName={setPjName}
-              pjLabel="PJ RUANGAN"
+            <textarea
+              value={temuan}
+              onChange={(e) => setTemuan(e.target.value)}
+              placeholder="Tuliskan temuan audit..."
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600"
             />
           </div>
-          <button
-            type="submit"
-            disabled={isSubmitting || !observer || stats.dinilai === 0}
-            className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg disabled:opacity-50"
-          >
-            {isSubmitting ? (
-              <RefreshCw className="w-5 h-5 animate-spin" />
-            ) : (
-              <Save className="w-5 h-5" />
-            )}
-            <span>{isEditMode ? 'Update Data Audit' : 'Simpan Data Audit'}</span>
-          </button>
+          <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
+              💡 Rekomendasi
+            </h2>
+            <textarea
+              value={rekomendasi}
+              onChange={(e) => setRekomendasi(e.target.value)}
+              placeholder="Tuliskan rekomendasi tindak lanjut..."
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600"
+            />
+          </div>
         </div>
+        <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
+          <DocumentationUploader images={images} setImages={setImages} />
+        </div>
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+          <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
+            ✍️ TANDA TANGAN DIGITAL
+          </h2>
+          <DigitalSignatureSection
+            ref={sigRef}
+            pjName={pjName}
+            setPjName={setPjName}
+            pjLabel="PJ RUANGAN"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={isSubmitting || !observer || stats.dinilai === 0}
+          className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg disabled:opacity-50"
+        >
+          {isSubmitting ? (
+            <RefreshCw className="w-5 h-5 animate-spin" />
+          ) : (
+            <Save className="w-5 h-5" />
+          )}
+          <span>{isEditMode ? 'Update Data Audit' : 'Simpan Data Audit'}</span>
+        </button>
       </form>
       <AnimatePresence>
         {isObserverModalOpen && (

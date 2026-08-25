@@ -27,94 +27,213 @@ import { LiveStatisticsCard } from "@/components/LiveStatisticsCard";
 import DigitalSignatureSection, {
   DigitalSignatureRef,
 } from "@/components/DigitalSignatureSection";
-const checklistItems = [
+const checklistGroups = [
   {
-    section: "A. KONTROL LINGKUNGAN",
+    category: "I. KONTROL LINGKUNGAN",
+    section: "A. Lingkungan umum",
     items: [
       {
-        id: "a1",
+        id: "rad_i_a_1",
         label:
-          "Permukaan lingkungan termasuk troli, meja, rak, perlengkapan, hiasan, dan tumbuhan bebas dari debu/kotoran",
+          "Permukaan lingkungan termasuk troli, meja, rak, perlengkapan, hiasan, dan tumbuhan bebas dari debu, kotoran, dll",
       },
       {
-        id: "a2",
-        label: "Kipas angin, AC, dan langit-langit bersih dan bebas jamur",
-      },
-      { id: "a3", label: "Langit-langit bersih dari noda" },
-      {
-        id: "a4",
-        label: "Benda sesuai disimpan di bawah wastafel dalam wadah tertutup",
+        id: "rad_i_a_2",
+        label: "Kipas angin, AC, dan langit – langit bersih dan bebas jamur",
       },
       {
-        id: "a5",
+        id: "rad_i_a_3",
+        label: "Langit – langit bersih dari noda",
+      },
+      {
+        id: "rad_i_a_4",
         label:
-          "Petugas mengetahui jadwal rutin disinfeksi lingkungan dengan disinfektan RS",
+          "Benda yang sesuai disimpan di bawah wastapel ( termasuk cairan pembersih, cairan kimia, dalam wadah tertutup )",
       },
-      { id: "a6", label: "Tersedia fasilitas memadai untuk kebersihan tangan" },
-      { id: "a7", label: "Tempat cuci tangan tidak digunakan mencuci alat" },
-      { id: "a8", label: "Poster kebersihan tangan tersedia di area petugas" },
       {
-        id: "a9",
-        label: "Tersedia handrub, botol baik, ada tanggal buka & expired",
+        id: "rad_i_a_5",
+        label:
+          "Petugas tahu jadwal rutin disinfeksi permukaan lingkungan dengan disinfektan yang disetujui rumah sakit",
       },
-      { id: "a10", label: "Cek kemampuan petugas melakukan kebersihan tangan" },
     ],
   },
   {
-    section: "B. MANAJEMEN LIMBAH",
+    category: "I. KONTROL LINGKUNGAN",
+    section: "B. Fasilitas kebersihan tangan",
     items: [
-      { id: "b1", label: "Petugas tahu prosedur pemisahan limbah" },
-      { id: "b2", label: "Limbah klinis umum dibuang di kantung plastik" },
-      { id: "b3", label: "Limbah berdarah dibuang di kantung biohazard" },
-      { id: "b4", label: "Tempat sampah, tutup, pedal kaki berfungsi baik" },
-      { id: "b5", label: "Tidak ada kantung berlebih isi" },
-      { id: "b6", label: "Tersedia spill kit tumpahan darah" },
+      {
+        id: "rad_i_b_1",
+        label: "Tersedia fasilitas yang memadai untuk kebersihan tangan",
+      },
+      {
+        id: "rad_i_b_2",
+        label: "Tempat mencuci tangan tidak digunakan untuk memcuci alat",
+      },
+      {
+        id: "rad_i_b_3",
+        label:
+          "Poster yang menganjurkan kebersihan tangan tersedia dan tersedia di area petugas",
+      },
+      {
+        id: "rad_i_b_4",
+        label:
+          "Tersedia hand rub, botol berfungsi baik, ada tanggal saat botol dibuka dan tanggal expired",
+      },
+      {
+        id: "rad_i_b_5",
+        label:
+          "Cek kemampuan melakukan kebersihan tangan pada petugas kesehatan ( termasuk dokter )",
+      },
     ],
   },
   {
-    section: "C. PRAKTIK KONTROL INFEKSI",
+    category: "II. MANAJEMEN LIMBAH",
+    section: "A. Tindakan umum",
     items: [
-      { id: "c1", label: "Petugas berkuku pendek, bersih, tidak diwarnai" },
       {
-        id: "c2",
+        id: "rad_ii_a_1",
+        label: "Petugas harus tahu prosedur pemisahan limbah",
+      },
+      {
+        id: "rad_ii_a_2",
+        label: "Limbah klinis umum dibuang di dalam kantung plastik",
+      },
+      {
+        id: "rad_ii_a_3",
+        label:
+          "Limbah klinis yang tercampur darah, terkena darah, atau berisi darah segar dibuang dalam kantung biohazard",
+      },
+      {
+        id: "rad_ii_a_4",
+        label:
+          "Tempat sampah termasuk tutup dan pedal, pedal kaki bekerja dengan baik",
+      },
+      {
+        id: "rad_ii_a_5",
+        label: "Tidak ada kantung dengan isi berlebih",
+      },
+      {
+        id: "rad_ii_a_6",
+        label: "Tersedia spill kit untuk tumpahan darah",
+      },
+    ],
+  },
+  {
+    category: "III. PRAKTIK KONTROL INSPEKSI",
+    section: "A. Kebersihan tangan",
+    items: [
+      {
+        id: "rad_iii_a_1",
+        label: "Petugas harus berkuku pendek, bersih, dan tidak diwarnai",
+      },
+      {
+        id: "rad_iii_a_2",
         label: "Petugas melakukan kebersihan tangan sesuai indikasi",
       },
-      { id: "c3", label: "Tidak menangani barang umum setelah kontak pasien" },
       {
-        id: "c4",
-        label: "Sarung tangan digunakan bila risiko kontak biohazard",
+        id: "rad_iii_a_3",
+        label:
+          "Petugas tidak menangani barang umum ( seperti gagang pintu dan telepon )",
       },
-      { id: "c5", label: "Gown berlengan panjang digunakan bila perlu" },
-      { id: "c6", label: "Masker/pelindung mata bila risiko percikan" },
-      { id: "c7", label: "Respirator N95 digunakan bila risiko airborne" },
-      { id: "c8", label: "Fit test N95 dilakukan sebelum penggunaan" },
-      { id: "c9", label: "APD dilepas di area kerja sesuai prosedur" },
+    ],
+  },
+  {
+    category: "III. PRAKTIK KONTROL INSPEKSI",
+    section: "B. Alat pelindung diri",
+    items: [
       {
-        id: "c10",
-        label: "Disinfeksi lead apron/mobile lead screen setiap hari",
-      },
-      { id: "c11", label: "Lead apron/mobile lead screen bersih visual" },
-      {
-        id: "c12",
-        label: "Alat pasien (mamogram dll) didisinfeksi tiap ganti pasien",
-      },
-      { id: "c13", label: "Makanan tidak dibawa ke ruang X-Ray" },
-      { id: "c14", label: "Tidak ada bukti makan/minum di area kerja" },
-      { id: "c15", label: "Obat dan alat kontras tidak kadaluarsa" },
-      {
-        id: "c16",
-        label: "Tersedia alat radiologi mobile untuk pasien isolasi",
+        id: "rad_iii_b_1",
+        label:
+          "Sarung tangan digunakan saat ada risiko kontak langsung dengan zat biohazard",
       },
       {
-        id: "c17",
-        label: "Ada alur pengambilan foto & laporan pasien infeksi khusus",
+        id: "rad_iii_b_2",
+        label:
+          "Gown berlengan panjang dipakai pada saat ada resiko terciprat cairan tubuh atau saat petugas menderita dermatitis",
       },
       {
-        id: "c18",
-        label: "SPO pemeriksaan pasien infeksi khusus tersedia jelas",
+        id: "rad_iii_b_3",
+        label:
+          "Masker perlindungan mata digunakan saat ada resiko zat biohazard terciprat ke wajah dan mata",
       },
-      { id: "c19", label: "Poster profilaksis pasca pajanan tersedia jelas" },
-      { id: "c20", label: "Pemeriksaan suhu berkala petugas dilakukan" },
+      {
+        id: "rad_iii_b_4",
+        label:
+          "Respirator N95 yang cocok, digunakan saat ada resiko penularan patogen airbone",
+      },
+      {
+        id: "rad_iii_b_5",
+        label:
+          "Pengecekan ukuran respirator N95 secara cepat dilakukan sebelum pemakaian ( fit test )",
+      },
+      {
+        id: "rad_iii_b_6",
+        label: "APD dilepas di area kerja saat digunakan",
+      },
+    ],
+  },
+  {
+    category: "III. PRAKTIK KONTROL INSPEKSI",
+    section: "C. Umum",
+    items: [
+      {
+        id: "rad_iii_c_1",
+        label:
+          "Setiap hari dilakukan disinfektan lead apron / mobile lead screens",
+      },
+      {
+        id: "rad_iii_c_2",
+        label: "lead apron / mobile lead screens bersih ( secara visual )",
+      },
+      {
+        id: "rad_iii_c_3",
+        label:
+          "Barang yang telah digunakan terhadap pasien ( contoh : mesin mamogram ) disinfeksi mengunakan disinfektan, setiap berganti pasien",
+      },
+      {
+        id: "rad_iii_c_4",
+        label: "Makanan tidak dibawa ke ruangan X – ray atau di simpan di lemari",
+      },
+      {
+        id: "rad_iii_c_5",
+        label: "Tidak ada bukti petugas makan, minum di area kerja",
+      },
+      {
+        id: "rad_iii_c_6",
+        label: "Obat – obatan dan alat kontras tidak ada yang kadaluarsa",
+      },
+    ],
+  },
+  {
+    category: "III. PRAKTIK KONTROL INSPEKSI",
+    section:
+      "D. Infeksi khusus (termasuk penularan airbone/droplet) : ebola, insfluenza H5N1, MERS-CoV, TB Paru, Difteria, Covid – 19 dll",
+    items: [
+      {
+        id: "rad_iii_d_1",
+        label:
+          "Tersedia alat radiologi mobile untuk pemeriksaan pasien dengan infeksi khusus yang telah dirawat di ruang isolasi",
+      },
+      {
+        id: "rad_iii_d_2",
+        label:
+          "Ada alur cara pengambilan foto, ekspertise, dan laporan hasil pemeriksaan radiologi pasien dengan infeksi khusus. Dapat jelas di baca dan dimengerti oleh seluruh petugas",
+      },
+      {
+        id: "rad_iii_d_3",
+        label:
+          "SPO pemeriksaan pasien infeksi khusus jelas dapat dibaca dan dimengerti oleh petugas",
+      },
+      {
+        id: "rad_iii_d_4",
+        label:
+          "Tersedia poster profilaksis pasca pajanan, jelas terbaca dan dimengerti oleh seluruh petugas",
+      },
+      {
+        id: "rad_iii_d_5",
+        label:
+          "Pemeriksaan suhu berkala pada petugas yang melakukan pemeriksaan pada pasien dengan infeksi khusus",
+      },
     ],
   },
 ];
@@ -143,7 +262,7 @@ export default function RadiologiInputPage() {
   useEffect(() => {
     fetchObservers();
     const initialData: Record<string, AuditStatus> = {};
-    checklistItems.forEach((sec) =>
+    checklistGroups.forEach((sec) =>
       sec.items.forEach((item) => (initialData[item.id] = null)),
     );
     setWaktu(new Date());
@@ -388,7 +507,7 @@ export default function RadiologiInputPage() {
       }
       // Flatten details
       const detailPayloads: any[] = [];
-      checklistItems.forEach((sec) => {
+      checklistGroups.forEach((sec) => {
         sec.items.forEach((item) => {
           if (data[item.id] !== null) {
             detailPayloads.push({
@@ -422,7 +541,7 @@ export default function RadiologiInputPage() {
     }
   };
   return (
-    <div className="max-w-7xl mx-auto pb-40">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32">
       <AnimatePresence>
         {showToast && (
           <motion.div
@@ -454,118 +573,203 @@ export default function RadiologiInputPage() {
       </div>
       <form
         onSubmit={handleSubmit}
-        className="mt-8 grid xl:grid-cols-12 gap-8 items-start"
+        className="mt-8 space-y-8 w-full"
       >
-        <div className="xl:col-span-8 space-y-8">
-          <div className="bg-white dark:bg-[#111827] shadow-sm p-6 lg:p-8 rounded-[2rem] border border-slate-200 dark:border-white/5 space-y-6">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 border-b border-slate-200 dark:border-white/5 pb-4">
-              1. INFORMASI UMUM
-            </h2>
-            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
-              <div className="space-y-3">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
-                  Waktu Audit
-                </label>
-                <input
-                  type="datetime-local"
-                  value={
-                    waktu
-                      ? new Date(
-                          waktu.getTime() - waktu.getTimezoneOffset() * 60000,
-                        )
-                          .toISOString()
-                          .slice(0, 16)
-                      : ""
-                  }
-                  onChange={(e) => setWaktu(new Date(e.target.value))}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500/50 [color-scheme:light] dark:[color-scheme:dark]"
-                />
-              </div>
-              <div className="space-y-3">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
-                  Ruangan
-                </label>
-                <select
-                  value={ruangan}
-                  onChange={(e) => setRuangan(e.target.value)}
-                  required
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-white outline-none"
+        <div className="bg-white dark:bg-[#111827] shadow-sm p-6 lg:p-8 rounded-[2rem] border border-slate-200 dark:border-white/5 space-y-6">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 border-b border-slate-200 dark:border-white/5 pb-4">
+            1. INFORMASI UMUM
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
+                Waktu Audit
+              </label>
+              <input
+                type="datetime-local"
+                value={
+                  waktu
+                    ? new Date(
+                        waktu.getTime() - waktu.getTimezoneOffset() * 60000,
+                      )
+                        .toISOString()
+                        .slice(0, 16)
+                    : ""
+                }
+                onChange={(e) => setWaktu(new Date(e.target.value))}
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500/50 [color-scheme:light] dark:[color-scheme:dark]"
+              />
+            </div>
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
+                Ruangan
+              </label>
+              <select
+                value={ruangan}
+                onChange={(e) => setRuangan(e.target.value)}
+                required
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-white outline-none"
+              >
+                <option value="Radiologi" className="dark:bg-slate-900">
+                  Radiologi
+                </option>
+              </select>
+            </div>
+            <div className="space-y-3 sm:col-span-2 lg:col-span-1">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex justify-between items-center">
+                Supervisor
+                <button
+                  type="button"
+                  onClick={() => setIsObserverModalOpen(true)}
+                  className="text-blue-400 hover:text-blue-300 font-bold uppercase tracking-widest flex items-center gap-1"
                 >
-                  <option value="Radiologi" className="dark:bg-slate-900">
-                    Radiologi
-                  </option>
+                  <User className="w-3 h-3" /> Tambah / Kelola
+                </button>
+              </label>
+              <div className="relative">
+                <select
+                  value={observer}
+                  onChange={(e) => setObserver(e.target.value)}
+                  className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white appearance-none outline-none focus:border-blue-500/50"
+                >
+                  <option value="">Pilih Supervisor...</option>
+                  {observers.map((o) => (
+                    <option key={o.id} value={o.nama}>
+                      {o.nama}
+                    </option>
+                  ))}
                 </select>
               </div>
-              <div className="space-y-3 sm:col-span-2 md:col-span-1">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex justify-between items-center">
-                  Supervisor
-                  <button
-                    type="button"
-                    onClick={() => setIsObserverModalOpen(true)}
-                    className="text-blue-400 hover:text-blue-300 font-bold uppercase tracking-widest flex items-center gap-1"
-                  >
-                    <User className="w-3 h-3" /> Tambah / Kelola
-                  </button>
-                </label>
-                <div className="relative">
-                  <select
-                    value={observer}
-                    onChange={(e) => setObserver(e.target.value)}
-                    className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white appearance-none outline-none focus:border-blue-500/50"
-                  >
-                    <option value="">Pilih Supervisor...</option>
-                    {observers.map((o) => (
-                      <option key={o.id} value={o.nama}>
-                        {o.nama}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
             </div>
           </div>
-          <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
-              📋 Indikator Kepatuhan
+        </div>
+        <div className="bg-white/5 p-5 sm:p-6 lg:p-8 rounded-[24px] border border-white/5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2">
+              📋 Indikator Kepatuhan Monitoring Radiologi
             </h2>
-            <div className="space-y-8">
-              {checklistItems.map((section) => (
-                <div key={section.section} className="space-y-4">
-                  <h2 className="text-xs font-black uppercase tracking-[0.2em] text-blue-400/80 mb-4 px-2">
-                    {section.section}
-                  </h2>
-                  <div className="grid gap-4">
-                    {section.items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="bg-white/5 p-6 rounded-[24px] border border-white/5 group hover:border-blue-500/30 transition-all duration-300"
-                      >
-                        <h3 className="text-sm font-bold text-white mb-4 group-hover:text-blue-400 transition-colors">
-                          {item.label}
-                        </h3>
-                        <div className="grid grid-cols-3 gap-3">
-                          {["ya", "tidak", "na"].map((choice) => (
-                            <button
-                              type="button"
-                              key={choice}
-                              onClick={() => toggleItem(item.id, choice as any)}
-                              className={`py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                                data[item.id] === choice
-                                  ? "bg-blue-600 text-white border-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.3)]"
-                                  : "bg-white/5 text-slate-400 border-transparent hover:bg-white/10"
-                              }`}
-                            >
-                              {choice === "na" ? "N/A" : choice}
-                            </button>
-                          ))}
-                        </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const updated: Record<string, AuditStatus> = {};
+                  checklistGroups.forEach((g) =>
+                    g.items.forEach((it) => (updated[it.id] = "ya"))
+                  );
+                  setData((prev) => ({ ...prev, ...updated }));
+                }}
+                className="px-3 py-1.5 rounded-xl bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 text-xs font-semibold tracking-wide transition-all border border-blue-500/30"
+              >
+                ✓ Set Semua YA
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const updated: Record<string, AuditStatus> = {};
+                  checklistGroups.forEach((g) =>
+                    g.items.forEach((it) => (updated[it.id] = null))
+                  );
+                  setData((prev) => ({ ...prev, ...updated }));
+                }}
+                className="px-3 py-1.5 rounded-xl bg-slate-500/20 text-slate-300 hover:bg-slate-500/30 text-xs font-semibold tracking-wide transition-all border border-white/10"
+              >
+                ↺ Reset
+              </button>
+            </div>
+          </div>
+          <div className="space-y-10">
+            {checklistGroups.map((group, groupIdx) => {
+              const isFirstOfCategory =
+                groupIdx === 0 ||
+                checklistGroups[groupIdx - 1].category !== group.category;
+
+              return (
+                <div key={`${group.category}-${group.section}`} className="space-y-4">
+                  {isFirstOfCategory && (
+                    <div className="pt-2 pb-1">
+                      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-black uppercase tracking-widest">
+                        <span className="w-2 h-2 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]" />
+                        {group.category}
                       </div>
-                    ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-3 border-b border-white/10 pb-2.5 px-1">
+                    <span className="w-2 h-2 rounded-full bg-cyan-400/80" />
+                    <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-200">
+                      {group.section}
+                    </h3>
+                  </div>
+
+                  <div className="grid gap-4">
+                    {group.items.map((item, idx) => {
+                      const selected = data[item.id];
+                      let borderLeftColor = "border-l-transparent";
+                      if (selected === "ya") {
+                        borderLeftColor = "border-l-blue-500";
+                      } else if (selected === "tidak") {
+                        borderLeftColor = "border-l-red-500";
+                      } else if (selected === "na") {
+                        borderLeftColor = "border-l-slate-500";
+                      }
+
+                      return (
+                        <div
+                          key={item.id}
+                          className={`bg-white/5 p-5 sm:p-6 rounded-[24px] border border-white/5 border-l-4 ${borderLeftColor} transition-colors duration-300 relative overflow-hidden group`}
+                        >
+                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 relative z-10">
+                            <div className="flex gap-4 items-start">
+                              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center shrink-0 border transition-all duration-500 bg-white/5 border-white/10 text-slate-400">
+                                <span className="text-xs font-black">{idx + 1}</span>
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="text-sm font-bold text-white leading-relaxed mt-1">
+                                  {item.label}
+                                </h4>
+                              </div>
+                            </div>
+                            <div className="flex p-1.5 bg-white/5 rounded-2xl border border-white/5 w-full sm:w-fit self-end md:self-center shrink-0">
+                              {["ya", "tidak", "na"].map((choice) => {
+                                let activeClass = "";
+                                if (choice === "na") {
+                                  activeClass =
+                                    "bg-slate-500 text-white shadow-[0_0_15px_rgba(100,116,139,0.3)] transform scale-105";
+                                } else if (choice === "ya") {
+                                  activeClass =
+                                    "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] transform scale-105";
+                                } else {
+                                  activeClass =
+                                    "bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)] transform scale-105";
+                                }
+
+                                return (
+                                  <button
+                                    key={choice}
+                                    type="button"
+                                    onClick={() =>
+                                      toggleItem(item.id, choice as any)
+                                    }
+                                    className={`flex-1 sm:flex-initial px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${
+                                      data[item.id] === choice
+                                        ? activeClass
+                                        : "bg-transparent text-slate-400 hover:bg-white/10"
+                                    }`}
+                                  >
+                                    {choice === "na" ? "N/A" : choice}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
+        </div>
           <LiveStatisticsCard
             totalDinilai={stats.dinilai}
             totalPatuh={stats.patuh}
@@ -623,7 +827,6 @@ export default function RadiologiInputPage() {
             )}
             <span>{isEditMode ? 'Update Data Audit' : 'Simpan Data Audit'}</span>
           </button>
-        </div>
       </form>
       <AnimatePresence>
         {isObserverModalOpen && (

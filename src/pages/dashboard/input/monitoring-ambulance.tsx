@@ -291,7 +291,7 @@ export default function MonitoringAmbulancePage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto pb-32">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32">
       <AnimatePresence>
         {showToast && (
           <motion.div
@@ -306,10 +306,10 @@ export default function MonitoringAmbulancePage() {
         )}
       </AnimatePresence>
 
-      <div className="flex items-center gap-6 mb-8 py-6 border-b border-white/5">
+      <div className="flex items-center gap-6 mb-8 py-6 border-b border-slate-200 dark:border-white/5">
         <Link
           href="/dashboard/input/isolasi"
-          className="p-3 bg-white/5 rounded-2xl border border-white/10 text-slate-400 hover:text-white transition-all shadow-lg hover:shadow-blue-500/10"
+          className="p-3 bg-white dark:bg-white/5 shadow-sm rounded-2xl border border-slate-200 dark:border-white/10 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-all"
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
@@ -324,18 +324,16 @@ export default function MonitoringAmbulancePage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <div className="bg-white/5 p-8 rounded-[2rem] border border-white/5 space-y-6">
-          <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-blue-400 flex items-center gap-2">
-            <Clock className="w-4 h-4" /> Informasi Audit
+      <form onSubmit={handleSubmit} className="mt-8 space-y-8 w-full">
+        <div className="bg-white dark:bg-[#111827] shadow-sm p-6 lg:p-8 rounded-[2rem] border border-slate-200 dark:border-white/5 space-y-6">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 border-b border-slate-200 dark:border-white/5 pb-4">
+            1. INFORMASI AUDIT
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="relative">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                  Waktu Audit
-                </label>
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
+                Waktu Audit
+              </label>
               <input
                 type="datetime-local"
                 value={
@@ -349,35 +347,39 @@ export default function MonitoringAmbulancePage() {
                     : ""
                 }
                 onChange={(e) => setStartTime(new Date(e.target.value))}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 transition-colors [color-scheme:dark]"
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500/50 transition-colors [color-scheme:light] dark:[color-scheme:dark]"
               />
             </div>
-            <EditableSelect
-              label="Supervisor"
-              value={observer}
-              onChange={setObserver}
-              options={[]}
-              isIPCN={isIPCN}
-              table="master_observers"
-              placeholder="Pilih Supervisor..."
-            />
-            <EditableSelect
-              label="ID Ambulance"
-              value={ambulanceId}
-              onChange={setAmbulanceId}
-              isIPCN={isIPCN}
-              options={["Ambulance 1", "Ambulance 2", "Mobil Jenazah"]}
-              placeholder="Pilih Ambulance..."
-            />
+            <div className="space-y-3">
+              <EditableSelect
+                label="Supervisor"
+                value={observer}
+                onChange={setObserver}
+                options={[]}
+                isIPCN={isIPCN}
+                table="master_observers"
+                placeholder="Pilih Supervisor..."
+              />
+            </div>
+            <div className="space-y-3 sm:col-span-2 lg:col-span-1">
+              <EditableSelect
+                label="ID Ambulance"
+                value={ambulanceId}
+                onChange={setAmbulanceId}
+                isIPCN={isIPCN}
+                options={["Ambulance 1", "Ambulance 2", "Mobil Jenazah"]}
+                placeholder="Pilih Ambulance..."
+              />
+            </div>
           </div>
         </div>
 
-        <div className="bg-white/5 p-8 rounded-[2rem] border border-white/5 space-y-6">
-          <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-blue-400 flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4" /> Indikator Kepatuhan
+        <div className="bg-white/5 p-5 sm:p-6 lg:p-8 rounded-[24px] border border-white/5">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
+            📋 Indikator Kepatuhan
           </h2>
           <div className="space-y-4">
-            {checklistItems.map((item) => {
+            {checklistItems.map((item, idx) => {
               const val = data[item.id];
               const activeColorLine =
                 val === "ya"
@@ -386,47 +388,54 @@ export default function MonitoringAmbulancePage() {
                     ? "border-l-red-500 bg-red-500/5"
                     : val === "na"
                       ? "border-l-slate-400 bg-slate-500/5"
-                      : "border-l-transparent";
+                      : "border-l-transparent bg-white/5";
 
               return (
                 <div
                   key={item.id}
-                  className={`bg-white/5 p-6 rounded-[24px] border border-white/5 group hover:border-blue-500/30 transition-all duration-300 border-l-4 relative overflow-hidden ${activeColorLine}`}
+                  className={`p-5 sm:p-6 rounded-[20px] sm:rounded-[24px] border border-white/5 group hover:border-blue-500/30 transition-all duration-300 border-l-4 relative overflow-hidden ${activeColorLine}`}
                 >
-                  <h3 className="text-sm font-bold text-white mb-4 group-hover:text-blue-400 transition-colors">
-                    {item.label}
-                  </h3>
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      {
-                        id: "ya",
-                        label: "Ya",
-                        activeClass: "bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-500/20",
-                      },
-                      {
-                        id: "tidak",
-                        label: "Tidak",
-                        activeClass: "bg-red-600 text-white border-red-500 shadow-lg shadow-red-500/20",
-                      },
-                      {
-                        id: "na",
-                        label: "N/A",
-                        activeClass: "bg-slate-500 text-white border-slate-400 shadow-lg shadow-slate-500/20",
-                      },
-                    ].map((btn) => (
-                      <button
-                        type="button"
-                        key={btn.id}
-                        onClick={() => handleActionClick(item.id, btn.id as any)}
-                        className={`py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                          data[item.id] === btn.id
-                            ? btn.activeClass
-                            : "bg-white/5 text-slate-400 border-transparent hover:bg-white/10"
-                        }`}
-                      >
-                        {btn.label}
-                      </button>
-                    ))}
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+                    <div className="flex gap-4 items-start">
+                      <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center shrink-0 border bg-white/5 border-white/10 text-slate-400 font-black text-xs">
+                        {idx + 1}
+                      </div>
+                      <h4 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors leading-relaxed pt-1">
+                        {item.label}
+                      </h4>
+                    </div>
+                    <div className="flex p-1.5 bg-slate-900/80 rounded-2xl border border-white/10 w-full sm:w-fit self-end md:self-center shrink-0">
+                      {[
+                        {
+                          id: "ya",
+                          label: "Ya",
+                          activeClass: "bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] transform scale-105",
+                        },
+                        {
+                          id: "tidak",
+                          label: "Tidak",
+                          activeClass: "bg-red-600 text-white shadow-[0_0_20px_rgba(239,68,68,0.3)] transform scale-105",
+                        },
+                        {
+                          id: "na",
+                          label: "N/A",
+                          activeClass: "bg-slate-600 text-white shadow-[0_0_20px_rgba(100,116,139,0.3)] transform scale-105",
+                        },
+                      ].map((btn) => (
+                        <button
+                          type="button"
+                          key={btn.id}
+                          onClick={() => handleActionClick(item.id, btn.id as any)}
+                          className={`flex-1 sm:flex-initial px-5 sm:px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${
+                            data[item.id] === btn.id
+                              ? btn.activeClass
+                              : "bg-transparent text-slate-400 hover:bg-white/10"
+                          }`}
+                        >
+                          {btn.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               );

@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { supabase, broadcastChannelMessage } from "@/lib/supabase";
 import { uploadImagesToSupabase } from "@/lib/upload";
 import {
   DocumentationUploader,
@@ -262,16 +262,11 @@ export default function FasilitasHandHygienePage() {
       } catch (err) {
         console.warn("Failed to insert native table", err);
       }
-      const ch = supabase.channel('changes_monitoring_fasilitas_hand_hygiene');
-      ch.subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          ch.send({
-            type: 'broadcast',
-            event: 'audit_submitted',
-            payload: { tableName: 'monitoring_fasilitas_hand_hygiene' }
-          }).then(() => supabase.removeChannel(ch));
-        }
-      });
+      await broadcastChannelMessage(
+        'changes_monitoring_fasilitas_hand_hygiene',
+        'audit_submitted',
+        { tableName: 'monitoring_fasilitas_hand_hygiene', indikator_id: 'monitoring_fasilitas_hand_hygiene' }
+      );
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);

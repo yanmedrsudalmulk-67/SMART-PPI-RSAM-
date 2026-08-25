@@ -22,14 +22,15 @@ import { useDashboardStore } from '@/hooks/useDashboardStore';
 import { supabase } from '@/lib/supabase';
 
 const NavItem = memo(({ item, isActive, onClick }: { item: any, isActive: boolean, onClick?: () => void }) => {
-  const baseClasses = "relative flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-300 ease-in-out group antialiased hover:scale-[1.02] active:scale-[0.98] transform-gpu will-change-transform";
+  const baseClasses = "relative flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 ease-in-out group antialiased hover:scale-[1.01] active:scale-[0.98] transform-gpu will-change-transform";
   
-  const activeClasses = "bg-gradient-to-r from-sky-500/25 via-cyan-500/20 to-sky-600/10 border border-sky-400/40 text-white font-bold ring-1 ring-sky-400/30 shadow-[0_4px_20px_rgba(56,189,248,0.22)]";
-  const inactiveClasses = "text-slate-300/85 hover:bg-[#132A4D]/80 hover:text-white hover:shadow-md border border-transparent";
+  // Clean solid blue active styling like "Grafik Capaian" in the image, without glowing neon borders or neon shadows
+  const activeClasses = "bg-[#1864ab] text-white font-bold shadow-md";
+  const inactiveClasses = "text-slate-300/90 hover:bg-white/10 hover:text-white border border-transparent";
 
   const iconBase = "w-[22px] h-[22px]";
-  const iconActive = "text-sky-300 drop-shadow-[0_0_10px_rgba(56,189,248,0.6)]";
-  const iconInactive = "text-slate-400 group-hover:text-sky-200 transition-colors duration-300";
+  const iconActive = "text-white";
+  const iconInactive = "text-slate-400 group-hover:text-white transition-colors duration-300";
 
   return (
     <Link 
@@ -37,17 +38,25 @@ const NavItem = memo(({ item, isActive, onClick }: { item: any, isActive: boolea
       onClick={onClick}
       className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
     >
-      {isActive && (
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-sky-400 rounded-r-full shadow-[0_0_12px_rgba(56,189,248,0.9)]" />
-      )}
       <motion.div 
-        animate={isActive ? { scale: 1.1 } : { scale: 1 }}
-        transition={{ duration: 0.2 }}
-        className={`relative z-10 flex items-center justify-center transition-transform duration-300 ${isActive ? 'scale-110 drop-shadow-lg' : 'group-hover:scale-110'}`}
+        animate={isActive ? { 
+          y: [0, -8, 0, -4, 0],
+          scale: [1, 1.15, 1, 1.08, 1],
+        } : { 
+          y: 0,
+          scale: 1,
+        }}
+        transition={isActive ? { 
+          duration: 0.8,
+          repeat: Infinity,
+          repeatDelay: 4.2, // Cycles every 5 seconds (0.8s jump + 4.2s delay = 5.0s)
+          ease: "easeInOut"
+        } : { duration: 0.2 }}
+        className={`relative z-10 flex items-center justify-center transition-transform duration-300 ${isActive ? 'scale-105' : 'group-hover:scale-110'}`}
       >
-        <item.icon className={`${iconBase} ${isActive ? iconActive : iconInactive}`} strokeWidth={isActive ? 2.5 : 2} />
+        <item.icon className={`${iconBase} ${isActive ? iconActive : iconInactive}`} strokeWidth={isActive ? 2.3 : 2} />
       </motion.div>
-      <span className={`text-[15px] sm:text-[14px] tracking-wide relative z-10 ${isActive ? 'font-bold text-white drop-shadow-md' : 'font-medium'}`}>{item.name}</span>
+      <span className={`text-[15px] sm:text-[14px] tracking-wide relative z-10 ${isActive ? 'font-bold text-white' : 'font-medium'}`}>{item.name}</span>
     </Link>
   );
 });
@@ -345,7 +354,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Mobile Bottom Navigation */}
       <div className="fixed bottom-5 inset-x-5 z-50 flex justify-center md:hidden pb-[env(safe-area-inset-bottom)]">
-        <nav className="w-full max-w-md flex justify-around items-center h-[72px] px-2 rounded-[36px] border backdrop-blur-xl transition-all duration-300 bg-[#0B1A2C]/95 border-sky-500/25 shadow-[0_12px_40px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.15),_0_0_25px_rgba(56,189,248,0.1)]">
+        <nav className="w-full max-w-md flex justify-around items-center h-[72px] px-2 rounded-[36px] border backdrop-blur-xl transition-all duration-300 bg-[#0B1A2C]/95 border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.15)]">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -357,25 +366,41 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {isActive && (
                   <motion.div
                     layoutId="mobileNavIndicator"
-                    className="absolute inset-x-1.5 inset-y-1.5 rounded-[22px] bg-gradient-to-br from-sky-500 to-cyan-600 border border-sky-400/40 shadow-[0_4px_16px_rgba(56,189,248,0.4),inset_0_1px_0_rgba(255,255,255,0.25)]"
+                    className="absolute inset-x-1.5 inset-y-1.5 rounded-[22px] bg-[#1864ab] shadow-md"
                     transition={{ type: "spring", stiffness: 380, damping: 30 }}
                   />
                 )}
                 
                 <div className={`relative z-10 flex flex-col items-center justify-center transition-all duration-200 ${
-                  isActive ? 'scale-105 opacity-100' : 'opacity-70 hover:opacity-100'
+                  isActive ? 'scale-105 opacity-100' : 'opacity-75 hover:opacity-100'
                 }`}>
-                  <item.icon 
-                    className={`w-[20px] h-[20px] transition-colors duration-200 ${
-                      isActive 
-                        ? 'text-white drop-shadow-md' 
-                        : 'text-slate-300'
-                    }`} 
-                    strokeWidth={isActive ? 2.5 : 2} 
-                  />
+                  <motion.div
+                    animate={isActive ? { 
+                      y: [0, -6, 0, -3, 0],
+                      scale: [1, 1.15, 1, 1.08, 1],
+                    } : { 
+                      y: 0,
+                      scale: 1,
+                    }}
+                    transition={isActive ? { 
+                      duration: 0.8,
+                      repeat: Infinity,
+                      repeatDelay: 4.2,
+                      ease: "easeInOut"
+                    } : { duration: 0.2 }}
+                  >
+                    <item.icon 
+                      className={`w-[20px] h-[20px] transition-colors duration-200 ${
+                        isActive 
+                          ? 'text-white' 
+                          : 'text-slate-300'
+                      }`} 
+                      strokeWidth={isActive ? 2.3 : 2} 
+                    />
+                  </motion.div>
                   <span className={`text-[9px] font-semibold tracking-wide mt-1 transition-colors duration-200 ${
                     isActive 
-                      ? 'text-white font-bold drop-shadow-sm' 
+                      ? 'text-white font-bold' 
                       : 'text-slate-400 font-medium'
                   }`}>
                     {item.shortName || item.name}

@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { supabase, broadcastChannelMessage } from "@/lib/supabase";
 import DashboardLayout from "@/components/DashboardLayout";
 import { LiveStatisticsCard } from "@/components/LiveStatisticsCard";
 import DigitalSignatureSection, {
@@ -79,61 +79,176 @@ export default function InputMonitoringImmunoPage() {
       if (id && mode === "edit") {
         setIsEditMode(true);
         setEditId(id);
+
         const loadEditData = async () => {
-          const { data: ed, error } = await supabase
+          let ed: any = null;
+
+          // 1. Fetch from audit_sessions
+          const { data: sData } = await supabase
             .from("audit_sessions")
             .select("*")
             .eq("id", id)
-            .single();
-          if (ed && !error) {
-            if (ed.tanggal_waktu) setStartTime(new Date(ed.tanggal_waktu));
-            if (ed.observer) setObserver(ed.observer);
-            
+            .maybeSingle();
+
+          if (sData) {
+            ed = sData;
+          } else {
+            // 2. Fetch from native table
+            const { data: tData } = await supabase
+              .from("penempatan_pasien_immunocompromised")
+              .select("*")
+              .eq("id", id)
+              .maybeSingle();
+            if (tData) ed = tData;
+          }
+
+          // 3. Fetch details from audit_details
+          const { data: detailsData } = await supabase
+            .from("audit_details")
+            .select("*")
+            .eq("session_id", id);
+
+          const detailsObj: Record<string, string> = {};
+          if (detailsData && detailsData.length > 0) {
+            detailsData.forEach((row: any) => {
+              if (row.pertanyaan_id && row.jawaban) {
+                detailsObj[row.pertanyaan_id] = String(row.jawaban).toLowerCase();
+              }
+              if (row.pertanyaan && row.jawaban) {
+                const found = checklistItems.find((i) => i.label === row.pertanyaan);
+                if (found) {
+                  detailsObj[found.id] = String(row.jawaban).toLowerCase();
+                }
+              }
+            });
+          }
+
+          if (ed) {
+            if (ed.tanggal_waktu || ed.waktu) {
+              setStartTime(new Date(ed.tanggal_waktu || ed.waktu));
+            }
+            if (ed.observer || ed.supervisor) {
+              setObserver(ed.observer || ed.supervisor);
+            }
 
             const indicatorsData = ed.data_indikator || ed.checklist_json || {};
-            if (indicatorsData.temuan) setTemuan(indicatorsData.temuan);
-            if (indicatorsData.rekomendasi) setRekomendasi(indicatorsData.rekomendasi);
-            
-            const displayPjName = indicatorsData.nama_pj || indicatorsData.nama_pj_ruangan || ed.nama_pj_ruangan || "";
+            if (ed.temuan || indicatorsData.temuan) {
+              setTemuan(ed.temuan || indicatorsData.temuan || "");
+            }
+            if (ed.rekomendasi || indicatorsData.rekomendasi) {
+              setRekomendasi(ed.rekomendasi || indicatorsData.rekomendasi || "");
+            }
+
+            const displayPjName =
+              ed.nama_pj_ruangan ||
+              ed.nama_pj ||
+              indicatorsData.nama_pj ||
+              indicatorsData.nama_pj_ruangan ||
+              indicatorsData.pj_name ||
+              indicatorsData.pjName ||
+              indicatorsData.penanggung_jawab ||
+              ed.penanggung_jawab ||
+              "";
             if (typeof setPjName === "function") setPjName(displayPjName);
 
-            try {
-              setData((prev: any) => {
-                const updated = { ...prev };
-                Object.keys(updated).forEach((key) => {
-                  if (indicatorsData[key] !== undefined) {
-                    updated[key] = indicatorsData[key];
-                  }
-                });
-                return updated;
-              });
-            } catch (err) {}
+            // Sources for checklist answers
+            const sources = [
+              detailsObj,
+              indicatorsData.data,
+              indicatorsData,
+              indicatorsData.checklist_json?.data,
+              indicatorsData.checklist_json,
+              ed.checklist_json?.data,
+              ed.checklist_json,
+              ed,
+            ];
 
-            
+            setData((prev) => {
+              const updated = { ...prev };
+              checklistItems.forEach((item, idx) => {
+                const possibleKeys = [
+                  item.id,
+                  String(idx + 1),
+                  `im_${idx + 1}`,
+                  `im${idx + 1}`,
+                  `item_${idx + 1}`,
+                  `item${idx + 1}`,
+                ];
+
+                for (const source of sources) {
+                  if (!source || typeof source !== "object") continue;
+                  let foundVal: any = undefined;
+                  for (const k of possibleKeys) {
+                    if (source[k] !== undefined && source[k] !== null) {
+                      foundVal = source[k];
+                      break;
+                    }
+                  }
+                  if (foundVal !== undefined) {
+                    if (typeof foundVal === "string") {
+                      const lower = foundVal.toLowerCase();
+                      if (lower === "ya" || lower === "tidak" || lower === "na") {
+                        updated[item.id] = lower as AuditStatus;
+                        break;
+                      }
+                    } else if (typeof foundVal === "boolean") {
+                      updated[item.id] = foundVal ? "ya" : "tidak";
+                      break;
+                    } else if (typeof foundVal === "object" && foundVal.status) {
+                      const lower = String(foundVal.status).toLowerCase();
+                      if (lower === "ya" || lower === "tidak" || lower === "na") {
+                        updated[item.id] = lower as AuditStatus;
+                        break;
+                      }
+                    }
+                  }
+                }
+              });
+              return updated;
+            });
 
             // Prefill signatures
-            setTimeout(() => {
-              const t1 = ed.ttd_pj_ruangan || indicatorsData.ttd_pj || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
-              const t2 = ed.ttd_ipcn || indicatorsData.ttd_ipcn || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
-              if (t1 && sigRef.current?.setPjSignature) {
-                sigRef.current.setPjSignature(t1);
-              }
-              if (t2 && sigRef.current?.setSupervisorSignature) {
-                sigRef.current.setSupervisorSignature(t2);
-              }
-            }, 800);
+            const t1 =
+              ed.ttd_pj_ruangan ||
+              ed.ttd_pj ||
+              indicatorsData.ttd_pj ||
+              indicatorsData.ttd_pj_ruangan ||
+              (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
+            const t2 =
+              ed.ttd_ipcn ||
+              indicatorsData.ttd_ipcn ||
+              ed.ttd_supervisor ||
+              indicatorsData.ttd_supervisor ||
+              (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
+
+            [300, 700, 1200].forEach((delay) => {
+              setTimeout(() => {
+                if (t1 && sigRef.current?.setPjSignature) {
+                  sigRef.current.setPjSignature(t1);
+                }
+                if (t2 && sigRef.current?.setSupervisorSignature) {
+                  sigRef.current.setSupervisorSignature(t2);
+                }
+              }, delay);
+            });
 
             // Prefill documentation
-            if (indicatorsData.dokumentasi) {
+            const docList =
+              indicatorsData.dokumentasi ||
+              indicatorsData.foto ||
+              ed.foto ||
+              ed.dokumentasi ||
+              [];
+            if (Array.isArray(docList) && docList.length > 0) {
               setImages(
-                indicatorsData.dokumentasi.map((url: string) => ({
-                  url,
-                  file: null as any,
-                }))
+                docList.map((url: any) =>
+                  typeof url === "string" ? { url, file: null as any } : url
+                )
               );
             }
           }
         };
+
         loadEditData();
       } else {
         setStartTime(new Date());
@@ -181,12 +296,27 @@ export default function InputMonitoringImmunoPage() {
       const ttd_pj = sigRef.current?.getPjSignature();
       const ttd_ipcn = sigRef.current?.getSupervisorSignature();
       const { uploadImagesToSupabase } = await import("@/lib/upload");
-      const uploadedUrls = images.length > 0 ? await uploadImagesToSupabase(
-        supabase,
-        images.map(f => ({ file: f })),
-        "audit_images",
-        "monitoring_immuno",
-      ) : [];
+
+      const existingUrls = images
+        .filter((img: any) => typeof img === "string" || img?.url)
+        .map((img: any) => (typeof img === "string" ? img : img.url));
+
+      const newFileObjects = images
+        .filter((img: any) => img instanceof File || img?.file instanceof File)
+        .map((img: any) => (img instanceof File ? img : img.file));
+
+      const uploadedUrls =
+        newFileObjects.length > 0
+          ? await uploadImagesToSupabase(
+              supabase,
+              newFileObjects.map((f) => ({ file: f })),
+              "audit_images",
+              "monitoring_immuno"
+            )
+          : [];
+
+      const finalDocUrls = [...existingUrls, ...uploadedUrls];
+
       const payload = {
         waktu: startTime?.toISOString() || new Date().toISOString(),
         checklist_json: { data },
@@ -196,27 +326,54 @@ export default function InputMonitoringImmunoPage() {
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         status_kepatuhan: stats.statusText,
-        foto: uploadedUrls,
+        foto: finalDocUrls,
+        nama_pj: pjName.trim(),
+        nama_pj_ruangan: pjName.trim(),
+        supervisor: observer,
+        observer: observer,
+        unit: "Ruang Isolasi",
+        ruangan: "Ruang Isolasi",
         ttd_pj,
-        ttd_ipcn
+        ttd_ipcn,
       };
+
       const sessionPayload = {
         indikator_id: "monitoring_immuno",
         nama_indikator: "PENEMPATAN PASIEN IMMUNOCOMPROMISED",
         tanggal_waktu: payload.waktu,
         observer: observer,
+        unit: "Ruang Isolasi",
+        nama_pj: pjName.trim(),
+        nama_pj_ruangan: pjName.trim(),
+        ttd_pj_ruangan: ttd_pj,
+        ttd_ipcn: ttd_ipcn,
+        temuan,
+        rekomendasi,
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.statusText,
         data_indikator: {
-          ...payload.checklist_json,
+          ...data,
+          data,
+          checklist_json: { data },
           temuan: payload.temuan,
           rekomendasi: payload.rekomendasi,
-          dokumentasi: uploadedUrls,
+          nama_pj: pjName.trim(),
+          nama_pj_ruangan: pjName.trim(),
+          observer,
+          supervisor: observer,
+          unit: "Ruang Isolasi",
+          ruangan: "Ruang Isolasi",
+          dokumentasi: finalDocUrls,
+          foto: finalDocUrls,
           tanda_tangan: [ttd_pj, ttd_ipcn].filter(Boolean),
+          ttd_pj,
+          ttd_ipcn,
+          ttd_pj_ruangan: ttd_pj,
         },
       };
+
       let sessionId = editId;
 
       if (isEditMode && editId) {
@@ -236,9 +393,10 @@ export default function InputMonitoringImmunoPage() {
         if (sessionError) throw sessionError;
         sessionId = sessionData.id;
       }
+
       const detailPayloads = Object.keys(data).map((key) => {
         let label = key;
-        const found = checklistItems.find(i => i.id === key);
+        const found = checklistItems.find((i) => i.id === key);
         if (found) label = found.label;
         return {
           session_id: sessionId,
@@ -248,30 +406,43 @@ export default function InputMonitoringImmunoPage() {
         };
       });
       await supabase.from("audit_details").insert(detailPayloads);
+
       try {
-        await supabase
-          .from("penempatan_pasien_immunocompromised")
-          .insert([{ ...payload, ttd_pj, ttd_ipcn }])
-          .select("id")
-          .single();
-      } catch (err) {
-        console.warn("Failed to insert into native table, but saved to generic session.", err);
-      }
-      const ch = supabase.channel('changes_monitoring_immuno');
-      ch.subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          ch.send({
-            type: 'broadcast',
-            event: 'audit_submitted',
-            payload: { tableName: 'monitoring_immuno' }
-          }).then(() => supabase.removeChannel(ch));
+        if (isEditMode && editId) {
+          await supabase
+            .from("penempatan_pasien_immunocompromised")
+            .update({ ...payload, ttd_pj, ttd_ipcn })
+            .eq("id", editId);
+        } else {
+          await supabase
+            .from("penempatan_pasien_immunocompromised")
+            .insert([{ ...payload, ttd_pj, ttd_ipcn }]);
         }
-      });
+      } catch (err) {
+        console.warn(
+          "Failed to write to native table, but saved to generic session.",
+          err
+        );
+      }
+
+      await broadcastChannelMessage(
+        "changes_monitoring_immuno",
+        "audit_submitted",
+        {
+          tableName: "monitoring_immuno",
+          indikator_id: "monitoring_immuno",
+        }
+      );
+
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
-        router.push("/dashboard/input/isolasi");
-      }, 2000);
+        if (isEditMode) {
+          router.push("/dashboard/reports?indicator=monitoring_immuno");
+        } else {
+          router.push("/dashboard/input/isolasi");
+        }
+      }, 1500);
     } catch (err: any) {
       console.error(err);
       alert(`Error: ${err.message || "Gagal menyimpan data"}`);
@@ -279,6 +450,7 @@ export default function InputMonitoringImmunoPage() {
       setIsSubmitting(false);
     }
   };
+
   return (
     <div className="max-w-4xl mx-auto pb-32">
       <AnimatePresence>
@@ -296,14 +468,18 @@ export default function InputMonitoringImmunoPage() {
       </AnimatePresence>
       <div className="flex items-center gap-6 mb-8 py-6 border-b border-white/5">
         <Link
-          href="/dashboard/input/isolasi"
+          href={
+            isEditMode
+              ? "/dashboard/reports?indicator=monitoring_immuno"
+              : "/dashboard/input/isolasi"
+          }
           className="p-3 bg-white/5 rounded-2xl border border-white/10 text-slate-400 hover:text-white transition-all shadow-lg hover:shadow-blue-500/10"
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-400 bg-[length:200%_auto] animate-gradient uppercase drop-shadow-[0_0_15px_rgba(59,130,246,0.3)]">
-            Input Penempatan Pasien Immunocompromised
+            {isEditMode ? "Edit Penempatan Pasien Immunocompromised" : "Input Penempatan Pasien Immunocompromised"}
           </h1>
           <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.3em] text-blue-500/80 mt-2 flex items-center gap-2">
             <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />

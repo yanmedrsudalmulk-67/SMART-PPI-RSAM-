@@ -15,3 +15,42 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export function getSupabase(): SupabaseClient {
   return supabase;
 }
+
+/**
+ * Broadcast a real-time event explicitly using httpSend (Supabase REST delivery)
+ * to prevent the 'Realtime send() is automatically falling back to REST API' deprecation warning.
+ */
+export async function broadcastChannelMessage(
+  channelName: string,
+  event: string,
+  payload: Record<string, any>
+): Promise<void> {
+  try {
+    const ch: any = supabase.channel(channelName);
+    if (typeof ch.httpSend === 'function') {
+      await ch.httpSend(event, payload);
+    } else {
+      await new Promise<void>((resolve) => {
+        const timer = setTimeout(() => resolve(), 3000);
+        ch.subscribe((status: string) => {
+          if (status === 'SUBSCRIBED') {
+            ch.send({
+              type: 'broadcast',
+              event,
+              payload,
+            }).finally(() => {
+              clearTimeout(timer);
+              supabase.removeChannel(ch);
+              resolve();
+            });
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+            clearTimeout(timer);
+            resolve();
+          }
+        });
+      });
+    }
+  } catch (err) {
+    console.warn('broadcastChannelMessage notice:', err);
+  }
+}

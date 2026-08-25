@@ -599,7 +599,7 @@ export default function MonitoringGiziPage() {
     {} as Record<string, typeof checklistItems>,
   );
   return (
-    <div className="max-w-7xl mx-auto pb-32">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32">
       <AnimatePresence>
         {showToast && (
           <motion.div
@@ -631,115 +631,123 @@ export default function MonitoringGiziPage() {
       </div>
       <form
         onSubmit={handleSubmit}
-        className="mt-8 grid xl:grid-cols-12 gap-8 items-start"
+        className="mt-8 space-y-8 w-full"
       >
-        <div className="xl:col-span-8 space-y-8">
-          <div className="bg-white dark:bg-[#111827] shadow-sm p-6 lg:p-8 rounded-[2rem] border border-slate-200 dark:border-white/5">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 border-b border-slate-200 dark:border-white/5 pb-4 mb-6">
-              1. INFORMASI UMUM
-            </h2>
-            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
-              <div className="space-y-3">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
-                  Waktu Audit
-                </label>
-                <input
-                  type="datetime-local"
-                  value={
-                    startTime
-                      ? new Date(
-                          startTime.getTime() -
-                            startTime.getTimezoneOffset() * 60000,
-                        )
-                          .toISOString()
-                          .slice(0, 16)
-                      : ""
-                  }
-                  onChange={(e) => setStartTime(new Date(e.target.value))}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500/50 [color-scheme:light] dark:[color-scheme:dark]"
-                />
-              </div>
-              <div className="space-y-3">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
-                  Ruangan
-                </label>
-                <select
-                  value={ruangan}
-                  onChange={(e) => setRuangan(e.target.value)}
-                  required
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-white outline-none"
+        <div className="bg-white dark:bg-[#111827] shadow-sm p-6 lg:p-8 rounded-[2rem] border border-slate-200 dark:border-white/5">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 border-b border-slate-200 dark:border-white/5 pb-4 mb-6">
+            1. INFORMASI UMUM
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
+                Waktu Audit
+              </label>
+              <input
+                type="datetime-local"
+                value={
+                  startTime
+                    ? new Date(
+                        startTime.getTime() -
+                          startTime.getTimezoneOffset() * 60000,
+                      )
+                        .toISOString()
+                        .slice(0, 16)
+                    : ""
+                }
+                onChange={(e) => setStartTime(new Date(e.target.value))}
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500/50 [color-scheme:light] dark:[color-scheme:dark]"
+              />
+            </div>
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
+                Ruangan
+              </label>
+              <select
+                value={ruangan}
+                onChange={(e) => setRuangan(e.target.value)}
+                required
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-white outline-none"
+              >
+                <option value="Gizi" className="dark:bg-slate-900">
+                  Gizi
+                </option>
+              </select>
+            </div>
+            <div className="space-y-3 sm:col-span-2 lg:col-span-1">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex justify-between items-center">
+                Supervisor
+                <button
+                  type="button"
+                  onClick={() => setIsObserverModalOpen(true)}
+                  className="text-blue-400 hover:text-blue-300 font-bold uppercase tracking-widest flex items-center gap-1"
                 >
-                  <option value="Gizi" className="dark:bg-slate-900">
-                    Gizi
-                  </option>
+                  <User className="w-3 h-3" /> Tambah / Kelola
+                </button>
+              </label>
+              <div className="relative">
+                <select
+                  value={observer}
+                  onChange={(e) => setObserver(e.target.value)}
+                  className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white appearance-none outline-none focus:border-blue-500/50"
+                >
+                  <option value="">Pilih Supervisor...</option>
+                  {observers.map((o) => (
+                    <option key={o.id} value={o.nama}>
+                      {o.nama}
+                    </option>
+                  ))}
                 </select>
-              </div>
-              <div className="space-y-3 sm:col-span-2 md:col-span-1">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex justify-between items-center">
-                  Supervisor
-                  <button
-                    type="button"
-                    onClick={() => setIsObserverModalOpen(true)}
-                    className="text-blue-400 hover:text-blue-300 font-bold uppercase tracking-widest flex items-center gap-1"
-                  >
-                    <User className="w-3 h-3" /> Tambah / Kelola
-                  </button>
-                </label>
-                <div className="relative">
-                  <select
-                    value={observer}
-                    onChange={(e) => setObserver(e.target.value)}
-                    className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white appearance-none outline-none focus:border-blue-500/50"
-                  >
-                    <option value="">Pilih Supervisor...</option>
-                    {observers.map((o) => (
-                      <option key={o.id} value={o.nama}>
-                        {o.nama}
-                      </option>
-                    ))}
-                  </select>
-                </div>
               </div>
             </div>
           </div>
-          <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
-              📋 Indikator Kepatuhan
-            </h2>
-            <div className="space-y-4">
-              {checklistItems.map((item, idx) => {
-                const selected = data[item.id];
-                const isNegativeQuestion = item.id === "gizi_c_1_3";
-                let borderLeftColor = "border-l-transparent";
-                if (selected === "na") {
-                  borderLeftColor = "border-l-slate-500";
-                } else if (selected) {
-                  borderLeftColor =
-                    selected === "ya"
-                      ? isNegativeQuestion
-                        ? "border-l-red-500"
-                        : "border-l-blue-500"
-                      : isNegativeQuestion
-                        ? "border-l-blue-500"
-                        : "border-l-red-500";
-                }
-                return (
+        </div>
+        <div className="bg-white/5 p-5 sm:p-6 lg:p-8 rounded-[24px] border border-white/5">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
+            📋 Indikator Kepatuhan
+          </h2>
+          <div className="space-y-6">
+            {checklistItems.map((item, idx) => {
+              const selected = data[item.id];
+              const isNegativeQuestion = item.id === "gizi_c_1_3";
+              const prevItem = idx > 0 ? checklistItems[idx - 1] : null;
+              const isNewGroup = !prevItem || prevItem.group !== item.group;
+
+              let borderLeftColor = "border-l-transparent bg-white/5";
+              if (selected === "na") {
+                borderLeftColor = "border-l-slate-500 bg-slate-500/5";
+              } else if (selected) {
+                borderLeftColor =
+                  selected === "ya"
+                    ? isNegativeQuestion
+                      ? "border-l-red-500 bg-red-500/5"
+                      : "border-l-blue-500 bg-blue-500/5"
+                    : isNegativeQuestion
+                      ? "border-l-blue-500 bg-blue-500/5"
+                      : "border-l-red-500 bg-red-500/5";
+              }
+              return (
+                <div key={item.id} className="space-y-4">
+                  {isNewGroup && (
+                    <div className="flex items-center gap-3 border-b border-white/10 pb-2.5 px-1 pt-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)]" />
+                      <h3 className="text-xs sm:text-sm font-black uppercase tracking-[0.2em] text-blue-400">
+                        {item.group}
+                      </h3>
+                    </div>
+                  )}
                   <div
-                    key={item.id}
-                    className={`bg-white/5 p-6 rounded-[24px] border border-white/5 border-l-4 ${borderLeftColor} transition-colors duration-300 relative overflow-hidden group`}
+                    className={`p-5 sm:p-6 rounded-[20px] sm:rounded-[24px] border border-white/5 border-l-4 ${borderLeftColor} transition-colors duration-300 relative overflow-hidden group`}
                   >
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-                      <div className="flex gap-4">
-                        <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border transition-all duration-500 bg-white/5 border-white/10 text-slate-500">
-                          <span className="text-xs font-black">{idx + 1}</span>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 relative z-10">
+                      <div className="flex gap-4 items-start">
+                        <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border transition-all duration-500 bg-white/5 border-white/10 text-slate-400 font-black text-xs">
+                          {idx + 1}
                         </div>
-                        <div>
-                          <h3 className="text-sm font-bold text-white mb-2">
-                            {item.label}
-                          </h3>
-                        </div>
+                        <h4 className="text-sm font-bold text-white leading-relaxed pt-1">
+                          {item.label}
+                        </h4>
                       </div>
-                      <div className="flex p-1.5 bg-white/5 rounded-2xl border border-white/5 w-fit self-end md:self-center">
+                      <div className="flex p-1.5 bg-slate-900/80 rounded-2xl border border-white/10 w-full sm:w-fit self-end md:self-center shrink-0">
                         {["ya", "tidak", "na"].map((choice) => {
                           let activeClass = "";
                           if (choice === "na") {
@@ -761,7 +769,7 @@ export default function MonitoringGiziPage() {
                               key={choice}
                               type="button"
                               onClick={() => toggleItem(item.id, choice as any)}
-                              className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${
+                              className={`flex-1 sm:flex-initial px-5 sm:px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${
                                 data[item.id] === choice
                                   ? activeClass
                                   : "bg-transparent text-slate-400 hover:bg-white/10"
@@ -774,68 +782,68 @@ export default function MonitoringGiziPage() {
                       </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
-          <LiveStatisticsCard
-            totalDinilai={stats.dinilai}
-            totalPatuh={stats.patuh}
-            totalTidakPatuh={stats.dinilai - stats.patuh}
-            persentase={stats.persentase}
-            statusText={stats.status}
-          />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-              <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
-                📝 Temuan Audit
-              </h2>
-              <textarea
-                value={temuan}
-                onChange={(e) => setTemuan(e.target.value)}
-                placeholder="Tuliskan temuan audit..."
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600"
-              />
-            </div>
-            <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-              <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
-                💡 Rekomendasi
-              </h2>
-              <textarea
-                value={rekomendasi}
-                onChange={(e) => setRekomendasi(e.target.value)}
-                placeholder="Tuliskan rekomendasi tindak lanjut..."
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600"
-              />
-            </div>
-          </div>
-          <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
-            <DocumentationUploader images={images} setImages={setImages} />
-          </div>
+        </div>
+        <LiveStatisticsCard
+          totalDinilai={stats.dinilai}
+          totalPatuh={stats.patuh}
+          totalTidakPatuh={stats.dinilai - stats.patuh}
+          persentase={stats.persentase}
+          statusText={stats.status}
+        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
-              ✍️ TANDA TANGAN DIGITAL
+            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
+              📝 Temuan Audit
             </h2>
-            <DigitalSignatureSection
-              ref={sigRef}
-              pjName={pjName}
-              setPjName={setPjName}
-              pjLabel="PJ RUANGAN"
+            <textarea
+              value={temuan}
+              onChange={(e) => setTemuan(e.target.value)}
+              placeholder="Tuliskan temuan audit..."
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600"
             />
           </div>
-          <button
-            type="submit"
-            disabled={isSubmitting || !observer || stats.dinilai === 0}
-            className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg disabled:opacity-50"
-          >
-            {isSubmitting ? (
-              <RefreshCw className="w-5 h-5 animate-spin" />
-            ) : (
-              <Save className="w-5 h-5" />
-            )}
-            <span>{isEditMode ? 'Update Data Audit' : 'Simpan Data Audit'}</span>
-          </button>
+          <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
+              💡 Rekomendasi
+            </h2>
+            <textarea
+              value={rekomendasi}
+              onChange={(e) => setRekomendasi(e.target.value)}
+              placeholder="Tuliskan rekomendasi tindak lanjut..."
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600"
+            />
+          </div>
         </div>
+        <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
+          <DocumentationUploader images={images} setImages={setImages} />
+        </div>
+        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+          <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
+            ✍️ TANDA TANGAN DIGITAL
+          </h2>
+          <DigitalSignatureSection
+            ref={sigRef}
+            pjName={pjName}
+            setPjName={setPjName}
+            pjLabel="PJ RUANGAN"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={isSubmitting || !observer || stats.dinilai === 0}
+          className="w-full flex justify-center items-center gap-4 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg disabled:opacity-50"
+        >
+          {isSubmitting ? (
+            <RefreshCw className="w-5 h-5 animate-spin" />
+          ) : (
+            <Save className="w-5 h-5" />
+          )}
+          <span>{isEditMode ? 'Update Data Audit' : 'Simpan Data Audit'}</span>
+        </button>
       </form>
       <AnimatePresence>
         {isObserverModalOpen && (

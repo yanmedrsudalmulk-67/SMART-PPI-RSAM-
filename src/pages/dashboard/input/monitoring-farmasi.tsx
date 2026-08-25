@@ -24,90 +24,165 @@ import { useAppContext } from "@/components/Providers";
 import { uploadImagesToSupabase } from "@/lib/upload";
 const checklistGroups = [
   {
-    title: "A: LINGKUNGAN UMUM",
+    title: "A. Lingkungan Umum",
     items: [
       {
         id: "lu_1",
-        label: "Fasilitas memadai, kebersihan tangan tersedia dan memadai",
+        label: "Fasilitas yang memadai, kebersihan tangan tersedia dan memadai",
       },
-      { id: "lu_2", label: "Kipas angin / AC bersih dan bebas debu" },
-      { id: "lu_3", label: "Langit-langit / plafon bebas noda" },
-      { id: "lu_4", label: "Mebelair bersih dan bebas debu" },
+      {
+        id: "lu_2",
+        label: "Kipas angin / AC bersih dan bebas dari debu",
+      },
+      {
+        id: "lu_3",
+        label: "Langit - langit / papan langit – langit bebas dari noda",
+      },
+      {
+        id: "lu_4",
+        label: "Mebelair bersih dan terbebas dari debu",
+      },
     ],
   },
   {
-    title: "B: RUANGAN BERSIH",
-    items: [
-      { id: "rb_1", label: "Area penyimpanan obat bersih dan rapi" },
-      { id: "rb_2", label: "Obat tersusun sesuai kategori" },
-      { id: "rb_3", label: "Tidak ada debu pada rak penyimpanan" },
-      { id: "rb_4", label: "Area dispensing bersih" },
-      { id: "rb_5", label: "Tidak ada makanan/minuman di area kerja" },
-    ],
-  },
-  {
-    title: "C: PEMBUANGAN LIMBAH",
+    title: "B. Ruangan Bersih",
     items: [
       {
-        id: "pl_1",
+        id: "rb_1",
         label:
-          "Tersedia wadah limbah infeksius, non infeksius, dan benda tajam",
+          "Sebelum dan sesudah bekerja, permukaan harus di bersihkan dengan bahan sesuai dengan pedoman PPI di Rumah Sakit Al-Mulk",
       },
-      { id: "pl_2", label: "Ada label di setiap tempat sampah" },
-      {
-        id: "pl_3",
-        label: "Tempat sampah menggunakan plastik sesuai jenis limbah",
-      },
-      { id: "pl_4", label: "Container benda tajam tahan air & tahan tusuk" },
-      { id: "pl_5", label: "Limbah dibuang saat 3/4 penuh atau 48 jam" },
-      { id: "pl_6", label: "Tempat sampah bersih dan tertutup" },
-      { id: "pl_7", label: "Pedal injak berfungsi baik" },
-      { id: "pl_8", label: "Tersedia spillkit tumpahan cairan" },
     ],
   },
   {
-    title: "D: FASILITAS KEBERSIHAN TANGAN",
+    title: "C. Kulkas Obat",
     items: [
       {
-        id: "fkt_1",
-        label: "Tersedia botol handrub dan diberi tanggal pemakaian",
+        id: "ko_1",
+        label: "Suhu kulkas obat di jaga dalam sushu 2 – 8 °C",
       },
-      { id: "fkt_2", label: "Tersedia wastafel cuci tangan" },
-      { id: "fkt_3", label: "Keran air berfungsi baik" },
-      { id: "fkt_4", label: "Tersedia sabun cair" },
-      { id: "fkt_5", label: "Tersedia tissue towel" },
-      { id: "fkt_6", label: "Tempat sampah dekat wastafel tersedia" },
       {
-        id: "fkt_7",
-        label: "Poster 6 langkah cuci tangan dan 5 momen tersedia",
+        id: "ko_2",
+        label:
+          "Pemantauan suhu dicatat setiap hari dan jika suhu tidak sesuai standar maka diambil tindakan yang sesuai (suhu lemari penyimpanan berkisar 2 – 8 °C)",
+      },
+      {
+        id: "ko_3",
+        label:
+          "Suhu lemari pembeku dijaga dalam kisaran suhu – 18 ° C atau lebih rendah",
+      },
+      {
+        id: "ko_4",
+        label:
+          "Pemantauan suhu dicatat setiap hari dan jika suhu tidak sesuai standar maka akan diambil tindakan yang sesuai ( suhu lemari pembeku berkisar antara – 18 °C atau lebih rendah )",
+      },
+      {
+        id: "ko_5",
+        label:
+          "Suhu ruang penyimpanan dijaga dalam kisaran 25 °C atau lebih rendah",
+      },
+      {
+        id: "ko_6",
+        label:
+          "Pemantauan suhu tercatat tiap bulannya dan jika suhu tidak sesuai standar maka di ambil tindakan yang sesuai",
       },
     ],
   },
   {
-    title: "E: PEMBERSIHAN LINGKUNGAN",
+    title: "D. Penyimpanan Obat",
     items: [
-      { id: "pel_1", label: "Ada jadwal pembersihan harian dan mingguan" },
-      { id: "pel_2", label: "Permukaan kerja dibersihkan rutin" },
-      { id: "pel_3", label: "Rak penyimpanan dibersihkan berkala" },
-      { id: "pel_4", label: "Lantai bersih dan tidak licin" },
-      { id: "pel_5", label: "Ventilasi bersih dan tidak berdebu" },
-      { id: "pel_6", label: "Bangunan ruangan dalam kondisi baik" },
+      {
+        id: "po_1",
+        label:
+          "Suhu penyimpanan dijaga dalam kisaran 25 °C atau lebih rendah",
+      },
     ],
   },
   {
-    title: "F: SUHU DAN KELEMBABAN",
+    title: "E. Limbah Umum",
     items: [
-      { id: "sdk_1", label: "Suhu ruangan sesuai standar penyimpanan obat" },
-      { id: "sdk_2", label: "Kelembaban ruangan terkontrol" },
-      { id: "sdk_3", label: "Thermometer tersedia dan berfungsi" },
+      {
+        id: "lm_1",
+        label: "Limbah medis umum dibuang ke dalam plastik hitam",
+      },
+      {
+        id: "lm_2",
+        label:
+          "Limbah khusus ditandai dengan jelas, misal : biohazard, radioaktif, kemoterapi",
+      },
+      {
+        id: "lm_3",
+        label: "Pastikan tidak ada kantung limbah yang terlampau penuh",
+      },
     ],
   },
   {
-    title: "G: VENTILASI",
+    title: "F. Penanganan Yang Aman dan Pembuangan Benda Tajam",
     items: [
-      { id: "ven_1", label: "Sirkulasi udara baik" },
-      { id: "ven_2", label: "AC/ventilasi berfungsi baik" },
-      { id: "ven_3", label: "Tidak ada bau menyengat/jamur" },
+      {
+        id: "bt_1",
+        label: "Tempat sampah bebas dari benda tajam yang terjulur",
+      },
+      {
+        id: "bt_2",
+        label: "Semua tempat sampah tersusun dengan benar",
+      },
+      {
+        id: "bt_3",
+        label:
+          "Seluruh tempat sampah benda tajam adalah safety box yang terstandar WHO",
+      },
+      {
+        id: "bt_4",
+        label: "Jarum tidak dibengkokkan, dipotong atau digunakan kembali",
+      },
+      {
+        id: "bt_5",
+        label:
+          "Jarum / benda tajam langsung dibuang ke tempat sampah benda tajam setelah sesesai digunakan",
+      },
+      {
+        id: "bt_6",
+        label: "Jarum bebas pakai tidak boleh digunakan lagi",
+      },
+    ],
+  },
+  {
+    title: "G. Fasilitas Cuci Tangan",
+    items: [
+      {
+        id: "fct_1",
+        label: "Tersedia fasilitas yang memadai untuk cuci tangan",
+      },
+      {
+        id: "fct_2",
+        label:
+          "Wastafel cuci tangan bebas dari alat – alat yang telah dipakai dan benda – benda yang tidak sesuai",
+      },
+      {
+        id: "fct_3",
+        label:
+          "Poster cara dan 5 saat kebersihan tangan berada di dekat alkohol hand rub atau wastafel",
+      },
+      {
+        id: "fct_4",
+        label:
+          "Tersedia hand rub, botol berfungsi baik, ada tanggal saat botol dibuka dan tanggal expired",
+      },
+    ],
+  },
+  {
+    title: "H. Petunjuk Umum",
+    items: [
+      {
+        id: "pu_1",
+        label: "Kuku dipotong pendek, bersih, dan bebas dari cat kuku",
+      },
+      {
+        id: "pu_2",
+        label:
+          "Poster promosi kebersihan tangan tersedia dan terpajang di area yang terlihat oleh staf",
+      },
     ],
   },
 ];
@@ -131,13 +206,14 @@ export default function InputMonitoringFarmasiPage() {
   const [showToast, setShowToast] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
     {
-      "A: LINGKUNGAN UMUM": true,
-      "B: RUANGAN BERSIH": true,
-      "C: PEMBUANGAN LIMBAH": false,
-      "D: FASILITAS KEBERSIHAN TANGAN": false,
-      "E: PEMBERSIHAN LINGKUNGAN": false,
-      "F: SUHU DAN KELEMBABAN": false,
-      "G: VENTILASI": false,
+      "A. Lingkungan Umum": true,
+      "B. Ruangan Bersih": true,
+      "C. Kulkas Obat": true,
+      "D. Penyimpanan Obat": true,
+      "E. Limbah Umum": true,
+      "F. Penanganan Yang Aman dan Pembuangan Benda Tajam": true,
+      "G. Fasilitas Cuci Tangan": true,
+      "H. Petunjuk Umum": true,
     },
   );
   useEffect(() => {
@@ -349,7 +425,7 @@ export default function InputMonitoringFarmasiPage() {
     }
   };
   return (
-    <div className="max-w-4xl mx-auto pb-32">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32">
       <AnimatePresence>
         {showToast && (
           <motion.div
@@ -381,11 +457,11 @@ export default function InputMonitoringFarmasiPage() {
         </div>
       </div>
       <div className="space-y-6">
-        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+        <div className="bg-white/5 p-5 sm:p-6 lg:p-8 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
             <Activity className="w-4 h-4 text-purple-400" /> Data Subjek
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div className="space-y-3">
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
                 Waktu Audit
@@ -417,7 +493,7 @@ export default function InputMonitoringFarmasiPage() {
             />
           </div>
         </div>
-        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
+        <div className="bg-white/5 p-5 sm:p-6 lg:p-8 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
             📋 Checklist Audit Farmasi
           </h2>
@@ -430,7 +506,7 @@ export default function InputMonitoringFarmasiPage() {
                 <button
                   type="button"
                   onClick={() => toggleGroup(group.title)}
-                  className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-white/5 transition-colors"
+                  className="w-full px-5 sm:px-6 py-4 flex items-center justify-between text-left hover:bg-white/5 transition-colors"
                 >
                   <span className="text-sm font-bold text-white uppercase tracking-widest">
                     {group.title}
@@ -449,25 +525,23 @@ export default function InputMonitoringFarmasiPage() {
                       exit={{ height: 0, opacity: 0 }}
                       className="border-t border-white/5"
                     >
-                      <div className="p-4 space-y-4">
+                      <div className="p-4 sm:p-5 space-y-4">
                         {group.items.map((item, idx) => (
                           <div
                             key={item.id}
-                            className="bg-white/5 p-5 rounded-[1.5rem] border border-white/5 relative overflow-hidden group flex flex-col md:flex-row md:items-center justify-between gap-6"
+                            className="bg-white/5 p-4 sm:p-5 md:p-6 rounded-[1.25rem] sm:rounded-[1.5rem] border border-white/5 relative overflow-hidden group flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6"
                           >
-                            <div className="flex gap-4 relative z-10">
-                              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border bg-white/5 border-white/10 text-slate-400">
-                                <span className="text-xs font-black">
-                                  {idx + 1}
-                                </span>
+                            <div className="flex gap-4 items-start relative z-10">
+                              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center shrink-0 border bg-white/5 border-white/10 text-slate-400 font-black text-xs">
+                                {idx + 1}
                               </div>
-                              <div className="mt-1 flex-1">
+                              <div className="mt-0.5 sm:mt-1 flex-1">
                                 <h3 className="text-sm font-bold text-white leading-relaxed">
                                   {item.label}
                                 </h3>
                               </div>
                             </div>
-                            <div className="flex p-1.5 bg-slate-900 rounded-2xl border border-white/5 w-fit shrink-0 self-end md:self-center z-10">
+                            <div className="flex p-1.5 bg-slate-900 rounded-2xl border border-white/5 w-full sm:w-fit shrink-0 self-end md:self-center z-10">
                               {["ya", "tidak", "na"].map((choice) => (
                                 <button
                                   key={choice}
@@ -475,17 +549,17 @@ export default function InputMonitoringFarmasiPage() {
                                     handleActionClick(item.id, choice as any)
                                   }
                                   type="button"
-                                  className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${
+                                  className={`flex-1 sm:flex-initial px-5 sm:px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${
                                     data[item.id] === choice
                                       ? choice === "ya"
-                                        ? "bg-blue-600 text-white shadow-lg"
+                                        ? "bg-blue-600 text-white shadow-lg transform scale-105"
                                         : choice === "tidak"
-                                          ? "bg-red-600 text-white shadow-lg"
-                                          : "bg-slate-600 text-white shadow-lg"
+                                          ? "bg-red-600 text-white shadow-lg transform scale-105"
+                                          : "bg-slate-600 text-white shadow-lg transform scale-105"
                                       : "text-slate-500 hover:text-slate-300 hover:bg-white/5"
                                   }`}
                                 >
-                                  {choice}
+                                  {choice === "na" ? "N/A" : choice}
                                 </button>
                               ))}
                             </div>
