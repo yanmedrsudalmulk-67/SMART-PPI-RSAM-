@@ -220,7 +220,7 @@ const checklistItems = [
   {
     group: "C. PRAKTIK PENGENDALIAN INFEKSI - Personal / Staf",
     id: "gizi_c_1_3",
-    label: "Memakai perhiasan, arloji dan cat kuku saat memasak",
+    label: "Tidak memakai perhiasan, arloji dan cat kuku saat memasak",
   },
   {
     group: "C. PRAKTIK PENGENDALIAN INFEKSI - Personal / Staf",
@@ -332,7 +332,7 @@ export default function MonitoringGiziPage() {
             if (indicatorsData.temuan) setTemuan(indicatorsData.temuan);
             if (indicatorsData.rekomendasi) setRekomendasi(indicatorsData.rekomendasi);
             
-            const displayPjName = indicatorsData.nama_pj || indicatorsData.nama_pj_ruangan || ed.nama_pj_ruangan || "";
+            const displayPjName = indicatorsData.nama_pj || indicatorsData.nama_pj_ruangan || ed.nama_pj_ruangan || ed.nama_pj || ed.auditee || "";
             setPjName(displayPjName);
 
             try {
@@ -349,8 +349,8 @@ export default function MonitoringGiziPage() {
 
             // Prefill signatures
             setTimeout(() => {
-              const t1 = ed.ttd_pj_ruangan || indicatorsData.ttd_pj || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
-              const t2 = ed.ttd_ipcn || indicatorsData.ttd_ipcn || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
+              const t1 = ed.ttd_pj_ruangan || ed.ttd_pj || ed.tanda_tangan_1 || indicatorsData.ttd_pj_ruangan || indicatorsData.ttd_pj || indicatorsData.tanda_tangan_pj || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]) || (ed.tanda_tangan && ed.tanda_tangan[0]);
+              const t2 = ed.ttd_ipcn || ed.tanda_tangan_2 || indicatorsData.ttd_ipcn || indicatorsData.tanda_tangan_ipcn || indicatorsData.tanda_tangan_spv || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]) || (ed.tanda_tangan && ed.tanda_tangan[1]);
               if (t1 && sigRef.current?.setPjSignature) {
                 sigRef.current.setPjSignature(t1);
               }
@@ -449,18 +449,11 @@ export default function MonitoringGiziPage() {
   const stats = useMemo(() => {
     let patuh = 0;
     let dinilai = 0;
-    Object.entries(data).forEach(([key, val]) => {
+    Object.entries(data).forEach(([, val]) => {
       if (val === "ya" || val === "tidak") {
         dinilai++;
-        const isNegativeQuestion = key === "gizi_c_1_3";
-        if (isNegativeQuestion) {
-          if (val === "tidak") {
-            patuh++;
-          }
-        } else {
-          if (val === "ya") {
-            patuh++;
-          }
+        if (val === "ya") {
+          patuh++;
         }
       }
     });
@@ -487,15 +480,15 @@ export default function MonitoringGiziPage() {
     }
     setIsSubmitting(true);
     try {
-      const ttd_pj = sigRef.current?.getPjSignature();
-      const ttd_ipcn = sigRef.current?.getSupervisorSignature();
+      const ttd_pj = sigRef.current?.getPjSignature() || null;
+      const ttd_ipcn = sigRef.current?.getSupervisorSignature() || null;
       const uploadedUrls = await uploadImagesToSupabase(
         supabase,
         images,
         "logos",
         "audit",
       );
-      const payload = {
+      const payload: any = {
         waktu: startTime?.toISOString() || new Date().toISOString(),
         checklist_json: data,
         persentase: stats.persentase,
@@ -503,9 +496,15 @@ export default function MonitoringGiziPage() {
         temuan,
         rekomendasi,
         ttd_pj,
+        ttd_pj_ruangan: ttd_pj,
+        tanda_tangan_1: ttd_pj,
         ttd_ipcn,
+        tanda_tangan_2: ttd_ipcn,
+        tanda_tangan: [ttd_pj, ttd_ipcn],
+        nama_pj: pjName.trim(),
+        nama_pj_ruangan: pjName.trim(),
       };
-      const sessionPayload = {
+      const sessionPayload: any = {
         indikator_id: "monitoring_gizi",
         kategori: "Kewaspadaan Isolasi",
         nama_indikator: "MONITORING GIZI",
@@ -520,9 +519,16 @@ export default function MonitoringGiziPage() {
           ...data,
           temuan,
           rekomendasi,
+          nama_pj: pjName.trim(),
           nama_pj_ruangan: pjName.trim(),
+          ttd_pj,
           ttd_pj_ruangan: ttd_pj,
-          ttd_ipcn: ttd_ipcn,
+          tanda_tangan_1: ttd_pj,
+          tanda_tangan_pj: ttd_pj,
+          ttd_ipcn,
+          tanda_tangan_2: ttd_ipcn,
+          tanda_tangan_ipcn: ttd_ipcn,
+          tanda_tangan: [ttd_pj, ttd_ipcn],
           dokumentasi: uploadedUrls,
         },
       };
@@ -708,22 +714,16 @@ export default function MonitoringGiziPage() {
           <div className="space-y-6">
             {checklistItems.map((item, idx) => {
               const selected = data[item.id];
-              const isNegativeQuestion = item.id === "gizi_c_1_3";
               const prevItem = idx > 0 ? checklistItems[idx - 1] : null;
               const isNewGroup = !prevItem || prevItem.group !== item.group;
 
               let borderLeftColor = "border-l-transparent bg-white/5";
               if (selected === "na") {
                 borderLeftColor = "border-l-slate-500 bg-slate-500/5";
-              } else if (selected) {
-                borderLeftColor =
-                  selected === "ya"
-                    ? isNegativeQuestion
-                      ? "border-l-red-500 bg-red-500/5"
-                      : "border-l-blue-500 bg-blue-500/5"
-                    : isNegativeQuestion
-                      ? "border-l-blue-500 bg-blue-500/5"
-                      : "border-l-red-500 bg-red-500/5";
+              } else if (selected === "ya") {
+                borderLeftColor = "border-l-blue-500 bg-blue-500/5";
+              } else if (selected === "tidak") {
+                borderLeftColor = "border-l-red-500 bg-red-500/5";
               }
               return (
                 <div key={item.id} className="space-y-4">
@@ -753,16 +753,12 @@ export default function MonitoringGiziPage() {
                           if (choice === "na") {
                             activeClass =
                               "bg-slate-500 text-white shadow-[0_0_15px_rgba(100,116,139,0.3)] transform scale-105";
-                          } else if (isNegativeQuestion) {
+                          } else if (choice === "ya") {
                             activeClass =
-                              choice === "ya"
-                                ? "bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)] transform scale-105"
-                                : "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] transform scale-105";
+                              "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] transform scale-105";
                           } else {
                             activeClass =
-                              choice === "ya"
-                                ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] transform scale-105"
-                                : "bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)] transform scale-105";
+                              "bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)] transform scale-105";
                           }
                           return (
                             <button

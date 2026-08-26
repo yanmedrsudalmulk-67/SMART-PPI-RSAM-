@@ -135,23 +135,35 @@ export default function EtikaBatukReport({
       const mainEl = document.querySelector("main");
       if (mainEl) {
         mainEl.scrollTop = 0;
-        mainEl.scrollTo({ top: 0, behavior: "instant" as any });
+        try {
+          mainEl.scrollTo({ top: 0, behavior: "instant" as any });
+        } catch (_) {}
       }
-      const scrollableElements = document.querySelectorAll('.overflow-y-auto');
+      const scrollableElements = document.querySelectorAll('.overflow-y-auto, [data-scroll-container]');
       scrollableElements.forEach(el => {
         el.scrollTop = 0;
       });
-      window.scrollTo({ top: 0, behavior: "instant" as any });
+
+      const headerEl = document.getElementById('report-detail-header') || document.getElementById('report-top-anchor');
+      if (headerEl) {
+        try {
+          headerEl.scrollIntoView({ behavior: 'instant' as any, block: 'start' });
+        } catch (_) {}
+      }
+
+      try {
+        window.scrollTo({ top: 0, behavior: "instant" as any });
+      } catch (_) {}
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
     };
 
-    if (!loading) {
-      scrollToTop();
-      requestAnimationFrame(scrollToTop);
-      setTimeout(scrollToTop, 50);
-      setTimeout(scrollToTop, 150);
-    }
+    scrollToTop();
+    requestAnimationFrame(scrollToTop);
+    setTimeout(scrollToTop, 30);
+    setTimeout(scrollToTop, 100);
+    setTimeout(scrollToTop, 250);
+    setTimeout(scrollToTop, 500);
   }, [loading]);
 
   const filteredData = data.filter((d) => {

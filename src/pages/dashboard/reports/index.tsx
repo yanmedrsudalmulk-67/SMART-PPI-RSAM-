@@ -346,23 +346,38 @@ export default function ReportsPage() {
       const mainEl = document.querySelector('main');
       if (mainEl) {
         mainEl.scrollTop = 0;
-        mainEl.scrollTo({ top: 0, behavior: 'instant' as any });
+        try {
+          mainEl.scrollTo({ top: 0, behavior: 'instant' as any });
+        } catch (_) {}
       }
-      const scrollableElements = document.querySelectorAll('.overflow-y-auto');
+      const scrollableElements = document.querySelectorAll('.overflow-y-auto, [data-scroll-container]');
       scrollableElements.forEach(el => {
         el.scrollTop = 0;
       });
-      window.scrollTo({ top: 0, behavior: 'instant' as any });
+
+      const headerEl = document.getElementById('report-detail-header') || document.getElementById('report-top-anchor');
+      if (headerEl) {
+        try {
+          headerEl.scrollIntoView({ behavior: 'instant' as any, block: 'start' });
+        } catch (_) {}
+      }
+
+      try {
+        window.scrollTo({ top: 0, behavior: 'instant' as any });
+      } catch (_) {}
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
     };
 
     reset();
     requestAnimationFrame(reset);
+    setTimeout(reset, 20);
     setTimeout(reset, 50);
-    setTimeout(reset, 150);
-    setTimeout(reset, 300);
+    setTimeout(reset, 100);
+    setTimeout(reset, 200);
+    setTimeout(reset, 350);
     setTimeout(reset, 500);
+    setTimeout(reset, 800);
   };
 
   // Automatically scroll main container to top when changing indicators, categories, or subcategories
@@ -773,10 +788,22 @@ export default function ReportsPage() {
         )}
 
         {selectedIndicator && (
-          <motion.div key="detail" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} onAnimationComplete={forceScrollToTop} className="space-y-6">
+          <motion.div
+            key={`detail-${selectedIndicator}`}
+            id="report-top-anchor"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            onAnimationStart={forceScrollToTop}
+            onAnimationComplete={forceScrollToTop}
+            className="space-y-6"
+          >
             
             {/* Header Detail View */}
-            <div className="bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-3xl p-4 sm:p-6 shadow-[0_12px_28px_-6px_rgba(0,0,0,0.12),0_6px_14px_-4px_rgba(0,0,0,0.06),inset_0_1px_1.5px_rgba(255,255,255,0.8)] dark:shadow-[0_20px_45px_-10px_rgba(0,0,0,0.9),0_8px_20px_-6px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div
+              id="report-detail-header"
+              className="bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-3xl p-4 sm:p-6 shadow-[0_12px_28px_-6px_rgba(0,0,0,0.12),0_6px_14px_-4px_rgba(0,0,0,0.06),inset_0_1px_1.5px_rgba(255,255,255,0.8)] dark:shadow-[0_20px_45px_-10px_rgba(0,0,0,0.9),0_8px_20px_-6px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] flex flex-col md:flex-row md:items-center justify-between gap-4"
+            >
                <div className="flex items-center gap-4">
                  <button onClick={handleBack} className="p-3 bg-slate-100 dark:bg-white/5 rounded-2xl hover:bg-slate-200 dark:hover:bg-white/10 transition-colors text-slate-600 dark:text-slate-300">
                    <ArrowLeft className="w-5 h-5" />

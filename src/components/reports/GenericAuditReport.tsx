@@ -177,18 +177,30 @@ export default function GenericAuditReport({
         item.ttd_pj_ruangan ||
         item.ttd_pj ||
         item.tanda_tangan_1 ||
-        jsonFallback.tanda_tangan_pj ||
+        item.tanda_tangan_pj ||
+        jsonFallback.ttd_pj_ruangan ||
         jsonFallback.ttd_pj ||
-        jsonFallback.tanda_tangan?.[0] ||
-        item.tanda_tangan?.[0],
+        jsonFallback.tanda_tangan_pj ||
+        jsonFallback.tanda_tangan_1 ||
+        (Array.isArray(jsonFallback.tanda_tangan) ? jsonFallback.tanda_tangan[0] : null) ||
+        (Array.isArray(item.tanda_tangan) ? item.tanda_tangan[0] : null) ||
+        (typeof item.tanda_tangan_1 === 'string' ? item.tanda_tangan_1 : null) ||
+        (typeof jsonFallback.tanda_tangan_1 === 'string' ? jsonFallback.tanda_tangan_1 : null) ||
+        null,
       tanda_tangan_2:
         item.ttd_ipcn ||
         item.tanda_tangan_2 ||
+        item.tanda_tangan_ipcn ||
+        item.tanda_tangan_spv ||
+        jsonFallback.ttd_ipcn ||
         jsonFallback.tanda_tangan_ipcn ||
         jsonFallback.tanda_tangan_spv ||
-        jsonFallback.ttd_ipcn ||
-        jsonFallback.tanda_tangan?.[1] ||
-        item.tanda_tangan?.[1],
+        jsonFallback.tanda_tangan_2 ||
+        (Array.isArray(jsonFallback.tanda_tangan) ? jsonFallback.tanda_tangan[1] : null) ||
+        (Array.isArray(item.tanda_tangan) ? item.tanda_tangan[1] : null) ||
+        (typeof item.tanda_tangan_2 === 'string' ? item.tanda_tangan_2 : null) ||
+        (typeof jsonFallback.tanda_tangan_2 === 'string' ? jsonFallback.tanda_tangan_2 : null) ||
+        null,
       foto:
         (Array.isArray(item.dokumentasi) ? item.dokumentasi : typeof item.dokumentasi === 'string' && item.dokumentasi.length > 0 ? [item.dokumentasi] : null) || 
         (Array.isArray(item.foto) ? item.foto : typeof item.foto === 'string' && item.foto.length > 0 ? [item.foto] : null) || 
@@ -749,7 +761,7 @@ export default function GenericAuditReport({
 
     if (selectedRecord?.checklist_json) {
       return Object.keys(selectedRecord.checklist_json)
-        .filter(k => !['temuan', 'rekomendasi', 'dokumentasi', 'tanda_tangan', 'ttd_pj', 'ttd_ipcn', 'nama_pj', 'nama_pj_ruangan', 'keterangan', 'keterangan_json'].includes(k))
+        .filter(k => !['temuan', 'rekomendasi', 'dokumentasi', 'tanda_tangan', 'ttd_pj', 'ttd_pj_ruangan', 'ttd_ipcn', 'nama_pj', 'nama_pj_ruangan', 'tanda_tangan_1', 'tanda_tangan_2', 'tanda_tangan_pj', 'tanda_tangan_ipcn', 'keterangan', 'keterangan_json'].includes(k))
         .map((k) => ({
           id: k,
           label: toSentenceCase(k),
@@ -772,23 +784,35 @@ export default function GenericAuditReport({
       const mainEl = document.querySelector("main");
       if (mainEl) {
         mainEl.scrollTop = 0;
-        mainEl.scrollTo({ top: 0, behavior: "instant" as any });
+        try {
+          mainEl.scrollTo({ top: 0, behavior: "instant" as any });
+        } catch (_) {}
       }
-      const scrollableElements = document.querySelectorAll('.overflow-y-auto');
+      const scrollableElements = document.querySelectorAll('.overflow-y-auto, [data-scroll-container]');
       scrollableElements.forEach(el => {
         el.scrollTop = 0;
       });
-      window.scrollTo({ top: 0, behavior: "instant" as any });
+
+      const headerEl = document.getElementById('report-detail-header') || document.getElementById('report-top-anchor');
+      if (headerEl) {
+        try {
+          headerEl.scrollIntoView({ behavior: 'instant' as any, block: 'start' });
+        } catch (_) {}
+      }
+
+      try {
+        window.scrollTo({ top: 0, behavior: "instant" as any });
+      } catch (_) {}
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
     };
 
-    if (!loading) {
-      scrollToTop();
-      requestAnimationFrame(scrollToTop);
-      setTimeout(scrollToTop, 50);
-      setTimeout(scrollToTop, 150);
-    }
+    scrollToTop();
+    requestAnimationFrame(scrollToTop);
+    setTimeout(scrollToTop, 30);
+    setTimeout(scrollToTop, 100);
+    setTimeout(scrollToTop, 250);
+    setTimeout(scrollToTop, 500);
   }, [loading, selectedRecordId]);
 
   if (loading && !data.length)

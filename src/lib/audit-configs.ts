@@ -479,7 +479,7 @@ export const genericAuditConfigs: Record<string, { tableName: string; extraFilte
       { id: 'gizi_b_1_4', label: 'Area penyimpanan limbah dirancang baik dan dijaga kebersihannya', key: 'gizi_b_1_4', section: 'B. PENANGANAN LIMBAH' },
       { id: 'gizi_c_1_1', label: 'Pemeriksaan harian staf untuk memastikan staf sakit tidak menangani makanan', key: 'gizi_c_1_1', section: 'C. PRAKTIK PENGENDALIAN INFEKSI - Personal / Staf' },
       { id: 'gizi_c_1_2', label: 'Semua pengolah makanan mendapat pelatihan kebersihan pribadi dan dapur berkala', key: 'gizi_c_1_2', section: 'C. PRAKTIK PENGENDALIAN INFEKSI - Personal / Staf' },
-      { id: 'gizi_c_1_3', label: 'Memakai perhiasan, arloji dan cat kuku saat memasak', key: 'gizi_c_1_3', section: 'C. PRAKTIK PENGENDALIAN INFEKSI - Personal / Staf' },
+      { id: 'gizi_c_1_3', label: 'Tidak memakai perhiasan, arloji dan cat kuku saat memasak', key: 'gizi_c_1_3', section: 'C. PRAKTIK PENGENDALIAN INFEKSI - Personal / Staf' },
       { id: 'gizi_c_1_4', label: 'Staf melakukan cuci tangan sebelum mengolah makanan', key: 'gizi_c_1_4', section: 'C. PRAKTIK PENGENDALIAN INFEKSI - Personal / Staf' },
       { id: 'gizi_c_1_5', label: 'Gunakan sarung tangan saat mempersiapkan makanan', key: 'gizi_c_1_5', section: 'C. PRAKTIK PENGENDALIAN INFEKSI - Personal / Staf' },
       { id: 'gizi_c_1_6', label: 'Staf cuci tangan setelah membuka sarung tangan', key: 'gizi_c_1_6', section: 'C. PRAKTIK PENGENDALIAN INFEKSI - Personal / Staf' },
