@@ -4,18 +4,24 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export interface DocImage {
   url: string;
-  file: File;
+  file?: File | null;
 }
 
 interface DocumentationUploaderProps {
-  images: DocImage[];
-  setImages: React.Dispatch<React.SetStateAction<DocImage[]>>;
+  images: (DocImage | any)[];
+  setImages: React.Dispatch<React.SetStateAction<DocImage[]>> | React.Dispatch<React.SetStateAction<any[]>>;
 }
 
 export function DocumentationUploader({ images, setImages }: DocumentationUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+  const getImageUrl = (img: any): string => {
+    if (!img) return '';
+    if (typeof img === 'string') return img;
+    return img.url || '';
+  };
 
   const compressImage = async (file: File): Promise<File> => {
     return new Promise((resolve) => {
@@ -60,19 +66,27 @@ export function DocumentationUploader({ images, setImages }: DocumentationUpload
         const compressed = await compressImage(files[i]);
         newImages.push({ url: URL.createObjectURL(compressed), file: compressed });
     }
-    setImages(prev => [...prev, ...newImages]);
+    setImages((prev: any) => [...(Array.isArray(prev) ? prev : []), ...newImages]);
     if (fileInputRef.current) fileInputRef.current.value = '';
     if (cameraInputRef.current) cameraInputRef.current.value = '';
   };
 
   const removeImage = (index: number) => {
-    setImages(prev => {
-      const updated = [...prev];
-      URL.revokeObjectURL(updated[index].url);
+    setImages((prev: any) => {
+      const updated = [...(Array.isArray(prev) ? prev : [])];
+      const target = updated[index];
+      const targetUrl = typeof target === 'string' ? target : target?.url;
+      if (targetUrl && targetUrl.startsWith('blob:')) {
+        try {
+          URL.revokeObjectURL(targetUrl);
+        } catch (_) {}
+      }
       updated.splice(index, 1);
       return updated;
     });
   };
+
+  const validImages = Array.isArray(images) ? images.filter(img => Boolean(getImageUrl(img))) : [];
 
   return (
     <>
@@ -98,26 +112,29 @@ export function DocumentationUploader({ images, setImages }: DocumentationUpload
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-6 w-full">
         <AnimatePresence>
-          {images.map((img, idx) => (
-            <motion.div layout initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} key={img.url} 
-              className="relative aspect-video rounded-2xl overflow-hidden border border-white/10 group shadow-2xl"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img.url} alt={`Doc ${idx}`} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                  <button type="button" onClick={() => setPreviewImage(img.url)} className="p-3 bg-blue-600 text-white rounded-xl shadow-xl transition-all">
-                    <Eye className="w-4 h-4" />
-                  </button>
-                  <button type="button" onClick={() => removeImage(idx)} className="p-3 bg-red-600 text-white rounded-xl shadow-xl transition-all">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-              </div>
-            </motion.div>
-          ))}
+          {validImages.map((img, idx) => {
+            const url = getImageUrl(img);
+            return (
+              <motion.div layout initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} key={url || idx} 
+                className="relative aspect-video rounded-2xl overflow-hidden border border-white/10 group shadow-2xl bg-black/40"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={url} alt={`Doc ${idx}`} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                    <button type="button" onClick={() => setPreviewImage(url)} className="p-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-xl transition-all">
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button type="button" onClick={() => removeImage(idx)} className="p-3 bg-red-600 hover:bg-red-500 text-white rounded-xl shadow-xl transition-all">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                </div>
+              </motion.div>
+            );
+          })}
         </AnimatePresence>
       </div>
         
-      {images.length === 0 && (
+      {validImages.length === 0 && (
         <div className="col-span-full py-12 border-2 border-dashed border-white/5 rounded-[2rem] flex flex-col items-center justify-center text-slate-500 gap-4 bg-white/2 w-full mt-4">
           <Camera className="w-8 h-8 opacity-20" />
           <p className="text-[10px] font-bold uppercase tracking-widest opacity-40">Belum ada foto dokumentasi</p>

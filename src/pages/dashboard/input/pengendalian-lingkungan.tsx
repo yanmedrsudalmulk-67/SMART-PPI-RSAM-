@@ -249,13 +249,13 @@ export default function InputPengendalianLingkunganPage() {
             }, 800);
 
             // Prefill documentation
-            if (indicatorsData.dokumentasi) {
+            const docs = indicatorsData.dokumentasi || ed.dokumentasi || indicatorsData.foto || ed.foto;
+            if (Array.isArray(docs)) {
               setImages(
-                indicatorsData.dokumentasi.map((url: string) => ({
-                  url,
-                  file: null as any,
-                }))
+                docs.map((url: any) => (typeof url === 'string' ? { url, file: null as any } : url))
               );
+            } else if (typeof docs === 'string' && docs.length > 0) {
+              setImages([{ url: docs, file: null as any }]);
             }
           }
         };

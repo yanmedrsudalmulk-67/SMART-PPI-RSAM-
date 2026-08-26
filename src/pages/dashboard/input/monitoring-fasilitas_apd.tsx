@@ -167,14 +167,11 @@ export default function MonitoringFasilitasAPDPage() {
             }, 800);
 
             // Prefill documentation
-            const docs = ed.foto || indicatorsData.dokumentasi;
+            const docs = indicatorsData.dokumentasi || ed.dokumentasi || ed.foto || indicatorsData.foto;
             if (docs) {
               const docArr = Array.isArray(docs) ? docs : [docs];
               setImages(
-                docArr.map((url: string) => ({
-                  url,
-                  file: null as any,
-                }))
+                docArr.map((url: any) => (typeof url === 'string' ? { url, file: null as any } : url))
               );
             }
           }

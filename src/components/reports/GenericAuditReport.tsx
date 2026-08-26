@@ -109,6 +109,25 @@ const INDICATOR_TO_FORM_PATH: Record<string, string> = {
   'monitoring_ambulance': '/dashboard/input/monitoring-ambulance',
   'monitoring_tunggu': '/dashboard/input/monitoring-tunggu',
   'monitoring_tps': '/dashboard/input/monitoring-tps',
+  'hand_hygiene': '/dashboard/input/hand-hygiene',
+  'audit_hand_hygiene': '/dashboard/input/hand-hygiene',
+  'apd': '/dashboard/input/apd',
+  'audit_apd': '/dashboard/input/apd',
+  'surveilans': '/dashboard/input/surveilans',
+  'surveilans_hais': '/dashboard/input/surveilans',
+  'diklat': '/dashboard/input/diklat',
+  'diklat_ppi': '/dashboard/input/diklat',
+  'iadp': '/dashboard/input/bundles/iadp',
+  'cauti': '/dashboard/input/bundles/cauti',
+  'ido_b': '/dashboard/input/bundles/ido',
+  'vap_b': '/dashboard/input/bundles/vap',
+  'plebitis': '/dashboard/input/bundles/plebitis',
+  'bundle_iadp': '/dashboard/input/bundles/iadp',
+  'bundle_cauti': '/dashboard/input/bundles/cauti',
+  'bundle_isk': '/dashboard/input/bundles/cauti',
+  'bundle_ido': '/dashboard/input/bundles/ido',
+  'bundle_vap': '/dashboard/input/bundles/vap',
+  'bundle_plebitis': '/dashboard/input/bundles/plebitis',
 };
 
 export default function GenericAuditReport({
@@ -337,7 +356,13 @@ export default function GenericAuditReport({
   }, [tableName, fetchData, normalizeItem]);
 
   const handleEditClick = (recordId: string) => {
-    const formPath = INDICATOR_TO_FORM_PATH[tableName];
+    let formPath = INDICATOR_TO_FORM_PATH[tableName];
+    if (!formPath && extraFilter?.indikator_id) {
+      formPath = INDICATOR_TO_FORM_PATH[extraFilter.indikator_id];
+    }
+    if (!formPath && extraFilter?.bundle_id) {
+      formPath = `/dashboard/input/bundles/${extraFilter.bundle_id}`;
+    }
     if (formPath) {
       router.push(`${formPath}?id=${recordId}&mode=edit`);
     } else {
@@ -634,15 +659,19 @@ export default function GenericAuditReport({
     );
   };
 
+  const [detailsKeteranganMap, setDetailsKeteranganMap] = useState<Record<string, string>>({});
+
   const getKeterangan = (itemId: string) => {
     if (!selectedRecord) return "";
     
     // Cast checklist_json to any for flexible nested object navigation
     const checklistJson: any = selectedRecord.checklist_json || (selectedRecord as any).data_indikator || {};
+    const rawDataIndikator: any = (selectedRecord as any).data_indikator || {};
     
     const keyCandidates = [
       itemId,
       String(itemId),
+      Number(itemId),
       `item_${itemId}`,
       `fapd_${itemId}`,
       `fasilitas_apd_${itemId}`,
@@ -651,36 +680,53 @@ export default function GenericAuditReport({
       itemId.replace(/^fasilitas_apd_/, '')
     ];
 
-    // Check if there is a flat keterangan object mapping from itemId inside checklist_json
-    if (checklistJson.keterangan && typeof checklistJson.keterangan === 'object') {
-       for (const k of keyCandidates) {
-         const ketVal = checklistJson.keterangan[k];
-         if (ketVal && typeof ketVal === "string") return ketVal;
-       }
+    // Check direct in audit_details map
+    for (const k of keyCandidates) {
+      if (k !== undefined && k !== null && detailsKeteranganMap[k as string]) {
+        return detailsKeteranganMap[k as string];
+      }
+    }
+
+    // Check if there is a flat keterangan object mapping from itemId inside data_indikator or checklist_json
+    const directKet = rawDataIndikator.keterangan || checklistJson.keterangan || rawDataIndikator.keterangan_json || checklistJson.keterangan_json;
+    if (directKet && typeof directKet === 'object') {
+      const ketObj = directKet.data && typeof directKet.data === 'object' ? directKet.data : directKet;
+      for (const k of keyCandidates) {
+        if (k !== undefined && k !== null && ketObj[k as any] && typeof ketObj[k as any] === "string") {
+          return ketObj[k as any];
+        }
+      }
     }
 
     // Check if there is keterangan nested as custom column keterangan_json
     if (selectedRecord.keterangan_json?.data && typeof selectedRecord.keterangan_json.data === 'object') {
        for (const k of keyCandidates) {
-         const ketVal = (selectedRecord.keterangan_json.data as any)[k];
-         if (ketVal && typeof ketVal === "string") return ketVal;
+         if (k !== undefined && k !== null) {
+           const ketVal = (selectedRecord.keterangan_json.data as any)[k];
+           if (ketVal && typeof ketVal === "string") return ketVal;
+         }
        }
     } else if (selectedRecord.keterangan_json && typeof selectedRecord.keterangan_json === 'object') {
        for (const k of keyCandidates) {
-         const ketVal = (selectedRecord.keterangan_json as any)[k];
-         if (ketVal && typeof ketVal === "string") return ketVal;
+         if (k !== undefined && k !== null) {
+           const ketVal = (selectedRecord.keterangan_json as any)[k];
+           if (ketVal && typeof ketVal === "string") return ketVal;
+         }
        }
     }
 
+    // Check item-level nested objects
     for (const k of keyCandidates) {
-      const val: any = checklistJson[k];
-      if (
-        val &&
-        typeof val === "object" &&
-        "keterangan" in val &&
-        typeof val.keterangan === "string"
-      ) {
-        return val.keterangan;
+      if (k !== undefined && k !== null) {
+        const val: any = checklistJson[k] ?? rawDataIndikator[k];
+        if (
+          val &&
+          typeof val === "object" &&
+          "keterangan" in val &&
+          typeof val.keterangan === "string"
+        ) {
+          return val.keterangan;
+        }
       }
     }
     return "";
@@ -703,17 +749,26 @@ export default function GenericAuditReport({
   useEffect(() => {
     if (!selectedRecordId) {
       setDynamicChecklist(null);
+      setDetailsKeteranganMap({});
       return;
     }
     const fetchDetails = async () => {
       try {
         const { data, error } = await supabase
           .from("audit_details")
-          .select("id, pertanyaan_id, pertanyaan")
+          .select("id, pertanyaan_id, pertanyaan, keterangan, jawaban")
           .eq("session_id", selectedRecordId)
           .order("id", { ascending: true });
         
         if (!error && data && data.length > 0) {
+          const ketMap: Record<string, string> = {};
+          data.forEach((d: any) => {
+            if (d.pertanyaan_id && d.keterangan) {
+              ketMap[d.pertanyaan_id] = d.keterangan;
+            }
+          });
+          setDetailsKeteranganMap(ketMap);
+
           const uniqueItems = Array.from(new Set(data.map(d => d.pertanyaan_id))).map(id => {
             const item = data.find(d => d.pertanyaan_id === id);
             return {
@@ -724,9 +779,11 @@ export default function GenericAuditReport({
           });
           setDynamicChecklist(uniqueItems);
         } else {
+          setDetailsKeteranganMap({});
           setDynamicChecklist(null);
         }
       } catch (err) {
+        setDetailsKeteranganMap({});
         setDynamicChecklist(null);
       }
     };

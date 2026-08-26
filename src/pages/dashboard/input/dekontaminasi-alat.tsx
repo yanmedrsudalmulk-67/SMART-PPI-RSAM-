@@ -172,10 +172,11 @@ export default function InputDekontaminasiAlatPage() {
             }
             
             // Prefill documentation
-            if (indicatorsData.dokumentasi) {
-              setImages(indicatorsData.dokumentasi.map((url: string) => ({ url, file: null })));
-            } else if (data.dokumentasi) {
-              setImages(data.dokumentasi.map((url: string) => ({ url, file: null })));
+            const docs = indicatorsData.dokumentasi || data.dokumentasi || indicatorsData.foto || data.foto;
+            if (Array.isArray(docs)) {
+              setImages(docs.map((url: any) => typeof url === 'string' ? { url, file: null as any } : url));
+            } else if (typeof docs === 'string' && docs.length > 0) {
+              setImages([{ url: docs, file: null as any }]);
             }
           }
         };

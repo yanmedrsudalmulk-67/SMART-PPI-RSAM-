@@ -200,8 +200,11 @@ export default function InputPengelolaanLimbahTajamPage() {
               setAuditData(prev => ({ ...prev, ...indicatorsData }));
             }
             
-            if (indicatorsData.dokumentasi && Array.isArray(indicatorsData.dokumentasi)) {
-              setImages(indicatorsData.dokumentasi);
+            const docs = indicatorsData.dokumentasi || ed.dokumentasi || indicatorsData.foto || ed.foto;
+            if (Array.isArray(docs)) {
+              setImages(docs.map((url: any) => typeof url === 'string' ? { url, file: null as any } : url));
+            } else if (typeof docs === 'string' && docs.length > 0) {
+              setImages([{ url: docs, file: null as any }]);
             }
           }
         };

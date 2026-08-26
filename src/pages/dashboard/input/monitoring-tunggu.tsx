@@ -176,7 +176,30 @@ export default function InputMonitoringRuangTungguPage() {
               });
             } catch (err) {}
 
-            
+            // Load and prefill keterangan
+            const loadedKet = ed.keterangan_json?.data || ed.keterangan_json || indicatorsData.keterangan || indicatorsData.keterangan_json?.data || indicatorsData.keterangan_json;
+            if (loadedKet && typeof loadedKet === 'object') {
+              setKeterangan(prev => ({ ...prev, ...loadedKet }));
+            }
+
+            // Also retrieve any item-specific notes from audit_details
+            try {
+              const { data: detailsList } = await supabase
+                .from("audit_details")
+                .select("pertanyaan_id, keterangan")
+                .eq("session_id", id);
+              if (detailsList && detailsList.length > 0) {
+                setKeterangan(prev => {
+                  const updated = { ...prev };
+                  detailsList.forEach((d: any) => {
+                    if (d.pertanyaan_id && d.keterangan) {
+                      updated[d.pertanyaan_id] = d.keterangan;
+                    }
+                  });
+                  return updated;
+                });
+              }
+            } catch (err) {}
 
             // Prefill signatures
             setTimeout(() => {
@@ -191,13 +214,13 @@ export default function InputMonitoringRuangTungguPage() {
             }, 800);
 
             // Prefill documentation
-            if (indicatorsData.dokumentasi) {
+            const docs = indicatorsData.dokumentasi || ed.dokumentasi || ed.foto || indicatorsData.foto;
+            if (Array.isArray(docs)) {
               setImages(
-                indicatorsData.dokumentasi.map((url: string) => ({
-                  url,
-                  file: null as any,
-                }))
+                docs.map((url: any) => (typeof url === 'string' ? { url, file: null as any } : url))
               );
+            } else if (typeof docs === 'string' && docs.length > 0) {
+              setImages([{ url: docs, file: null as any }]);
             }
           }
         };
@@ -265,6 +288,7 @@ export default function InputMonitoringRuangTungguPage() {
         status_kepatuhan: stats.statusText,
         data_indikator: {
           ...data,
+          keterangan,
           temuan,
           rekomendasi,
           nama_pj: pjName.trim(),
@@ -300,7 +324,8 @@ export default function InputMonitoringRuangTungguPage() {
             session_id: sessionId,
             pertanyaan_id: item.id,
             pertanyaan: item.label,
-            jawaban: String(data[item.id]),
+            jawaban: String(data[item.id] || "na"),
+            keterangan: keterangan[item.id] || "",
           });
         });
       });
@@ -311,6 +336,7 @@ export default function InputMonitoringRuangTungguPage() {
           waktu: startTime?.toISOString() || new Date().toISOString(),
           checklist_json: {
             data,
+            keterangan,
           },
           keterangan_json: {
             data: keterangan,
@@ -319,6 +345,7 @@ export default function InputMonitoringRuangTungguPage() {
           status: stats.statusText,
           temuan,
           rekomendasi,
+          foto: uploadedUrls,
         };
         await supabase.from("audit_ruang_tunggu").insert([payload]);
       } catch (err) {

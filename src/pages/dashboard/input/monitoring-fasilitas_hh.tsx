@@ -134,12 +134,11 @@ export default function FasilitasHandHygienePage() {
             }, 800);
 
             // Prefill documentation
-            if (indicatorsData.dokumentasi) {
+            const docs = indicatorsData.dokumentasi || ed.dokumentasi || ed.foto || indicatorsData.foto;
+            if (docs) {
+              const docArr = Array.isArray(docs) ? docs : [docs];
               setImages(
-                indicatorsData.dokumentasi.map((url: string) => ({
-                  url,
-                  file: null as any,
-                }))
+                docArr.map((url: any) => (typeof url === 'string' ? { url, file: null as any } : url))
               );
             }
           }
