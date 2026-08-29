@@ -1359,22 +1359,24 @@ export default function GenericAuditReport({
       )}
 
       {/* Tabel Riwayat Laporan */}
-      <div className="bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-[0_15px_35px_-8px_rgba(0,0,0,0.12),0_6px_15px_-4px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.95),0_10px_25px_-6px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] overflow-hidden relative group">
-        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500" />
-        <div className="p-6 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+      <div className="bg-[#18193b] rounded-[28px] md:rounded-[32px] border border-[#2b2d56] shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] overflow-hidden relative group">
+        {/* Top Bevel Highlight */}
+        <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+        <div className="p-6 border-b border-indigo-900/30 bg-[#141532]/60 backdrop-blur-md flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-              <ClipboardCheck className="w-5 h-5 text-blue-500" />
+            <h3 className="text-lg font-black text-white tracking-tight flex items-center gap-2">
+              <ClipboardCheck className="w-5 h-5 text-cyan-400" />
               Tabel Riwayat Laporan
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Daftar laporan kepatuhan yang tercatat pada sistem</p>
+            <p className="text-xs text-slate-400 font-medium mt-1">Daftar laporan kepatuhan yang tercatat pada sistem</p>
           </div>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead>
-              <tr className="bg-white/5 text-[11px] uppercase tracking-widest text-slate-400 font-bold border-b border-white/5">
+              <tr className="bg-[#12132e] text-[11px] uppercase tracking-widest text-slate-400 font-black border-b border-indigo-900/30">
                 <th className="py-4 px-6 w-16 text-center">No</th>
                 <th className="py-4 px-6">Tanggal Audit</th>
                 <th className="py-4 px-6">Unit / Ruangan</th>
@@ -1387,7 +1389,7 @@ export default function GenericAuditReport({
             <tbody className="divide-y divide-white/5 text-sm">
               {filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-500 font-bold uppercase tracking-wider">
+                  <td colSpan={7} className="py-12 text-center text-slate-400 font-bold uppercase tracking-wider">
                     Belum Ada Data Audit
                   </td>
                 </tr>
@@ -1402,8 +1404,8 @@ export default function GenericAuditReport({
                       onClick={() => setSelectedRecordId(row.id)}
                       className={`cursor-pointer transition-all ${
                         isActive
-                          ? "bg-blue-600/10 hover:bg-blue-600/15 border-l-4 border-l-blue-500"
-                          : "hover:bg-white/[0.02]"
+                          ? "bg-indigo-600/20 hover:bg-indigo-600/30 border-l-4 border-l-cyan-400"
+                          : "hover:bg-white/[0.03]"
                       }`}
                     >
                       <td className="py-4 px-6 text-center font-bold text-slate-400">
@@ -1422,10 +1424,10 @@ export default function GenericAuditReport({
                         {score}%
                       </td>
                       <td className="py-4 px-6 text-center">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border ${
-                          score >= 85 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
-                          score >= 70 ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' :
-                          'bg-rose-500/10 border-rose-500/20 text-rose-400'
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase border shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)] ${
+                          score >= 85 ? 'bg-emerald-950/80 border-emerald-500/40 text-emerald-300' :
+                          score >= 70 ? 'bg-amber-950/80 border-amber-500/40 text-amber-300' :
+                          'bg-rose-950/80 border-rose-500/40 text-rose-300'
                         }`}>
                           {score >= 85 ? 'Patuh' : score >= 70 ? 'Cukup' : 'Tidak Patuh'}
                         </span>

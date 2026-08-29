@@ -151,7 +151,7 @@ export default function LoginPage() {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 focus:border-blue-500/50 focus:bg-white dark:focus:bg-white/10 block w-full pl-12 pr-4 py-3.5 text-sm text-slate-900 dark:text-white rounded-2xl outline-none transition-all placeholder:text-slate-400"
+                  className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 focus:border-blue-500/50 focus:bg-white dark:focus:bg-white/10 block w-full pl-12 pr-4 py-3.5 text-sm text-slate-900 dark:text-white rounded-2xl outline-none transition-all placeholder:text-slate-400 shadow-inner dark:shadow-[inset_0_2px_6px_rgba(0,0,0,0.4)]"
                   placeholder={role === 'IPCN' ? "PPI RSAM" : "Masukkan username"}
                 />
               </div>
@@ -173,7 +173,7 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 focus:border-blue-500/50 focus:bg-white dark:focus:bg-white/10 block w-full pl-12 pr-4 py-3.5 text-sm text-slate-900 dark:text-white rounded-2xl outline-none transition-all placeholder:text-slate-400"
+                  className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 focus:border-blue-500/50 focus:bg-white dark:focus:bg-white/10 block w-full pl-12 pr-4 py-3.5 text-sm text-slate-900 dark:text-white rounded-2xl outline-none transition-all placeholder:text-slate-400 shadow-inner dark:shadow-[inset_0_2px_6px_rgba(0,0,0,0.4)]"
                   placeholder="••••••••"
                 />
               </div>

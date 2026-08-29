@@ -353,22 +353,25 @@ export default function ApdReport({
          </div>
       </div>
 
-      <div className="bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md rounded-[2rem] border border-slate-200/80 dark:border-white/10 overflow-hidden shadow-[0_15px_35px_-8px_rgba(0,0,0,0.12),0_6px_15px_-4px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.95),0_10px_25px_-6px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] transition-all -mx-4 sm:mx-0 print:border-none print:shadow-none print:rounded-none">
-        
-        <div className="p-6 sm:p-8 border-b border-slate-100 dark:border-white/5 bg-white dark:bg-[#0f172a]">
+      {/* Tabel Data Audit APD */}
+      <div className="bg-[#18193b] rounded-[28px] md:rounded-[32px] border border-[#2b2d56] overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] relative group transition-all -mx-4 sm:mx-0 print:border-none print:shadow-none print:rounded-none">
+        {/* Top Bevel Highlight */}
+        <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+        <div className="p-6 sm:p-8 border-b border-indigo-900/30 bg-[#141532]/60 backdrop-blur-md">
            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
              <div className="flex flex-col md:flex-row items-center gap-6 w-full text-left justify-start">
                <div className="flex-shrink-0">
                  {hospitalLogoUrl ? (
-                   <img src={hospitalLogoUrl} alt="Logo RS" className="w-20 h-20 object-contain" />
+                   <img src={hospitalLogoUrl} alt="Logo RS" className="w-16 h-16 sm:w-20 sm:h-20 object-contain" />
                  ) : (
-                   <ShieldCheck className="w-16 h-16 text-slate-800 dark:text-slate-200" />
+                   <ShieldCheck className="w-14 h-14 text-emerald-400" />
                  )}
                </div>
                <div>
-                 <h2 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase tracking-tight">LAPORAN MONITORING KEPATUHAN PENGGUNAAN APD</h2>
-                 <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300 uppercase">UOBK RSUD AL-MULK KOTA SUKABUMI</h3>
-                 <p className="text-slate-500 dark:text-slate-400 font-medium mt-1 uppercase text-xs">
+                 <h2 className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-300 uppercase tracking-tight">LAPORAN MONITORING KEPATUHAN PENGGUNAAN APD</h2>
+                 <h3 className="text-base sm:text-lg font-black text-slate-200 uppercase mt-0.5">UOBK RSUD AL-MULK KOTA SUKABUMI</h3>
+                 <p className="text-slate-400 font-bold text-xs sm:text-sm mt-1 uppercase tracking-wider">
                    Periode: {filters.periode ? format(new Date(filters.periode), 'MMMM yyyy', {locale: idLocale}) : 'Semua Periode'}
                    {filters.type ? ` | Tipe: ${filters.type}` : ''}
                    {filters.searchQuery ? ` | Filter: ${filters.searchQuery}` : ''}
@@ -381,26 +384,26 @@ export default function ApdReport({
         <div className="overflow-x-auto pb-4 max-h-[600px] print:max-h-none print:overflow-visible relative">
           <table className="w-full text-center border-collapse whitespace-nowrap">
             <thead className="sticky top-0 z-20 print:static">
-              <tr className="bg-slate-100 dark:bg-slate-800 text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 shadow-sm print:shadow-none">
-                <th className="px-4 py-3 border-b-2 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800">NO</th>
-                <th className="px-4 py-3 border-b-2 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800">WAKTU</th>
-                <th className="px-4 py-3 border-b-2 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-left">OBSERVER</th>
-                <th className="px-4 py-3 border-b-2 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-left">UNIT / RUANGAN</th>
-                <th className="px-4 py-3 border-b-2 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-left">TINDAKAN</th>
-                <th className="px-2 py-3 border-b-2 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 leading-tight min-w-[70px] whitespace-normal">MASKER</th>
-                <th className="px-2 py-3 border-b-2 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 leading-tight min-w-[80px] whitespace-normal">SARUNG TANGAN</th>
-                <th className="px-2 py-3 border-b-2 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 leading-tight min-w-[80px] whitespace-normal">PENUTUP KEPALA</th>
-                <th className="px-2 py-3 border-b-2 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 leading-tight min-w-[70px] whitespace-normal">APRON</th>
-                <th className="px-2 py-3 border-b-2 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 leading-tight min-w-[90px] whitespace-normal">KACA MATA / GOGGLE</th>
-                <th className="px-2 py-3 border-b-2 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 leading-tight min-w-[80px] whitespace-normal">SEPATU BOOTS</th>
-                <th className="px-2 py-3 border-b-2 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 leading-tight min-w-[90px] whitespace-normal">GAUN / BAJU PELINDUNG</th>
-                <th className="px-4 py-3 border-b-2 border-l-2 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-emerald-600 dark:text-emerald-400">PATUH</th>
-                <th className="px-4 py-3 border-b-2 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-rose-600 dark:text-rose-400 whitespace-nowrap min-w-[100px]">TIDAK PATUH</th>
-                <th className="px-4 py-3 border-b-2 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400 whitespace-nowrap">HASIL (%)</th>
-                <th className="px-4 py-3 border-b-2 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-center">AKSI</th>
+              <tr className="bg-[#12132e] text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 border-b border-indigo-900/30 shadow-sm print:shadow-none">
+                <th className="px-4 py-3.5 bg-[#12132e]">NO</th>
+                <th className="px-4 py-3.5 bg-[#12132e]">WAKTU</th>
+                <th className="px-4 py-3.5 bg-[#12132e] text-left">OBSERVER</th>
+                <th className="px-4 py-3.5 bg-[#12132e] text-left">UNIT / RUANGAN</th>
+                <th className="px-4 py-3.5 bg-[#12132e] text-left">TINDAKAN</th>
+                <th className="px-2 py-3.5 bg-[#12132e] leading-tight min-w-[70px] whitespace-normal">MASKER</th>
+                <th className="px-2 py-3.5 bg-[#12132e] leading-tight min-w-[80px] whitespace-normal">SARUNG TANGAN</th>
+                <th className="px-2 py-3.5 bg-[#12132e] leading-tight min-w-[80px] whitespace-normal">PENUTUP KEPALA</th>
+                <th className="px-2 py-3.5 bg-[#12132e] leading-tight min-w-[70px] whitespace-normal">APRON</th>
+                <th className="px-2 py-3.5 bg-[#12132e] leading-tight min-w-[90px] whitespace-normal">KACA MATA / GOGGLE</th>
+                <th className="px-2 py-3.5 bg-[#12132e] leading-tight min-w-[80px] whitespace-normal">SEPATU BOOTS</th>
+                <th className="px-2 py-3.5 bg-[#12132e] leading-tight min-w-[90px] whitespace-normal">GAUN / BAJU PELINDUNG</th>
+                <th className="px-4 py-3.5 bg-[#12132e] text-emerald-400 border-l border-white/5">PATUH</th>
+                <th className="px-4 py-3.5 bg-[#12132e] text-rose-400 whitespace-nowrap min-w-[100px]">TIDAK PATUH</th>
+                <th className="px-4 py-3.5 bg-[#12132e] text-cyan-400 whitespace-nowrap">HASIL (%)</th>
+                <th className="px-4 py-3.5 bg-[#12132e] text-center">AKSI</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-700/50 text-[10px] sm:text-xs font-semibold text-slate-900 dark:text-slate-300">
+            <tbody className="divide-y divide-white/5 text-[10px] sm:text-xs font-bold text-slate-200">
               {filteredData.map((row, index) => {
                 const items = [row.masker, row.sarung_tangan, row.penutup_kepala, row.apron, row.goggle, row.sepatu_boot, row.gaun_pelindung];
                 const patuh = items.filter(val => val && (val.toLowerCase() === 'ya' || val.toLowerCase() === 'sesuai')).length;
@@ -409,20 +412,20 @@ export default function ApdReport({
                 const persentase = dinilai > 0 ? Math.round((patuh / dinilai) * 100) : 0;
 
                 return (
-                  <tr key={row.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
-                    <td className="px-4 py-4 group-hover:bg-slate-50 dark:group-hover:bg-[#151e2e] transition-colors font-bold text-slate-400">
+                  <tr key={row.id} className="hover:bg-white/[0.03] transition-colors group">
+                    <td className="px-4 py-4 font-mono font-bold text-slate-400">
                       {index + 1}
                     </td>
-                    <td className="px-4 py-4 group-hover:bg-slate-50 dark:group-hover:bg-[#151e2e] transition-colors">
+                    <td className="px-4 py-4 text-slate-300 font-mono">
                       {row.tanggal_waktu ? format(parseISO(row.tanggal_waktu), 'dd/MM/yyyy HH:mm') : '-'}
                     </td>
-                    <td className="px-4 py-4 text-left text-slate-700 dark:text-slate-300 uppercase group-hover:bg-slate-50 dark:group-hover:bg-[#151e2e] transition-colors">
+                    <td className="px-4 py-4 text-left text-slate-400 italic">
                       {row.observer || '-'}
                     </td>
-                    <td className="px-4 py-4 text-left text-[11px] font-bold text-slate-500 uppercase group-hover:bg-slate-50 dark:group-hover:bg-[#151e2e] transition-colors">
+                    <td className="px-4 py-4 text-left text-[11px] font-bold text-white uppercase">
                       {row.unit || '-'}
                     </td>
-                    <td className="px-4 py-4 text-left uppercase text-[9px] leading-relaxed max-w-[150px] whitespace-pre-wrap">{row.tindakan || '-'}</td>
+                    <td className="px-4 py-4 text-left uppercase text-[10px] font-bold text-slate-300 leading-relaxed max-w-[150px] whitespace-pre-wrap">{row.tindakan || '-'}</td>
                     <td className="px-2 py-4">{mapApdAction(row.masker)}</td>
                     <td className="px-2 py-4">{mapApdAction(row.sarung_tangan)}</td>
                     <td className="px-2 py-4">{mapApdAction(row.penutup_kepala)}</td>
@@ -430,13 +433,13 @@ export default function ApdReport({
                     <td className="px-2 py-4">{mapApdAction(row.goggle)}</td>
                     <td className="px-2 py-4">{mapApdAction(row.sepatu_boot)}</td>
                     <td className="px-2 py-4">{mapApdAction(row.gaun_pelindung)}</td>
-                    <td className="px-4 py-4 border-l border-slate-100 dark:border-white/5 text-emerald-600 dark:text-emerald-400 text-sm font-black">{patuh}</td>
-                    <td className="px-4 py-4 text-rose-600 dark:text-rose-400 text-sm font-black">{tidakPatuh}</td>
-                    <td className="px-4 py-4 font-black text-sm">
-                      <span className={`px-2 py-1 rounded-full ${
-                        persentase >= 85 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' :
-                        persentase >= 70 ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' :
-                        'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400'
+                    <td className="px-4 py-4 border-l border-white/5 text-emerald-400 text-sm font-black font-mono">{patuh}</td>
+                    <td className="px-4 py-4 text-rose-400 text-sm font-black font-mono">{tidakPatuh}</td>
+                    <td className="px-4 py-4 font-black">
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase border shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)] ${
+                        persentase >= 85 ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40' :
+                        persentase >= 70 ? 'bg-amber-950/80 text-amber-300 border-amber-500/40' :
+                        'bg-rose-950/80 text-rose-300 border-rose-500/40'
                       }`}>
                         {persentase}%
                       </span>
@@ -446,7 +449,7 @@ export default function ApdReport({
                         <button
                           onClick={() => handleEditClick(row.id)}
                           type="button"
-                          className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all duration-200 shadow-sm border border-blue-500/20"
+                          className="p-2 rounded-xl bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all duration-200 shadow-sm border border-blue-500/20"
                           title="Edit Data"
                         >
                           <Edit className="w-3.5 h-3.5" />
@@ -454,7 +457,7 @@ export default function ApdReport({
                         <button
                           onClick={() => setDeleteConfirmId(row.id)}
                           type="button"
-                          className="p-1.5 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all duration-200 shadow-sm border border-rose-500/20"
+                          className="p-2 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white transition-all duration-200 shadow-sm border border-rose-500/20"
                           title="Hapus Data"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -466,7 +469,7 @@ export default function ApdReport({
               })}
               {filteredData.length === 0 && (
                 <tr>
-                  <td colSpan={16} className="px-4 py-12 text-center text-slate-500 font-medium">Belum ada data untuk periode ini</td>
+                  <td colSpan={16} className="px-4 py-12 text-center text-slate-400 font-bold uppercase tracking-wider">Belum ada data untuk periode ini</td>
                 </tr>
               )}
             </tbody>
@@ -476,53 +479,74 @@ export default function ApdReport({
 
       {/* Ringkasan Monitoring APD */}
       <div>
-         <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white mb-4">Rekapan Monitoring Kepatuhan APD</h3>
+         <h3 className="text-base sm:text-lg font-black text-white uppercase tracking-wider mb-4">Rekapan Monitoring Kepatuhan APD</h3>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="p-5 bg-white/90 dark:bg-[#111827]/90 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_16px_32px_-8px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.1)] flex flex-col justify-center items-center text-center">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total Observasi</span>
-              <span className="text-3xl font-black text-slate-800 dark:text-white">{summaryStats.count}</span>
+            <div className="p-5 bg-[#18193b] rounded-[24px] border border-[#2b2d56] shadow-[-4px_-4px_12px_rgba(140,165,255,0.05),6px_8px_20px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.15)] flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute top-0 inset-x-4 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Total Observasi</span>
+              <div className="bg-[#12132e] rounded-xl p-3 border border-black/40 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.7)] text-center">
+                <span className="text-3xl font-black font-mono text-cyan-300 drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">{summaryStats.count}</span>
+              </div>
             </div>
-            <div className="p-5 bg-white/90 dark:bg-[#111827]/90 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_16px_32px_-8px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.1)] flex flex-col justify-center items-center text-center">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total APD Dinilai</span>
-              <span className="text-3xl font-black text-slate-800 dark:text-white">{summaryStats.dinilai}</span>
+            
+            <div className="p-5 bg-[#18193b] rounded-[24px] border border-[#2b2d56] shadow-[-4px_-4px_12px_rgba(140,165,255,0.05),6px_8px_20px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.15)] flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute top-0 inset-x-4 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Total APD Dinilai</span>
+              <div className="bg-[#12132e] rounded-xl p-3 border border-black/40 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.7)] text-center">
+                <span className="text-3xl font-black font-mono text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">{summaryStats.dinilai}</span>
+              </div>
             </div>
-            <div className="p-5 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 shadow-[0_10px_25px_-5px_rgba(16,185,129,0.15)] dark:shadow-[0_16px_32px_-8px_rgba(0,0,0,0.85)] flex flex-col justify-center items-center text-center text-emerald-600 dark:text-emerald-400">
-              <span className="text-[10px] font-bold uppercase tracking-widest mb-1">Total Patuh</span>
-              <span className="text-3xl font-black">{summaryStats.patuh}</span>
+            
+            <div className="p-5 bg-[#18193b] rounded-[24px] border border-[#2b2d56] shadow-[-4px_-4px_12px_rgba(140,165,255,0.05),6px_8px_20px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.15)] flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute top-0 inset-x-4 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Total Patuh</span>
+              <div className="bg-[#12132e] rounded-xl p-3 border border-black/40 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.7)] text-center">
+                <span className="text-3xl font-black font-mono text-emerald-400 drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">{summaryStats.patuh}</span>
+              </div>
             </div>
-            <div className="p-5 bg-rose-50 dark:bg-rose-500/10 rounded-2xl border border-rose-200 dark:border-rose-500/20 shadow-[0_10px_25px_-5px_rgba(244,63,94,0.15)] dark:shadow-[0_16px_32px_-8px_rgba(0,0,0,0.85)] flex flex-col justify-center items-center text-center text-rose-600 dark:text-rose-400">
-              <span className="text-[10px] font-bold uppercase tracking-widest mb-1">Total Tidak Patuh</span>
-              <span className="text-3xl font-black">{summaryStats.tidakPatuh}</span>
+            
+            <div className="p-5 bg-[#18193b] rounded-[24px] border border-[#2b2d56] shadow-[-4px_-4px_12px_rgba(140,165,255,0.05),6px_8px_20px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.15)] flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute top-0 inset-x-4 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Total Tidak Patuh</span>
+              <div className="bg-[#12132e] rounded-xl p-3 border border-black/40 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.7)] text-center">
+                <span className="text-3xl font-black font-mono text-rose-400 drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">{summaryStats.tidakPatuh}</span>
+              </div>
             </div>
-            <div className="p-5 bg-blue-50 dark:bg-blue-500/10 rounded-2xl border border-blue-200 dark:border-blue-500/20 shadow-[0_10px_25px_-5px_rgba(59,130,246,0.15)] dark:shadow-[0_16px_32px_-8px_rgba(0,0,0,0.85)] flex flex-col justify-center items-center text-center text-blue-600 dark:text-blue-400">
-              <span className="text-[10px] font-bold uppercase tracking-widest mb-1">Kepatuhan</span>
-              <span className="text-3xl font-black">{summaryStats.avg}%</span>
+            
+            <div className="p-5 bg-[#18193b] rounded-[24px] border border-[#2b2d56] shadow-[-4px_-4px_12px_rgba(140,165,255,0.05),6px_8px_20px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.15)] flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute top-0 inset-x-4 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Kepatuhan</span>
+              <div className="bg-[#12132e] rounded-xl p-3 border border-black/40 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.7)] text-center">
+                <span className={`text-3xl font-black font-mono drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)] ${summaryStats.avg >= 85 ? "text-emerald-400" : "text-amber-400"}`}>{summaryStats.avg}%</span>
+              </div>
             </div>
           </div>
        </div>
 
        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-          <div className="bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md p-6 sm:p-8 rounded-[2rem] border border-slate-200/80 dark:border-white/10 shadow-[0_15px_35px_-8px_rgba(0,0,0,0.12),0_6px_15px_-4px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.95),0_10px_25px_-6px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] flex flex-col">
+          {/* Grafik Card */}
+          <div className="bg-[#18193b] rounded-[28px] md:rounded-[32px] border border-[#2b2d56] p-6 sm:p-8 shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] flex flex-col relative overflow-hidden">
+             <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
              <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-               <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-3">
-                 <TrendingUp className="w-5 h-5 text-emerald-500" /> Grafik Capaian Kepatuhan APD
+               <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-3">
+                 <TrendingUp className="w-5 h-5 text-emerald-400" /> Grafik Capaian Kepatuhan APD
                </h3>
-               <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-                 <button onClick={() => setChartType('bar')} className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${chartType === 'bar' ? 'bg-white dark:bg-slate-700 shadow flex items-center gap-2 text-blue-600 dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
-                   <BarChart2 className="w-3.5 h-3.5" /> Bar
+               <div className="flex bg-[#12132e] p-1 rounded-xl border border-indigo-900/40 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6)]">
+                 <button onClick={() => setChartType('bar')} className={`px-3.5 py-1.5 text-xs font-black uppercase rounded-lg transition-all ${chartType === 'bar' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}>
+                   <BarChart2 className="w-3.5 h-3.5 inline mr-1" /> Bar
                  </button>
-                 <button onClick={() => setChartType('line')} className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${chartType === 'line' ? 'bg-white dark:bg-slate-700 shadow flex items-center gap-2 text-emerald-600 dark:text-emerald-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
-                   <TrendingUp className="w-3.5 h-3.5" /> Line
+                 <button onClick={() => setChartType('line')} className={`px-3.5 py-1.5 text-xs font-black uppercase rounded-lg transition-all ${chartType === 'line' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}>
+                   <TrendingUp className="w-3.5 h-3.5 inline mr-1" /> Line
                  </button>
                </div>
              </div>
              <div className="h-[250px] w-full mt-auto">
                <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={trendData} margin={{ top: 20, right: 30, left: -20, bottom: 0 }}>
-                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(100,116,139,0.2)" />
-                     <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} dy={10} />
-                     <YAxis tick={{ fontSize: 11, fill: '#64748b' }} domain={[0, 100]} axisLine={false} tickLine={false} />
-                     <RechartsTooltip cursor={{ fill: 'rgba(255,255,255,0.02)' }} wrapperClassName="text-sm font-bold bg-white dark:bg-slate-800 rounded-xl shadow-lg border-none" labelClassName="text-slate-500 mb-2"/>
+                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                     <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} dy={10} />
+                     <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} domain={[0, 100]} axisLine={false} tickLine={false} />
+                     <RechartsTooltip cursor={{ fill: 'rgba(255,255,255,0.02)' }} contentStyle={{ backgroundColor: '#12132e', borderColor: '#2b2d56', borderRadius: '16px', color: '#fff', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)' }} />
                      {chartType === 'line' ? (
                        <Line type="monotone" dataKey="val" name="Kepatuhan (%)" stroke="#10b981" strokeWidth={3} dot={{ r: 4, strokeWidth: 2, fill: '#10b981' }} activeDot={{ r: 6 }} animationDuration={1000} />
                      ) : (
@@ -537,15 +561,18 @@ export default function ApdReport({
              </div>
           </div>
           
-         {/* Analysis Otomatis */}
-         <div className="bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md p-6 sm:p-8 rounded-[2rem] border border-slate-200/80 dark:border-white/10 shadow-[0_15px_35px_-8px_rgba(0,0,0,0.12),0_6px_15px_-4px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.95),0_10px_25px_-6px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] flex flex-col">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-3 mb-6">
+         {/* Analysis Otomatis Card */}
+         <div className="bg-[#18193b] rounded-[28px] md:rounded-[32px] border border-[#2b2d56] p-6 sm:p-8 shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] flex flex-col relative overflow-hidden">
+            <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+            <h3 className="text-base sm:text-lg font-black text-white uppercase tracking-wider mb-4">
                Analisa Data
             </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium text-justify">
-              Pada periode {filters.periode ? format(new Date(filters.periode), 'MMMM yyyy', {locale: idLocale}) : 'ini'} terdapat <span className="font-bold text-slate-900 dark:text-white">{summaryStats.count} observasi</span> dengan total <span className="font-bold text-slate-900 dark:text-white">{summaryStats.dinilai} item APD</span> yang dinilai. Sebanyak <span className="font-bold text-emerald-600 dark:text-emerald-400">{summaryStats.patuh} item dinyatakan patuh</span> dan <span className="font-bold text-rose-600 dark:text-rose-400">{summaryStats.tidakPatuh} item tidak patuh</span> sehingga tingkat kepatuhan mencapai <span className="font-bold text-blue-600 dark:text-blue-400">{summaryStats.avg}%</span>.
-              {recommendationData.mostMissingCount > 0 ? ` Ketidakpatuhan paling banyak ditemukan pada penggunaan ${recommendationData.mostMissingItem}.` : ' Kepatuhan sangat baik tanpa ada ketidakpatuhan.'}
-            </p>
+            <div className="bg-[#12132e] rounded-2xl p-5 border border-indigo-900/40 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6)] flex-1 flex items-center">
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium text-justify">
+                Pada periode {filters.periode ? format(new Date(filters.periode), 'MMMM yyyy', {locale: idLocale}) : 'ini'} terdapat <span className="font-black text-white">{summaryStats.count} observasi</span> dengan total <span className="font-black text-white">{summaryStats.dinilai} item APD</span> yang dinilai. Sebanyak <span className="font-black text-emerald-400">{summaryStats.patuh} item dinyatakan patuh</span> dan <span className="font-black text-rose-400">{summaryStats.tidakPatuh} item tidak patuh</span> sehingga tingkat kepatuhan mencapai <span className="font-black text-cyan-300">{summaryStats.avg}%</span>.
+                {recommendationData.mostMissingCount > 0 ? ` Ketidakpatuhan paling banyak ditemukan pada penggunaan ${recommendationData.mostMissingItem}.` : ' Kepatuhan sangat baik tanpa ada ketidakpatuhan.'}
+              </p>
+            </div>
          </div>
       </div>
 

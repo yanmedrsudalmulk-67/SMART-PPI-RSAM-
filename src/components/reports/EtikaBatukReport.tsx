@@ -458,12 +458,13 @@ export default function EtikaBatukReport({
           </div>
         </div>
       ) : (
-        <div className="h-full bg-slate-50 dark:bg-[#111827]/80 rounded-[2rem] border border-slate-200 dark:border-white/10 flex flex-col items-center justify-center p-12 md:p-20 text-center text-slate-500 shadow-sm min-h-[400px]">
-          <FileText className="w-16 h-16 md:w-20 md:h-20 mb-6 text-slate-300 dark:text-slate-700" />
-          <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white mb-2">
+        <div className="h-full bg-[#18193b] rounded-[28px] md:rounded-[32px] border border-[#2b2d56] shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center p-12 md:p-20 text-center text-slate-400 min-h-[400px] relative overflow-hidden">
+          <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+          <FileText className="w-16 h-16 md:w-20 md:h-20 mb-6 text-slate-600" />
+          <h2 className="text-xl md:text-2xl font-black text-white uppercase tracking-wider mb-2">
             Belum Ada Data Edukasi
           </h2>
-          <p className="text-xs md:text-sm max-w-sm">
+          <p className="text-xs md:text-sm max-w-sm font-medium text-slate-400">
             Data laporan edukasi etika batuk untuk unit dan periode yang dipilih saat ini belum tersedia.
           </p>
         </div>
@@ -475,7 +476,7 @@ export default function EtikaBatukReport({
           <button
             onClick={handleDownloadPdf}
             disabled={filteredData.length === 0 || downloading}
-            className="flex justify-center items-center gap-2 px-6 py-3 bg-[#4F46E5] hover:bg-[#4338CA] disabled:bg-slate-400 text-white text-sm font-bold rounded-xl transition-all duration-300 shadow-md select-none cursor-pointer w-full sm:w-auto min-w-[220px]"
+            className="flex justify-center items-center gap-2.5 px-8 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 text-white text-xs sm:text-sm font-black uppercase tracking-wider rounded-2xl transition-all duration-300 shadow-[0_10px_25px_-5px_rgba(59,130,246,0.4)] select-none cursor-pointer w-full sm:w-auto min-w-[240px] border border-blue-400/30"
           >
             {downloading ? (
               <>
@@ -491,22 +492,22 @@ export default function EtikaBatukReport({
       )}
 
       {/* Tabel Riwayat Laporan (Posisinya Di Bawah Laporan Resmi) */}
-      <div className="bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-[0_15px_35px_-8px_rgba(0,0,0,0.12),0_6px_15px_-4px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.95),0_10px_25px_-6px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] overflow-hidden relative group print:hidden">
-        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500" />
-        <div className="p-6 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
+      <div className="bg-[#18193b] rounded-[28px] md:rounded-[32px] border border-[#2b2d56] shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] overflow-hidden relative group print:hidden">
+        <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+        <div className="p-6 sm:p-7 border-b border-indigo-900/30 bg-[#141532]/60 backdrop-blur-md flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-bold text-slate-850 dark:text-white tracking-tight flex items-center gap-2">
-              <ClipboardCheck className="w-5 h-5 text-blue-500" />
+            <h3 className="text-base sm:text-lg font-black text-white uppercase tracking-wider flex items-center gap-3">
+              <ClipboardCheck className="w-5 h-5 text-cyan-400" />
               Tabel Riwayat Laporan
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Daftar laporan edukasi yang tercatat pada sistem</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Daftar laporan edukasi yang tercatat pada sistem</p>
           </div>
         </div>
 
         <div className="overflow-x-auto max-h-[500px]">
           <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead>
-              <tr className="bg-slate-50 dark:bg-white/5 text-[11px] uppercase tracking-widest text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-white/10">
+              <tr className="bg-[#12132e] text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 border-b border-indigo-900/30">
                 <th className="py-4 px-6 w-16 text-center">No</th>
                 <th className="py-4 px-6">Tanggal Edukasi</th>
                 <th className="py-4 px-6">Unit / Ruangan</th>
@@ -516,10 +517,10 @@ export default function EtikaBatukReport({
                 <th className="py-4 px-6 text-center">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-sm">
+            <tbody className="divide-y divide-white/5 text-xs sm:text-sm font-bold text-slate-200">
               {filteredData.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-500 font-bold uppercase tracking-wider">
+                  <td colSpan={7} className="py-12 text-center text-slate-400 font-bold uppercase tracking-wider">
                     Belum Ada Data Laporan Edukasi
                   </td>
                 </tr>
@@ -533,26 +534,26 @@ export default function EtikaBatukReport({
                       onClick={() => setSelectedRecordId(row.id)}
                       className={`cursor-pointer transition-all ${
                         isActive
-                          ? "bg-blue-600/10 hover:bg-blue-600/15 border-l-4 border-l-blue-500"
-                          : "hover:bg-slate-50/50 dark:hover:bg-white/[0.02]"
+                          ? "bg-indigo-950/40 border-l-4 border-l-cyan-400"
+                          : "hover:bg-white/[0.03]"
                       }`}
                     >
-                      <td className="py-4 px-6 text-center font-bold text-slate-400">
+                      <td className="py-4 px-6 text-center font-mono font-bold text-slate-400">
                         {idx + 1}
                       </td>
-                      <td className="py-4 px-6 text-slate-700 dark:text-slate-300 font-medium font-mono text-xs">
+                      <td className="py-4 px-6 text-slate-300 font-mono text-xs">
                         {row.waktu ? format(parseISO(row.waktu), "dd MMMM yyyy HH:mm", { locale: idLocale }) : "-"}
                       </td>
-                      <td className="py-4 px-6 text-slate-800 dark:text-white font-semibold">
+                      <td className="py-4 px-6 text-white font-bold uppercase">
                         {row.unit || "-"}
                       </td>
-                      <td className="py-4 px-6 text-slate-600 dark:text-slate-400 italic">
+                      <td className="py-4 px-6 text-slate-400 italic">
                         {row.observer || "-"}
                       </td>
-                      <td className="py-4 px-6 text-slate-700 dark:text-slate-300 max-w-xs truncate" title={row.materi_edukasi.join(", ")}>
+                      <td className="py-4 px-6 text-slate-300 max-w-xs truncate text-xs" title={row.materi_edukasi.join(", ")}>
                         {row.materi_edukasi.join(", ") || "-"}
                       </td>
-                      <td className="py-4 px-6 text-slate-700 dark:text-slate-300 max-w-xs truncate" title={row.sasaran_edukasi.join(", ")}>
+                      <td className="py-4 px-6 text-slate-300 max-w-xs truncate text-xs" title={row.sasaran_edukasi.join(", ")}>
                         {row.sasaran_edukasi.join(", ") || "-"}
                       </td>
                       <td className="py-3 px-6 text-center" onClick={(e) => e.stopPropagation()}>
@@ -571,7 +572,7 @@ export default function EtikaBatukReport({
                               setShowDeleteConfirm(true);
                             }}
                             type="button"
-                            className="p-2 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all duration-300 shadow-md border border-red-500/20 group/btn select-none"
+                            className="p-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all duration-300 shadow-md border border-red-500/20 group/btn select-none"
                             title="Hapus Data"
                           >
                             <Trash2 className="w-3.5 h-3.5" />

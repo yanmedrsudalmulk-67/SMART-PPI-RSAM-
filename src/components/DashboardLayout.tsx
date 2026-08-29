@@ -21,16 +21,84 @@ import { ClockWidget } from '@/components/ClockWidget';
 import { useDashboardStore } from '@/hooks/useDashboardStore';
 import { supabase } from '@/lib/supabase';
 
-const NavItem = memo(({ item, isActive, onClick }: { item: any, isActive: boolean, onClick?: () => void }) => {
-  const baseClasses = "relative flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 ease-in-out group antialiased hover:scale-[1.01] active:scale-[0.98] transform-gpu will-change-transform";
-  
-  // Vibrant Royal Blue active styling matching the "Input Sekarang" button with realistic 3D dark shadow and specular highlight
-  const activeClasses = "bg-[#2563EB] bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] text-white font-bold border border-blue-400/40 shadow-[0_10px_22px_-4px_rgba(0,0,0,0.45),0_4px_8px_-2px_rgba(0,0,0,0.35),0_0_15px_rgba(37,99,235,0.35),inset_0_1px_1.5px_rgba(255,255,255,0.35),inset_0_-1px_1.5px_rgba(0,0,0,0.25)]";
-  const inactiveClasses = "text-slate-300/90 hover:bg-white/10 hover:text-white border border-transparent";
+interface NavTheme {
+  bg: string;
+  shadow: string;
+  border: string;
+}
 
-  const iconBase = "w-[22px] h-[22px]";
-  const iconActive = "text-white";
-  const iconInactive = "text-slate-400 group-hover:text-white transition-colors duration-300";
+interface NavItemData {
+  name: string;
+  shortName: string;
+  href: string;
+  icon: any;
+  theme: NavTheme;
+}
+
+const navItems: NavItemData[] = [
+  { 
+    name: 'Dashboard', 
+    shortName: 'Dashboard', 
+    href: '/dashboard', 
+    icon: LayoutDashboard,
+    theme: {
+      bg: "bg-gradient-to-br from-sky-500 to-blue-600",
+      shadow: "shadow-[2px_3px_8px_rgba(0,0,0,0.35)]",
+      border: "border-sky-400/40"
+    }
+  },
+  { 
+    name: 'Input Data', 
+    shortName: 'Input', 
+    href: '/dashboard/input', 
+    icon: ClipboardCheck,
+    theme: {
+      bg: "bg-gradient-to-br from-emerald-500 to-teal-600",
+      shadow: "shadow-[2px_3px_8px_rgba(0,0,0,0.35)]",
+      border: "border-emerald-400/40"
+    }
+  },
+  { 
+    name: 'Grafik Capaian', 
+    shortName: 'Grafik', 
+    href: '/dashboard/analytics', 
+    icon: BarChart2,
+    theme: {
+      bg: "bg-gradient-to-br from-purple-500 to-indigo-600",
+      shadow: "shadow-[2px_3px_8px_rgba(0,0,0,0.35)]",
+      border: "border-purple-400/40"
+    }
+  },
+  { 
+    name: 'Laporan PPI', 
+    shortName: 'Laporan', 
+    href: '/dashboard/reports', 
+    icon: FileText,
+    theme: {
+      bg: "bg-gradient-to-br from-amber-500 to-orange-600",
+      shadow: "shadow-[2px_3px_8px_rgba(0,0,0,0.35)]",
+      border: "border-amber-400/40"
+    }
+  },
+  { 
+    name: 'Pengaturan', 
+    shortName: 'Pengaturan', 
+    href: '/dashboard/settings', 
+    icon: Settings,
+    theme: {
+      bg: "bg-gradient-to-br from-rose-500 to-pink-600",
+      shadow: "shadow-[2px_3px_8px_rgba(0,0,0,0.35)]",
+      border: "border-rose-400/40"
+    }
+  },
+];
+
+const NavItem = memo(({ item, isActive, onClick }: { item: NavItemData, isActive: boolean, onClick?: () => void }) => {
+  const baseClasses = "relative flex items-center gap-3.5 px-3.5 py-3 rounded-[20px] transition-all duration-300 ease-out group antialiased transform-gpu will-change-transform";
+  
+  // 3D Neumorphic Active Plate with rich extruded tactile elevation
+  const activeClasses = "bg-gradient-to-b from-[#f8fafc] via-[#e2e8f0] to-[#cbd5e1] text-[#1e293b] border border-white/90 shadow-[-3px_-3px_9px_rgba(255,255,255,0.35),4px_5px_16px_rgba(0,0,0,0.55),inset_1.5px_1.5px_2px_rgba(255,255,255,1),inset_-1.5px_-1.5px_2px_rgba(0,0,0,0.12)]";
+  const inactiveClasses = "text-slate-300/85 hover:bg-[#18193b]/70 hover:text-white border border-transparent shadow-none hover:shadow-[-2px_-2px_6px_rgba(140,165,255,0.05),3px_3px_8px_rgba(0,0,0,0.4)]";
 
   return (
     <Link 
@@ -38,10 +106,11 @@ const NavItem = memo(({ item, isActive, onClick }: { item: any, isActive: boolea
       onClick={onClick}
       className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
     >
+      {/* Matte Colorful Icon - 3D Squircle with Tactile Shadow */}
       <motion.div 
         animate={isActive ? { 
-          y: [0, -8, 0, -4, 0],
-          scale: [1, 1.15, 1, 1.08, 1],
+          y: [0, -9, 0, -4, 0],
+          scale: [1, 1.14, 1, 1.06, 1],
         } : { 
           y: 0,
           scale: 1,
@@ -49,27 +118,29 @@ const NavItem = memo(({ item, isActive, onClick }: { item: any, isActive: boolea
         transition={isActive ? { 
           duration: 0.8,
           repeat: Infinity,
-          repeatDelay: 4.2, // Cycles every 5 seconds (0.8s jump + 4.2s delay = 5.0s)
+          repeatDelay: 4.2, // Cycles every 5.0 seconds (0.8s jump + 4.2s delay = 5.0s)
           ease: "easeInOut"
         } : { duration: 0.2 }}
-        className={`relative z-10 flex items-center justify-center transition-transform duration-300 ${isActive ? 'scale-105' : 'group-hover:scale-110'}`}
+        className="relative z-10 flex items-center justify-center flex-shrink-0"
       >
-        <item.icon className={`${iconBase} ${isActive ? iconActive : iconInactive}`} strokeWidth={isActive ? 2.3 : 2} />
+        <div className={`relative w-[38px] h-[38px] rounded-[13px] flex items-center justify-center text-white border ${item.theme.bg} ${item.theme.border} ${isActive ? 'shadow-[-2px_-2px_6px_rgba(255,255,255,0.3),3px_3px_8px_rgba(0,0,0,0.45),inset_1px_1px_1.5px_rgba(255,255,255,0.4),inset_-1px_-1px_1.5px_rgba(0,0,0,0.2)]' : item.theme.shadow} overflow-hidden transform-gpu`}>
+          <item.icon className="w-5 h-5 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)] relative z-10" strokeWidth={2.4} />
+        </div>
       </motion.div>
-      <span className={`text-[15px] sm:text-[14px] tracking-wide relative z-10 ${isActive ? 'font-bold text-white' : 'font-medium'}`}>{item.name}</span>
+
+      {/* Text label with high legibility */}
+      <span className={`text-[14px] tracking-wide relative z-10 transition-colors duration-200 ${
+        isActive 
+          ? 'font-black text-[#1e293b] drop-shadow-[0_0.5px_0_rgba(255,255,255,0.8)]' 
+          : 'font-bold text-slate-300/90 group-hover:text-white'
+      }`}>
+        {item.name}
+      </span>
     </Link>
   );
 });
 
 NavItem.displayName = 'NavItem';
-
-const navItems = [
-  { name: 'Dashboard', shortName: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Input Data', shortName: 'Input', href: '/dashboard/input', icon: ClipboardCheck },
-  { name: 'Grafik Capaian', shortName: 'Grafik', href: '/dashboard/analytics', icon: BarChart2 },
-  { name: 'Laporan PPI', shortName: 'Laporan', href: '/dashboard/reports', icon: FileText },
-  { name: 'Pengaturan', shortName: 'Pengaturan', href: '/dashboard/settings', icon: Settings },
-];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -212,10 +283,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!mounted) return null;
 
   return (
-    <div className="h-[100dvh] w-full overflow-hidden flex bg-[#091526] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(14,165,233,0.18),rgba(255,255,255,0))] bg-[radial-gradient(circle_at_85%_20%,rgba(2,132,199,0.22),transparent_45%)] bg-[radial-gradient(circle_at_10%_80%,rgba(30,64,175,0.25),transparent_50%)] text-slate-200 relative">
-      {/* Subtle Ambient Steel-Cyan Background Glow Accent */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-sky-500/10 rounded-full blur-[120px] pointer-events-none z-0" />
-      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none z-0" />
+    <div className="h-[100dvh] w-full overflow-hidden flex bg-gradient-to-b from-[#181938] via-[#12142e] to-[#0c0d20] text-slate-100 relative">
+      {/* Subtle Ambient Deep Indigo-Purple Radial Glow Accent */}
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-purple-700/12 rounded-full blur-[160px] pointer-events-none z-0" />
+      <div className="absolute top-1/3 right-0 w-[550px] h-[550px] bg-indigo-600/15 rounded-full blur-[160px] pointer-events-none z-0" />
+      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-blue-700/12 rounded-full blur-[170px] pointer-events-none z-0" />
 
       {/* Mobile Backdrop Overlay */}
       <AnimatePresence>
@@ -243,34 +315,42 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           damping: 40,
           mass: 0.8
         }}
-        className="border flex flex-col fixed inset-y-4 left-4 z-50 w-[280px] rounded-[24px] transition-colors duration-500 print:hidden transform-gpu will-change-transform backdrop-blur-xl bg-[#0A192F]/98 border-[#1B3B6F]/70 shadow-[0_12px_45px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.12)]"
+        className="flex flex-col fixed inset-y-4 left-4 z-50 w-[280px] rounded-[30px] transition-colors duration-500 print:hidden transform-gpu will-change-transform backdrop-blur-2xl bg-gradient-to-b from-[#1c183a] via-[#14172f] to-[#0c0e1e] border border-[#2b2d56] shadow-[-6px_-6px_20px_rgba(140,165,255,0.08),12px_14px_36px_rgba(0,0,0,0.75),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] overflow-hidden"
       >
+        {/* Top Bevel Highlight */}
+        <div className="absolute top-0 inset-x-6 h-[1.5px] bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none z-20" />
+
         {/* Toggle Button on the Right Border */}
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="absolute -right-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center border shadow-lg transition-all duration-300 z-50 group hidden md:flex bg-[#0D2140] border-[#254E86] text-sky-400 hover:bg-[#14325E] hover:border-sky-300 hover:scale-110"
+          className="absolute -right-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center border-2 shadow-[-2px_-2px_6px_rgba(140,165,255,0.15),4px_4px_12px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.25)] transition-all duration-300 z-50 group hidden md:flex bg-[#18193b] border-indigo-500/40 text-indigo-200 hover:border-cyan-400 hover:text-cyan-300 hover:scale-110"
           title={isSidebarOpen ? "Minimize Sidebar" : "Expand Sidebar"}
         >
           <ChevronLeft className={`w-4 h-4 transition-transform duration-500 ${isSidebarOpen ? 'rotate-0' : 'rotate-180'}`} />
         </button>
 
-        <div className="flex flex-col items-center justify-center pt-5 pb-4 border-b shrink-0 px-4 relative border-[#1B3B6F]/60 bg-[#0F2445]/60 rounded-t-[23px]">
-          <div className="flex items-center justify-center w-[56px] h-[56px] mb-3 relative group">
-            <AppLogo className="w-full h-full text-white group-hover:text-sky-200 transition-colors" iconClassName="w-7 h-7 text-sky-400" />
+        <div className="flex flex-col items-center justify-center pt-6 pb-5 border-b shrink-0 px-4 relative border-indigo-900/40 bg-[#141532]/70 backdrop-blur-md rounded-t-[29px]">
+          {/* 3D Neumorphic Floating SMART PPI Logo (No Box Container) */}
+          <div className="relative mb-3 flex items-center justify-center transition-transform duration-300 hover:scale-105">
+            <AppLogo 
+              className="w-14 h-14 md:w-[68px] md:h-[68px] drop-shadow-[-3px_-3px_8px_rgba(140,165,255,0.2)] drop-shadow-[5px_8px_16px_rgba(0,0,0,0.85)] filter transition-all duration-300" 
+              iconClassName="w-11 h-11 md:w-[54px] md:h-[54px] text-cyan-400 drop-shadow-[-2px_-2px_6px_rgba(140,165,255,0.25)] drop-shadow-[4px_7px_14px_rgba(0,0,0,0.9)]"
+              imageClassName="drop-shadow-[-3px_-3px_8px_rgba(140,165,255,0.2)] drop-shadow-[5px_8px_16px_rgba(0,0,0,0.85)]"
+            />
           </div>
           <div className="flex flex-col items-center text-center">
-            <span className="font-heading font-[800] text-[18px] tracking-[1.5px] transition-all antialiased text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
+            <span className="font-heading font-[800] text-[18px] tracking-[1.5px] transition-all antialiased text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]">
               SMART PPI
             </span>
-            <span className="text-[8.5px] whitespace-nowrap leading-[1.4] text-center mt-1 transition-all antialiased text-sky-200/70 font-medium">
-              Sistem Monitoring, Audit dan Supervisi Terintegrasi
+            <span className="text-[8.5px] whitespace-nowrap leading-[1.4] text-center mt-1 transition-all antialiased text-indigo-200/80 font-bold uppercase tracking-wider">
+              Sistem Monitoring & Audit Terpadu
             </span>
           </div>
         </div>
         
-        <div className="flex-1 overflow-y-auto py-6 px-4 space-y-2 custom-sidebar-scrollbar">
-          <div className="mb-5 px-1">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] antialiased text-sky-400/80">Menu Utama</p>
+        <div className="flex-1 overflow-y-auto py-5 px-3.5 space-y-2 custom-sidebar-scrollbar">
+          <div className="mb-4 px-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] antialiased text-indigo-300/80">Menu Utama</p>
           </div>
           {navItems.map((item) => (
             <NavItem 
@@ -281,17 +361,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             />
           ))}
         </div>            
-        <div className="p-5 pt-2 mt-auto shrink-0 antialiased">
+        <div className="p-4 pt-2 mt-auto shrink-0 antialiased">
           <button 
             onClick={(e) => {
               e.preventDefault();
               setUserRole('');
               router.push('/');
             }}
-            className="flex items-center justify-center gap-3 w-full py-3.5 px-4 rounded-xl font-bold text-[14px] tracking-wide transition-all duration-300 group bg-red-500/20 hover:bg-red-500/40 text-white border border-red-500/30 hover:border-red-400/50 hover:shadow-[0_4px_20px_rgba(239,68,68,0.3)] hover:scale-[1.02] active:scale-[0.98]"
+            className="flex items-center justify-center gap-3 w-full py-3.5 px-4 rounded-2xl font-black text-[12px] uppercase tracking-wider transition-all duration-300 group bg-gradient-to-r from-red-600/25 via-rose-600/20 to-red-700/25 hover:from-red-600/40 hover:to-rose-600/40 text-red-200 border border-red-500/35 shadow-[-2px_-2px_6px_rgba(255,100,100,0.08),4px_6px_16px_rgba(0,0,0,0.5),inset_1px_1px_1.5px_rgba(255,255,255,0.15)] hover:scale-[1.02] active:scale-[0.98]"
             title="Keluar"
           >
-            <LogOut className="w-5 h-5 transition-transform duration-300 group-hover:-translate-x-1" strokeWidth={2.5} />
+            <LogOut className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" strokeWidth={2.5} />
             <span>Keluar</span>
           </button>
         </div>
@@ -302,7 +382,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         !isMobile ? (isSidebarOpen ? 'ml-[312px]' : 'ml-[40px]') : 'ml-0'
       }`}>
         {/* Page Content */}
-        <main ref={mainRef} className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 pb-32 sm:pb-10 relative overscroll-y-none [transform:translateZ(0)] will-change-scroll w-full max-w-full">
+        <main ref={mainRef} className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 pb-32 sm:pb-10 relative overscroll-y-none [transform:translateZ(0)] will-change-scroll w-full max-w-full z-10">
           {/* Header Khusus Mode Portrait untuk Seluruh Menu (Dashboard, Input, Grafik, Laporan, Pengaturan) */}
           <div className="flex sm:hidden flex-col mb-4 print:hidden">
             <div className="flex items-center justify-between gap-3 px-1">
@@ -311,7 +391,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   {hospitalLogoUrl ? (
                     <img src={hospitalLogoUrl} alt="Logo RS" className="w-full h-full object-contain" />
                   ) : (
-                    <ShieldCheck className="w-6 h-6 transition-colors duration-500 text-sky-400" />
+                    <ShieldCheck className="w-6 h-6 transition-colors duration-500 text-indigo-300" />
                   )}
                 </div>
                 
@@ -319,7 +399,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <span className="font-heading font-bold text-[13px] tracking-wide leading-tight transition-colors duration-500 text-white">
                     UOBK RSUD AL-MULK
                   </span>
-                  <span className="text-[9.5px] font-bold uppercase tracking-[0.2em] transition-colors duration-500 text-slate-400">
+                  <span className="text-[9.5px] font-bold uppercase tracking-[0.2em] transition-colors duration-500 text-indigo-200/80">
                     KOTA SUKABUMI
                   </span>
                 </div>
@@ -352,60 +432,59 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation */}
-      <div className="fixed bottom-5 inset-x-5 z-50 flex justify-center md:hidden pb-[env(safe-area-inset-bottom)]">
-        <nav className="w-full max-w-md flex justify-around items-center h-[72px] px-2 rounded-[36px] border backdrop-blur-xl transition-all duration-300 bg-[#0B1A2C]/95 border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.15)]">
+      {/* Mobile Bottom Navigation - Neumorphic (Neuromorphism) Bar with 3D Tactile Squircle Icons */}
+      <div className="fixed bottom-4 inset-x-3 sm:inset-x-5 z-50 flex justify-center md:hidden pb-[env(safe-area-inset-bottom)]">
+        <nav className="w-full max-w-md flex justify-around items-center h-[76px] px-2.5 py-1.5 rounded-[30px] border border-white/10 bg-gradient-to-b from-[#1c1f40]/95 via-[#13162f]/95 to-[#0b0d1e]/95 backdrop-blur-2xl shadow-[-6px_-6px_18px_rgba(140,165,255,0.08),8px_8px_24px_rgba(0,0,0,0.8),inset_1px_1px_2px_rgba(255,255,255,0.15),inset_-1.5px_-1.5px_2px_rgba(0,0,0,0.6)]">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
+
             return (
               <Link 
                 key={item.name} 
                 href={item.href}
-                className="relative flex-1 h-[56px] flex flex-col items-center justify-center transition-all duration-200 outline-none px-1"
+                className="relative flex-1 h-[62px] flex flex-col items-center justify-center transition-all duration-200 outline-none px-0.5"
               >
+                {/* Neumorphic Extruded Active Plate Indicator */}
                 {isActive && (
                   <motion.div
-                    layoutId="mobileNavIndicator"
-                    className="absolute inset-x-1.5 inset-y-1.5 rounded-[22px] bg-[#2563EB] bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] border border-blue-400/40 shadow-[0_8px_18px_-3px_rgba(0,0,0,0.45),0_3px_6px_-2px_rgba(0,0,0,0.35),0_0_12px_rgba(37,99,235,0.35),inset_0_1px_1.5px_rgba(255,255,255,0.35),inset_0_-1px_1.5px_rgba(0,0,0,0.25)]"
-                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    layoutId="mobileNavIndicatorWhite"
+                    className="absolute inset-x-1 inset-y-1 rounded-[22px] bg-gradient-to-b from-[#f8fafc] via-[#e2e8f0] to-[#cbd5e1] border border-white/90 shadow-[-2px_-2px_7px_rgba(255,255,255,0.3),4px_4px_12px_rgba(0,0,0,0.5),inset_1.5px_1.5px_2px_rgba(255,255,255,1),inset_-1.5px_-1.5px_2px_rgba(0,0,0,0.12)]"
+                    transition={{ type: "spring", stiffness: 420, damping: 32 }}
                   />
                 )}
                 
-                <div className={`relative z-10 flex flex-col items-center justify-center transition-all duration-200 ${
-                  isActive ? 'scale-105 opacity-100' : 'opacity-75 hover:opacity-100'
-                }`}>
-                  <motion.div
-                    animate={isActive ? { 
-                      y: [0, -6, 0, -3, 0],
-                      scale: [1, 1.15, 1, 1.08, 1],
-                    } : { 
-                      y: 0,
-                      scale: 1,
-                    }}
-                    transition={isActive ? { 
-                      duration: 0.8,
-                      repeat: Infinity,
-                      repeatDelay: 4.2,
-                      ease: "easeInOut"
-                    } : { duration: 0.2 }}
-                  >
-                    <item.icon 
-                      className={`w-[20px] h-[20px] transition-colors duration-200 ${
-                        isActive 
-                          ? 'text-white' 
-                          : 'text-slate-300'
-                      }`} 
-                      strokeWidth={isActive ? 2.3 : 2} 
-                    />
-                  </motion.div>
-                  <span className={`text-[9px] font-semibold tracking-wide mt-1 transition-colors duration-200 ${
+                <motion.div 
+                  animate={isActive ? { 
+                    y: [0, -7, 0, -3, 0],
+                    scale: [1, 1.12, 1, 1.05, 1],
+                  } : { 
+                    y: 0,
+                    scale: 1,
+                  }}
+                  transition={isActive ? { 
+                    duration: 0.8,
+                    repeat: Infinity,
+                    repeatDelay: 4.2,
+                    ease: "easeInOut"
+                  } : { duration: 0.2 }}
+                  className={`relative z-10 flex flex-col items-center justify-center transition-all duration-200 ${
+                    isActive ? 'scale-105' : 'opacity-85 hover:opacity-100 active:scale-95'
+                  }`}
+                >
+                  {/* Neumorphic 3D Squircle Icon */}
+                  <div className={`relative w-[34px] h-[34px] rounded-[11px] flex items-center justify-center text-white border ${item.theme.bg} ${item.theme.border} shadow-[-2px_-2px_6px_rgba(255,255,255,0.25),3px_3px_8px_rgba(0,0,0,0.45),inset_1px_1px_1.5px_rgba(255,255,255,0.4),inset_-1px_-1px_1.5px_rgba(0,0,0,0.2)] overflow-hidden transform-gpu`}>
+                    <item.icon className="w-4 h-4 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] relative z-10" strokeWidth={2.4} />
+                  </div>
+
+                  {/* Neumorphic Embossed Text */}
+                  <span className={`text-[9.5px] tracking-tight mt-1 transition-colors duration-200 ${
                     isActive 
-                      ? 'text-white font-bold' 
-                      : 'text-slate-400 font-medium'
+                      ? 'text-[#1e293b] font-black drop-shadow-[0_0.5px_0_rgba(255,255,255,0.7)]' 
+                      : 'text-slate-400 font-semibold drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]'
                   }`}>
                     {item.shortName || item.name}
                   </span>
-                </div>
+                </motion.div>
               </Link>
             );
           })}

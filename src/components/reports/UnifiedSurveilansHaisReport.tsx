@@ -5,7 +5,7 @@ import { id as idLocale } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Activity, ArrowDown, ArrowUp, BarChart, LineChart, Table2, TrendingUp,
-  AlertCircle, Calendar, Building2, Filter, CheckCircle2, RefreshCw, LayoutGrid
+  AlertCircle, Calendar, Building2, Filter, CheckCircle2, RefreshCw, LayoutGrid, ChevronDown
 } from 'lucide-react';
 import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -394,73 +394,160 @@ export default function UnifiedSurveilansHaisReport() {
   return (
     <div className="flex flex-col gap-6 w-full fade-in zoom-in-95 animate-in duration-500 pb-32">
       
-      {/* HEADER PAGE */}
-      <div className="text-center lg:text-left mb-2">
-        <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white uppercase mb-2">
-          SURVEILANS HAIs
-        </h1>
-        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 max-w-full sm:whitespace-nowrap">
-          Monitoring realtime insiden Healthcare Associated Infections (HAIs) berdasarkan periode dan kategori ruangan.
-        </p>
-      </div>
+      {/* HEADER & FILTER PERIODE */}
+      <div className="mb-6 flex flex-col lg:flex-row justify-between items-center lg:items-center gap-4">
+        <div className="text-center lg:text-left w-full lg:w-auto shrink-0">
+          <h1 className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase">
+            SURVEILANS HAIs
+          </h1>
+          <p className="text-sm text-slate-300 mt-1 font-medium">
+            Monitoring Real-Time Insiden Healthcare-Associated Infections (HAIs)
+          </p>
+        </div>
 
-      {/* TOP FILTER SECTION */}
-      <div className="bg-white/95 dark:bg-[#0f172a]/95 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-2xl p-4 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_4px_10px_-2px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_16px_32px_-8px_rgba(0,0,0,0.85),0_6px_16px_-4px_rgba(0,0,0,0.75),inset_0_1px_1px_rgba(255,255,255,0.12)] flex flex-col md:flex-row gap-4 justify-between items-center w-full">
-        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-          {/* Periode */}
-          <div className="glowing-border-container w-full sm:w-auto">
-            {/* Spinning gradient layer */}
-            <div className="glowing-border-bg" />
-            {/* Glowing shadow layer underneath */}
-            <div className="glowing-border-shadow" />
-            
-            <div className="glowing-border-inner flex flex-wrap justify-center items-center gap-2 rounded-[14px] p-1 shadow-sm w-full sm:w-auto">
-              <select value={periodeType} onChange={(e) => setPeriodeType(e.target.value)} className="bg-transparent border-none text-xs sm:text-sm font-bold text-slate-900 dark:text-white outline-none cursor-pointer">
-                {['Bulanan', 'Triwulan', 'Semester', 'Tahunan'].map(p => <option key={p} value={p} className="bg-white dark:bg-slate-900">{p}</option>)}
-              </select>
-              
-              {(periodeType === 'Bulanan' || periodeType === 'Triwulan' || periodeType === 'Semester') && (
-                 <div className="w-px h-4 bg-slate-300 dark:bg-slate-700 mx-1" />
-              )}
+        <div className="flex flex-wrap items-center justify-center lg:justify-end gap-3 w-full lg:w-auto">
+          {/* Filter Periode - 3D Tactile Neumorphic Container */}
+          <div className="relative group w-full sm:w-auto">
+            <div className="relative bg-[#18193b] rounded-[24px] p-2.5 sm:p-3 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)]">
+              {/* Top Bevel Highlight */}
+              <div className="absolute top-0 inset-x-6 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
-              {periodeType === 'Bulanan' && (
-                <select value={selectedMonth} onChange={(e) => setSelectedMonth(parseInt(e.target.value))} className="bg-transparent border-none text-xs sm:text-sm font-bold text-slate-900 dark:text-white outline-none cursor-pointer">
-                  {["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"].map((m, i) => <option key={m} value={i} className="bg-white dark:bg-slate-900">{m}</option>)}
-                </select>
-              )}
-              {periodeType === 'Triwulan' && (
-                <select value={selectedQuarter} onChange={(e) => setSelectedQuarter(parseInt(e.target.value))} className="bg-transparent border-none text-xs sm:text-sm font-bold text-slate-900 dark:text-white outline-none cursor-pointer">
-                  {["Q1", "Q2", "Q3", "Q4"].map((q, i) => <option key={q} value={i} className="bg-white dark:bg-slate-900">{q}</option>)}
-                </select>
-              )}
-              {periodeType === 'Semester' && (
-                <select value={selectedSemester} onChange={(e) => setSelectedSemester(parseInt(e.target.value))} className="bg-transparent border-none text-xs sm:text-sm font-bold text-slate-900 dark:text-white outline-none cursor-pointer">
-                  {["S1", "S2"].map((s, i) => <option key={s} value={i} className="bg-white dark:bg-slate-900">{s}</option>)}
-                </select>
-              )}
+              <div className="flex flex-wrap items-center justify-center lg:justify-end gap-2.5 relative z-10">
+                {/* Neumorphic Capsule Badge */}
+                <div className="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)]">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
+                    PERIODE
+                  </span>
+                </div>
 
-              <div className="w-px h-4 bg-slate-300 dark:bg-slate-700 mx-1" />
-              <select value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.target.value))} className="bg-transparent border-none text-xs sm:text-sm font-bold text-slate-900 dark:text-white outline-none cursor-pointer">
-                {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => <option key={y} value={y} className="bg-white dark:bg-slate-900">{y}</option>)}
-              </select>
+                {/* Tipe Periode - Recessed Neumorphic Well */}
+                <div className="relative">
+                  <select 
+                    value={periodeType} 
+                    onChange={(e) => setPeriodeType(e.target.value)} 
+                    className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] capitalize"
+                  >
+                    <option value="Bulanan" className="bg-[#18193b] text-white">Bulanan</option>
+                    <option value="Triwulan" className="bg-[#18193b] text-white">Triwulan</option>
+                    <option value="Semester" className="bg-[#18193b] text-white">Semester</option>
+                    <option value="Tahunan" className="bg-[#18193b] text-white">Tahunan</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+
+                {periodeType === 'Bulanan' && (
+                  <div className="relative">
+                    <select 
+                      value={selectedMonth} 
+                      onChange={(e) => setSelectedMonth(parseInt(e.target.value))} 
+                      className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                    >
+                      {["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"].map((m, i) => (
+                        <option key={m} value={i} className="bg-[#18193b] text-white">{m}</option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
+                )}
+                {periodeType === 'Triwulan' && (
+                  <div className="relative">
+                    <select 
+                      value={selectedQuarter} 
+                      onChange={(e) => setSelectedQuarter(parseInt(e.target.value))} 
+                      className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                    >
+                      <option value={0} className="bg-[#18193b] text-white">TW 1 (Jan-Mar)</option>
+                      <option value={1} className="bg-[#18193b] text-white">TW 2 (Apr-Jun)</option>
+                      <option value={2} className="bg-[#18193b] text-white">TW 3 (Jul-Sep)</option>
+                      <option value={3} className="bg-[#18193b] text-white">TW 4 (Okt-Des)</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
+                )}
+                {periodeType === 'Semester' && (
+                  <div className="relative">
+                    <select 
+                      value={selectedSemester} 
+                      onChange={(e) => setSelectedSemester(parseInt(e.target.value))} 
+                      className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                    >
+                      <option value={0} className="bg-[#18193b] text-white">SM 1 (Jan-Jun)</option>
+                      <option value={1} className="bg-[#18193b] text-white">SM 2 (Jul-Des)</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Tahun - Recessed Neumorphic Well */}
+                <div className="relative">
+                  <select 
+                    value={selectedYear} 
+                    onChange={(e) => setSelectedYear(parseInt(e.target.value))} 
+                    className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                  >
+                    <option value={2026} className="bg-[#18193b] text-white">2026</option>
+                    <option value={2025} className="bg-[#18193b] text-white">2025</option>
+                    <option value={2024} className="bg-[#18193b] text-white">2024</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Ruangan */}
-          <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 rounded-xl p-1 px-3 flex-grow sm:flex-grow-0 min-w-max">
-            <Building2 className="w-4 h-4 text-blue-500" />
-            <select value={selectedRuangan} onChange={(e) => setSelectedRuangan(e.target.value)} className="bg-transparent border-none text-xs sm:text-sm font-bold text-slate-900 dark:text-white outline-none cursor-pointer w-full">
-              {RUANGAN_LIST.map(r => <option key={r} value={r}>{r}</option>)}
-            </select>
+          {/* Ruangan - Matching Neumorphic Container */}
+          <div className="relative group">
+            <div className="relative bg-[#18193b] rounded-[24px] p-2.5 sm:p-3 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)]">
+              <div className="absolute top-0 inset-x-4 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+              <div className="relative z-10 flex items-center">
+                <select 
+                  value={selectedRuangan} 
+                  onChange={(e) => setSelectedRuangan(e.target.value)} 
+                  className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                >
+                  {RUANGAN_LIST.map(r => (
+                    <option key={r} value={r} className="bg-[#18193b] text-white">{r}</option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Kategori HAIs */}
-        <div className="flex items-center gap-2 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-xl p-1 px-3 w-full md:w-auto mt-2 md:mt-0 max-w-full">
-          <Activity className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-          <select value={selectedHais} onChange={(e) => setSelectedHais(e.target.value)} className="bg-transparent border-none text-xs sm:text-sm font-bold text-slate-900 dark:text-white outline-none cursor-pointer w-full text-ellipsis overflow-hidden">
-            {KATEGORI_HAIS.map(k => <option key={k} value={k}>{k}</option>)}
-          </select>
+          {/* Kategori HAIs - Matching Neumorphic Container */}
+          <div className="relative group">
+            <div className="relative bg-[#18193b] rounded-[24px] p-2.5 sm:p-3 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)]">
+              <div className="absolute top-0 inset-x-4 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+              <div className="relative z-10 flex items-center">
+                <select 
+                  value={selectedHais} 
+                  onChange={(e) => setSelectedHais(e.target.value)} 
+                  className="bg-[#12132e] border border-emerald-900/40 text-emerald-400 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all appearance-none cursor-pointer hover:border-emerald-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] text-ellipsis overflow-hidden"
+                >
+                  {KATEGORI_HAIS.map(k => (
+                    <option key={k} value={k} className="bg-[#18193b] text-white">{k}</option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -469,20 +556,21 @@ export default function UnifiedSurveilansHaisReport() {
       ) : (
         <>
           {/* MAIN CONTAINER AND SUMMARY CARDS */}
-          <div className="bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md rounded-[2rem] border border-slate-200/80 dark:border-white/10 overflow-hidden shadow-[0_15px_35px_-8px_rgba(0,0,0,0.12),0_6px_15px_-4px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.95),0_10px_25px_-6px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] transition-all mt-4">
+          <div className="bg-[#18193b] rounded-[28px] md:rounded-[32px] border border-[#2b2d56] overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] transition-all mt-4 relative">
+            <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
             
             {/* Logo, Header Laporan */}
-            <div className="p-8 border-b border-slate-100 dark:border-white/5 bg-white dark:bg-[#0f172a]">
+            <div className="p-6 sm:p-8 border-b border-indigo-900/30 bg-[#141532]/60 backdrop-blur-md">
                <div className="flex flex-col md:flex-row items-center gap-6">
                  {hospitalLogoUrl && (
                    <img src={hospitalLogoUrl} alt="Logo RS" className="w-20 h-20 object-contain" />
                  )}
                  <div className="text-center md:text-left">
-                   <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                   <h2 className="text-xl font-black text-white uppercase tracking-tight">
                      Laporan Surveilans HAIs
                    </h2>
-                   <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase">UOBK RSUD AL-MULK KOTA SUKABUMI</h3>
-                   <p className="text-slate-500 dark:text-slate-400 font-medium mt-1 uppercase">
+                   <h3 className="text-sm font-bold text-slate-300 uppercase">UOBK RSUD AL-MULK KOTA SUKABUMI</h3>
+                   <p className="text-slate-400 font-bold mt-1 uppercase text-xs">
                      Periode: {periodeType} {selectedYear} {periodeType === 'Bulanan' ? `- ${["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"][selectedMonth]}` : ''}
                    </p>
                  </div>
@@ -493,12 +581,12 @@ export default function UnifiedSurveilansHaisReport() {
                 <thead>
                   
                   {/* Super Header Row */}
-                  <tr className="bg-slate-100/80 dark:bg-[#1e293b]/70 border-b border-slate-200 dark:border-white/10">
-                    <th className="py-2 px-1 text-[11px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[3%] text-center bg-slate-100 dark:bg-[#1e293b] border-r border-slate-300 dark:border-white/20" rowSpan={2}>No</th>
-                    <th className="py-2 px-2 text-[11px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[11%] bg-slate-100 dark:bg-[#1e293b] border-r border-slate-300 dark:border-white/20" rowSpan={2}>Ruangan</th>
+                  <tr className="bg-[#12132e] border-b border-indigo-900/30">
+                    <th className="py-2.5 px-2 text-[11px] font-black uppercase tracking-wider text-slate-300 w-[3%] text-center border-r border-indigo-900/30" rowSpan={2}>No</th>
+                    <th className="py-2.5 px-3 text-[11px] font-black uppercase tracking-wider text-slate-300 w-[11%] border-r border-indigo-900/30" rowSpan={2}>Ruangan</th>
                     
                     {INDICATORS.map(ind => (
-                      <th key={ind.id} className="py-1.5 px-1.5 text-center text-[10px] font-black uppercase tracking-wider text-white border-r border-slate-300 dark:border-white/20 leading-tight" colSpan={4} style={{ backgroundColor: COLORS[ind.name] + 'dd' }}>
+                      <th key={ind.id} className="py-1.5 px-1.5 text-center text-[10px] font-black uppercase tracking-wider text-white border-r border-indigo-900/30 leading-tight" colSpan={4} style={{ backgroundColor: COLORS[ind.name] + 'dd' }}>
                         <div className="flex flex-col justify-center items-center">
                           {ind.labelLines.map((line, lIdx) => (
                             <span key={lIdx} className="block whitespace-normal">{line}</span>
@@ -509,31 +597,31 @@ export default function UnifiedSurveilansHaisReport() {
                   </tr>
 
                   {/* Sub Header Row */}
-                  <tr className="bg-slate-50 dark:bg-[#0f172a]/90 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-white/10">
+                  <tr className="bg-[#0e0f24] text-[9px] font-black uppercase tracking-wider text-slate-400 border-b border-indigo-900/30">
                     {INDICATORS.map(ind => (
                       <React.Fragment key={`${ind.id}-sub`}>
-                        <th className="py-1 px-1 text-center font-black w-[4%] bg-slate-50/70 dark:bg-slate-900 border-r border-slate-150 dark:border-slate-800">N</th>
-                        <th className="py-1 px-1 text-center font-black w-[4%] bg-slate-50/70 dark:bg-slate-900 border-r border-slate-150 dark:border-slate-800">D</th>
-                        <th className="py-1 px-1.5 text-center font-black w-[6%] bg-slate-50/70 dark:bg-slate-900 border-r border-slate-150 dark:border-slate-800">%</th>
-                        <th className="py-1 px-1.5 text-center font-black w-[6%] bg-slate-100/50 dark:bg-slate-800/80 border-r-2 border-slate-300 dark:border-white/20">Target</th>
+                        <th className="py-1.5 px-1 text-center font-black w-[4%] border-r border-indigo-950/60">N</th>
+                        <th className="py-1.5 px-1 text-center font-black w-[4%] border-r border-indigo-950/60">D</th>
+                        <th className="py-1.5 px-1.5 text-center font-black w-[6%] border-r border-indigo-950/60">%</th>
+                        <th className="py-1.5 px-1.5 text-center font-black w-[6%] border-r-2 border-indigo-900/40 bg-indigo-950/20">Target</th>
                       </React.Fragment>
                     ))}
                   </tr>
 
                 </thead>
-                <tbody className="divide-y divide-slate-150 dark:divide-white/5 text-[12px]">
+                <tbody className="divide-y divide-white/5 text-[12px]">
                   
                   {/* Rows for Rooms */}
                   {roomsToDisplay.map((room, idx) => (
-                    <tr key={room} className="hover:bg-slate-100/40 dark:hover:bg-white/5 transition-colors group">
+                    <tr key={room} className="hover:bg-white/[0.03] transition-colors group">
                       
                       {/* Column "No" */}
-                      <td className="py-1.5 px-1 text-center font-bold text-slate-400 group-hover:bg-slate-100 dark:group-hover:bg-slate-800/40 bg-white dark:bg-[#0f172a] border-r border-slate-300 dark:border-white/20 transition-colors">
+                      <td className="py-2 px-2 text-center font-bold text-slate-400 border-r border-indigo-900/30 font-mono">
                         {idx + 1}
                       </td>
 
                       {/* Column "Ruangan" */}
-                      <td className="py-1.5 px-2 font-bold text-slate-900 dark:text-white group-hover:bg-slate-100 dark:group-hover:bg-slate-800/40 bg-white dark:bg-[#0f172a] border-r border-slate-300 dark:border-white/20 transition-colors">
+                      <td className="py-2 px-3 font-bold text-white border-r border-indigo-900/30 uppercase">
                         {room}
                       </td>
 
@@ -542,27 +630,27 @@ export default function UnifiedSurveilansHaisReport() {
                         const { n, d, rate, hasData } = getIndicatorDataForRoom(room, ind.id);
                         const isCompliant = rate <= ind.target;
                         const badgeColorText = isCompliant 
-                          ? "text-emerald-600 dark:text-emerald-400" 
-                          : "text-red-600 dark:text-red-400 font-black";
+                          ? "text-emerald-400 font-black" 
+                          : "text-red-400 font-black";
 
                         return (
                           <React.Fragment key={`${room}-${ind.id}`}>
-                            <td className="py-1.5 px-1 text-center font-semibold font-mono text-slate-500 border-r border-slate-150 dark:border-slate-800">{n}</td>
-                            <td className="py-1.5 px-1 text-center font-semibold font-mono text-slate-500 border-r border-slate-150 dark:border-slate-800">{d}</td>
+                            <td className="py-2 px-1 text-center font-semibold font-mono text-slate-300 border-r border-indigo-950/40">{n}</td>
+                            <td className="py-2 px-1 text-center font-semibold font-mono text-slate-300 border-r border-indigo-950/40">{d}</td>
                             
                             {/* Rate (%) */}
-                            <td className={`py-1.5 px-1.5 text-center font-mono font-bold border-r border-slate-150 dark:border-slate-800 transition-colors ${d > 0 ? (isCompliant ? 'bg-emerald-500/5' : 'bg-red-500/5') : ''}`}>
+                            <td className={`py-2 px-1.5 text-center font-mono font-bold border-r border-indigo-950/40 transition-colors ${d > 0 ? (isCompliant ? 'bg-emerald-500/10' : 'bg-red-500/10') : ''}`}>
                               {d > 0 ? (
                                 <span className={badgeColorText}>
                                   {rate.toFixed(1)}{ind.unit}
                                 </span>
                               ) : (
-                                <span className="text-slate-300 dark:text-slate-700">0.0{ind.unit}</span>
+                                <span className="text-slate-600 font-mono">0.0{ind.unit}</span>
                               )}
                             </td>
 
                             {/* Target value */}
-                            <td className="py-1.5 px-1 text-center font-mono font-bold text-[10px] text-slate-400 bg-slate-50/40 dark:bg-slate-800/20 border-r-2 border-slate-300 dark:border-white/20">
+                            <td className="py-2 px-1 text-center font-mono font-bold text-[10px] text-slate-400 bg-indigo-950/20 border-r-2 border-indigo-900/40">
                               {ind.targetLabel}
                             </td>
                           </React.Fragment>
@@ -572,10 +660,10 @@ export default function UnifiedSurveilansHaisReport() {
                   ))}
 
                   {/* TOTAL (JUMLAH) ROW AT THE BOTTOM */}
-                  <tr className="bg-slate-100/90 dark:bg-[#1e293b]/80 border-t-2 border-slate-300 dark:border-white/30 text-slate-900 dark:text-white font-black text-[12px]">
-                    <td className="py-2 px-1 text-center bg-slate-100 dark:bg-[#1e293b] border-r border-slate-300 dark:border-white/20" colSpan={1}>
+                  <tr className="bg-[#12132e] border-t-2 border-indigo-900/40 text-white font-black text-[12px]">
+                    <td className="py-2.5 px-2 text-center border-r border-indigo-900/30" colSpan={1}>
                     </td>
-                    <td className="py-2 px-2 uppercase tracking-wider bg-slate-100 dark:bg-[#1e293b] border-r border-slate-300 dark:border-white/20">
+                    <td className="py-2.5 px-3 uppercase tracking-wider border-r border-indigo-900/30 font-black text-cyan-400">
                       JUMLAH
                     </td>
 
@@ -584,27 +672,27 @@ export default function UnifiedSurveilansHaisReport() {
                       const { n, d, rate, hasData } = getIndicatorTotal(ind.id);
                       const isCompliant = rate <= ind.target;
                       const textColorClass = isCompliant 
-                        ? "text-emerald-700 dark:text-emerald-400" 
-                        : "text-red-700 dark:text-red-400";
+                        ? "text-emerald-400 font-black" 
+                        : "text-red-400 font-black";
 
                       return (
                         <React.Fragment key={`total-${ind.id}`}>
-                          <td className="py-2 px-1 text-center font-mono text-slate-700 dark:text-slate-300">{n}</td>
-                          <td className="py-2 px-1 text-center font-mono text-slate-700 dark:text-slate-300">{d}</td>
+                          <td className="py-2.5 px-1 text-center font-mono text-slate-200 font-bold border-r border-indigo-950/40">{n}</td>
+                          <td className="py-2.5 px-1 text-center font-mono text-slate-200 font-bold border-r border-indigo-950/40">{d}</td>
                           
                           {/* Aggregate Rate */}
-                          <td className={`py-2 px-1 text-center font-mono font-extrabold border-r border-slate-200 dark:border-slate-800 ${d > 0 ? (isCompliant ? 'bg-emerald-500/10' : 'bg-red-500/10') : ''}`}>
+                          <td className={`py-2.5 px-1 text-center font-mono font-extrabold border-r border-indigo-950/40 ${d > 0 ? (isCompliant ? 'bg-emerald-500/20' : 'bg-red-500/20') : ''}`}>
                             {d > 0 ? (
                               <span className={textColorClass}>
                                 {rate.toFixed(1)}{ind.unit}
                               </span>
                             ) : (
-                              <span className="text-slate-300 dark:text-slate-700">0.0{ind.unit}</span>
+                              <span className="text-slate-600">0.0{ind.unit}</span>
                             )}
                           </td>
 
                           {/* Static Target info */}
-                          <td className="py-2 px-1 text-center font-mono font-black text-[10px] text-[#475569] bg-slate-150 dark:bg-slate-800/40 border-r-2 border-slate-300 dark:border-white/20">
+                          <td className="py-2.5 px-1 text-center font-mono font-black text-[10px] text-slate-400 bg-indigo-950/30 border-r-2 border-indigo-900/40">
                             {ind.targetLabel}
                           </td>
                         </React.Fragment>
@@ -620,21 +708,23 @@ export default function UnifiedSurveilansHaisReport() {
           </div>
 
           {/* CHART SECTION */}
-          <div className="bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-3xl p-5 sm:p-6 shadow-[0_15px_35px_-8px_rgba(0,0,0,0.12),0_6px_15px_-4px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.95),0_10px_25px_-6px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] relative overflow-hidden mt-4">
+          <div className="bg-[#18193b] rounded-[28px] md:rounded-[32px] border border-[#2b2d56] p-6 sm:p-7 shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] relative overflow-hidden mt-4">
+             <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+             
              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                 <div>
-                  <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 whitespace-nowrap font-sans">
-                    <TrendingUp className="w-5 h-5 text-blue-500" />
+                  <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-3 uppercase tracking-wider">
+                    <TrendingUp className="w-5 h-5 text-cyan-400" />
                     Grafik Monitoring Surveilans HAIs
                   </h3>
-                  <p className="text-xs font-medium text-slate-500 mt-1">Menampilkan capaian sepanjang periode tahun terpilih.</p>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Menampilkan capaian sepanjang periode tahun terpilih.</p>
                 </div>
                 
-                <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl">
-                  <button onClick={() => setChartMode("bar")} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all ${chartMode === "bar" ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 hover:text-slate-800 dark:hover:text-white"}`}>
+                <div className="flex bg-[#12132e] p-1.5 rounded-2xl border border-indigo-900/40 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
+                  <button onClick={() => setChartMode("bar")} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all ${chartMode === "bar" ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md" : "text-slate-400 hover:text-white"}`}>
                     <BarChart className="w-4 h-4" /> Bar
                   </button>
-                  <button onClick={() => setChartMode("line")} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all ${chartMode === "line" ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 hover:text-slate-800 dark:hover:text-white"}`}>
+                  <button onClick={() => setChartMode("line")} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all ${chartMode === "line" ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md" : "text-slate-400 hover:text-white"}`}>
                     <LineChart className="w-4 h-4" /> Line
                   </button>
                 </div>
@@ -644,11 +734,11 @@ export default function UnifiedSurveilansHaisReport() {
                {chartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                      <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#94a3b833" vertical={false} />
-                        <XAxis dataKey="period" stroke="#64748b" fontSize={9} tickMargin={10} axisLine={false} tickLine={false} interval={0} angle={-45} textAnchor="end" height={40} />
-                        <YAxis stroke="#64748b" fontSize={11} axisLine={false} tickLine={false} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#2b2d56" vertical={false} />
+                        <XAxis dataKey="period" stroke="#94a3b8" fontSize={9} tickMargin={10} axisLine={false} tickLine={false} interval={0} angle={-45} textAnchor="end" height={40} />
+                        <YAxis stroke="#94a3b8" fontSize={11} axisLine={false} tickLine={false} />
                         <Tooltip 
-                          contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.95)', borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)', color: '#fff' }}
+                          contentStyle={{ backgroundColor: '#18193b', borderRadius: '16px', border: '1px solid #2b2d56', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.7)', color: '#fff' }}
                           itemStyle={{ fontSize: '13px', fontWeight: 'bold' }}
                           labelStyle={{ color: '#94a3b8', fontSize: '11px', fontWeight: 'bold', marginBottom: '8px', textTransform: 'uppercase' }}
                         />
@@ -682,9 +772,9 @@ export default function UnifiedSurveilansHaisReport() {
                      </ComposedChart>
                   </ResponsiveContainer>
                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 dark:bg-white/5 rounded-2xl border border-dashed border-slate-200 dark:border-white/10">
-                    <Activity className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
-                    <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Belum ada data untuk grafik</span>
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-[#12132e] rounded-2xl border border-indigo-900/30">
+                    <Activity className="w-10 h-10 text-slate-600 mb-3" />
+                    <span className="text-sm font-black text-slate-400 uppercase tracking-widest">Belum ada data untuk grafik</span>
                   </div>
                )}
              </div>

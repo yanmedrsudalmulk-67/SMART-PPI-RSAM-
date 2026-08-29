@@ -383,10 +383,10 @@ const HeroSlider = ({
               return (
                 <div
                   style={slideStyle}
-                  className={`relative w-full h-full rounded-[16px] md:rounded-[20px] overflow-hidden transition-all duration-700 ease-out transform-gpu flex items-center justify-center ${
+                  className={`relative w-full h-full rounded-[16px] md:rounded-[20px] overflow-hidden transition-all duration-700 ease-out transform-gpu flex items-center justify-center border border-indigo-300/30 ${
                     isActive
-                      ? "shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)]"
-                      : "shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)]"
+                      ? "shadow-[0_20px_50px_rgba(15,10,45,0.45)]"
+                      : "shadow-[0_10px_25px_rgba(15,10,45,0.25)]"
                   }`}
                 >
                   {slide.image_url && !imageErrors[slide.id] ? (
@@ -990,8 +990,8 @@ export default function DashboardPage() {
   const renderTooltipContent = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-[#0a0f1c]/95 backdrop-blur-xl border border-cyan-500/30 p-4 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] text-white">
-          <p className="text-sm font-black text-cyan-300 mb-2">
+        <div className="bg-[#181a48]/95 backdrop-blur-xl border border-indigo-300/40 p-4 rounded-2xl shadow-[0_15px_35px_rgba(10,8,35,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] text-white">
+          <p className="text-sm font-black text-indigo-200 mb-2">
             {label}
           </p>
           <div className="space-y-1.5">
@@ -1243,12 +1243,12 @@ export default function DashboardPage() {
     <div className="space-y-6 pb-10 w-full max-w-full overflow-x-hidden">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
         <div className="text-center sm:text-left w-full sm:w-auto">
-          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all uppercase">
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase">
             Dashboard SMART PPI
           </h1>
           <div className="mt-1">
             <p
-              className="text-white font-normal leading-tight max-w-[280px] sm:max-w-none mx-auto sm:mx-0 text-[14px]"
+              className="text-slate-400 font-medium leading-tight max-w-[280px] sm:max-w-none mx-auto sm:mx-0 text-[14px]"
               style={{ fontSize: "14px" }}
             >
               Pencegahan Dan Pengendalian Infeksi <br className="sm:hidden" />{" "}
@@ -1265,43 +1265,55 @@ export default function DashboardPage() {
 
       <HeroSlider slides={slides} isLoading={isSlidesLoading} />
 
-      {/* Global Period Filter - Glassmorphism 3D Depth */}
+      {/* Global Period Filter - 3D Tactile Container with Top Bevel Highlight */}
       <section className="relative">
-        <div className="group relative bg-[#092540]/30 backdrop-blur-2xl backdrop-saturate-150 rounded-[24px] p-6 md:p-7 border border-sky-400/40 hover:border-sky-300/80 transition-all duration-300 transform-gpu overflow-hidden shadow-[0_16px_36px_-6px_rgba(2,8,20,0.7),0_4px_12px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.18)] hover:shadow-[0_22px_44px_-6px_rgba(2,8,20,0.85),0_6px_16px_rgba(0,0,0,0.5),inset_0_1px_2px_rgba(255,255,255,0.25)] before:absolute before:inset-0 before:bg-gradient-to-br before:from-sky-300/15 before:via-sky-500/5 before:to-transparent before:pointer-events-none">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-sky-400/20 backdrop-blur-md border border-sky-300/40 flex items-center justify-center text-sky-200 shadow-[0_4px_12px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.2)]">
-                <BarChart2 className="w-6 h-6" />
-              </div>
+        <div className="group relative bg-[#18193b] rounded-[32px] md:rounded-[36px] p-6 md:p-8 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)]">
+          {/* Top Bevel Highlight */}
+          <div className="absolute top-0 inset-x-10 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+            <div className="flex items-start gap-4">
               <div>
-                <p className="text-base font-bold text-white tracking-wide drop-shadow-sm">
-                  Pilih Periode Monitoring
+                {/* Pill Capsule Badge */}
+                <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)] mb-3">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-300">
+                    PERIODE MONITORING
+                  </span>
+                </div>
+
+                <h3 className="text-xl md:text-2xl font-black text-white tracking-tight leading-snug">
+                  Filter & Rentang Waktu
+                </h3>
+                <p className="text-slate-400 text-xs md:text-sm font-medium mt-1">
+                  Sesuaikan rentang waktu pengamatan data audit dan indikator mutu PPI
                 </p>
               </div>
             </div>
 
-            <div className="w-full md:w-auto lg:min-w-[580px] bg-[#081B33]/40 backdrop-blur-xl rounded-2xl p-3 border border-sky-400/30 shadow-[0_4px_16px_rgba(0,0,0,0.35),inset_0_1px_1px_rgba(255,255,255,0.1)]">
+            {/* Recessed Control Area */}
+            <div className="w-full lg:min-w-[580px] bg-[#12132e] rounded-2xl p-3 border border-black/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
                 {/* Select Period Type */}
                 <div className="relative group/select">
-                  <label className="absolute -top-2.5 left-3 px-2 bg-[#081B33]/90 backdrop-blur-md border border-sky-400/40 text-[10px] font-black text-sky-300 uppercase tracking-widest z-10 rounded-md shadow-sm">
+                  <label className="absolute -top-2.5 left-3 px-2 bg-[#18193b] border border-indigo-500/20 text-[9px] font-black text-indigo-300 uppercase tracking-widest z-10 rounded-md shadow-sm">
                     Tipe
                   </label>
                   <select
                     value={filterPeriodType}
                     onChange={(e) => setFilterPeriodType(e.target.value as any)}
-                    className="w-full bg-[#081B33]/60 backdrop-blur-md border border-sky-400/30 text-white text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-sky-300 transition-all appearance-none cursor-pointer hover:border-sky-400/60 shadow-inner"
+                    className="w-full bg-[#161735] border border-indigo-900/40 text-white text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.5),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
                   >
-                    <option value="bulanan" className="bg-[#0B1A2C] text-slate-100">
+                    <option value="bulanan" className="bg-[#18193b] text-white">
                       BULANAN
                     </option>
-                    <option value="triwulan" className="bg-[#0B1A2C] text-slate-100">
+                    <option value="triwulan" className="bg-[#18193b] text-white">
                       TRIWULAN
                     </option>
-                    <option value="semester" className="bg-[#0B1A2C] text-slate-100">
+                    <option value="semester" className="bg-[#18193b] text-white">
                       SEMESTER
                     </option>
-                    <option value="tahunan" className="bg-[#0B1A2C] text-slate-100">
+                    <option value="tahunan" className="bg-[#18193b] text-white">
                       TAHUNAN
                     </option>
                   </select>
@@ -1309,7 +1321,7 @@ export default function DashboardPage() {
 
                 {/* Select Detail Period */}
                 <div className="relative group/select">
-                  <label className="absolute -top-2.5 left-3 px-2 bg-[#081B33]/90 backdrop-blur-md border border-sky-400/40 text-[10px] font-black text-sky-300 uppercase tracking-widest z-10 rounded-md shadow-sm">
+                  <label className="absolute -top-2.5 left-3 px-2 bg-[#18193b] border border-indigo-500/20 text-[9px] font-black text-indigo-300 uppercase tracking-widest z-10 rounded-md shadow-sm">
                     {filterPeriodType === "bulanan"
                       ? "Bulan"
                       : filterPeriodType === "triwulan"
@@ -1323,7 +1335,7 @@ export default function DashboardPage() {
                       <select
                         value={filterMonth}
                         onChange={(e) => setFilterMonth(parseInt(e.target.value))}
-                        className="w-full bg-[#081B33]/60 backdrop-blur-md border border-sky-400/30 text-white text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-sky-300 transition-all appearance-none cursor-pointer disabled:opacity-50 hover:border-sky-400/60 shadow-inner"
+                        className="w-full bg-[#161735] border border-indigo-900/40 text-white text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer disabled:opacity-50 hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.5),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
                       >
                         {[
                           "Januari",
@@ -1339,7 +1351,7 @@ export default function DashboardPage() {
                           "November",
                           "Desember",
                         ].map((m, i) => (
-                          <option key={i} value={i} className="bg-[#0B1A2C] text-slate-100">
+                          <option key={i} value={i} className="bg-[#18193b] text-white">
                             {m}
                           </option>
                         ))}
@@ -1351,18 +1363,18 @@ export default function DashboardPage() {
                         onChange={(e) =>
                           setFilterQuarter(parseInt(e.target.value))
                         }
-                        className="w-full bg-[#081B33]/60 backdrop-blur-md border border-sky-400/30 text-white text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-sky-300 transition-all appearance-none cursor-pointer hover:border-sky-400/60 shadow-inner"
+                        className="w-full bg-[#161735] border border-indigo-900/40 text-white text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.5),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
                       >
-                        <option value={0} className="bg-[#0B1A2C] text-slate-100">
+                        <option value={0} className="bg-[#18193b] text-white">
                           TW 1 (Jan-Mar)
                         </option>
-                        <option value={1} className="bg-[#0B1A2C] text-slate-100">
+                        <option value={1} className="bg-[#18193b] text-white">
                           TW 2 (Apr-Jun)
                         </option>
-                        <option value={2} className="bg-[#0B1A2C] text-slate-100">
+                        <option value={2} className="bg-[#18193b] text-white">
                           TW 3 (Jul-Sep)
                         </option>
-                        <option value={3} className="bg-[#0B1A2C] text-slate-100">
+                        <option value={3} className="bg-[#18193b] text-white">
                           TW 4 (Okt-Des)
                         </option>
                       </select>
@@ -1373,18 +1385,18 @@ export default function DashboardPage() {
                         onChange={(e) =>
                           setFilterSemester(parseInt(e.target.value))
                         }
-                        className="w-full bg-[#081B33]/60 backdrop-blur-md border border-sky-400/30 text-white text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-sky-300 transition-all appearance-none cursor-pointer hover:border-sky-400/60 shadow-inner"
+                        className="w-full bg-[#161735] border border-indigo-900/40 text-white text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.5),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
                       >
-                        <option value={0} className="bg-[#0B1A2C] text-slate-100">
+                        <option value={0} className="bg-[#18193b] text-white">
                           SM 1 (Jan-Jun)
                         </option>
-                        <option value={1} className="bg-[#0B1A2C] text-slate-100">
+                        <option value={1} className="bg-[#18193b] text-white">
                           SM 2 (Jul-Des)
                         </option>
                       </select>
                     )}
                     {filterPeriodType === "tahunan" && (
-                      <div className="w-full bg-[#081B33]/60 backdrop-blur-md border border-sky-400/30 text-slate-200 text-sm font-bold rounded-xl px-4 py-3 shadow-inner">
+                      <div className="w-full bg-[#161735] border border-indigo-900/40 text-white text-sm font-bold rounded-xl px-4 py-3 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.5),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
                         Tahun Penuh
                       </div>
                     )}
@@ -1393,16 +1405,16 @@ export default function DashboardPage() {
 
                 {/* Select Year */}
                 <div className="relative group/select">
-                  <label className="absolute -top-2.5 left-3 px-2 bg-[#081B33]/90 backdrop-blur-md border border-sky-400/40 text-[10px] font-black text-sky-300 uppercase tracking-widest z-10 rounded-md shadow-sm">
+                  <label className="absolute -top-2.5 left-3 px-2 bg-[#18193b] border border-indigo-500/20 text-[9px] font-black text-indigo-300 uppercase tracking-widest z-10 rounded-md shadow-sm">
                     Tahun
                   </label>
                   <select
                     value={filterYear}
                     onChange={(e) => setFilterYear(parseInt(e.target.value))}
-                    className="w-full bg-[#081B33]/60 backdrop-blur-md border border-sky-400/30 text-white text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-sky-300 transition-all appearance-none cursor-pointer hover:border-sky-400/60 shadow-inner"
+                    className="w-full bg-[#161735] border border-indigo-900/40 text-white text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.5),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
                   >
                     {[2024, 2025, 2026, 2027].map((y) => (
-                      <option key={y} value={y} className="bg-[#0B1A2C] text-slate-100">
+                      <option key={y} value={y} className="bg-[#18193b] text-white">
                         {y}
                       </option>
                     ))}
@@ -1415,199 +1427,271 @@ export default function DashboardPage() {
       </section>
 
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-3 gap-6">
-        {/* HH Card - Glassmorphism 3D Depth */}
-        <div className="group relative bg-[#063440]/30 backdrop-blur-2xl backdrop-saturate-150 p-7 rounded-[24px] border border-cyan-400/40 hover:border-cyan-300/80 transition-all duration-300 transform-gpu hover:-translate-y-1.5 overflow-hidden shadow-[0_16px_36px_-6px_rgba(2,8,20,0.75),0_4px_12px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:shadow-[0_24px_48px_-6px_rgba(2,8,20,0.9),0_8px_18px_rgba(0,0,0,0.55),inset_0_1px_2px_rgba(255,255,255,0.3)] before:absolute before:inset-0 before:bg-gradient-to-br before:from-cyan-300/15 before:via-cyan-500/5 before:to-transparent before:pointer-events-none">
-          <div className="flex items-center gap-4 mb-7 relative z-10">
-            <div className="w-12 h-12 rounded-xl bg-cyan-400/20 backdrop-blur-md border border-cyan-300/40 flex items-center justify-center text-cyan-200 shadow-[0_4px_12px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.2)]">
-              <Droplets className="w-6 h-6" />
+        {/* Card 1: HH Card - 3D Tactile Slate Card with Floating Isometric Plate */}
+        <div className="group relative bg-[#18193b] p-7 md:p-8 rounded-[32px] md:rounded-[36px] border border-[#2b2d56] transition-all duration-300 transform-gpu hover:-translate-y-2 overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] hover:shadow-[-8px_-8px_24px_rgba(140,165,255,0.1),12px_16px_40px_rgba(0,0,0,0.8),inset_1px_1px_2px_rgba(255,255,255,0.25)] flex flex-col justify-between">
+          {/* Top Bevel Highlight */}
+          <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+          <div>
+            {/* Header: Badge & 3D Floating Isometric Feature Plate */}
+            <div className="flex items-start justify-between gap-4 mb-4 relative z-10">
+              <div>
+                {/* Pill Badge */}
+                <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)] mb-3">
+                  <span className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-300">
+                    INDIKATOR MUTU
+                  </span>
+                </div>
+                <h3 className="text-[25px] font-extrabold text-white leading-snug tracking-tight">
+                  Kepatuhan Kebersihan Tangan
+                </h3>
+              </div>
+
+              {/* 3D Floating Isometric Plate */}
+              <div className="shrink-0 relative">
+                <div className="w-16 h-16 rounded-[22px] bg-gradient-to-br from-[#272952] to-[#12132d] border-2 border-indigo-400/30 shadow-[-3px_-3px_10px_rgba(140,165,255,0.12),6px_8px_18px_rgba(0,0,0,0.7),inset_1.5px_1.5px_2px_rgba(255,255,255,0.2)] flex items-center justify-center transform group-hover:scale-105 group-hover:-rotate-3 transition-transform duration-300">
+                  <div className="w-10 h-10 rounded-[16px] bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-400 shadow-[0_6px_16px_rgba(16,185,129,0.5),inset_1px_1px_2px_rgba(255,255,255,0.4)] flex items-center justify-center text-white">
+                    <Droplets className="w-5 h-5 drop-shadow" />
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300/90 leading-none mb-1">
-                Indikator Mutu
-              </h3>
-              <p className="text-[19px] font-bold text-white leading-snug drop-shadow-sm">
-                Kepatuhan Kebersihan Tangan
-              </p>
-            </div>
+
+            <p className="text-slate-400 text-xs md:text-sm font-medium mb-5 leading-relaxed relative z-10">
+              Evaluasi kepatuhan 6 langkah dan 5 momen kebersihan tangan tenaga medis & non-medis.
+            </p>
           </div>
-          <div className="flex items-baseline gap-3 mb-4 relative z-10">
-            <span
-              className={`text-6xl font-black tracking-tighter drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)] ${getStatusColor(stats.hh, standards.hh)}`}
-            >
-              {stats.hh}%
-            </span>
-          </div>
-          <div className="mt-7 pt-5 border-t border-cyan-400/25 flex items-center justify-between relative z-10">
-            <span className="text-[14px] font-bold text-cyan-200 uppercase tracking-widest drop-shadow-sm">
-              Capaian
-            </span>
-            <div className="flex flex-col items-end">
-              <span className="text-[10px] font-black uppercase text-slate-200/90 mb-1">
-                Standard: {standards?.hh?.nilai_standar || 85}%
-              </span>
-              <span
-                className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full backdrop-blur-md shadow-[0_2px_8px_rgba(0,0,0,0.3)] ${stats.hh >= (standards?.hh?.nilai_standar || 85) ? "bg-emerald-500/25 text-emerald-200 border border-emerald-400/50 shadow-[0_0_12px_rgba(16,185,129,0.3)]" : "bg-red-500/25 text-red-200 border border-red-400/50 shadow-[0_0_12px_rgba(239,68,68,0.3)]"}`}
-              >
-                {stats.hh >= (standards?.hh?.nilai_standar || 85)
-                  ? "Tercapai"
-                  : "Di Bawah Standar"}
-              </span>
+
+          {/* Recessed Tray */}
+          <div className="mt-auto bg-[#12132e] rounded-2xl p-4 border border-black/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] relative z-10">
+            <div className="flex items-end justify-between">
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-0.5">
+                  Capaian Periode Ini
+                </span>
+                <span
+                  className={`text-4xl font-black tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] ${stats.hh >= (standards?.hh?.nilai_standar || 85) ? "text-emerald-400" : "text-rose-400"}`}
+                >
+                  {stats.hh}%
+                </span>
+              </div>
+
+              <div className="flex flex-col items-end">
+                <span className="text-[10px] font-black uppercase text-slate-400 mb-1">
+                  Standar: {standards?.hh?.nilai_standar || 85}%
+                </span>
+                <span
+                  className={`text-[10px] font-black uppercase px-3.5 py-1 rounded-full shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)] ${stats.hh >= (standards?.hh?.nilai_standar || 85) ? "bg-emerald-950/80 text-emerald-300 border border-emerald-500/40" : "bg-rose-950/80 text-rose-300 border border-rose-500/40"}`}
+                >
+                  {stats.hh >= (standards?.hh?.nilai_standar || 85)
+                    ? "Tercapai"
+                    : "Di Bawah Standar"}
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* APD Card - Glassmorphism 3D Depth */}
-        <div className="group relative bg-[#092540]/30 backdrop-blur-2xl backdrop-saturate-150 p-7 rounded-[24px] border border-sky-400/40 hover:border-sky-300/80 transition-all duration-300 transform-gpu hover:-translate-y-1.5 overflow-hidden shadow-[0_16px_36px_-6px_rgba(2,8,20,0.75),0_4px_12px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:shadow-[0_24px_48px_-6px_rgba(2,8,20,0.9),0_8px_18px_rgba(0,0,0,0.55),inset_0_1px_2px_rgba(255,255,255,0.3)] before:absolute before:inset-0 before:bg-gradient-to-br before:from-sky-300/15 before:via-sky-500/5 before:to-transparent before:pointer-events-none">
-          <div className="flex items-center gap-4 mb-7 relative z-10">
-            <div className="w-12 h-12 rounded-xl bg-sky-400/20 backdrop-blur-md border border-sky-300/40 flex items-center justify-center text-sky-200 shadow-[0_4px_12px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.2)]">
-              <Shield className="w-6 h-6" />
+        {/* Card 2: APD Card - 3D Tactile Slate Card with Floating Isometric Plate */}
+        <div className="group relative bg-[#18193b] p-7 md:p-8 rounded-[32px] md:rounded-[36px] border border-[#2b2d56] transition-all duration-300 transform-gpu hover:-translate-y-2 overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] hover:shadow-[-8px_-8px_24px_rgba(140,165,255,0.1),12px_16px_40px_rgba(0,0,0,0.8),inset_1px_1px_2px_rgba(255,255,255,0.25)] flex flex-col justify-between">
+          {/* Top Bevel Highlight */}
+          <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+          <div>
+            {/* Header: Badge & 3D Floating Isometric Feature Plate */}
+            <div className="flex items-start justify-between gap-4 mb-4 relative z-10">
+              <div>
+                {/* Pill Badge */}
+                <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)] mb-3">
+                  <span className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-300">
+                    INDIKATOR MUTU
+                  </span>
+                </div>
+                <h3 className="text-[25px] font-extrabold text-white leading-snug tracking-tight">
+                  Kepatuhan Penggunaan APD
+                </h3>
+              </div>
+
+              {/* 3D Floating Isometric Plate */}
+              <div className="shrink-0 relative">
+                <div className="w-16 h-16 rounded-[22px] bg-gradient-to-br from-[#272952] to-[#12132d] border-2 border-indigo-400/30 shadow-[-3px_-3px_10px_rgba(140,165,255,0.12),6px_8px_18px_rgba(0,0,0,0.7),inset_1.5px_1.5px_2px_rgba(255,255,255,0.2)] flex items-center justify-center transform group-hover:scale-105 group-hover:-rotate-3 transition-transform duration-300">
+                  <div className="w-10 h-10 rounded-[16px] bg-gradient-to-tr from-blue-600 via-indigo-500 to-sky-400 shadow-[0_6px_16px_rgba(59,130,246,0.5),inset_1px_1px_2px_rgba(255,255,255,0.4)] flex items-center justify-center text-white">
+                    <Shield className="w-5 h-5 drop-shadow" />
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-sky-300/90 leading-none mb-1">
-                Indikator Mutu
-              </h3>
-              <p className="text-[19px] font-bold text-white leading-snug drop-shadow-sm">
-                Kepatuhan Penggunaan APD
-              </p>
-            </div>
+
+            <p className="text-slate-400 text-xs md:text-sm font-medium mb-5 leading-relaxed relative z-10">
+              Monitoring penggunaan alat pelindung diri sesuai transmisi dan risiko tindakan.
+            </p>
           </div>
-          <div className="flex items-baseline gap-3 mb-4 relative z-10">
-            <span
-              className={`text-6xl font-black tracking-tighter drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)] ${getStatusColor(stats.apd, standards.apd)}`}
-            >
-              {stats.apd}%
-            </span>
-          </div>
-          <div className="mt-7 pt-5 border-t border-sky-400/25 flex items-center justify-between relative z-10">
-            <span className="text-[14px] font-bold text-sky-200 uppercase tracking-widest drop-shadow-sm">
-              Capaian
-            </span>
-            <div className="flex flex-col items-end">
-              <span className="text-[10px] font-black uppercase text-slate-200/90 mb-1">
-                Standard: {standards?.apd?.nilai_standar || 100}%
-              </span>
-              <span
-                className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full backdrop-blur-md shadow-[0_2px_8px_rgba(0,0,0,0.3)] ${stats.apd >= (standards?.apd?.nilai_standar || 100) ? "bg-emerald-500/25 text-emerald-200 border border-emerald-400/50 shadow-[0_0_12px_rgba(16,185,129,0.3)]" : "bg-red-500/25 text-red-200 border border-red-400/50 shadow-[0_0_12px_rgba(239,68,68,0.3)]"}`}
-              >
-                {stats.apd >= (standards?.apd?.nilai_standar || 100)
-                  ? "Tercapai"
-                  : "Di Bawah Standar"}
-              </span>
+
+          {/* Recessed Tray */}
+          <div className="mt-auto bg-[#12132e] rounded-2xl p-4 border border-black/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] relative z-10">
+            <div className="flex items-end justify-between">
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-0.5">
+                  Capaian Periode Ini
+                </span>
+                <span
+                  className={`text-4xl font-black tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] ${stats.apd >= (standards?.apd?.nilai_standar || 100) ? "text-emerald-400" : "text-rose-400"}`}
+                >
+                  {stats.apd}%
+                </span>
+              </div>
+
+              <div className="flex flex-col items-end">
+                <span className="text-[10px] font-black uppercase text-slate-400 mb-1">
+                  Standar: {standards?.apd?.nilai_standar || 100}%
+                </span>
+                <span
+                  className={`text-[10px] font-black uppercase px-3.5 py-1 rounded-full shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)] ${stats.apd >= (standards?.apd?.nilai_standar || 100) ? "bg-emerald-950/80 text-emerald-300 border border-emerald-500/40" : "bg-rose-950/80 text-rose-300 border border-rose-500/40"}`}
+                >
+                  {stats.apd >= (standards?.apd?.nilai_standar || 100)
+                    ? "Tercapai"
+                    : "Di Bawah Standar"}
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* HAIs Card - Glassmorphism 3D Depth */}
-        <div className="group relative bg-[#1B1242]/30 backdrop-blur-2xl backdrop-saturate-150 p-7 rounded-[24px] border border-indigo-400/40 hover:border-indigo-300/80 transition-all duration-300 transform-gpu hover:-translate-y-1.5 overflow-hidden shadow-[0_16px_36px_-6px_rgba(2,8,20,0.75),0_4px_12px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:shadow-[0_24px_48px_-6px_rgba(2,8,20,0.9),0_8px_18px_rgba(0,0,0,0.55),inset_0_1px_2px_rgba(255,255,255,0.3)] before:absolute before:inset-0 before:bg-gradient-to-br before:from-indigo-300/15 before:via-indigo-500/5 before:to-transparent before:pointer-events-none">
-          <div className="flex items-center gap-4 mb-6 relative z-10">
-            <div className="w-12 h-12 rounded-xl bg-indigo-400/20 backdrop-blur-md border border-indigo-300/40 flex items-center justify-center text-indigo-200 shadow-[0_4px_12px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.2)]">
-              <AlertCircle className="w-6 h-6" />
+        {/* Card 3: HAIs Card - 3D Tactile Slate Card with Floating Isometric Plate */}
+        <div className="group relative bg-[#18193b] p-7 md:p-8 rounded-[32px] md:rounded-[36px] border border-[#2b2d56] transition-all duration-300 transform-gpu hover:-translate-y-2 overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] hover:shadow-[-8px_-8px_24px_rgba(140,165,255,0.1),12px_16px_40px_rgba(0,0,0,0.8),inset_1px_1px_2px_rgba(255,255,255,0.25)] flex flex-col justify-between">
+          {/* Top Bevel Highlight */}
+          <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+          <div>
+            {/* Header: Badge & 3D Floating Isometric Feature Plate */}
+            <div className="flex items-start justify-between gap-4 mb-4 relative z-10">
+              <div>
+                {/* Pill Badge */}
+                <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)] mb-3">
+                  <span className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-300">
+                    INDIKATOR MUTU
+                  </span>
+                </div>
+                <h3 className="text-[25px] font-extrabold text-white leading-snug tracking-tight">
+                  Surveilans HAIs
+                </h3>
+              </div>
+
+              {/* 3D Floating Isometric Plate */}
+              <div className="shrink-0 relative">
+                <div className="w-16 h-16 rounded-[22px] bg-gradient-to-br from-[#272952] to-[#12132d] border-2 border-indigo-400/30 shadow-[-3px_-3px_10px_rgba(140,165,255,0.12),6px_8px_18px_rgba(0,0,0,0.7),inset_1.5px_1.5px_2px_rgba(255,255,255,0.2)] flex items-center justify-center transform group-hover:scale-105 group-hover:-rotate-3 transition-transform duration-300">
+                  <div className="w-10 h-10 rounded-[16px] bg-gradient-to-tr from-purple-600 via-fuchsia-500 to-pink-500 shadow-[0_6px_16px_rgba(168,85,247,0.5),inset_1px_1px_2px_rgba(255,255,255,0.4)] flex items-center justify-center text-white">
+                    <AlertCircle className="w-5 h-5 drop-shadow" />
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-300/90 leading-none mb-1">
-                Indikator Mutu
-              </h3>
-              <p className="text-[19px] font-bold text-white uppercase tracking-tight drop-shadow-sm">
-                INSIDEN HAIS
-              </p>
-            </div>
+
+            <p className="text-slate-400 text-xs md:text-sm font-medium mb-4 leading-relaxed relative z-10">
+              Pemantauan insiden infeksi terkait pelayanan kesehatan seperti Phlebitis, ISK, IDO, VAP di seluruh unit rawat inap
+            </p>
           </div>
-          <div className="grid grid-cols-2 gap-2.5 mt-4 relative z-10">
-            <div className="bg-[#0C1435]/50 backdrop-blur-md p-2.5 rounded-xl border border-indigo-400/30 hover:border-indigo-300/60 transition-all shadow-[0_4px_10px_rgba(0,0,0,0.25),inset_0_1px_1px_rgba(255,255,255,0.1)]">
-              <p className="text-[8px] font-black text-slate-200/80 uppercase tracking-widest mb-0.5">
-                Phlebitis
-              </p>
-              <p
-                className={`text-sm font-black drop-shadow-sm ${getStatusColor(stats.hais.phlebitis, standards.phlebitis)}`}
-              >
-                {stats.hais.phlebitis} ‰
-              </p>
-            </div>
-            <div className="bg-[#0C1435]/50 backdrop-blur-md p-2.5 rounded-xl border border-indigo-400/30 hover:border-indigo-300/60 transition-all shadow-[0_4px_10px_rgba(0,0,0,0.25),inset_0_1px_1px_rgba(255,255,255,0.1)]">
-              <p className="text-[8px] font-black text-slate-200/80 uppercase tracking-widest mb-0.5">
-                ISK
-              </p>
-              <p
-                className={`text-sm font-black drop-shadow-sm ${getStatusColor(stats.hais.isk, standards.isk)}`}
-              >
-                {stats.hais.isk} ‰
-              </p>
-            </div>
-            <div className="bg-[#0C1435]/50 backdrop-blur-md p-2.5 rounded-xl border border-indigo-400/30 hover:border-indigo-300/60 transition-all shadow-[0_4px_10px_rgba(0,0,0,0.25),inset_0_1px_1px_rgba(255,255,255,0.1)]">
-              <p className="text-[8px] font-black text-slate-200/80 uppercase tracking-widest mb-0.5">
-                IDO
-              </p>
-              <p
-                className={`text-sm font-black drop-shadow-sm ${getStatusColor(stats.hais.ido, standards.ido)}`}
-              >
-                {stats.hais.ido}%
-              </p>
-            </div>
-            <div className="bg-[#0C1435]/50 backdrop-blur-md p-2.5 rounded-xl border border-indigo-400/30 hover:border-indigo-300/60 transition-all shadow-[0_4px_10px_rgba(0,0,0,0.25),inset_0_1px_1px_rgba(255,255,255,0.1)]">
-              <p className="text-[8px] font-black text-slate-200/80 uppercase tracking-widest mb-0.5">
-                VAP
-              </p>
-              <p
-                className={`text-sm font-black drop-shadow-sm ${getStatusColor(stats.hais.vap, standards.vap)}`}
-              >
-                {stats.hais.vap} ‰
-              </p>
+
+          {/* Recessed Tray with 4 Mini Stats */}
+          <div className="mt-auto bg-[#12132e] rounded-2xl p-3 border border-black/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] relative z-10">
+            <div className="grid grid-cols-4 gap-2">
+              <div className="bg-[#18193b] p-2 rounded-xl border border-white/5 text-center shadow-[inset_1px_1px_2px_rgba(0,0,0,0.4)]">
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider mb-0.5">
+                  Phlebitis
+                </p>
+                <p
+                  className={`text-xs md:text-sm font-black ${stats.hais.phlebitis <= (standards.phlebitis?.nilai_standar || 1.5) ? "text-emerald-400" : "text-rose-400"}`}
+                >
+                  {stats.hais.phlebitis}‰
+                </p>
+              </div>
+              <div className="bg-[#18193b] p-2 rounded-xl border border-white/5 text-center shadow-[inset_1px_1px_2px_rgba(0,0,0,0.4)]">
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider mb-0.5">
+                  ISK
+                </p>
+                <p
+                  className={`text-xs md:text-sm font-black ${stats.hais.isk <= (standards.isk?.nilai_standar || 5) ? "text-emerald-400" : "text-rose-400"}`}
+                >
+                  {stats.hais.isk}‰
+                </p>
+              </div>
+              <div className="bg-[#18193b] p-2 rounded-xl border border-white/5 text-center shadow-[inset_1px_1px_2px_rgba(0,0,0,0.4)]">
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider mb-0.5">
+                  IDO
+                </p>
+                <p
+                  className={`text-xs md:text-sm font-black ${stats.hais.ido <= (standards.ido?.nilai_standar || 2) ? "text-emerald-400" : "text-rose-400"}`}
+                >
+                  {stats.hais.ido}%
+                </p>
+              </div>
+              <div className="bg-[#18193b] p-2 rounded-xl border border-white/5 text-center shadow-[inset_1px_1px_2px_rgba(0,0,0,0.4)]">
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider mb-0.5">
+                  VAP
+                </p>
+                <p
+                  className={`text-xs md:text-sm font-black ${stats.hais.vap <= (standards.vap?.nilai_standar || 5) ? "text-emerald-400" : "text-rose-400"}`}
+                >
+                  {stats.hais.vap}‰
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Chart and Analytics Section - Glassmorphism with Navy Blue Header & 3D Depth */}
-      <div className="bg-[#091A30]/85 backdrop-blur-xl rounded-[24px] border border-[#1E437C]/65 overflow-hidden transition-all mt-6 shadow-[0_20px_45px_-10px_rgba(2,8,20,0.8),0_4px_16px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)]">
-        {/* Navy Blue Header */}
-        <div className="p-5 sm:p-6 border-b border-[#1E437C]/70 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-gradient-to-r from-[#0A1E3F] via-[#0D2852] to-[#081833]">
+      {/* Chart and Analytics Section - 3D Tactile Card Container */}
+      <div className="relative group bg-[#18193b] rounded-[32px] md:rounded-[36px] border border-[#2b2d56] overflow-hidden transition-all mt-6 shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)]">
+        {/* Top Bevel Highlight */}
+        <div className="absolute top-0 inset-x-10 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+        {/* Header */}
+        <div className="p-5 sm:p-7 border-b border-indigo-900/30 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-[#141532]/60 backdrop-blur-md">
           <div className="flex flex-wrap gap-2">
             {[
               {
                 id: "hh",
                 label: "KEBERSIHAN TANGAN",
                 icon: Droplets,
-                c: "text-sky-300",
-                bg: "bg-sky-500/25 border border-sky-400/40 shadow-sm",
               },
               {
                 id: "apd",
                 label: "KEPATUHAN APD",
                 icon: Shield,
-                c: "text-emerald-300",
-                bg: "bg-emerald-500/25 border border-emerald-400/40 shadow-sm",
               },
               {
                 id: "hais",
                 label: "INSIDEN HAIS",
                 icon: AlertCircle,
-                c: "text-rose-300",
-                bg: "bg-rose-500/25 border border-rose-400/40 shadow-sm",
               },
             ].map((t) => (
               <button
                 key={t.id}
                 onClick={() => setActiveTab(t.id as any)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${activeTab === t.id ? `${t.bg} ${t.c}` : "text-slate-300 hover:text-white hover:bg-white/10"}`}
+                className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all ${
+                  activeTab === t.id
+                    ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-[-2px_-2px_8px_rgba(140,165,255,0.2),4px_6px_16px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.3)] border border-white/20"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent"
+                }`}
               >
-                <t.icon className="w-4 h-4" /> {t.label}
+                <t.icon className={`w-4 h-4 ${activeTab === t.id ? "text-cyan-300" : "text-slate-400"}`} /> {t.label}
               </button>
             ))}
           </div>
 
           <div className="flex flex-wrap gap-3 items-center">
-            <div className="flex bg-[#06152B]/90 backdrop-blur-md rounded-xl border border-[#1E437C]/70 items-center px-3 py-1 gap-2 shadow-inner">
-              <Calendar className="w-3.5 h-3.5 text-sky-400" />
+            <div className="flex bg-[#12132e] rounded-xl border border-indigo-900/40 items-center px-3 py-1.5 gap-2 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
+              <Calendar className="w-3.5 h-3.5 text-indigo-400" />
               <select
                 value={filterPeriodType}
                 onChange={(e) => setFilterPeriodType(e.target.value as any)}
-                className="bg-transparent border-none outline-none text-[10px] font-black uppercase text-sky-300 cursor-pointer"
+                className="bg-transparent border-none outline-none text-[10px] font-black uppercase text-slate-300 cursor-pointer"
               >
                 {["bulanan", "triwulan", "semester", "tahunan"].map((p) => (
                   <option
                     key={p}
                     value={p}
-                    className="bg-[#0A1E3F] text-slate-100"
+                    className="bg-[#18193b] text-white"
                   >
                     {p.toUpperCase()}
                   </option>
@@ -1616,7 +1700,7 @@ export default function DashboardPage() {
 
               {filterPeriodType === "bulanan" && (
                 <>
-                  <div className="w-px h-4 bg-white/15 mx-1" />
+                  <div className="w-px h-4 bg-white/10 mx-1" />
                   <select
                     value={filterMonth}
                     onChange={(e) => setFilterMonth(parseInt(e.target.value))}
@@ -1639,7 +1723,7 @@ export default function DashboardPage() {
                       <option
                         key={m}
                         value={i}
-                        className="bg-[#0A1E3F] text-slate-100"
+                        className="bg-[#18193b] text-white"
                       >
                         {m}
                       </option>
@@ -1650,10 +1734,12 @@ export default function DashboardPage() {
 
               {filterPeriodType === "triwulan" && (
                 <>
-                  <div className="w-px h-4 bg-white/15 mx-1" />
+                  <div className="w-px h-4 bg-white/10 mx-1" />
                   <select
                     value={filterQuarter}
-                    onChange={(e) => setFilterQuarter(parseInt(e.target.value))}
+                    onChange={(e) =>
+                      setFilterQuarter(parseInt(e.target.value))
+                    }
                     className="bg-transparent border-none outline-none text-xs font-bold text-slate-200 cursor-pointer"
                   >
                     {[
@@ -1665,7 +1751,7 @@ export default function DashboardPage() {
                       <option
                         key={q}
                         value={i}
-                        className="bg-[#0A1E3F] text-slate-100"
+                        className="bg-[#18193b] text-white"
                       >
                         {q}
                       </option>
@@ -1676,7 +1762,7 @@ export default function DashboardPage() {
 
               {filterPeriodType === "semester" && (
                 <>
-                  <div className="w-px h-4 bg-white/15 mx-1" />
+                  <div className="w-px h-4 bg-white/10 mx-1" />
                   <select
                     value={filterSemester}
                     onChange={(e) =>
@@ -1688,7 +1774,7 @@ export default function DashboardPage() {
                       <option
                         key={s}
                         value={i}
-                        className="bg-[#0A1E3F] text-slate-100"
+                        className="bg-[#18193b] text-white"
                       >
                         {s}
                       </option>
@@ -1697,7 +1783,7 @@ export default function DashboardPage() {
                 </>
               )}
 
-              <div className="w-px h-4 bg-white/15 mx-1" />
+              <div className="w-px h-4 bg-white/10 mx-1" />
               <select
                 value={filterYear}
                 onChange={(e) => setFilterYear(parseInt(e.target.value))}
@@ -1710,7 +1796,7 @@ export default function DashboardPage() {
                   <option
                     key={y}
                     value={y}
-                    className="bg-[#0A1E3F] text-slate-100"
+                    className="bg-[#18193b] text-white"
                   >
                     {y}
                   </option>
@@ -1721,394 +1807,432 @@ export default function DashboardPage() {
             <select
               value={selectedUnit}
               onChange={(e) => setSelectedUnit(e.target.value)}
-              className="bg-[#06152B]/90 backdrop-blur-md border border-[#1E437C]/70 text-slate-100 text-xs font-bold rounded-xl px-3 py-2 outline-none cursor-pointer"
+              className="bg-[#12132e] border border-indigo-900/40 text-white text-xs font-bold rounded-xl px-3 py-2 outline-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.5),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
             >
               {units.map((u) => (
                 <option
                   key={u}
                   value={u}
-                  className="bg-[#0A1E3F] text-slate-100"
+                  className="bg-[#18193b] text-white"
                 >
                   {u.toUpperCase()}
                 </option>
               ))}
             </select>
 
-            <div className="flex bg-[#06152B]/90 backdrop-blur-md rounded-xl border border-[#1E437C]/70 overflow-hidden shadow-inner">
+            <div className="flex bg-[#12132e] rounded-xl border border-indigo-900/40 overflow-hidden p-0.5 shadow-inner">
               <button
                 onClick={() => setChartMode("bar")}
-                className={`p-2 transition-colors ${chartMode === "bar" ? "bg-sky-500 text-white shadow-sm" : "text-slate-400 hover:text-white"}`}
+                className={`p-1.5 rounded-lg transition-colors ${chartMode === "bar" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-400 hover:text-white"}`}
               >
                 <BarChart2 className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setChartMode("line")}
-                className={`p-2 transition-colors ${chartMode === "line" ? "bg-sky-500 text-white shadow-sm" : "text-slate-400 hover:text-white"}`}
+                className={`p-1.5 rounded-lg transition-colors ${chartMode === "line" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-400 hover:text-white"}`}
               >
                 <LineChart className="w-4 h-4" />
               </button>
             </div>
           </div>
         </div>
-        <div className="p-4 sm:p-8 h-[350px] sm:h-[400px]">
-          {isDataLoading ? (
-            <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-500">
-              <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm font-medium">Memuat data monitoring...</p>
-            </div>
-          ) : chartDataList.length > 0 ? (
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={chartMode}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.3 }}
-                className="w-full h-full"
-              >
-                <ResponsiveContainer width="100%" height="100%">
-                  {chartMode === "bar" ? (
-                    <ComposedChart
-                      data={chartDataList}
-                      margin={{ top: 20, right: 10, left: -20, bottom: 20 }}
-                    >
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        vertical={false}
-                        stroke="rgba(255,255,255,0.05)"
-                      />
-                      <XAxis
-                        dataKey="name"
-                        tick={{ fontSize: 8, fill: "#64748b" }}
-                        axisLine={false}
-                        tickLine={false}
-                        dy={10}
-                        interval={0}
-                      />
-                      <YAxis
-                        tick={{ fontSize: 10, fill: "#64748b" }}
-                        domain={
-                          activeTab !== "hais" ? [0, 100] : ["auto", "auto"]
-                        }
-                        axisLine={false}
-                        tickLine={false}
-                        dx={-5}
-                      />
-                      <Tooltip
-                        content={renderTooltipContent}
-                        cursor={{ fill: "rgba(255,255,255,0.02)" }}
-                      />
-                      <Legend content={renderCustomLegend} />
-                      {activeTab === "hais" ? (
-                        <>
-                          <Bar
-                            dataKey="phlebitis"
-                            name="Phlebitis (‰)"
-                            fill="#f43f5e"
-                            radius={[4, 4, 0, 0]}
-                            stackId="a"
-                          />
-                          <Bar
-                            dataKey="isk"
-                            name="ISK (‰)"
-                            fill="#3b82f6"
-                            radius={[4, 4, 0, 0]}
-                            stackId="a"
-                          />
-                          <Bar
-                            dataKey="ido"
-                            name="IDO (%)"
-                            fill="#10b981"
-                            radius={[4, 4, 0, 0]}
-                            stackId="a"
-                          />
-                          <Bar
-                            dataKey="vap"
-                            name="VAP (‰)"
-                            fill="#f59e0b"
-                            radius={[4, 4, 0, 0]}
-                            stackId="a"
-                          />
-                        </>
-                      ) : activeTab === "hh" ? (
-                        <Bar
-                          dataKey="hh"
-                          name="Capaian HH (%)"
-                          radius={[8, 8, 0, 0]}
-                        >
-                          <LabelList
-                            dataKey="hh"
-                            position="top"
-                            formatter={(val: number) => `${val}%`}
-                            fill="#64748b"
-                            fontSize={11}
-                            fontWeight={700}
-                          />
-                          {chartDataList.map((entry: any, index: number) => (
-                            <Cell
-                              key={`cell-${index}`}
-                              fill={getBarColor(entry.hh, "hh")}
-                            />
-                          ))}
-                        </Bar>
-                      ) : activeTab === "apd" ? (
-                        <Bar
-                          dataKey="apd"
-                          name="Capaian APD (%)"
-                          radius={[8, 8, 0, 0]}
-                        >
-                          <LabelList
-                            dataKey="apd"
-                            position="top"
-                            formatter={(val: number) => `${val}%`}
-                            fill="#64748b"
-                            fontSize={11}
-                            fontWeight={700}
-                          />
-                          {chartDataList.map((entry: any, index: number) => (
-                            <Cell
-                              key={`cell-${index}`}
-                              fill={getBarColor(entry.apd, "apd")}
-                            />
-                          ))}
-                        </Bar>
-                      ) : activeTab === "fasilitas_apd" ? (
-                        <Bar
-                          dataKey="fasilitas_apd"
-                          name="Fasilitas APD (%)"
-                          radius={[8, 8, 0, 0]}
-                        >
-                          <LabelList
-                            dataKey="fasilitas_apd"
-                            position="top"
-                            formatter={(val: number) => `${val}%`}
-                            fill="#64748b"
-                            fontSize={11}
-                            fontWeight={700}
-                          />
-                          {chartDataList.map((entry: any, index: number) => (
-                            <Cell
-                              key={`cell-${index}`}
-                              fill={getBarColor(
-                                entry.fasilitas_apd,
-                                "fasilitas_apd",
-                              )}
-                            />
-                          ))}
-                        </Bar>
-                      ) : (
-                        <Bar
-                          dataKey="linen"
-                          name="Linen (%)"
-                          radius={[8, 8, 0, 0]}
-                        >
-                          <LabelList
-                            dataKey="linen"
-                            position="top"
-                            formatter={(val: number) => `${val}%`}
-                            fill="#64748b"
-                            fontSize={11}
-                            fontWeight={700}
-                          />
-                          {chartDataList.map((entry: any, index: number) => (
-                            <Cell
-                              key={`cell-${index}`}
-                              fill={getBarColor(entry.linen, "linen")}
-                            />
-                          ))}
-                        </Bar>
-                      )}
-                      {standards[activeTab] && activeTab !== "hais" && (
-                        <ReferenceLine
-                          y={standards[activeTab]?.nilai_standar}
-                          stroke="#06b6d4"
-                          strokeDasharray="5 5"
-                          label={{
-                            position: "top",
-                            value: `Standar ${standards[activeTab]?.nilai_standar}%`,
-                            fill: "#06b6d4",
-                            fontSize: 10,
-                          }}
+        {/* 3D Neumorphic Chart Stage / Plate */}
+        <div className="p-4 sm:p-7">
+          <div className="p-4 sm:p-6 bg-gradient-to-b from-[#12132e] to-[#0e0f24] rounded-2xl md:rounded-3xl border border-indigo-950/60 shadow-[inset_2.5px_3px_10px_rgba(0,0,0,0.85),inset_-1.5px_-1.5px_4px_rgba(140,165,255,0.06),0_4px_20px_rgba(0,0,0,0.4)] h-[360px] sm:h-[410px] relative overflow-hidden">
+            {isDataLoading ? (
+              <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-500">
+                <div className="w-8 h-8 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm font-medium">Memuat data monitoring...</p>
+              </div>
+            ) : chartDataList.length > 0 ? (
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={chartMode}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.3 }}
+                  className="w-full h-full"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    {chartMode === "bar" ? (
+                      <ComposedChart
+                        data={chartDataList}
+                        margin={{ top: 28, right: 10, left: -20, bottom: 20 }}
+                      >
+                        <defs>
+                          {/* 3D Bar Dark Shadow Filter Only */}
+                          <filter id="bar3DShadow" x="-40%" y="-30%" width="180%" height="160%">
+                            {/* Deep dark 3D drop shadow */}
+                            <feDropShadow dx="6" dy="10" stdDeviation="5" floodColor="#000000" floodOpacity="0.95" />
+                            {/* Soft ambient dark shadow for depth */}
+                            <feDropShadow dx="2" dy="4" stdDeviation="8" floodColor="#000000" floodOpacity="0.75" />
+                          </filter>
+                        </defs>
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          vertical={false}
+                          stroke="rgba(255,255,255,0.05)"
                         />
-                      )}
-                    </ComposedChart>
-                  ) : (
-                    <ComposedChart
-                      data={chartDataList}
-                      margin={{ top: 20, right: 10, left: -20, bottom: 20 }}
-                    >
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        vertical={false}
-                        stroke="rgba(255,255,255,0.05)"
-                      />
-                      <XAxis
-                        dataKey="name"
-                        tick={{ fontSize: 8, fill: "#64748b" }}
-                        axisLine={false}
-                        tickLine={false}
-                        dy={10}
-                        interval={0}
-                      />
-                      <YAxis
-                        tick={{ fontSize: 10, fill: "#64748b" }}
-                        domain={
-                          activeTab !== "hais" ? [0, 100] : ["auto", "auto"]
-                        }
-                        axisLine={false}
-                        tickLine={false}
-                        dx={-5}
-                      />
-                      <Tooltip
-                        content={renderTooltipContent}
-                        cursor={{ fill: "rgba(255,255,255,0.02)" }}
-                      />
-                      <Legend content={renderCustomLegend} />
-                      {activeTab === "hais" ? (
-                        <>
-                          <Line
-                            type="monotone"
-                            dataKey="phlebitis"
-                            name="Phlebitis"
-                            stroke="#f43f5e"
-                            strokeWidth={3}
-                            dot={{ r: 4, strokeWidth: 2 }}
-                            activeDot={{ r: 6 }}
+                        <XAxis
+                          dataKey="name"
+                          tick={{ fontSize: 8, fill: "#94a3b8" }}
+                          axisLine={false}
+                          tickLine={false}
+                          dy={10}
+                          interval={0}
+                        />
+                        <YAxis
+                          tick={{ fontSize: 10, fill: "#94a3b8" }}
+                          domain={
+                            activeTab !== "hais" ? [0, 100] : ["auto", "auto"]
+                          }
+                          axisLine={false}
+                          tickLine={false}
+                          dx={-5}
+                        />
+                        <Tooltip
+                          content={renderTooltipContent}
+                          cursor={{ fill: "rgba(255,255,255,0.02)" }}
+                        />
+                        {activeTab === "hais" ? (
+                          <>
+                            <Bar
+                              dataKey="phlebitis"
+                              name="Phlebitis (‰)"
+                              fill="#f43f5e"
+                              radius={[4, 4, 0, 0]}
+                              stackId="a"
+                              filter="url(#bar3DShadow)"
+                            />
+                            <Bar
+                              dataKey="isk"
+                              name="ISK (‰)"
+                              fill="#3b82f6"
+                              radius={[4, 4, 0, 0]}
+                              stackId="a"
+                              filter="url(#bar3DShadow)"
+                            />
+                            <Bar
+                              dataKey="ido"
+                              name="IDO (%)"
+                              fill="#10b981"
+                              radius={[4, 4, 0, 0]}
+                              stackId="a"
+                              filter="url(#bar3DShadow)"
+                            />
+                            <Bar
+                              dataKey="vap"
+                              name="VAP (‰)"
+                              fill="#f59e0b"
+                              radius={[4, 4, 0, 0]}
+                              stackId="a"
+                              filter="url(#bar3DShadow)"
+                            />
+                          </>
+                        ) : activeTab === "hh" ? (
+                          <Bar
+                            dataKey="hh"
+                            name="Capaian HH (%)"
+                            radius={[8, 8, 0, 0]}
+                            filter="url(#bar3DShadow)"
+                          >
+                            <LabelList
+                              dataKey="hh"
+                              position="top"
+                              formatter={(val: number) => `${val}%`}
+                              fill="#94a3b8"
+                              fontSize={11}
+                              fontWeight={700}
+                            />
+                            {chartDataList.map((entry: any, index: number) => (
+                              <Cell
+                                key={`cell-${index}`}
+                                fill={getBarColor(entry.hh, "hh")}
+                              />
+                            ))}
+                          </Bar>
+                        ) : activeTab === "apd" ? (
+                          <Bar
+                            dataKey="apd"
+                            name="Capaian APD (%)"
+                            radius={[8, 8, 0, 0]}
+                            filter="url(#bar3DShadow)"
+                          >
+                            <LabelList
+                              dataKey="apd"
+                              position="top"
+                              formatter={(val: number) => `${val}%`}
+                              fill="#94a3b8"
+                              fontSize={11}
+                              fontWeight={700}
+                            />
+                            {chartDataList.map((entry: any, index: number) => (
+                              <Cell
+                                key={`cell-${index}`}
+                                fill={getBarColor(entry.apd, "apd")}
+                              />
+                            ))}
+                          </Bar>
+                        ) : activeTab === "fasilitas_apd" ? (
+                          <Bar
+                            dataKey="fasilitas_apd"
+                            name="Fasilitas APD (%)"
+                            radius={[8, 8, 0, 0]}
+                            filter="url(#bar3DShadow)"
+                          >
+                            <LabelList
+                              dataKey="fasilitas_apd"
+                              position="top"
+                              formatter={(val: number) => `${val}%`}
+                              fill="#94a3b8"
+                              fontSize={11}
+                              fontWeight={700}
+                            />
+                            {chartDataList.map((entry: any, index: number) => (
+                              <Cell
+                                key={`cell-${index}`}
+                                fill={getBarColor(
+                                  entry.fasilitas_apd,
+                                  "fasilitas_apd",
+                                )}
+                              />
+                            ))}
+                          </Bar>
+                        ) : (
+                          <Bar
+                            dataKey="linen"
+                            name="Linen (%)"
+                            radius={[8, 8, 0, 0]}
+                            filter="url(#bar3DShadow)"
+                          >
+                            <LabelList
+                              dataKey="linen"
+                              position="top"
+                              formatter={(val: number) => `${val}%`}
+                              fill="#94a3b8"
+                              fontSize={11}
+                              fontWeight={700}
+                            />
+                            {chartDataList.map((entry: any, index: number) => (
+                              <Cell
+                                key={`cell-${index}`}
+                                fill={getBarColor(entry.linen, "linen")}
+                              />
+                            ))}
+                          </Bar>
+                        )}
+                        {standards[activeTab] && activeTab !== "hais" && (
+                          <ReferenceLine
+                            y={standards[activeTab]?.nilai_standar}
+                            stroke="#a78bfa"
+                            strokeDasharray="5 5"
+                            strokeWidth={1.5}
+                            label={{
+                              position: "top",
+                              dy: (standards[activeTab]?.nilai_standar || 85) < 100 ? -28 : -10,
+                              value: `Standar ${standards[activeTab]?.nilai_standar}%`,
+                              fill: "#c4b5fd",
+                              fontSize: 11,
+                              fontWeight: "bold",
+                            }}
                           />
+                        )}
+                      </ComposedChart>
+                    ) : (
+                      <ComposedChart
+                        data={chartDataList}
+                        margin={{ top: 28, right: 10, left: -20, bottom: 20 }}
+                      >
+                        <defs>
+                          {/* 3D Line Neumorphic Shadow Filter */}
+                          <filter id="line3DShadow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="6" stdDeviation="4.5" floodColor="#000000" floodOpacity="0.8" />
+                          </filter>
+                        </defs>
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          vertical={false}
+                          stroke="rgba(255,255,255,0.05)"
+                        />
+                        <XAxis
+                          dataKey="name"
+                          tick={{ fontSize: 8, fill: "#94a3b8" }}
+                          axisLine={false}
+                          tickLine={false}
+                          dy={10}
+                          interval={0}
+                        />
+                        <YAxis
+                          tick={{ fontSize: 10, fill: "#94a3b8" }}
+                          domain={
+                            activeTab !== "hais" ? [0, 100] : ["auto", "auto"]
+                          }
+                          axisLine={false}
+                          tickLine={false}
+                          dx={-5}
+                        />
+                        <Tooltip
+                          content={renderTooltipContent}
+                          cursor={{ fill: "rgba(255,255,255,0.02)" }}
+                        />
+                        {activeTab === "hais" ? (
+                          <>
+                            <Line
+                              type="monotone"
+                              dataKey="phlebitis"
+                              name="Phlebitis"
+                              stroke="#f43f5e"
+                              strokeWidth={3.5}
+                              dot={{ r: 4.5, strokeWidth: 2 }}
+                              activeDot={{ r: 7 }}
+                              filter="url(#line3DShadow)"
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="isk"
+                              name="ISK"
+                              stroke="#3b82f6"
+                              strokeWidth={3.5}
+                              dot={{ r: 4.5, strokeWidth: 2 }}
+                              activeDot={{ r: 7 }}
+                              filter="url(#line3DShadow)"
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="ido"
+                              name="IDO"
+                              stroke="#10b981"
+                              strokeWidth={3.5}
+                              dot={{ r: 4.5, strokeWidth: 2 }}
+                              activeDot={{ r: 7 }}
+                              filter="url(#line3DShadow)"
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="vap"
+                              name="VAP"
+                              stroke="#f59e0b"
+                              strokeWidth={3.5}
+                              dot={{ r: 4.5, strokeWidth: 2 }}
+                              activeDot={{ r: 7 }}
+                              filter="url(#line3DShadow)"
+                            />
+                          </>
+                        ) : activeTab === "hh" ? (
                           <Line
                             type="monotone"
-                            dataKey="isk"
-                            name="ISK"
-                            stroke="#3b82f6"
-                            strokeWidth={3}
-                            dot={{ r: 4, strokeWidth: 2 }}
-                            activeDot={{ r: 6 }}
-                          />
+                            dataKey="hh"
+                            name="Capaian HH (%)"
+                            stroke="#8b5cf6"
+                            strokeWidth={3.5}
+                            dot={{ r: 4.5, strokeWidth: 2 }}
+                            activeDot={{ r: 7 }}
+                            filter="url(#line3DShadow)"
+                          >
+                            <LabelList
+                              dataKey="hh"
+                              position="top"
+                              formatter={(val: number) => `${val}%`}
+                              fill="#94a3b8"
+                              fontSize={11}
+                              fontWeight={700}
+                            />
+                          </Line>
+                        ) : activeTab === "apd" ? (
                           <Line
                             type="monotone"
-                            dataKey="ido"
-                            name="IDO"
+                            dataKey="apd"
+                            name="Capaian APD (%)"
                             stroke="#10b981"
-                            strokeWidth={3}
-                            dot={{ r: 4, strokeWidth: 2 }}
-                            activeDot={{ r: 6 }}
-                          />
+                            strokeWidth={3.5}
+                            dot={{ r: 4.5, strokeWidth: 2 }}
+                            activeDot={{ r: 7 }}
+                            filter="url(#line3DShadow)"
+                          >
+                            <LabelList
+                              dataKey="apd"
+                              position="top"
+                              formatter={(val: number) => `${val}%`}
+                              fill="#94a3b8"
+                              fontSize={11}
+                              fontWeight={700}
+                            />
+                          </Line>
+                        ) : activeTab === "fasilitas_apd" ? (
                           <Line
                             type="monotone"
-                            dataKey="vap"
-                            name="VAP"
-                            stroke="#f59e0b"
-                            strokeWidth={3}
-                            dot={{ r: 4, strokeWidth: 2 }}
-                            activeDot={{ r: 6 }}
-                          />
-                        </>
-                      ) : activeTab === "hh" ? (
-                        <Line
-                          type="monotone"
-                          dataKey="hh"
-                          name="Capaian HH (%)"
-                          stroke="#3b82f6"
-                          strokeWidth={3}
-                          dot={{ r: 4, strokeWidth: 2 }}
-                          activeDot={{ r: 6 }}
-                        >
-                          <LabelList
-                            dataKey="hh"
-                            position="top"
-                            formatter={(val: number) => `${val}%`}
-                            fill="#64748b"
-                            fontSize={11}
-                            fontWeight={700}
-                          />
-                        </Line>
-                      ) : activeTab === "apd" ? (
-                        <Line
-                          type="monotone"
-                          dataKey="apd"
-                          name="Capaian APD (%)"
-                          stroke="#10b981"
-                          strokeWidth={3}
-                          dot={{ r: 4, strokeWidth: 2 }}
-                          activeDot={{ r: 6 }}
-                        >
-                          <LabelList
-                            dataKey="apd"
-                            position="top"
-                            formatter={(val: number) => `${val}%`}
-                            fill="#64748b"
-                            fontSize={11}
-                            fontWeight={700}
-                          />
-                        </Line>
-                      ) : activeTab === "fasilitas_apd" ? (
-                        <Line
-                          type="monotone"
-                          dataKey="fasilitas_apd"
-                          name="Fasilitas APD (%)"
-                          stroke="#9333ea"
-                          strokeWidth={3}
-                          dot={{ r: 4, strokeWidth: 2 }}
-                          activeDot={{ r: 6 }}
-                        >
-                          <LabelList
                             dataKey="fasilitas_apd"
-                            position="top"
-                            formatter={(val: number) => `${val}%`}
-                            fill="#64748b"
-                            fontSize={11}
-                            fontWeight={700}
-                          />
-                        </Line>
-                      ) : (
-                        <Line
-                          type="monotone"
-                          dataKey="linen"
-                          name="Linen (%)"
-                          stroke="#f97316"
-                          strokeWidth={3}
-                          dot={{ r: 4, strokeWidth: 2 }}
-                          activeDot={{ r: 6 }}
-                        >
-                          <LabelList
+                            name="Fasilitas APD (%)"
+                            stroke="#9333ea"
+                            strokeWidth={3.5}
+                            dot={{ r: 4.5, strokeWidth: 2 }}
+                            activeDot={{ r: 7 }}
+                            filter="url(#line3DShadow)"
+                          >
+                            <LabelList
+                              dataKey="fasilitas_apd"
+                              position="top"
+                              formatter={(val: number) => `${val}%`}
+                              fill="#94a3b8"
+                              fontSize={11}
+                              fontWeight={700}
+                            />
+                          </Line>
+                        ) : (
+                          <Line
+                            type="monotone"
                             dataKey="linen"
-                            position="top"
-                            formatter={(val: number) => `${val}%`}
-                            fill="#64748b"
-                            fontSize={11}
-                            fontWeight={700}
+                            name="Linen (%)"
+                            stroke="#f97316"
+                            strokeWidth={3.5}
+                            dot={{ r: 4.5, strokeWidth: 2 }}
+                            activeDot={{ r: 7 }}
+                            filter="url(#line3DShadow)"
+                          >
+                            <LabelList
+                              dataKey="linen"
+                              position="top"
+                              formatter={(val: number) => `${val}%`}
+                              fill="#94a3b8"
+                              fontSize={11}
+                              fontWeight={700}
+                            />
+                          </Line>
+                        )}
+                        {standards[activeTab] && activeTab !== "hais" && (
+                          <ReferenceLine
+                            y={standards[activeTab]?.nilai_standar}
+                            stroke="#a78bfa"
+                            strokeDasharray="5 5"
+                            strokeWidth={1.5}
+                            label={{
+                              position: "top",
+                              dy: (standards[activeTab]?.nilai_standar || 85) < 100 ? -28 : -10,
+                              value: `Standar ${standards[activeTab]?.nilai_standar}%`,
+                              fill: "#c4b5fd",
+                              fontSize: 11,
+                              fontWeight: "bold",
+                            }}
                           />
-                        </Line>
-                      )}
-                      {standards[activeTab] && activeTab !== "hais" && (
-                        <ReferenceLine
-                          y={standards[activeTab]?.nilai_standar}
-                          stroke="#06b6d4"
-                          strokeDasharray="5 5"
-                          label={{
-                            position: "top",
-                            value: `Standar ${standards[activeTab]?.nilai_standar}%`,
-                            fill: "#06b6d4",
-                            fontSize: 10,
-                          }}
-                        />
-                      )}
-                    </ComposedChart>
-                  )}
-                </ResponsiveContainer>
-              </motion.div>
-            </AnimatePresence>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-500">
-              <TrendingUp className="w-12 h-12 opacity-20" />
-              <p className="text-sm font-medium">
-                Tidak ada data untuk periode ini.
-              </p>
-            </div>
-          )}
+                        )}
+                      </ComposedChart>
+                    )}
+                  </ResponsiveContainer>
+                </motion.div>
+              </AnimatePresence>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-500">
+                <TrendingUp className="w-12 h-12 opacity-20" />
+                <p className="text-sm font-medium">
+                  Tidak ada data untuk periode ini.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Auto Insight & Rekomendasi PPI Card - Glassmorphism 3D Depth */}
+        {/* Auto Insight & Rekomendasi PPI Card - Matching Reference Style */}
         <div className="px-6 md:px-8 pb-8 pt-2">
           {(() => {
             const insight = getAutoInsightAndRecommendation();
@@ -2117,23 +2241,23 @@ export default function DashboardPage() {
             const isWarning = insight.status === "warning";
 
             const badgeBg = isOptimal
-              ? "bg-emerald-500/20 text-emerald-300 border-emerald-400/40 shadow-sm"
+              ? "bg-[#102d28] text-emerald-300 border-emerald-400/40"
               : isDanger
-              ? "bg-rose-500/20 text-rose-300 border-rose-400/40 shadow-sm"
+              ? "bg-[#33141e] text-rose-300 border-rose-400/40"
               : isWarning
-              ? "bg-amber-500/20 text-amber-300 border-amber-400/40 shadow-sm"
-              : "bg-sky-500/20 text-sky-300 border-sky-400/40 shadow-sm";
+              ? "bg-[#332512] text-amber-300 border-amber-400/40"
+              : "bg-[#151b31] text-violet-300 border-violet-400/40";
 
             return (
-              <div className="p-6 rounded-2xl bg-[#06152B]/90 backdrop-blur-xl border border-[#1E437C]/65 space-y-5 shadow-[0_12px_28px_-6px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.12)]">
+              <div className="p-6 rounded-2xl bg-[#141a30] border border-black/40 space-y-5 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.85),inset_-1px_-1px_2px_rgba(255,255,255,0.06)]">
                 {/* Analisa Data Section */}
                 <div className="space-y-2.5">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h4 className="text-sm font-bold text-sky-400 flex items-center gap-2 tracking-wide">
-                      <Activity className="w-4 h-4 text-sky-400" />
+                    <h4 className="text-sm font-bold text-violet-300 flex items-center gap-2 tracking-wide">
+                      <Activity className="w-4 h-4 text-violet-400" />
                       Analisa Data Standar PPI
                     </h4>
-                    <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${badgeBg}`}>
+                    <span className={`px-3 py-1 rounded-full text-[11px] font-black border ${badgeBg}`}>
                       {insight.label}
                     </span>
                   </div>
@@ -2143,7 +2267,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Divider */}
-                <div className="h-px w-full bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+                <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
                 {/* Rekomendasi PPI Section */}
                 <div className="space-y-2.5">

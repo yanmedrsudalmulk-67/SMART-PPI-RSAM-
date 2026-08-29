@@ -4,7 +4,7 @@ import {
   BarChart2, TrendingUp, Filter, Download, Activity, Users, ClipboardCheck, 
   AlertTriangle, CheckCircle2, Clock, ShieldCheck, Shield, FileText, 
   FileSpreadsheet, ImageIcon, Calendar, Award, AlertCircle, UserCheck, 
-  RefreshCw, Building2, Layers, ChevronDown, Check, HelpCircle
+  RefreshCw, Building2, Layers, ChevronDown, Check, HelpCircle, Droplets
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import DashboardLayout from '@/components/DashboardLayout';
@@ -27,34 +27,34 @@ const ChartTypeToggle = ({
   colorScheme?: 'emerald' | 'sky' | 'purple';
 }) => {
   const activeBg = {
-    emerald: 'bg-emerald-500 text-white shadow-[0_0_12px_rgba(16,185,129,0.4)]',
-    sky: 'bg-sky-500 text-white shadow-[0_0_12px_rgba(14,165,233,0.4)]',
-    purple: 'bg-purple-500 text-white shadow-[0_0_12px_rgba(168,85,247,0.4)]',
+    emerald: 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-[-2px_-2px_6px_rgba(255,255,255,0.25),3px_3px_8px_rgba(0,0,0,0.5),inset_1px_1px_1.5px_rgba(255,255,255,0.4)]',
+    sky: 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[-2px_-2px_6px_rgba(255,255,255,0.25),3px_3px_8px_rgba(0,0,0,0.5),inset_1px_1px_1.5px_rgba(255,255,255,0.4)]',
+    purple: 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-[-2px_-2px_6px_rgba(255,255,255,0.25),3px_3px_8px_rgba(0,0,0,0.5),inset_1px_1px_1.5px_rgba(255,255,255,0.4)]',
   }[colorScheme];
 
   return (
-    <div className="flex items-center bg-[#071322] p-1 rounded-2xl border border-white/10 shadow-inner">
+    <div className="flex items-center bg-[#12132e] p-1.5 rounded-2xl border border-indigo-900/40 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
       <button
         type="button"
         onClick={() => onChange('line')}
         title="Grafik Line"
         aria-label="Grafik Line"
-        className={`p-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center ${
-          type === 'line' ? activeBg : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+        className={`px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded-xl transition-all duration-200 flex items-center gap-1.5 ${
+          type === 'line' ? activeBg : 'text-slate-400 hover:text-white hover:bg-white/5'
         }`}
       >
-        <TrendingUp className="w-4 h-4" />
+        <TrendingUp className="w-3.5 h-3.5" /> Line
       </button>
       <button
         type="button"
         onClick={() => onChange('bar')}
         title="Grafik Batang"
         aria-label="Grafik Batang"
-        className={`p-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center ${
-          type === 'bar' ? activeBg : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+        className={`px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded-xl transition-all duration-200 flex items-center gap-1.5 ${
+          type === 'bar' ? activeBg : 'text-slate-400 hover:text-white hover:bg-white/5'
         }`}
       >
-        <BarChart2 className="w-4 h-4" />
+        <BarChart2 className="w-3.5 h-3.5" /> Bar
       </button>
     </div>
   );
@@ -96,35 +96,35 @@ function getProfessionGroup(profesiStr: string | null | undefined): 'Perawat / B
   return 'Nakes Lainnya';
 }
 
-// Custom Glassmorphism Tooltip Component
+// Custom Glassmorphism / Neumorphic Tooltip Component
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-[#0b172a]/95 backdrop-blur-xl border border-sky-400/30 p-4 rounded-2xl shadow-2xl text-xs space-y-2 text-white z-50 min-w-[200px]">
-        <div className="font-bold border-b border-white/10 pb-1.5 text-sky-300 flex items-center justify-between">
+      <div className="bg-[#18193b] backdrop-blur-xl border border-[#2b2d56] p-4 rounded-2xl shadow-[0_12px_32px_rgba(0,0,0,0.8)] text-xs space-y-2 text-white z-50 min-w-[210px]">
+        <div className="font-black border-b border-indigo-900/40 pb-1.5 text-cyan-300 flex items-center justify-between uppercase tracking-wider">
           <span>{label}</span>
-          <span className="text-[10px] text-slate-400 font-normal">Realtime Data</span>
+          <span className="text-[9px] text-slate-400 font-bold">Realtime</span>
         </div>
         <div className="space-y-1.5 pt-1">
           {payload.map((entry: any, index: number) => {
             const extra = entry.payload;
             return (
               <div key={`item-${index}`} className="flex flex-col gap-0.5">
-                <div className="flex items-center justify-between gap-4">
-                  <span className="flex items-center gap-1.5 font-medium" style={{ color: entry.color }}>
-                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                <div className="flex items-center justify-between gap-4 font-bold">
+                  <span className="flex items-center gap-1.5 text-slate-200">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
                     {entry.name}:
                   </span>
-                  <span className="font-bold text-white">
+                  <span className="font-mono font-black text-white">
                     {typeof entry.value === 'number' ? `${entry.value}%` : entry.value}
                   </span>
                 </div>
                 {extra && extra.details && extra.details[entry.name] && (
-                  <div className="pl-3 text-[10px] text-slate-300 grid grid-cols-2 gap-x-2 gap-y-0.5 bg-white/5 p-1.5 rounded-lg border border-white/5">
-                    <span>Observasi: <strong>{extra.details[entry.name].observasi || 0}</strong></span>
-                    <span>Patuh: <strong className="text-emerald-400">{extra.details[entry.name].patuh || 0}</strong></span>
-                    <span>Tidak Patuh: <strong className="text-rose-400">{extra.details[entry.name].tidakPatuh || 0}</strong></span>
-                    <span>N/A: <strong>{extra.details[entry.name].na || 0}</strong></span>
+                  <div className="pl-3 text-[10px] text-slate-300 grid grid-cols-2 gap-x-2 gap-y-0.5 bg-[#12132e] p-2 rounded-xl border border-indigo-900/30">
+                    <span>Observasi: <strong className="text-white font-mono">{extra.details[entry.name].observasi || 0}</strong></span>
+                    <span>Patuh: <strong className="text-emerald-400 font-mono">{extra.details[entry.name].patuh || 0}</strong></span>
+                    <span>T.Patuh: <strong className="text-rose-400 font-mono">{extra.details[entry.name].tidakPatuh || 0}</strong></span>
+                    <span>N/A: <strong className="text-slate-400 font-mono">{extra.details[entry.name].na || 0}</strong></span>
                   </div>
                 )}
               </div>
@@ -141,18 +141,18 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 const HaisTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-[#0b172a]/95 backdrop-blur-xl border border-purple-400/30 p-4 rounded-2xl shadow-2xl text-xs space-y-2 text-white z-50 min-w-[200px]">
-        <div className="font-bold border-b border-white/10 pb-1.5 text-purple-300">
+      <div className="bg-[#18193b] backdrop-blur-xl border border-[#2b2d56] p-4 rounded-2xl shadow-[0_12px_32px_rgba(0,0,0,0.8)] text-xs space-y-2 text-white z-50 min-w-[200px]">
+        <div className="font-black border-b border-indigo-900/40 pb-1.5 text-purple-300 uppercase tracking-wider">
           {label}
         </div>
         <div className="space-y-1.5 pt-1">
           {payload.map((entry: any, index: number) => (
-            <div key={`hais-${index}`} className="flex items-center justify-between gap-4">
-              <span className="flex items-center gap-1.5 font-medium" style={{ color: entry.color }}>
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+            <div key={`hais-${index}`} className="flex items-center justify-between gap-4 font-bold">
+              <span className="flex items-center gap-1.5 text-slate-200">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
                 {entry.name}:
               </span>
-              <span className="font-bold text-white">{entry.value} Kejadian</span>
+              <span className="font-mono font-black text-white">{entry.value} Kasus</span>
             </div>
           ))}
         </div>
@@ -870,201 +870,235 @@ export default function AnalyticsPage() {
     <DashboardLayout>
       <div className="space-y-8 max-w-7xl mx-auto pb-24 text-slate-100 animate-in fade-in duration-300">
         
-        {/* HEADER PAGE */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 p-6 rounded-3xl bg-gradient-to-r from-[#091b33]/90 via-[#0d284c]/80 to-[#091b33]/90 border border-sky-500/20 backdrop-blur-2xl shadow-2xl relative overflow-hidden">
-          <div className="absolute -right-12 -top-12 w-48 h-48 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="space-y-1 z-10">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-sky-500/10 border border-sky-400/30 text-sky-400 shadow-inner">
-                <BarChart2 className="w-7 h-7" />
+        {/* HEADER PAGE - 3D Tactile Neumorphic Container */}
+        <div className="relative group bg-[#18193b] rounded-[28px] md:rounded-[32px] p-6 sm:p-7 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)]">
+          {/* Top Bevel Highlight */}
+          <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+            <div className="flex items-center gap-4">
+              {/* 3D Floating Isometric Feature Plate */}
+              <div className="shrink-0 relative">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-[22px] bg-gradient-to-br from-[#272952] to-[#12132d] border-2 border-indigo-400/30 shadow-[-3px_-3px_10px_rgba(140,165,255,0.12),6px_8px_18px_rgba(0,0,0,0.7),inset_1.5px_1.5px_2px_rgba(255,255,255,0.2)] flex items-center justify-center transform hover:scale-105 transition-transform duration-300">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-[16px] bg-gradient-to-tr from-blue-600 via-indigo-500 to-sky-400 shadow-[0_6px_16px_rgba(59,130,246,0.5),inset_1px_1px_2px_rgba(255,255,255,0.4)] flex items-center justify-center text-white">
+                    <BarChart2 className="w-5 h-5 drop-shadow" />
+                  </div>
+                </div>
               </div>
+
               <div>
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase font-heading flex items-center gap-2">
-                    GRAFIK <span className="text-sky-400">SMART-PPI</span>
+                    GRAFIK <span className="text-cyan-400">SMART-PPI</span>
                   </h1>
                   {loading && (
-                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30 flex items-center gap-1.5 animate-pulse">
-                      <RefreshCw className="w-3 h-3 animate-spin text-sky-400" />
+                    <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#12132e] text-cyan-300 border border-cyan-500/30 flex items-center gap-1.5 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)] animate-pulse">
+                      <RefreshCw className="w-3 h-3 animate-spin text-cyan-400" />
                       Memuat Data...
                     </span>
                   )}
                 </div>
-                <p className="text-xs sm:text-sm text-slate-300 font-medium">
+                <p className="text-xs sm:text-sm text-slate-300 font-medium mt-1">
                   Pusat Visualisasi Realtime Capaian Indikator Mutu PPI Terintegrasi
                 </p>
               </div>
             </div>
-          </div>
 
-          {/* EXPORT BUTTONS */}
-          <div className="flex items-center gap-2.5 z-10 print:hidden flex-wrap">
-            <button
-              onClick={() => handleExport('excel')}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-bold text-xs transition-all shadow-lg shadow-emerald-500/10 active:scale-95"
-            >
-              <FileSpreadsheet className="w-4 h-4" /> Export Excel
-            </button>
-            <button
-              onClick={() => handleExport('pdf')}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 font-bold text-xs transition-all shadow-lg shadow-sky-500/10 active:scale-95"
-            >
-              <FileText className="w-4 h-4" /> Cetak / PDF
-            </button>
+            {/* EXPORT BUTTONS with 3D tactile buttons */}
+            <div className="flex items-center gap-3 z-10 print:hidden flex-wrap">
+              <button
+                onClick={() => handleExport('excel')}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#12132e] hover:bg-[#161735] text-emerald-300 border border-emerald-500/35 font-black text-xs uppercase tracking-wider transition-all shadow-[-2px_-2px_6px_rgba(16,185,129,0.08),4px_6px_16px_rgba(0,0,0,0.5),inset_1px_1px_1.5px_rgba(255,255,255,0.15)] hover:scale-105 active:scale-95 cursor-pointer"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-emerald-400" /> Export Excel
+              </button>
+              <button
+                onClick={() => handleExport('pdf')}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#12132e] hover:bg-[#161735] text-sky-300 border border-sky-500/35 font-black text-xs uppercase tracking-wider transition-all shadow-[-2px_-2px_6px_rgba(14,165,233,0.08),4px_6px_16px_rgba(0,0,0,0.5),inset_1px_1px_1.5px_rgba(255,255,255,0.15)] hover:scale-105 active:scale-95 cursor-pointer"
+              >
+                <FileText className="w-4 h-4 text-sky-400" /> Cetak / PDF
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* CONTROLS & FILTER SECTION */}
-        <div className="p-6 rounded-3xl bg-[#092340]/60 border border-sky-400/20 backdrop-blur-xl shadow-xl space-y-4 print:hidden">
-          <div className="flex items-center gap-2 text-sky-400 font-bold text-sm border-b border-white/10 pb-3">
-            <Filter className="w-4 h-4" />
-            <span>Filter Periode & Sub-Indikator</span>
+        {/* CONTROLS & FILTER SECTION - 3D Tactile Container with Recessed Trays */}
+        <div className="relative group bg-[#18193b] rounded-[28px] md:rounded-[32px] p-6 sm:p-7 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] space-y-4 print:hidden">
+          {/* Top Bevel Highlight */}
+          <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+          <div className="flex items-center justify-between border-b border-indigo-900/40 pb-3 relative z-10">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)]">
+              <Filter className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-300">
+                PARAMETER FILTER GRAFIK
+              </span>
+            </div>
+            <span className="text-[11px] font-bold text-slate-400 hidden sm:inline-block">
+              Pilih periode, unit & kategori profesi
+            </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Periode Type */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tipe Periode</label>
-              <select
-                value={periodeType}
-                onChange={(e: any) => setPeriodeType(e.target.value)}
-                className="w-full bg-[#0b172a] border border-sky-500/30 rounded-2xl px-3.5 py-2.5 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-sky-400/50"
-              >
-                <option value="Bulanan">Bulanan</option>
-                <option value="Triwulan">Triwulan</option>
-                <option value="Semester">Semester</option>
-                <option value="Tahunan">Tahunan</option>
-              </select>
-            </div>
-
-            {/* Specific Period Selection */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pilihan Periode</label>
-              {periodeType === 'Bulanan' && (
-                <div className="grid grid-cols-2 gap-2">
-                  <select
-                    value={selectedMonth}
-                    onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                    className="w-full bg-[#0b172a] border border-sky-500/30 rounded-2xl px-2.5 py-2.5 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-sky-400/50"
-                  >
-                    {MONTH_NAMES.map((m, idx) => (
-                      <option key={m} value={idx}>{m}</option>
-                    ))}
-                  </select>
-                  <select
-                    value={selectedYear}
-                    onChange={(e) => setSelectedYear(Number(e.target.value))}
-                    className="w-full bg-[#0b172a] border border-sky-500/30 rounded-2xl px-2.5 py-2.5 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-sky-400/50"
-                  >
-                    {[2024, 2025, 2026, 2027].map(y => (
-                      <option key={y} value={y}>{y}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {periodeType === 'Triwulan' && (
-                <div className="grid grid-cols-2 gap-2">
-                  <select
-                    value={selectedQuarter}
-                    onChange={(e) => setSelectedQuarter(Number(e.target.value))}
-                    className="w-full bg-[#0b172a] border border-sky-500/30 rounded-2xl px-2.5 py-2.5 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-sky-400/50"
-                  >
-                    {QUARTER_NAMES.map((q, idx) => (
-                      <option key={q} value={idx + 1}>{q}</option>
-                    ))}
-                  </select>
-                  <select
-                    value={selectedYear}
-                    onChange={(e) => setSelectedYear(Number(e.target.value))}
-                    className="w-full bg-[#0b172a] border border-sky-500/30 rounded-2xl px-2.5 py-2.5 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-sky-400/50"
-                  >
-                    {[2024, 2025, 2026, 2027].map(y => (
-                      <option key={y} value={y}>{y}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {periodeType === 'Semester' && (
-                <div className="grid grid-cols-2 gap-2">
-                  <select
-                    value={selectedSemester}
-                    onChange={(e) => setSelectedSemester(Number(e.target.value))}
-                    className="w-full bg-[#0b172a] border border-sky-500/30 rounded-2xl px-2.5 py-2.5 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-sky-400/50"
-                  >
-                    {SEMESTER_NAMES.map((s, idx) => (
-                      <option key={s} value={idx + 1}>{s}</option>
-                    ))}
-                  </select>
-                  <select
-                    value={selectedYear}
-                    onChange={(e) => setSelectedYear(Number(e.target.value))}
-                    className="w-full bg-[#0b172a] border border-sky-500/30 rounded-2xl px-2.5 py-2.5 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-sky-400/50"
-                  >
-                    {[2024, 2025, 2026, 2027].map(y => (
-                      <option key={y} value={y}>{y}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {periodeType === 'Tahunan' && (
+          {/* Recessed Control Area */}
+          <div className="bg-[#12132e] rounded-2xl p-4 border border-black/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] relative z-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Periode Type */}
+              <div className="relative group/select">
+                <label className="absolute -top-2.5 left-3 px-2 bg-[#18193b] border border-indigo-500/20 text-[9px] font-black text-indigo-300 uppercase tracking-widest z-10 rounded-md shadow-sm">
+                  Tipe Periode
+                </label>
                 <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(Number(e.target.value))}
-                  className="w-full bg-[#0b172a] border border-sky-500/30 rounded-2xl px-3.5 py-2.5 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-sky-400/50"
+                  value={periodeType}
+                  onChange={(e: any) => setPeriodeType(e.target.value)}
+                  className="w-full bg-[#161735] border border-indigo-900/40 text-white text-xs font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.5),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
                 >
-                  {[2024, 2025, 2026, 2027].map(y => (
-                    <option key={y} value={y}>Tahun {y}</option>
+                  <option value="Bulanan" className="bg-[#18193b] text-white">Bulanan</option>
+                  <option value="Triwulan" className="bg-[#18193b] text-white">Triwulan</option>
+                  <option value="Semester" className="bg-[#18193b] text-white">Semester</option>
+                  <option value="Tahunan" className="bg-[#18193b] text-white">Tahunan</option>
+                </select>
+              </div>
+
+              {/* Specific Period Selection */}
+              <div className="relative group/select">
+                <label className="absolute -top-2.5 left-3 px-2 bg-[#18193b] border border-indigo-500/20 text-[9px] font-black text-indigo-300 uppercase tracking-widest z-10 rounded-md shadow-sm">
+                  Pilihan Periode
+                </label>
+                {periodeType === 'Bulanan' && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <select
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                      className="w-full bg-[#161735] border border-indigo-900/40 text-white text-xs font-bold rounded-xl px-3 py-3 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.5),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                    >
+                      {MONTH_NAMES.map((m, idx) => (
+                        <option key={m} value={idx} className="bg-[#18193b] text-white">{m}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(Number(e.target.value))}
+                      className="w-full bg-[#161735] border border-indigo-900/40 text-white text-xs font-bold rounded-xl px-3 py-3 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.5),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                    >
+                      {[2024, 2025, 2026, 2027].map(y => (
+                        <option key={y} value={y} className="bg-[#18193b] text-white">{y}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {periodeType === 'Triwulan' && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <select
+                      value={selectedQuarter}
+                      onChange={(e) => setSelectedQuarter(Number(e.target.value))}
+                      className="w-full bg-[#161735] border border-indigo-900/40 text-white text-xs font-bold rounded-xl px-3 py-3 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.5),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                    >
+                      {QUARTER_NAMES.map((q, idx) => (
+                        <option key={q} value={idx + 1} className="bg-[#18193b] text-white">{q}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(Number(e.target.value))}
+                      className="w-full bg-[#161735] border border-indigo-900/40 text-white text-xs font-bold rounded-xl px-3 py-3 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.5),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                    >
+                      {[2024, 2025, 2026, 2027].map(y => (
+                        <option key={y} value={y} className="bg-[#18193b] text-white">{y}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {periodeType === 'Semester' && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <select
+                      value={selectedSemester}
+                      onChange={(e) => setSelectedSemester(Number(e.target.value))}
+                      className="w-full bg-[#161735] border border-indigo-900/40 text-white text-xs font-bold rounded-xl px-3 py-3 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.5),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                    >
+                      {SEMESTER_NAMES.map((s, idx) => (
+                        <option key={s} value={idx + 1} className="bg-[#18193b] text-white">{s}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(Number(e.target.value))}
+                      className="w-full bg-[#161735] border border-indigo-900/40 text-white text-xs font-bold rounded-xl px-3 py-3 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.5),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                    >
+                      {[2024, 2025, 2026, 2027].map(y => (
+                        <option key={y} value={y} className="bg-[#18193b] text-white">{y}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {periodeType === 'Tahunan' && (
+                  <select
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(Number(e.target.value))}
+                    className="w-full bg-[#161735] border border-indigo-900/40 text-white text-xs font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.5),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                  >
+                    {[2024, 2025, 2026, 2027].map(y => (
+                      <option key={y} value={y} className="bg-[#18193b] text-white">Tahun {y}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              {/* Sub Filter: Unit/Ruangan */}
+              <div className="relative group/select">
+                <label className="absolute -top-2.5 left-3 px-2 bg-[#18193b] border border-indigo-500/20 text-[9px] font-black text-indigo-300 uppercase tracking-widest z-10 rounded-md shadow-sm">
+                  Unit / Ruangan
+                </label>
+                <select
+                  value={selectedUnit}
+                  onChange={(e) => setSelectedUnit(e.target.value)}
+                  className="w-full bg-[#161735] border border-indigo-900/40 text-white text-xs font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.5),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] truncate"
+                >
+                  {availableUnits.map(u => (
+                    <option key={u} value={u} className="bg-[#18193b] text-white">{u}</option>
                   ))}
                 </select>
-              )}
-            </div>
+              </div>
 
-            {/* Sub Filter: Unit/Ruangan */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Unit / Ruangan</label>
-              <select
-                value={selectedUnit}
-                onChange={(e) => setSelectedUnit(e.target.value)}
-                className="w-full bg-[#0b172a] border border-sky-500/30 rounded-2xl px-3.5 py-2.5 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-sky-400/50 truncate"
-              >
-                {availableUnits.map(u => (
-                  <option key={u} value={u}>{u}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Sub Filter: Profesi */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Kategori Profesi</label>
-              <select
-                value={selectedProfesiGroup}
-                onChange={(e) => setSelectedProfesiGroup(e.target.value)}
-                className="w-full bg-[#0b172a] border border-sky-500/30 rounded-2xl px-3.5 py-2.5 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-sky-400/50"
-              >
-                <option value="Semua Profesi">Semua Profesi</option>
-                <option value="Perawat / Bidan">Perawat / Bidan</option>
-                <option value="Dokter">Dokter</option>
-                <option value="Nakes Lainnya">Nakes Lainnya</option>
-              </select>
+              {/* Sub Filter: Profesi */}
+              <div className="relative group/select">
+                <label className="absolute -top-2.5 left-3 px-2 bg-[#18193b] border border-indigo-500/20 text-[9px] font-black text-indigo-300 uppercase tracking-widest z-10 rounded-md shadow-sm">
+                  Kategori Profesi
+                </label>
+                <select
+                  value={selectedProfesiGroup}
+                  onChange={(e) => setSelectedProfesiGroup(e.target.value)}
+                  className="w-full bg-[#161735] border border-indigo-900/40 text-white text-xs font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.5),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                >
+                  <option value="Semua Profesi" className="bg-[#18193b] text-white">Semua Profesi</option>
+                  <option value="Perawat / Bidan" className="bg-[#18193b] text-white">Perawat / Bidan</option>
+                  <option value="Dokter" className="bg-[#18193b] text-white">Dokter</option>
+                  <option value="Nakes Lainnya" className="bg-[#18193b] text-white">Nakes Lainnya</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* SECTION 1: KEPATUHAN KEBERSIHAN TANGAN */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-[#081e36]/70 border border-emerald-500/20 backdrop-blur-xl shadow-2xl space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-3 h-8 bg-emerald-400 rounded-full shadow-[0_0_12px_rgba(52,211,153,0.8)]" />
+        {/* SECTION 1: KEPATUHAN KEBERSIHAN TANGAN - 3D Tactile Neumorphic Container */}
+        <div className="relative group bg-[#18193b] rounded-[28px] md:rounded-[32px] p-6 sm:p-8 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] space-y-6">
+          {/* Top Bevel Highlight */}
+          <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-indigo-900/40 pb-4 relative z-10">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-[14px] bg-gradient-to-br from-[#272952] to-[#12132d] border border-emerald-400/30 shadow-[-2px_-2px_6px_rgba(16,185,129,0.15),3px_4px_12px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.25)] flex items-center justify-center text-emerald-400">
+                <Droplets className="w-5 h-5 drop-shadow" />
+              </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-lg sm:text-xl font-black text-white tracking-wide uppercase font-heading">
                     KEPATUHAN KEBERSIHAN TANGAN
                   </h2>
-                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1 shadow-sm">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 flex items-center gap-1 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)]">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                     Standar Target: ≥ 85%
                   </span>
                 </div>
@@ -1076,14 +1110,16 @@ export default function AnalyticsPage() {
           </div>
 
           {/* A. Capaian Berdasarkan Profesi */}
-          <div className="space-y-4">
-            <h3 className="text-xs font-bold text-emerald-300 uppercase tracking-wider flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              <span>A. Capaian Kepatuhan Berdasarkan Profesi</span>
-            </h3>
+          <div className="space-y-4 relative z-10">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#12132e] border border-white/10 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)]">
+              <Users className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-[10px] font-black text-emerald-300 uppercase tracking-wider">
+                A. Capaian Kepatuhan Berdasarkan Profesi
+              </span>
+            </div>
 
             {normalizedHH.length === 0 ? (
-              <div className="p-8 rounded-3xl bg-[#09172a]/60 border border-white/5 text-center space-y-2">
+              <div className="p-8 rounded-2xl bg-[#12132e] border border-indigo-900/40 text-center space-y-2 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8)]">
                 <BarChart2 className="w-10 h-10 text-slate-500 mx-auto animate-pulse" />
                 <h4 className="text-sm font-bold text-slate-300">Belum tersedia data grafik pada periode yang dipilih.</h4>
                 <p className="text-xs text-slate-400">Data grafik akan ditampilkan secara otomatis setelah terdapat data pada Menu Input.</p>
@@ -1093,27 +1129,27 @@ export default function AnalyticsPage() {
                 {hhProfBreakdown.map((prof) => (
                   <div
                     key={prof.name}
-                    className="p-5 rounded-2xl bg-[#0b1b30] border border-emerald-500/20 space-y-3 relative overflow-hidden shadow-lg"
+                    className="p-5 rounded-2xl bg-[#12132e] border border-indigo-900/40 space-y-3 relative overflow-hidden shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] hover:border-emerald-500/40 transition-all"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-200">{prof.name}</span>
-                      <span className="text-xl font-black text-emerald-400 font-heading">{prof.pct}%</span>
+                      <span className="text-xs font-black uppercase tracking-wider text-slate-200">{prof.name}</span>
+                      <span className="text-2xl font-black text-emerald-400 font-heading drop-shadow-[0_2px_6px_rgba(16,185,129,0.4)]">{prof.pct}%</span>
                     </div>
 
-                    {/* Progress Bar */}
-                    <div className="w-full h-3 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-white/5">
+                    {/* Recessed Progress Bar */}
+                    <div className="w-full h-3 bg-[#0a0a1a] rounded-full overflow-hidden p-0.5 border border-black/40 shadow-[inset_1px_1px_3px_rgba(0,0,0,0.8)]">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${prof.pct}%` }}
                         transition={{ duration: 0.8, ease: 'easeOut' }}
-                        className="h-full bg-gradient-to-r from-emerald-500 to-teal-300 rounded-full shadow-[0_0_10px_rgba(52,211,153,0.5)]"
+                        className="h-full bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-400 rounded-full shadow-[0_0_10px_rgba(52,211,153,0.5)]"
                       />
                     </div>
 
-                    <div className="grid grid-cols-3 gap-1 pt-2 border-t border-white/5 text-[10px] text-slate-400 text-center">
-                      <div>Obs: <strong className="text-white">{prof.data.obs}</strong></div>
-                      <div>Patuh: <strong className="text-emerald-400">{prof.data.patuh}</strong></div>
-                      <div>T.Patuh: <strong className="text-rose-400">{prof.data.tidakPatuh}</strong></div>
+                    <div className="grid grid-cols-3 gap-1 pt-2 border-t border-indigo-900/30 text-[10px] text-slate-400 text-center font-bold">
+                      <div className="bg-[#161735]/60 p-1.5 rounded-lg border border-white/5">Obs: <strong className="text-white font-mono">{prof.data.obs}</strong></div>
+                      <div className="bg-[#161735]/60 p-1.5 rounded-lg border border-white/5">Patuh: <strong className="text-emerald-400 font-mono">{prof.data.patuh}</strong></div>
+                      <div className="bg-[#161735]/60 p-1.5 rounded-lg border border-white/5">T.Patuh: <strong className="text-rose-400 font-mono">{prof.data.tidakPatuh}</strong></div>
                     </div>
                   </div>
                 ))}
@@ -1122,79 +1158,88 @@ export default function AnalyticsPage() {
           </div>
 
           {/* B. Grafik Tren Waktu */}
-          <div className="space-y-4 pt-4 border-t border-white/10">
+          <div className="space-y-4 pt-4 border-t border-indigo-900/40 relative z-10">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <h3 className="text-xs font-bold text-emerald-300 uppercase tracking-wider flex items-center gap-2">
-                <TrendingUp className="w-4 h-4" />
-                <span>B. Tren Kepatuhan Kebersihan Tangan</span>
-              </h3>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#12132e] border border-white/10 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)]">
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-[10px] font-black text-emerald-300 uppercase tracking-wider">
+                  B. Tren Kepatuhan Kebersihan Tangan
+                </span>
+              </div>
               <ChartTypeToggle type={hhChartType} onChange={setHhChartType} colorScheme="emerald" />
             </div>
 
             {hhTrendData.length === 0 ? (
-              <div className="p-8 rounded-3xl bg-[#09172a]/60 border border-white/5 text-center space-y-2">
+              <div className="p-8 rounded-2xl bg-[#12132e] border border-indigo-900/40 text-center space-y-2 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8)]">
                 <BarChart2 className="w-10 h-10 text-slate-500 mx-auto animate-pulse" />
                 <h4 className="text-sm font-bold text-slate-300">Belum tersedia data grafik pada periode yang dipilih.</h4>
                 <p className="text-xs text-slate-400">Data grafik akan ditampilkan secara otomatis setelah terdapat data pada Menu Input.</p>
               </div>
             ) : (
-              <div className="h-[340px] w-full pt-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  {hhChartType === 'line' ? (
-                    <LineChart data={hhTrendData} margin={{ top: 25, right: 30, left: -20, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                      <XAxis dataKey="periode" stroke="#94a3b8" tick={{ fontSize: 11, fill: '#cbd5e1' }} />
-                      <YAxis domain={[0, 115]} stroke="#94a3b8" tick={{ fontSize: 11, fill: '#cbd5e1' }} unit="%" />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-                      <ReferenceLine y={85} stroke="#34d399" strokeDasharray="5 5" strokeWidth={2} label={{ value: 'Standar Target: ≥85%', fill: '#34d399', fontSize: 11, position: 'top', fontWeight: 'bold' }} />
-                      <Line type="monotone" dataKey="Perawat / Bidan" stroke="#10b981" strokeWidth={3} dot={{ r: 5, fill: '#10b981' }} activeDot={{ r: 8 }}>
-                        <LabelList dataKey="Perawat / Bidan" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#34d399" fontSize={10} fontWeight="bold" dy={-6} />
-                      </Line>
-                      <Line type="monotone" dataKey="Dokter" stroke="#3b82f6" strokeWidth={3} dot={{ r: 5, fill: '#3b82f6' }} activeDot={{ r: 8 }}>
-                        <LabelList dataKey="Dokter" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#60a5fa" fontSize={10} fontWeight="bold" dy={-6} />
-                      </Line>
-                      <Line type="monotone" dataKey="Nakes Lainnya" stroke="#f59e0b" strokeWidth={3} dot={{ r: 5, fill: '#f59e0b' }} activeDot={{ r: 8 }}>
-                        <LabelList dataKey="Nakes Lainnya" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#fbbf24" fontSize={10} fontWeight="bold" dy={-6} />
-                      </Line>
-                    </LineChart>
-                  ) : (
-                    <BarChart data={hhTrendData} margin={{ top: 25, right: 30, left: -20, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                      <XAxis dataKey="periode" stroke="#94a3b8" tick={{ fontSize: 11, fill: '#cbd5e1' }} />
-                      <YAxis domain={[0, 115]} stroke="#94a3b8" tick={{ fontSize: 11, fill: '#cbd5e1' }} unit="%" />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-                      <ReferenceLine y={85} stroke="#34d399" strokeDasharray="5 5" strokeWidth={2} label={{ value: 'Standar Target: ≥85%', fill: '#34d399', fontSize: 11, position: 'top', fontWeight: 'bold' }} />
-                      <Bar dataKey="Perawat / Bidan" fill="#10b981" radius={[4, 4, 0, 0]}>
-                        <LabelList dataKey="Perawat / Bidan" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#34d399" fontSize={10} fontWeight="bold" />
-                      </Bar>
-                      <Bar dataKey="Dokter" fill="#3b82f6" radius={[4, 4, 0, 0]}>
-                        <LabelList dataKey="Dokter" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#60a5fa" fontSize={10} fontWeight="bold" />
-                      </Bar>
-                      <Bar dataKey="Nakes Lainnya" fill="#f59e0b" radius={[4, 4, 0, 0]}>
-                        <LabelList dataKey="Nakes Lainnya" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#fbbf24" fontSize={10} fontWeight="bold" />
-                      </Bar>
-                    </BarChart>
-                  )}
-                </ResponsiveContainer>
+              <div className="bg-[#12132e] p-4 sm:p-5 rounded-2xl border border-indigo-900/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
+                <div className="h-[340px] w-full pt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    {hhChartType === 'line' ? (
+                      <LineChart data={hhTrendData} margin={{ top: 25, right: 30, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#2b2d56" />
+                        <XAxis dataKey="periode" stroke="#94a3b8" tick={{ fontSize: 11, fill: '#cbd5e1' }} />
+                        <YAxis domain={[0, 115]} stroke="#94a3b8" tick={{ fontSize: 11, fill: '#cbd5e1' }} unit="%" />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
+                        <ReferenceLine y={85} stroke="#34d399" strokeDasharray="5 5" strokeWidth={2} label={{ value: 'Standar Target: ≥85%', fill: '#34d399', fontSize: 11, position: 'top', fontWeight: 'bold' }} />
+                        <Line type="monotone" dataKey="Perawat / Bidan" stroke="#10b981" strokeWidth={3} dot={{ r: 5, fill: '#10b981' }} activeDot={{ r: 8 }}>
+                          <LabelList dataKey="Perawat / Bidan" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#34d399" fontSize={10} fontWeight="bold" dy={-6} />
+                        </Line>
+                        <Line type="monotone" dataKey="Dokter" stroke="#3b82f6" strokeWidth={3} dot={{ r: 5, fill: '#3b82f6' }} activeDot={{ r: 8 }}>
+                          <LabelList dataKey="Dokter" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#60a5fa" fontSize={10} fontWeight="bold" dy={-6} />
+                        </Line>
+                        <Line type="monotone" dataKey="Nakes Lainnya" stroke="#f59e0b" strokeWidth={3} dot={{ r: 5, fill: '#f59e0b' }} activeDot={{ r: 8 }}>
+                          <LabelList dataKey="Nakes Lainnya" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#fbbf24" fontSize={10} fontWeight="bold" dy={-6} />
+                        </Line>
+                      </LineChart>
+                    ) : (
+                      <BarChart data={hhTrendData} margin={{ top: 25, right: 30, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#2b2d56" />
+                        <XAxis dataKey="periode" stroke="#94a3b8" tick={{ fontSize: 11, fill: '#cbd5e1' }} />
+                        <YAxis domain={[0, 115]} stroke="#94a3b8" tick={{ fontSize: 11, fill: '#cbd5e1' }} unit="%" />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
+                        <ReferenceLine y={85} stroke="#34d399" strokeDasharray="5 5" strokeWidth={2} label={{ value: 'Standar Target: ≥85%', fill: '#34d399', fontSize: 11, position: 'top', fontWeight: 'bold' }} />
+                        <Bar dataKey="Perawat / Bidan" fill="#10b981" radius={[4, 4, 0, 0]}>
+                          <LabelList dataKey="Perawat / Bidan" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#34d399" fontSize={10} fontWeight="bold" />
+                        </Bar>
+                        <Bar dataKey="Dokter" fill="#3b82f6" radius={[4, 4, 0, 0]}>
+                          <LabelList dataKey="Dokter" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#60a5fa" fontSize={10} fontWeight="bold" />
+                        </Bar>
+                        <Bar dataKey="Nakes Lainnya" fill="#f59e0b" radius={[4, 4, 0, 0]}>
+                          <LabelList dataKey="Nakes Lainnya" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#fbbf24" fontSize={10} fontWeight="bold" />
+                        </Bar>
+                      </BarChart>
+                    )}
+                  </ResponsiveContainer>
+                </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* SECTION 2: KEPATUHAN PENGGUNAAN APD */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-[#081e36]/70 border border-sky-500/20 backdrop-blur-xl shadow-2xl space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-3 h-8 bg-sky-400 rounded-full shadow-[0_0_12px_rgba(56,189,248,0.8)]" />
+        {/* SECTION 2: KEPATUHAN PENGGUNAAN APD - 3D Tactile Neumorphic Container */}
+        <div className="relative group bg-[#18193b] rounded-[28px] md:rounded-[32px] p-6 sm:p-8 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] space-y-6">
+          {/* Top Bevel Highlight */}
+          <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-indigo-900/40 pb-4 relative z-10">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-[14px] bg-gradient-to-br from-[#272952] to-[#12132d] border border-sky-400/30 shadow-[-2px_-2px_6px_rgba(56,189,248,0.15),3px_4px_12px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.25)] flex items-center justify-center text-sky-400">
+                <ShieldCheck className="w-5 h-5 drop-shadow" />
+              </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-lg sm:text-xl font-black text-white tracking-wide uppercase font-heading">
                     KEPATUHAN PENGGUNAAN APD
                   </h2>
-                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1 shadow-sm">
-                    <Award className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-950/80 text-amber-300 border border-amber-500/40 flex items-center gap-1 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)]">
+                    <Award className="w-3 h-3 text-amber-400" />
                     Standar Target: 100%
                   </span>
                 </div>
@@ -1206,14 +1251,16 @@ export default function AnalyticsPage() {
           </div>
 
           {/* A. Capaian Berdasarkan Profesi */}
-          <div className="space-y-4">
-            <h3 className="text-xs font-bold text-sky-300 uppercase tracking-wider flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              <span>A. Capaian Kepatuhan APD Berdasarkan Profesi</span>
-            </h3>
+          <div className="space-y-4 relative z-10">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#12132e] border border-white/10 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)]">
+              <Users className="w-3.5 h-3.5 text-sky-400" />
+              <span className="text-[10px] font-black text-sky-300 uppercase tracking-wider">
+                A. Capaian Kepatuhan APD Berdasarkan Profesi
+              </span>
+            </div>
 
             {normalizedApd.length === 0 ? (
-              <div className="p-8 rounded-3xl bg-[#09172a]/60 border border-white/5 text-center space-y-2">
+              <div className="p-8 rounded-2xl bg-[#12132e] border border-indigo-900/40 text-center space-y-2 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8)]">
                 <BarChart2 className="w-10 h-10 text-slate-500 mx-auto animate-pulse" />
                 <h4 className="text-sm font-bold text-slate-300">Belum tersedia data grafik pada periode yang dipilih.</h4>
                 <p className="text-xs text-slate-400">Data grafik akan ditampilkan secara otomatis setelah terdapat data pada Menu Input.</p>
@@ -1223,27 +1270,27 @@ export default function AnalyticsPage() {
                 {apdProfBreakdown.map((prof) => (
                   <div
                     key={prof.name}
-                    className="p-5 rounded-2xl bg-[#0b1b30] border border-sky-500/20 space-y-3 relative overflow-hidden shadow-lg"
+                    className="p-5 rounded-2xl bg-[#12132e] border border-indigo-900/40 space-y-3 relative overflow-hidden shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] hover:border-sky-500/40 transition-all"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-200">{prof.name}</span>
-                      <span className="text-xl font-black text-sky-400 font-heading">{prof.pct}%</span>
+                      <span className="text-xs font-black uppercase tracking-wider text-slate-200">{prof.name}</span>
+                      <span className="text-2xl font-black text-sky-400 font-heading drop-shadow-[0_2px_6px_rgba(56,189,248,0.4)]">{prof.pct}%</span>
                     </div>
 
-                    {/* Progress Bar */}
-                    <div className="w-full h-3 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-white/5">
+                    {/* Recessed Progress Bar */}
+                    <div className="w-full h-3 bg-[#0a0a1a] rounded-full overflow-hidden p-0.5 border border-black/40 shadow-[inset_1px_1px_3px_rgba(0,0,0,0.8)]">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${prof.pct}%` }}
                         transition={{ duration: 0.8, ease: 'easeOut' }}
-                        className="h-full bg-gradient-to-r from-sky-500 to-indigo-400 rounded-full shadow-[0_0_10px_rgba(56,189,248,0.5)]"
+                        className="h-full bg-gradient-to-r from-sky-600 via-indigo-500 to-sky-400 rounded-full shadow-[0_0_10px_rgba(56,189,248,0.5)]"
                       />
                     </div>
 
-                    <div className="grid grid-cols-3 gap-1 pt-2 border-t border-white/5 text-[10px] text-slate-400 text-center">
-                      <div>Obs: <strong className="text-white">{prof.data.obs}</strong></div>
-                      <div>Patuh: <strong className="text-sky-400">{prof.data.patuh}</strong></div>
-                      <div>T.Patuh: <strong className="text-rose-400">{prof.data.tidakPatuh}</strong></div>
+                    <div className="grid grid-cols-3 gap-1 pt-2 border-t border-indigo-900/30 text-[10px] text-slate-400 text-center font-bold">
+                      <div className="bg-[#161735]/60 p-1.5 rounded-lg border border-white/5">Obs: <strong className="text-white font-mono">{prof.data.obs}</strong></div>
+                      <div className="bg-[#161735]/60 p-1.5 rounded-lg border border-white/5">Patuh: <strong className="text-sky-400 font-mono">{prof.data.patuh}</strong></div>
+                      <div className="bg-[#161735]/60 p-1.5 rounded-lg border border-white/5">T.Patuh: <strong className="text-rose-400 font-mono">{prof.data.tidakPatuh}</strong></div>
                     </div>
                   </div>
                 ))}
@@ -1252,79 +1299,88 @@ export default function AnalyticsPage() {
           </div>
 
           {/* B. Grafik Tren APD */}
-          <div className="space-y-4 pt-4 border-t border-white/10">
+          <div className="space-y-4 pt-4 border-t border-indigo-900/40 relative z-10">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <h3 className="text-xs font-bold text-sky-300 uppercase tracking-wider flex items-center gap-2">
-                <TrendingUp className="w-4 h-4" />
-                <span>B. Tren Kepatuhan Penggunaan APD</span>
-              </h3>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#12132e] border border-white/10 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)]">
+                <TrendingUp className="w-3.5 h-3.5 text-sky-400" />
+                <span className="text-[10px] font-black text-sky-300 uppercase tracking-wider">
+                  B. Tren Kepatuhan Penggunaan APD
+                </span>
+              </div>
               <ChartTypeToggle type={apdChartType} onChange={setApdChartType} colorScheme="sky" />
             </div>
 
             {apdTrendData.length === 0 ? (
-              <div className="p-8 rounded-3xl bg-[#09172a]/60 border border-white/5 text-center space-y-2">
+              <div className="p-8 rounded-2xl bg-[#12132e] border border-indigo-900/40 text-center space-y-2 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8)]">
                 <BarChart2 className="w-10 h-10 text-slate-500 mx-auto animate-pulse" />
                 <h4 className="text-sm font-bold text-slate-300">Belum tersedia data grafik pada periode yang dipilih.</h4>
                 <p className="text-xs text-slate-400">Data grafik akan ditampilkan secara otomatis setelah terdapat data pada Menu Input.</p>
               </div>
             ) : (
-              <div className="h-[340px] w-full pt-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  {apdChartType === 'line' ? (
-                    <LineChart data={apdTrendData} margin={{ top: 25, right: 30, left: -20, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                      <XAxis dataKey="periode" stroke="#94a3b8" tick={{ fontSize: 11, fill: '#cbd5e1' }} />
-                      <YAxis domain={[0, 115]} stroke="#94a3b8" tick={{ fontSize: 11, fill: '#cbd5e1' }} unit="%" />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-                      <ReferenceLine y={100} label={{ value: 'Standar Target: 100%', fill: '#f59e0b', fontSize: 11, position: 'top', fontWeight: 'bold' }} stroke="#f59e0b" strokeDasharray="5 5" strokeWidth={2} />
-                      <Line type="monotone" dataKey="Perawat / Bidan" stroke="#0284c7" strokeWidth={3} dot={{ r: 5, fill: '#0284c7' }} activeDot={{ r: 8 }}>
-                        <LabelList dataKey="Perawat / Bidan" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#38bdf8" fontSize={10} fontWeight="bold" dy={-6} />
-                      </Line>
-                      <Line type="monotone" dataKey="Dokter" stroke="#6366f1" strokeWidth={3} dot={{ r: 5, fill: '#6366f1' }} activeDot={{ r: 8 }}>
-                        <LabelList dataKey="Dokter" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#818cf8" fontSize={10} fontWeight="bold" dy={-6} />
-                      </Line>
-                      <Line type="monotone" dataKey="Nakes Lainnya" stroke="#ec4899" strokeWidth={3} dot={{ r: 5, fill: '#ec4899' }} activeDot={{ r: 8 }}>
-                        <LabelList dataKey="Nakes Lainnya" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#f472b6" fontSize={10} fontWeight="bold" dy={-6} />
-                      </Line>
-                    </LineChart>
-                  ) : (
-                    <BarChart data={apdTrendData} margin={{ top: 25, right: 30, left: -20, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                      <XAxis dataKey="periode" stroke="#94a3b8" tick={{ fontSize: 11, fill: '#cbd5e1' }} />
-                      <YAxis domain={[0, 115]} stroke="#94a3b8" tick={{ fontSize: 11, fill: '#cbd5e1' }} unit="%" />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-                      <ReferenceLine y={100} label={{ value: 'Standar Target: 100%', fill: '#f59e0b', fontSize: 11, position: 'top', fontWeight: 'bold' }} stroke="#f59e0b" strokeDasharray="5 5" strokeWidth={2} />
-                      <Bar dataKey="Perawat / Bidan" fill="#0284c7" radius={[4, 4, 0, 0]}>
-                        <LabelList dataKey="Perawat / Bidan" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#38bdf8" fontSize={10} fontWeight="bold" />
-                      </Bar>
-                      <Bar dataKey="Dokter" fill="#6366f1" radius={[4, 4, 0, 0]}>
-                        <LabelList dataKey="Dokter" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#818cf8" fontSize={10} fontWeight="bold" />
-                      </Bar>
-                      <Bar dataKey="Nakes Lainnya" fill="#ec4899" radius={[4, 4, 0, 0]}>
-                        <LabelList dataKey="Nakes Lainnya" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#f472b6" fontSize={10} fontWeight="bold" />
-                      </Bar>
-                    </BarChart>
-                  )}
-                </ResponsiveContainer>
+              <div className="bg-[#12132e] p-4 sm:p-5 rounded-2xl border border-indigo-900/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
+                <div className="h-[340px] w-full pt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    {apdChartType === 'line' ? (
+                      <LineChart data={apdTrendData} margin={{ top: 25, right: 30, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#2b2d56" />
+                        <XAxis dataKey="periode" stroke="#94a3b8" tick={{ fontSize: 11, fill: '#cbd5e1' }} />
+                        <YAxis domain={[0, 115]} stroke="#94a3b8" tick={{ fontSize: 11, fill: '#cbd5e1' }} unit="%" />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
+                        <ReferenceLine y={100} label={{ value: 'Standar Target: 100%', fill: '#f59e0b', fontSize: 11, position: 'top', fontWeight: 'bold' }} stroke="#f59e0b" strokeDasharray="5 5" strokeWidth={2} />
+                        <Line type="monotone" dataKey="Perawat / Bidan" stroke="#0284c7" strokeWidth={3} dot={{ r: 5, fill: '#0284c7' }} activeDot={{ r: 8 }}>
+                          <LabelList dataKey="Perawat / Bidan" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#38bdf8" fontSize={10} fontWeight="bold" dy={-6} />
+                        </Line>
+                        <Line type="monotone" dataKey="Dokter" stroke="#6366f1" strokeWidth={3} dot={{ r: 5, fill: '#6366f1' }} activeDot={{ r: 8 }}>
+                          <LabelList dataKey="Dokter" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#818cf8" fontSize={10} fontWeight="bold" dy={-6} />
+                        </Line>
+                        <Line type="monotone" dataKey="Nakes Lainnya" stroke="#ec4899" strokeWidth={3} dot={{ r: 5, fill: '#ec4899' }} activeDot={{ r: 8 }}>
+                          <LabelList dataKey="Nakes Lainnya" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#f472b6" fontSize={10} fontWeight="bold" dy={-6} />
+                        </Line>
+                      </LineChart>
+                    ) : (
+                      <BarChart data={apdTrendData} margin={{ top: 25, right: 30, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#2b2d56" />
+                        <XAxis dataKey="periode" stroke="#94a3b8" tick={{ fontSize: 11, fill: '#cbd5e1' }} />
+                        <YAxis domain={[0, 115]} stroke="#94a3b8" tick={{ fontSize: 11, fill: '#cbd5e1' }} unit="%" />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
+                        <ReferenceLine y={100} label={{ value: 'Standar Target: 100%', fill: '#f59e0b', fontSize: 11, position: 'top', fontWeight: 'bold' }} stroke="#f59e0b" strokeDasharray="5 5" strokeWidth={2} />
+                        <Bar dataKey="Perawat / Bidan" fill="#0284c7" radius={[4, 4, 0, 0]}>
+                          <LabelList dataKey="Perawat / Bidan" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#38bdf8" fontSize={10} fontWeight="bold" />
+                        </Bar>
+                        <Bar dataKey="Dokter" fill="#6366f1" radius={[4, 4, 0, 0]}>
+                          <LabelList dataKey="Dokter" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#818cf8" fontSize={10} fontWeight="bold" />
+                        </Bar>
+                        <Bar dataKey="Nakes Lainnya" fill="#ec4899" radius={[4, 4, 0, 0]}>
+                          <LabelList dataKey="Nakes Lainnya" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#f472b6" fontSize={10} fontWeight="bold" />
+                        </Bar>
+                      </BarChart>
+                    )}
+                  </ResponsiveContainer>
+                </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* SECTION 3: GRAFIK SURVEILANS HAIs */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-[#081e36]/70 border border-purple-500/20 backdrop-blur-xl shadow-2xl space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-3 h-8 bg-purple-400 rounded-full shadow-[0_0_12px_rgba(192,132,252,0.8)]" />
+        {/* SECTION 3: GRAFIK SURVEILANS HAIs - 3D Tactile Neumorphic Container */}
+        <div className="relative group bg-[#18193b] rounded-[28px] md:rounded-[32px] p-6 sm:p-8 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] space-y-6">
+          {/* Top Bevel Highlight */}
+          <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-indigo-900/40 pb-4 relative z-10">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-[14px] bg-gradient-to-br from-[#272952] to-[#12132d] border border-purple-400/30 shadow-[-2px_-2px_6px_rgba(192,132,252,0.15),3px_4px_12px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.25)] flex items-center justify-center text-purple-400">
+                <Activity className="w-5 h-5 drop-shadow" />
+              </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-lg sm:text-xl font-black text-white tracking-wide uppercase font-heading">
                     GRAFIK SURVEILANS HAIS
                   </h2>
-                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1 shadow-sm">
-                    <AlertCircle className="w-3.5 h-3.5 text-purple-400" />
+                  <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-950/80 text-purple-300 border border-purple-500/40 flex items-center gap-1 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)]">
+                    <AlertCircle className="w-3 h-3 text-purple-400" />
                     Standar Indikator: Phlebitis ≤ 1.5‰ | ISK ≤ 5‰ | IDO ≤ 2% | VAP ≤ 5‰
                   </span>
                 </div>
@@ -1335,19 +1391,21 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 relative z-10">
             {/* A. Tren Insiden HAIs */}
-            <div className="space-y-4 p-5 rounded-2xl bg-[#0b1b30] border border-purple-500/20">
+            <div className="space-y-4 p-5 rounded-2xl bg-[#12132e] border border-indigo-900/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <h3 className="text-xs font-bold text-purple-300 uppercase tracking-wider flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4" />
-                  <span>A. Tren Insiden HAIs Berdasarkan Periode</span>
-                </h3>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#18193b] border border-white/10 shadow-sm">
+                  <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
+                  <span className="text-[10px] font-black text-purple-300 uppercase tracking-wider">
+                    A. Tren Insiden HAIs Periode
+                  </span>
+                </div>
                 <ChartTypeToggle type={haisChartType} onChange={setHaisChartType} colorScheme="purple" />
               </div>
 
               {haisTrendData.length === 0 ? (
-                <div className="p-8 rounded-2xl bg-[#09172a]/60 border border-white/5 text-center space-y-2">
+                <div className="p-8 rounded-2xl bg-[#161735]/40 border border-white/5 text-center space-y-2">
                   <BarChart2 className="w-8 h-8 text-slate-500 mx-auto animate-pulse" />
                   <p className="text-xs text-slate-400">Belum tersedia data surveilans HAIs pada periode ini.</p>
                 </div>
@@ -1356,7 +1414,7 @@ export default function AnalyticsPage() {
                   <ResponsiveContainer width="100%" height="100%">
                     {haisChartType === 'line' ? (
                       <LineChart data={haisTrendData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#2b2d56" />
                         <XAxis dataKey="periode" stroke="#94a3b8" tick={{ fontSize: 10, fill: '#cbd5e1' }} />
                         <YAxis stroke="#94a3b8" tick={{ fontSize: 10, fill: '#cbd5e1' }} allowDecimals={false} />
                         <Tooltip content={<HaisTooltip />} />
@@ -1376,7 +1434,7 @@ export default function AnalyticsPage() {
                       </LineChart>
                     ) : (
                       <BarChart data={haisTrendData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#2b2d56" />
                         <XAxis dataKey="periode" stroke="#94a3b8" tick={{ fontSize: 10, fill: '#cbd5e1' }} />
                         <YAxis stroke="#94a3b8" tick={{ fontSize: 10, fill: '#cbd5e1' }} allowDecimals={false} />
                         <Tooltip content={<HaisTooltip />} />
@@ -1401,17 +1459,19 @@ export default function AnalyticsPage() {
             </div>
 
             {/* B. Distribusi HAIs Berdasarkan Ruangan */}
-            <div className="space-y-4 p-5 rounded-2xl bg-[#0b1b30] border border-purple-500/20">
+            <div className="space-y-4 p-5 rounded-2xl bg-[#12132e] border border-indigo-900/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <h3 className="text-xs font-bold text-purple-300 uppercase tracking-wider flex items-center gap-2">
-                  <Building2 className="w-4 h-4" />
-                  <span>B. Distribusi Insiden HAIs Berdasarkan Ruangan</span>
-                </h3>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#18193b] border border-white/10 shadow-sm">
+                  <Building2 className="w-3.5 h-3.5 text-purple-400" />
+                  <span className="text-[10px] font-black text-purple-300 uppercase tracking-wider">
+                    B. Distribusi HAIs per Ruangan
+                  </span>
+                </div>
                 <ChartTypeToggle type={haisRoomChartType} onChange={setHaisRoomChartType} colorScheme="purple" />
               </div>
 
               {haisRoomData.length === 0 ? (
-                <div className="p-8 rounded-2xl bg-[#09172a]/60 border border-white/5 text-center space-y-2">
+                <div className="p-8 rounded-2xl bg-[#161735]/40 border border-white/5 text-center space-y-2">
                   <BarChart2 className="w-8 h-8 text-slate-500 mx-auto animate-pulse" />
                   <p className="text-xs text-slate-400">Belum tersedia data distribusi ruangan pada periode ini.</p>
                 </div>
@@ -1420,7 +1480,7 @@ export default function AnalyticsPage() {
                   <ResponsiveContainer width="100%" height="100%">
                     {haisRoomChartType === 'bar' ? (
                       <BarChart data={haisRoomData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#2b2d56" />
                         <XAxis dataKey="unit" stroke="#94a3b8" tick={{ fontSize: 10, fill: '#cbd5e1' }} />
                         <YAxis stroke="#94a3b8" tick={{ fontSize: 10, fill: '#cbd5e1' }} allowDecimals={false} />
                         <Tooltip content={<HaisTooltip />} />
@@ -1433,7 +1493,7 @@ export default function AnalyticsPage() {
                       </BarChart>
                     ) : (
                       <LineChart data={haisRoomData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#2b2d56" />
                         <XAxis dataKey="unit" stroke="#94a3b8" tick={{ fontSize: 10, fill: '#cbd5e1' }} />
                         <YAxis stroke="#94a3b8" tick={{ fontSize: 10, fill: '#cbd5e1' }} allowDecimals={false} />
                         <Tooltip content={<HaisTooltip />} />

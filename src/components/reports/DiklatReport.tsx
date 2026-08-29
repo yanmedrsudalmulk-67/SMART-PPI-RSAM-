@@ -428,14 +428,15 @@ export default function DiklatReport({
 
   if (filteredSessions.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-20 text-center bg-white/5 backdrop-blur-sm rounded-3xl border border-white/5">
-        <FileText className="w-12 h-12 text-slate-600 mb-4" />
-        <h3 className="text-lg font-bold text-white mb-2">Belum Ada Laporan Pendidikan & Pelatihan</h3>
-        <p className="text-xs text-slate-400 max-w-sm mb-4">
+      <div className="flex flex-col items-center justify-center p-16 text-center bg-[#18193b] rounded-[28px] md:rounded-[32px] border border-[#2b2d56] shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] relative overflow-hidden">
+        <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+        <FileText className="w-14 h-14 text-slate-500 mb-4" />
+        <h3 className="text-lg font-black text-white uppercase tracking-wider mb-2">Belum Ada Laporan Pendidikan & Pelatihan</h3>
+        <p className="text-xs text-slate-400 max-w-sm mb-4 font-medium">
           Data kegiatan pelatihan yang diinput akan muncul di sini lengkap dengan materi dan dokumentasi.
         </p>
         {sessions.length > 0 && (
-           <p className="text-xs text-amber-500 font-bold border border-amber-500/20 bg-amber-500/10 p-2 rounded-lg">
+           <p className="text-xs text-amber-400 font-bold border border-amber-500/20 bg-amber-500/10 p-3 rounded-xl">
              Catatan: Terdapat {sessions.length} data tersimpan, namun tidak sesuai dengan filter pencarian / tanggal aktif.
            </p>
         )}
@@ -676,74 +677,85 @@ export default function DiklatReport({
       {/* BOTTOM SECTION: Daftar Kegiatan Pelatihan with Edit & Trash Icons */}
       <div className="w-full max-w-4xl space-y-4 no-print mt-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">
+          <h3 className="text-xs font-black uppercase tracking-widest text-slate-300">
             Daftar Kegiatan Pelatihan ({filteredSessions.length})
           </h3>
-          <span className="text-[10px] text-slate-500 font-medium">
+          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
             Klik kartu untuk melihat detail laporan resmi
           </span>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[800px] overflow-y-auto pr-2 custom-scrollbar">
-          {filteredSessions.map((s) => (
-            <div
-              key={s.id}
-              onClick={() => setSelectedSessionId(s.id)}
-              className={`p-4 rounded-2xl border text-left cursor-pointer transition-all relative overflow-hidden ${
-                selectedSession?.id === s.id
-                  ? 'bg-blue-600/10 border-blue-500/40 shadow-lg shadow-blue-500/5'
-                  : 'bg-white/2 hover:bg-white/5 border-white/5'
-              }`}
-            >
-              <div className="flex justify-between items-start gap-2 mb-2">
-                <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-[9px] font-bold rounded-md uppercase tracking-wider">
-                  {s.unit}
-                </span>
-                <span className="text-[10px] text-slate-500 font-mono">
-                  {format(parseISO(s.waktu), 'dd/MM/yyyy')}
-                </span>
-              </div>
-              <h4 className="text-xs font-black text-slate-100 uppercase tracking-tight line-clamp-2">
-                {s.judul}
-              </h4>
-              <div className="flex justify-between items-center mt-4 border-t border-white/5 pt-3">
-                <span className="text-[10px] text-slate-400 font-medium truncate max-w-[140px]">
-                  👤 {s.observer}
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] uppercase font-bold text-cyan-400">
-                    📎 {s.materials.length} File
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[800px] overflow-y-auto pr-2 custom-scrollbar">
+          {filteredSessions.map((s) => {
+            const isSelected = selectedSession?.id === s.id;
+            return (
+              <div
+                key={s.id}
+                onClick={() => setSelectedSessionId(s.id)}
+                className={`p-5 rounded-[24px] border text-left cursor-pointer transition-all relative overflow-hidden group ${
+                  isSelected
+                    ? 'bg-[#1e204a] border-cyan-400/70 shadow-[-4px_-4px_14px_rgba(140,165,255,0.08),8px_10px_24px_rgba(0,0,0,0.8),inset_1px_1px_2px_rgba(255,255,255,0.22)]'
+                    : 'bg-[#18193b] hover:bg-[#1c1e45] border-[#2b2d56] shadow-[-4px_-4px_12px_rgba(140,165,255,0.05),6px_8px_20px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.15)]'
+                }`}
+              >
+                <div className="absolute top-0 inset-x-4 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+                
+                <div className="flex justify-between items-start gap-2 mb-2">
+                  <span className={`px-2.5 py-1 text-[9px] font-black rounded-lg uppercase tracking-wider border ${
+                    isSelected 
+                      ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400/40' 
+                      : 'bg-indigo-950/80 text-indigo-300 border-indigo-800/40'
+                  }`}>
+                    {s.unit}
                   </span>
-                  
-                  {/* EDIT BUTTON */}
-                  <button 
-                    type="button"
-                    onClick={(e) => { 
-                      e.stopPropagation(); 
-                      handleEditSession(s.id); 
-                    }}
-                    className="p-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 hover:text-blue-300 rounded-lg transition-all"
-                    title="Edit Data Pelatihan"
-                  >
-                    <Edit className="w-3.5 h-3.5" />
-                  </button>
+                  <span className="text-[10px] text-slate-400 font-mono font-bold">
+                    {format(parseISO(s.waktu), 'dd/MM/yyyy')}
+                  </span>
+                </div>
+                
+                <h4 className="text-xs sm:text-sm font-black text-white uppercase tracking-tight line-clamp-2 mt-1">
+                  {s.judul}
+                </h4>
+                
+                <div className="flex justify-between items-center mt-4 border-t border-indigo-900/30 pt-3">
+                  <span className="text-[11px] text-slate-300 font-semibold truncate max-w-[140px] italic">
+                    👤 {s.observer}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] uppercase font-black text-cyan-400">
+                      📎 {s.materials.length} File
+                    </span>
+                    
+                    {/* EDIT BUTTON */}
+                    <button 
+                      type="button"
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        handleEditSession(s.id); 
+                      }}
+                      className="p-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 hover:text-blue-300 rounded-xl transition-all border border-blue-500/20"
+                      title="Edit Data Pelatihan"
+                    >
+                      <Edit className="w-3.5 h-3.5" />
+                    </button>
 
-                  {/* TRASH / DELETE BUTTON */}
-                  <button 
-                    type="button"
-                    onClick={(e) => { 
-                      e.stopPropagation(); 
-                      setDeleteConfirmSession(s); 
-                    }}
-                    className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 rounded-lg transition-all"
-                    title="Hapus Data Pelatihan"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                    {/* TRASH / DELETE BUTTON */}
+                    <button 
+                      type="button"
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        setDeleteConfirmSession(s); 
+                      }}
+                      className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 rounded-xl transition-all border border-red-500/20"
+                      title="Hapus Data Pelatihan"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

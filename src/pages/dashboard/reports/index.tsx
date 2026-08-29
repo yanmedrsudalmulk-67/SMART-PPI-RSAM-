@@ -139,26 +139,43 @@ const SUB_CATEGORIES = {
   'Kewaspadaan Isolasi': ['Standar', 'Transmisi', 'Monitoring']
 };
 
+const MONTHS_SHORT = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "Mei",
+  "Jun",
+  "Jul",
+  "Ags",
+  "Sep",
+  "Okt",
+  "Nov",
+  "Des",
+];
+
 const SummaryCard = ({ indicator, stats, onClick }: any) => {
   const avgPercent = stats ? stats.avgPercent : 0;
   const count = stats ? stats.count : 0;
   
   let colorClass = 'text-slate-400';
-  let bgClass = 'bg-slate-500/10';
-  let borderClass = 'border-slate-500/20';
+  let badgeBg = 'bg-slate-500/10 text-slate-400 border-slate-500/30';
   let targetStatus = 'Belum ada data';
   
   if (count > 0) {
     if (avgPercent < 75) {
-      colorClass = 'text-red-500'; bgClass = 'bg-red-500/10'; borderClass = 'border-red-500/30';
+      colorClass = 'text-rose-400';
+      badgeBg = 'bg-rose-950/80 text-rose-300 border-rose-500/40';
       targetStatus = 'Di bawah target';
     }
     else if (avgPercent < 85) {
-      colorClass = 'text-yellow-500'; bgClass = 'bg-yellow-500/10'; borderClass = 'border-yellow-500/30';
+      colorClass = 'text-amber-400';
+      badgeBg = 'bg-amber-950/80 text-amber-300 border-amber-500/40';
       targetStatus = 'Mendekati target';
     }
     else {
-      colorClass = 'text-emerald-500'; bgClass = 'bg-emerald-500/10'; borderClass = 'border-emerald-500/30';
+      colorClass = 'text-emerald-400';
+      badgeBg = 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40';
       targetStatus = 'Target tercapai';
     }
   }
@@ -169,41 +186,45 @@ const SummaryCard = ({ indicator, stats, onClick }: any) => {
     <motion.div 
       whileHover={{ y: -6, scale: 1.02 }} 
       onClick={onClick}
-      className={`bg-gradient-to-b from-white/95 via-white/90 to-slate-50/90 dark:from-[#111C36] dark:via-[#0D152A] dark:to-[#080D1A] backdrop-blur-md p-5 sm:p-6 rounded-3xl border border-slate-200/80 dark:border-white/10 ${borderClass} cursor-pointer group relative overflow-hidden flex flex-col justify-between min-h-[220px] shadow-[0_12px_24px_-6px_rgba(0,0,0,0.12),0_6px_12px_-4px_rgba(0,0,0,0.08),inset_0_1px_1.5px_rgba(255,255,255,0.8)] dark:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.9),0_10px_20px_-6px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.2),0_12px_24px_-6px_rgba(0,0,0,0.15),inset_0_1px_2px_rgba(255,255,255,0.95)] dark:hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.95),0_16px_30px_-8px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.2)] transition-all duration-300 transform-gpu`}
+      className="group relative bg-[#18193b] p-6 sm:p-7 rounded-[28px] md:rounded-[32px] border border-[#2b2d56] cursor-pointer overflow-hidden flex flex-col justify-between min-h-[240px] shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] hover:shadow-[-8px_-8px_24px_rgba(140,165,255,0.1),12px_16px_40px_rgba(0,0,0,0.8),inset_1px_1px_2px_rgba(255,255,255,0.25)] transition-all duration-300 transform-gpu"
     >
-      <div className={`absolute top-0 right-0 w-32 h-32 blur-[60px] rounded-full -z-10 opacity-20 transition-all duration-500 group-hover:opacity-40 group-hover:scale-150 ${bgClass.replace('/10', '')}`} />
+      {/* Top Bevel Highlight */}
+      <div className="absolute top-0 inset-x-6 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
       
-      <div className="flex justify-between items-start mb-4">
-        <div className={`p-3.5 rounded-2xl ${bgClass} ${colorClass} group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-inner`}>
-          <Icon className="w-6 h-6" />
+      <div className="flex justify-between items-start mb-4 relative z-10">
+        <div className="shrink-0 relative">
+          <div className="w-14 h-14 rounded-[20px] bg-gradient-to-br from-[#272952] to-[#12132d] border-2 border-indigo-400/30 shadow-[-3px_-3px_10px_rgba(140,165,255,0.12),6px_8px_18px_rgba(0,0,0,0.7),inset_1.5px_1.5px_2px_rgba(255,255,255,0.2)] flex items-center justify-center transform group-hover:scale-105 group-hover:-rotate-3 transition-transform duration-300">
+            <div className="w-9 h-9 rounded-[14px] bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 shadow-[0_6px_16px_rgba(59,130,246,0.5),inset_1px_1px_2px_rgba(255,255,255,0.4)] flex items-center justify-center text-white">
+              <Icon className="w-5 h-5 drop-shadow" />
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col items-end">
-          <span className={`text-3xl font-black font-mono tracking-tighter drop-shadow-md transition-colors ${colorClass}`}>
+
+        <div className="flex flex-col items-end text-right">
+          <span className={`text-3xl sm:text-4xl font-black font-mono tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] ${colorClass}`}>
             {Math.round(avgPercent)}%
           </span>
-          <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">Capaian Rata-rata</span>
+          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1 text-right">CAPAIAN RATA-RATA</span>
         </div>
       </div>
 
-      <div className="mt-4">
-        <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mb-3 uppercase tracking-tight leading-snug group-hover:text-blue-500 transition-colors">
+      <div className="mt-2 relative z-10">
+        <h3 className="text-sm sm:text-base font-extrabold text-white mb-3 uppercase tracking-tight leading-snug group-hover:text-cyan-300 transition-colors">
           {indicator.title}
         </h3>
         
-        <div className="flex items-center justify-between border-t border-slate-100 dark:border-white/5 pt-4">
+        {/* Recessed Tray for details */}
+        <div className="bg-[#12132e] rounded-2xl p-3 border border-black/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] flex items-center justify-between">
           <div className="flex flex-col">
-             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{count} Audit</span>
-             <span className={`text-[10px] font-bold ${colorClass}`}>{targetStatus}</span>
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{count} Audit Terdata</span>
+            <span className={`text-[10px] font-black uppercase px-2 py-0.5 mt-1 rounded-full border ${badgeBg} w-fit`}>
+              {targetStatus}
+            </span>
           </div>
-          <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-colors text-slate-400">
+          <div className="w-8 h-8 rounded-xl bg-[#18193b] border border-white/10 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all text-slate-400 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)]">
             <ArrowLeft className="w-4 h-4 rotate-180" />
           </div>
         </div>
-      </div>
-      
-      {/* Decorative Target Line */}
-       <div className="absolute bottom-0 left-0 w-full h-1 bg-slate-100 dark:bg-white/5">
-         <div className={`h-full ${bgClass.replace('/10', '')} transition-all duration-1000 ease-out`} style={{ width: `${avgPercent}%` }} />
       </div>
     </motion.div>
   );
@@ -222,19 +243,7 @@ const SurveilansSummaryCard = ({ indicator, stats, onClick }: any) => {
   const maxStandard = standards[indicator.id] || 0;
   const isSesuai = rate <= maxStandard;
 
-  let colorClass = 'text-slate-400';
-  let bgClass = 'bg-slate-500/10';
-  let borderClass = 'border-slate-500/20';
-  
-  if (indicator.id === 'phlebitis') {
-    colorClass = 'text-cyan-500'; bgClass = 'bg-cyan-500/10'; borderClass = 'border-cyan-500/30';
-  } else if (indicator.id === 'isk') {
-    colorClass = 'text-emerald-500'; bgClass = 'bg-emerald-500/10'; borderClass = 'border-emerald-500/30';
-  } else if (indicator.id === 'vap') {
-    colorClass = 'text-purple-500'; bgClass = 'bg-purple-500/10'; borderClass = 'border-purple-500/30';
-  } else if (indicator.id === 'ido') {
-    colorClass = 'text-orange-500'; bgClass = 'bg-orange-500/10'; borderClass = 'border-orange-500/30';
-  }
+  let colorClass = isSesuai ? 'text-emerald-400' : 'text-rose-400';
 
   const Icon = indicator.icon;
   const trendUp = rate > prevRate;
@@ -245,53 +254,60 @@ const SurveilansSummaryCard = ({ indicator, stats, onClick }: any) => {
     <motion.div 
       whileHover={{ y: -6, scale: 1.02 }} 
       onClick={onClick}
-      className={`bg-gradient-to-b from-slate-900/90 via-slate-900/80 to-[#0A0F1E]/95 dark:from-[#111C36] dark:via-[#0D152A] dark:to-[#080D1A] backdrop-blur-md p-5 sm:p-6 rounded-3xl border border-slate-700/50 dark:border-white/10 ${borderClass} cursor-pointer group relative overflow-hidden flex flex-col justify-between min-h-[240px] shadow-[0_12px_24px_-6px_rgba(0,0,0,0.4),0_6px_12px_-4px_rgba(0,0,0,0.3),inset_0_1px_1.5px_rgba(255,255,255,0.15)] dark:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.9),0_10px_20px_-6px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6),0_12px_24px_-6px_rgba(0,0,0,0.4),inset_0_1px_2px_rgba(255,255,255,0.25)] dark:hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.95),0_16px_30px_-8px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.2)] transition-all duration-300 transform-gpu`}
+      className="group relative bg-[#18193b] p-6 sm:p-7 rounded-[28px] md:rounded-[32px] border border-[#2b2d56] cursor-pointer overflow-hidden flex flex-col justify-between min-h-[250px] shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] hover:shadow-[-8px_-8px_24px_rgba(140,165,255,0.1),12px_16px_40px_rgba(0,0,0,0.8),inset_1px_1px_2px_rgba(255,255,255,0.25)] transition-all duration-300 transform-gpu"
     >
-      <div className={`absolute top-0 right-0 w-40 h-40 blur-[80px] rounded-full -z-10 opacity-20 transition-all duration-500 group-hover:opacity-40 group-hover:scale-150 ${bgClass.replace('/10', '')}`} />
+      {/* Top Bevel Highlight */}
+      <div className="absolute top-0 inset-x-6 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
       
-      <div className="flex justify-between items-start mb-4">
-        <div className={`p-4 rounded-2xl ${bgClass} ${colorClass} group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-inner`}>
-          <Icon className="w-6 h-6" />
+      <div className="flex justify-between items-start mb-4 relative z-10">
+        <div className="shrink-0 relative">
+          <div className="w-14 h-14 rounded-[20px] bg-gradient-to-br from-[#272952] to-[#12132d] border-2 border-indigo-400/30 shadow-[-3px_-3px_10px_rgba(140,165,255,0.12),6px_8px_18px_rgba(0,0,0,0.7),inset_1.5px_1.5px_2px_rgba(255,255,255,0.2)] flex items-center justify-center transform group-hover:scale-105 group-hover:-rotate-3 transition-transform duration-300">
+            <div className="w-9 h-9 rounded-[14px] bg-gradient-to-tr from-purple-600 via-fuchsia-500 to-pink-500 shadow-[0_6px_16px_rgba(168,85,247,0.5),inset_1px_1px_2px_rgba(255,255,255,0.4)] flex items-center justify-center text-white">
+              <Icon className="w-5 h-5 drop-shadow" />
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col items-end">
-          <span className={`text-4xl font-black font-mono tracking-tighter drop-shadow-md transition-colors ${colorClass}`}>
+
+        <div className="flex flex-col items-end text-right">
+          <span className={`text-3xl sm:text-4xl font-black font-mono tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] ${colorClass}`}>
             {rate.toFixed(2)}{symbol}
           </span>
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Rate Realtime</span>
+          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1 text-right">RATE REALTIME</span>
         </div>
       </div>
 
-      <div className="mt-auto">
-        <h3 className="text-base font-bold text-white mb-4 uppercase tracking-tight leading-snug group-hover:opacity-80 transition-opacity">
+      <div className="mt-auto relative z-10">
+        <h3 className="text-sm sm:text-base font-extrabold text-white mb-3 uppercase tracking-tight leading-snug group-hover:text-cyan-300 transition-colors">
           {indicator.title}
         </h3>
         
-        <div className="flex flex-col gap-3 border-t border-white/10 pt-4">
+        {/* Recessed Tray for details */}
+        <div className="bg-[#12132e] rounded-2xl p-3 border border-black/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] flex flex-col gap-2">
           <div className="flex justify-between items-center text-xs">
-             <span className="text-slate-400 font-medium">Status</span>
-             {count === 0 ? (
-                <span className="text-slate-500 font-bold">Belum ada data</span>
-             ) : isSesuai ? (
-                <span className="text-emerald-400 font-bold bg-emerald-400/10 px-2 py-0.5 rounded">Sesuai Standar</span>
-             ) : (
-                <span className="text-red-400 font-bold bg-red-400/10 px-2 py-0.5 rounded">Di Atas Standar</span>
-             )}
+            <span className="text-slate-400 font-medium text-[11px]">Status</span>
+            {count === 0 ? (
+              <span className="text-slate-500 font-bold text-[10px]">Belum ada data</span>
+            ) : isSesuai ? (
+              <span className="text-emerald-300 font-black text-[10px] bg-emerald-950/80 border border-emerald-500/40 px-2 py-0.5 rounded-full">Sesuai Standar</span>
+            ) : (
+              <span className="text-rose-300 font-black text-[10px] bg-rose-950/80 border border-rose-500/40 px-2 py-0.5 rounded-full">Di Atas Standar</span>
+            )}
           </div>
-          <div className="flex justify-between items-center text-xs">
-             <span className="text-slate-400 font-medium">Trend (vs sblm)</span>
-             {count === 0 ? (
-                <span className="text-slate-500 font-bold">-</span>
-             ) : trendSame ? (
-                <span className="text-slate-300 font-bold">-</span>
-             ) : trendUp ? (
-                <span className="text-red-400 font-bold flex items-center gap-1">Naik <Activity className="w-3 h-3" /></span>
-             ) : (
-                <span className="text-emerald-400 font-bold flex items-center gap-1">Turun <Activity className="w-3 h-3 rotate-180" /></span>
-             )}
+          <div className="flex justify-between items-center text-xs border-t border-white/5 pt-1.5">
+            <span className="text-slate-400 font-medium text-[11px]">Trend (vs sblm)</span>
+            {count === 0 ? (
+              <span className="text-slate-500 font-bold text-[10px]">-</span>
+            ) : trendSame ? (
+              <span className="text-slate-300 font-bold text-[10px]">-</span>
+            ) : trendUp ? (
+              <span className="text-rose-400 font-bold text-[10px] flex items-center gap-1">Naik <Activity className="w-3 h-3" /></span>
+            ) : (
+              <span className="text-emerald-400 font-bold text-[10px] flex items-center gap-1">Turun <Activity className="w-3 h-3 rotate-180" /></span>
+            )}
           </div>
-          <div className="flex justify-between items-center text-xs">
-             <span className="text-slate-400 font-medium">Total Input</span>
-             <span className="text-white font-bold">{count} Data</span>
+          <div className="flex justify-between items-center text-xs border-t border-white/5 pt-1.5">
+            <span className="text-slate-400 font-medium text-[11px]">Total Input</span>
+            <span className="text-white font-bold text-[11px]">{count} Data</span>
           </div>
         </div>
       </div>
@@ -514,88 +530,115 @@ export default function ReportsPage() {
             
             {/* Header & Filter Periode */}
             {kategori !== 'Surveilans HAIs' && (
-              <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-                <div className="text-center lg:text-left w-full lg:w-auto">
-                  <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all uppercase mb-2">
+              <div className="mb-6 flex flex-col lg:flex-row justify-between items-center lg:items-center gap-4">
+                <div className="text-center lg:text-left w-full lg:w-auto shrink-0">
+                  <h1 className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase">
                      Laporan SMART PPI
                   </h1>
-                  <p className="text-sm font-normal text-white mx-auto md:mx-0 max-w-[280px] sm:max-w-none">
-                     Pusat analisis data pencegahan dan pengendalian infeksi terintegrasi.
+                  <p className="text-sm text-slate-300 mt-1 font-medium">
+                     Laporan Data Monitoring PPI Terintegrasi
                   </p>
                 </div>
-                 <div className="flex flex-wrap items-center justify-center lg:justify-end gap-3 w-full lg:w-auto">
-                  <div className="glowing-border-container w-full sm:w-auto">
-                    {/* Spinning gradient layer */}
-                    <div className="glowing-border-bg" />
-                    {/* Glowing shadow layer underneath */}
-                    <div className="glowing-border-shadow" />
 
-                    <div className="glowing-border-inner flex flex-wrap justify-center items-center gap-3 rounded-[14px] p-2 w-full sm:w-auto">
-                      <select 
-                        value={periode} 
-                        onChange={(e) => setPeriode(e.target.value)}
-                        className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
-                      >
-                        {['Bulanan', 'Triwulan', 'Semester', 'Tahunan'].map(p => (
-                          <option key={p} value={p} className="bg-white dark:bg-slate-900">{p}</option>
-                        ))}
-                      </select>
+                {/* Filter Periode - 3D Tactile Neumorphic Container */}
+                <div className="relative group w-full lg:w-auto">
+                  <div className="relative bg-[#18193b] rounded-[24px] p-2.5 sm:p-3 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)]">
+                    {/* Top Bevel Specular Highlight */}
+                    <div className="absolute top-0 inset-x-6 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+                    <div className="flex flex-wrap items-center justify-center lg:justify-end gap-2.5 relative z-10">
+                      {/* Neumorphic Capsule Badge */}
+                      <div className="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)]">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
+                          PERIODE
+                        </span>
+                      </div>
+
+                      {/* Tipe Periode - Recessed Neumorphic Well */}
+                      <div className="relative">
+                        <select 
+                          value={periode} 
+                          onChange={(e) => setPeriode(e.target.value)}
+                          className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] capitalize"
+                        >
+                          <option value="Bulanan" className="bg-[#18193b] text-white">Bulanan</option>
+                          <option value="Triwulan" className="bg-[#18193b] text-white">Triwulan</option>
+                          <option value="Semester" className="bg-[#18193b] text-white">Semester</option>
+                          <option value="Tahunan" className="bg-[#18193b] text-white">Tahunan</option>
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </div>
+                      </div>
    
                       {periode === 'Bulanan' && (
-                        <>
-                          <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
+                        <div className="relative">
                           <select 
                             value={selectedMonth} 
                             onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                            className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
+                            className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
                           >
-                            {["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"].map((m, i) => (
-                              <option key={m} value={i} className="bg-white dark:bg-slate-900">{m}</option>
+                            {MONTHS_SHORT.map((m, i) => (
+                              <option key={m} value={i} className="bg-[#18193b] text-white">{m}</option>
                             ))}
                           </select>
-                        </>
+                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          </div>
+                        </div>
                       )}
    
                       {periode === 'Triwulan' && (
-                        <>
-                          <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
+                        <div className="relative">
                           <select 
                             value={selectedQuarter} 
                             onChange={(e) => setSelectedQuarter(parseInt(e.target.value))}
-                            className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
+                            className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
                           >
-                            {["Triwulan 1", "Triwulan 2", "Triwulan 3", "Triwulan 4"].map((q, i) => (
-                              <option key={q} value={i} className="bg-white dark:bg-slate-900">{q}</option>
-                            ))}
+                            <option value={0} className="bg-[#18193b] text-white">TW 1 (Jan-Mar)</option>
+                            <option value={1} className="bg-[#18193b] text-white">TW 2 (Apr-Jun)</option>
+                            <option value={2} className="bg-[#18193b] text-white">TW 3 (Jul-Sep)</option>
+                            <option value={3} className="bg-[#18193b] text-white">TW 4 (Okt-Des)</option>
                           </select>
-                        </>
+                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          </div>
+                        </div>
                       )}
    
                       {periode === 'Semester' && (
-                        <>
-                          <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
+                        <div className="relative">
                           <select 
                             value={selectedSemester} 
                             onChange={(e) => setSelectedSemester(parseInt(e.target.value))}
-                            className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
+                            className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
                           >
-                            {["Semester 1", "Semester 2"].map((s, i) => (
-                              <option key={s} value={i} className="bg-white dark:bg-slate-900">{s}</option>
-                            ))}
+                            <option value={0} className="bg-[#18193b] text-white">SM 1 (Jan-Jun)</option>
+                            <option value={1} className="bg-[#18193b] text-white">SM 2 (Jul-Des)</option>
                           </select>
-                        </>
+                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          </div>
+                        </div>
                       )}
    
-                      <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
-                      <select 
-                        value={selectedYear} 
-                        onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                        className="bg-transparent border-none outline-none text-sm font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
-                      >
-                        {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => (
-                          <option key={y} value={y} className="bg-white dark:bg-slate-900">{y}</option>
-                        ))}
-                      </select>
+                      {/* Tahun - Recessed Neumorphic Well */}
+                      <div className="relative">
+                        <select 
+                          value={selectedYear} 
+                          onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                          className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                        >
+                          <option value={2026} className="bg-[#18193b] text-white">2026</option>
+                          <option value={2025} className="bg-[#18193b] text-white">2025</option>
+                          <option value={2024} className="bg-[#18193b] text-white">2024</option>
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -615,46 +658,44 @@ export default function ReportsPage() {
                     whileHover={{ y: -5, scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => handleCategoryChange(detail.id)}
-                    className={`cursor-pointer rounded-2xl p-5 border transition-all duration-300 relative overflow-hidden backdrop-blur-md flex flex-col justify-between min-h-[140px] select-none shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_4px_10px_-2px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_16px_32px_-8px_rgba(0,0,0,0.85),0_6px_16px_-4px_rgba(0,0,0,0.75),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] hover:shadow-[0_20px_35px_-8px_rgba(0,0,0,0.18),0_10px_18px_-4px_rgba(0,0,0,0.12)] dark:hover:shadow-[0_25px_50px_-10px_rgba(0,0,0,0.95),0_12px_24px_-6px_rgba(0,0,0,0.85)] ${
+                    className={`relative rounded-[24px] sm:rounded-[28px] p-5 sm:p-6 border transition-all duration-300 transform-gpu overflow-hidden cursor-pointer select-none flex flex-col justify-between min-h-[160px] shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] ${
                       isActive 
-                        ? `bg-[#0f172a]/90 dark:bg-slate-900/95 bg-gradient-to-br ${detail.activeGradient} ${detail.activeBorder} z-10` 
-                        : `bg-white/90 dark:bg-[#111827]/90 hover:bg-slate-50 dark:hover:bg-white/5 ${detail.border} ${detail.textGlow}`
+                        ? `bg-[#1c1e48] border-cyan-400/50 shadow-[-6px_-6px_20px_rgba(140,165,255,0.12),12px_16px_36px_rgba(0,0,0,0.85),inset_1px_1px_2px_rgba(255,255,255,0.25)] ring-1 ring-cyan-400/30` 
+                        : `bg-[#18193b] hover:bg-[#1f214d] border-[#2b2d56]`
                     }`}
                   >
-                    {/* Glow Accent Background Ornaments */}
-                    {isActive && (
-                      <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 rounded-full blur-xl pointer-events-none animate-pulse" />
-                    )}
+                    {/* Top Bevel Specular Highlight */}
+                    <div className="absolute top-0 inset-x-6 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
-                    <div className="flex items-start justify-between">
-                      <div className="flex flex-col gap-1 pr-4">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl filter drop-shadow">{detail.emoji}</span>
-                          <h3 className={`text-sm sm:text-base font-extrabold tracking-tight ${
-                            isActive ? 'text-white' : 'text-slate-800 dark:text-slate-100'
+                    <div className="flex items-start justify-between relative z-10">
+                      <div className="flex flex-col gap-1 pr-3">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-2xl filter drop-shadow">{detail.emoji}</span>
+                          <h3 className={`text-sm sm:text-base font-black tracking-tight leading-snug ${
+                            isActive ? 'text-cyan-300' : 'text-white'
                           }`}>
                             {detail.title}
                           </h3>
                         </div>
-                        <p className={`text-[10px] sm:text-xs leading-normal mt-1 font-medium ${
-                          isActive ? 'text-white/80' : 'text-slate-500 dark:text-slate-400'
-                        }`}>
+                        <p className="text-[10px] sm:text-xs leading-relaxed mt-1 font-medium text-slate-300">
                           {detail.subtitle}
                         </p>
                       </div>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-slate-200/50 dark:border-white/5 flex items-center justify-between">
-                      <span className={`text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider ${
-                        isActive ? 'text-emerald-400' : 'text-slate-400 dark:text-slate-500'
+                    <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between relative z-10">
+                      <span className={`text-[10px] sm:text-[11px] font-black uppercase tracking-wider ${
+                        isActive ? 'text-emerald-400' : 'text-slate-400'
                       }`}>
                         {detail.statistic}
                       </span>
-                      {isActive && (
+                      {isActive ? (
                         <span className="flex h-2 w-2 relative">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-400"></span>
                         </span>
+                      ) : (
+                        <span className="w-2 h-2 rounded-full bg-white/20" />
                       )}
                     </div>
                   </motion.div>
@@ -662,7 +703,7 @@ export default function ReportsPage() {
               })}
             </div>
 
-            {/* Sub-Category Premium Redesigned Tabs */}
+            {/* Sub-Category Neumorphic Tabs */}
             <AnimatePresence>
               {(SUB_CATEGORIES as any)[kategori] && (
                 <motion.div
@@ -673,15 +714,15 @@ export default function ReportsPage() {
                   transition={{ duration: 0.2 }}
                   className="mt-4 mb-2 max-w-2xl mx-auto w-full"
                 >
-                  <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2.5 px-3">Klasifikasi Indikator</p>
-                  <div className="relative flex p-1.5 bg-white/80 dark:bg-[#0B1120]/80 backdrop-blur-sm rounded-full mb-4 border border-white/20 dark:border-white/10 shadow-[inset_0_1px_4px_rgba(0,0,0,0.05)] w-full">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 px-3 text-center sm:text-left">Klasifikasi Indikator</p>
+                  <div className="relative flex p-1.5 bg-[#12132e] rounded-full mb-4 border border-indigo-900/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] w-full">
                     <motion.div
                       className={`absolute top-1.5 bottom-1.5 rounded-full transition-colors duration-500 border ${
                         subKategori === "Standar"
-                          ? "bg-gradient-to-r from-blue-600 to-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.4)] border-blue-400/30"
+                          ? "bg-gradient-to-r from-blue-600 to-indigo-600 shadow-[-2px_-2px_8px_rgba(140,165,255,0.2),4px_6px_16px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.3)] border-white/20"
                           : subKategori === "Transmisi"
-                            ? "bg-gradient-to-r from-purple-600 to-purple-500 shadow-[0_0_20px_rgba(139,92,246,0.4)] border-purple-400/30"
-                            : "bg-gradient-to-r from-emerald-600 to-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.4)] border-emerald-400/30"
+                            ? "bg-gradient-to-r from-purple-600 to-indigo-600 shadow-[-2px_-2px_8px_rgba(140,165,255,0.2),4px_6px_16px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.3)] border-white/20"
+                            : "bg-gradient-to-r from-emerald-600 to-teal-600 shadow-[-2px_-2px_8px_rgba(140,165,255,0.2),4px_6px_16px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.3)] border-white/20"
                       }`}
                       initial={false}
                       style={{ left: "6px" }}
@@ -711,14 +752,14 @@ export default function ReportsPage() {
                             setSubKategori(tab.id);
                             forceScrollToTop();
                           }}
-                          className={`flex-1 flex items-center justify-center gap-2 py-3 text-[10px] sm:text-xs font-bold uppercase tracking-widest rounded-full transition-colors relative z-10 whitespace-nowrap shrink-0 overflow-hidden text-ellipsis ${
+                          className={`flex-1 flex items-center justify-center gap-2 py-3 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-full transition-colors relative z-10 whitespace-nowrap shrink-0 overflow-hidden text-ellipsis ${
                             isSubActive
                               ? "text-white"
-                              : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white"
+                              : "text-slate-400 hover:text-white"
                           }`}
                         >
                           <Icon
-                            className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform duration-300 ${isSubActive ? "text-white" : "text-slate-500 group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-white"}`}
+                            className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform duration-300 ${isSubActive ? "text-cyan-300" : "text-slate-400"}`}
                           />
                           <span className="truncate">{tab.label}</span>
                         </button>
@@ -802,136 +843,181 @@ export default function ReportsPage() {
             {/* Header Detail View */}
             <div
               id="report-detail-header"
-              className="bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-3xl p-4 sm:p-6 shadow-[0_12px_28px_-6px_rgba(0,0,0,0.12),0_6px_14px_-4px_rgba(0,0,0,0.06),inset_0_1px_1.5px_rgba(255,255,255,0.8)] dark:shadow-[0_20px_45px_-10px_rgba(0,0,0,0.9),0_8px_20px_-6px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] flex flex-col md:flex-row md:items-center justify-between gap-4"
+              className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative"
             >
-               <div className="flex items-center gap-4">
-                 <button onClick={handleBack} className="p-3 bg-slate-100 dark:bg-white/5 rounded-2xl hover:bg-slate-200 dark:hover:bg-white/10 transition-colors text-slate-600 dark:text-slate-300">
-                   <ArrowLeft className="w-5 h-5" />
-                 </button>
-                 <div>
-                   <h1 className="text-xl sm:text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase leading-none">
-                     {selectedData?.title}
-                   </h1>
-                   <div className="flex items-center gap-2 mt-2 font-medium text-[11px] text-slate-500 uppercase tracking-widest">
-                     <span>{selectedData?.cat}</span>
-                     {selectedData?.subcat && (
-                       <>
-                         <ChevronRight className="w-3 h-3" />
-                         <span>{selectedData.subcat}</span>
-                       </>
-                     )}
-                   </div>
-                 </div>
-               </div>
-               
-               <div className="flex flex-wrap justify-center items-center gap-3 self-center md:self-auto w-full md:w-auto mt-4 md:mt-0">
-                  <div className="glowing-border-container w-full sm:w-auto">
-                    {/* Spinning gradient layer */}
-                    <div className="glowing-border-bg" />
-                    {/* Glowing shadow layer underneath */}
-                    <div className="glowing-border-shadow" />
-                 <div className="glowing-border-inner flex flex-wrap justify-center items-center gap-2 rounded-[14px] p-1 shadow-sm w-full sm:w-auto">
-                   
-                   <select 
-                     value={periode} 
-                     onChange={(e) => setPeriode(e.target.value)}
-                     className="bg-transparent border-none outline-none text-xs font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
-                   >
-                     {['Bulanan', 'Triwulan', 'Semester', 'Tahunan'].map(p => (
-                       <option key={p} value={p} className="bg-white dark:bg-slate-900">{p}</option>
-                     ))}
-                   </select>
+              <div className="flex items-center gap-4 relative z-10 w-full lg:w-auto shrink-0">
+                <button onClick={handleBack} className="p-3 bg-[#12132e] border border-white/10 rounded-2xl hover:bg-[#20224a] transition-colors text-slate-300 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)]">
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase leading-none">
+                    {selectedData?.title}
+                  </h1>
+                  <div className="flex items-center gap-2 mt-2 font-medium text-[11px] text-slate-400 uppercase tracking-widest">
+                    <span>{selectedData?.cat}</span>
+                    {selectedData?.subcat && (
+                      <>
+                        <ChevronRight className="w-3 h-3" />
+                        <span>{selectedData.subcat}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex flex-wrap justify-center lg:justify-end items-center gap-3 relative z-10 w-full lg:w-auto mt-2 lg:mt-0">
+                {/* Filter Periode - 3D Tactile Neumorphic Container */}
+                <div className="relative group w-full sm:w-auto">
+                  <div className="relative bg-[#18193b] rounded-[24px] p-2.5 sm:p-3 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)]">
+                    {/* Top Bevel Highlight */}
+                    <div className="absolute top-0 inset-x-6 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
-                   {periode === 'Bulanan' && (
-                     <>
-                       <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
-                       <select 
-                         value={selectedMonth} 
-                         onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                         className="bg-transparent border-none outline-none text-xs font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
-                       >
-                         {["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"].map((m, i) => (
-                           <option key={m} value={i} className="bg-white dark:bg-slate-900">{m}</option>
-                         ))}
-                       </select>
-                     </>
-                   )}
-                   {periode === 'Triwulan' && (
-                     <>
-                       <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
-                       <select 
-                         value={selectedQuarter} 
-                         onChange={(e) => setSelectedQuarter(parseInt(e.target.value))}
-                         className="bg-transparent border-none outline-none text-xs font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
-                       >
-                         {["Triwulan 1", "Triwulan 2", "Triwulan 3", "Triwulan 4"].map((q, i) => (
-                           <option key={q} value={i} className="bg-white dark:bg-slate-900">{q}</option>
-                         ))}
-                       </select>
-                     </>
-                   )}
-                   {periode === 'Semester' && (
-                     <>
-                       <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
-                       <select 
-                         value={selectedSemester} 
-                         onChange={(e) => setSelectedSemester(parseInt(e.target.value))}
-                         className="bg-transparent border-none outline-none text-xs font-bold text-slate-900 dark:text-white pr-2 cursor-pointer"
-                       >
-                         {["Semester 1", "Semester 2"].map((s, i) => (
-                           <option key={s} value={i} className="bg-white dark:bg-slate-900">{s}</option>
-                         ))}
-                       </select>
-                     </>
-                   )}
-                 </div>
+                    <div className="flex flex-wrap items-center justify-center lg:justify-end gap-2.5 relative z-10">
+                      {/* Neumorphic Capsule Badge */}
+                      <div className="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)]">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
+                          PERIODE
+                        </span>
+                      </div>
 
-                 </div>
+                      {/* Tipe Periode - Recessed Neumorphic Well */}
+                      <div className="relative">
+                        <select 
+                          value={periode} 
+                          onChange={(e) => setPeriode(e.target.value)}
+                          className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] capitalize"
+                        >
+                          <option value="Bulanan" className="bg-[#18193b] text-white">Bulanan</option>
+                          <option value="Triwulan" className="bg-[#18193b] text-white">Triwulan</option>
+                          <option value="Semester" className="bg-[#18193b] text-white">Semester</option>
+                          <option value="Tahunan" className="bg-[#18193b] text-white">Tahunan</option>
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </div>
+                      </div>
 
-                  <div className="flex items-center gap-2 bg-white/60 dark:bg-[#111827]/60 backdrop-blur-sm border border-slate-200 dark:border-white/10 rounded-xl p-1 shadow-sm">
-                   <div className="p-1.5 bg-amber-50 dark:bg-amber-500/10 rounded-lg text-amber-600 dark:text-amber-400">
-                     <Building2 className="w-4 h-4" />
-                   </div>
-                   <select 
-                     value={selectedUnit} 
-                     onChange={(e) => setSelectedUnit(e.target.value)}
-                     className="bg-transparent border-none outline-none text-xs font-bold text-slate-900 dark:text-white pr-2 max-w-[120px] sm:max-w-none cursor-pointer"
-                   >
-                     <option value="Semua Unit" className="bg-white dark:bg-slate-900">Semua Unit</option>
-                     {['IGD', 'ICU', 'IBS', 'Rawat Jalan', 'Ranap Aisyah', 'Ranap Fatimah', 'Ranap Khadijah', 'Ranap Usman', 'Radiologi', 'Laboratorium', 'Pantry', 'Emergency Kebidanan'].map(u => (
-                       <option key={u} value={u} className="bg-white dark:bg-slate-900">{u}</option>
-                     ))}
-                   </select>
-                 </div>
+                      {periode === 'Bulanan' && (
+                        <div className="relative">
+                          <select 
+                            value={selectedMonth} 
+                            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                            className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                          >
+                            {MONTHS_SHORT.map((m, i) => (
+                              <option key={m} value={i} className="bg-[#18193b] text-white">{m}</option>
+                            ))}
+                          </select>
+                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          </div>
+                        </div>
+                      )}
 
-                 {selectedIndicator === 'dekontaminasi_alat' && (
-                   <div className="flex gap-2">
-                     <button
-                       onClick={() => window.dispatchEvent(new Event('edit-dekontaminasi'))}
-                       className="p-3 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 rounded-xl transition-colors"
-                       title="Edit Laporan"
-                     >
-                       <Edit className="w-5 h-5" />
-                     </button>
-                     <button
-                       onClick={() => window.dispatchEvent(new Event('delete-dekontaminasi'))}
-                       className="p-3 bg-red-500/10 hover:bg-red-500/20 text-red-600 rounded-xl transition-colors"
-                       title="Hapus Laporan"
-                     >
-                       <Trash2 className="w-5 h-5" />
-                     </button>
-                     <button
-                       onClick={() => window.dispatchEvent(new Event('print-dekontaminasi'))}
-                       className="p-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 rounded-xl transition-colors"
-                       title="Print PDF"
-                     >
-                       <FileText className="w-5 h-5" />
-                     </button>
-                   </div>
-                 )}
+                      {periode === 'Triwulan' && (
+                        <div className="relative">
+                          <select 
+                            value={selectedQuarter} 
+                            onChange={(e) => setSelectedQuarter(parseInt(e.target.value))}
+                            className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                          >
+                            <option value={0} className="bg-[#18193b] text-white">TW 1 (Jan-Mar)</option>
+                            <option value={1} className="bg-[#18193b] text-white">TW 2 (Apr-Jun)</option>
+                            <option value={2} className="bg-[#18193b] text-white">TW 3 (Jul-Sep)</option>
+                            <option value={3} className="bg-[#18193b] text-white">TW 4 (Okt-Des)</option>
+                          </select>
+                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          </div>
+                        </div>
+                      )}
 
-               </div>
-             </div>
+                      {periode === 'Semester' && (
+                        <div className="relative">
+                          <select 
+                            value={selectedSemester} 
+                            onChange={(e) => setSelectedSemester(parseInt(e.target.value))}
+                            className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                          >
+                            <option value={0} className="bg-[#18193b] text-white">SM 1 (Jan-Jun)</option>
+                            <option value={1} className="bg-[#18193b] text-white">SM 2 (Jul-Des)</option>
+                          </select>
+                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Tahun - Recessed Neumorphic Well */}
+                      <div className="relative">
+                        <select 
+                          value={selectedYear} 
+                          onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                          className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                        >
+                          <option value={2026} className="bg-[#18193b] text-white">2026</option>
+                          <option value={2025} className="bg-[#18193b] text-white">2025</option>
+                          <option value={2024} className="bg-[#18193b] text-white">2024</option>
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Unit Filter - Styled Matching Neumorphic Container */}
+                <div className="relative group">
+                  <div className="relative bg-[#18193b] rounded-[24px] p-2.5 sm:p-3 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)]">
+                    <div className="absolute top-0 inset-x-4 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+                    <div className="relative z-10 flex items-center">
+                      <select 
+                        value={selectedUnit} 
+                        onChange={(e) => setSelectedUnit(e.target.value)}
+                        className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                      >
+                        <option value="Semua Unit" className="bg-[#18193b] text-white">Semua Unit</option>
+                        {['IGD', 'ICU', 'IBS', 'Rawat Jalan', 'Ranap Aisyah', 'Ranap Fatimah', 'Ranap Khadijah', 'Ranap Usman', 'Radiologi', 'Laboratorium', 'Pantry', 'Emergency Kebidanan'].map(u => (
+                          <option key={u} value={u} className="bg-[#18193b] text-white">{u}</option>
+                        ))}
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {selectedIndicator === 'dekontaminasi_alat' && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => window.dispatchEvent(new Event('edit-dekontaminasi'))}
+                      className="p-2.5 bg-[#12132e] hover:bg-[#22244e] text-blue-400 rounded-xl border border-indigo-900/40 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] transition-colors"
+                      title="Edit Laporan"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => window.dispatchEvent(new Event('delete-dekontaminasi'))}
+                      className="p-2.5 bg-[#12132e] hover:bg-rose-950/40 text-rose-400 rounded-xl border border-rose-900/40 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] transition-colors"
+                      title="Hapus Laporan"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => window.dispatchEvent(new Event('print-dekontaminasi'))}
+                      className="p-2.5 bg-[#12132e] hover:bg-emerald-950/40 text-emerald-400 rounded-xl border border-emerald-900/40 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] transition-colors"
+                      title="Print PDF"
+                    >
+                      <FileText className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* Dynamic Report Content */}
             <div className="pt-2">

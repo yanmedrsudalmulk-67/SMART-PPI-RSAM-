@@ -268,11 +268,11 @@ export default function SurveilansHaisReport({
   return (
     <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500">
       {/* TABLE SECTION */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl relative">
-        <div className="absolute top-0 right-0 p-32 bg-blue-500/5 blur-[120px] rounded-full pointer-events-none"></div>
-        <div className="p-6 border-b border-slate-800 flex justify-between items-center relative z-10">
-          <h3 className="text-lg font-bold text-white flex items-center gap-3">
-            <div className="p-2 bg-slate-800 rounded-xl" style={{ color }}>
+      <div className="bg-[#18193b] rounded-[28px] md:rounded-[32px] border border-[#2b2d56] overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] relative">
+        <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+        <div className="p-6 sm:p-7 border-b border-indigo-900/30 bg-[#141532]/60 backdrop-blur-md flex justify-between items-center relative z-10">
+          <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-3 uppercase tracking-wider">
+            <div className="p-2.5 bg-[#12132e] rounded-xl border border-indigo-900/40" style={{ color }}>
               <Table2 className="w-5 h-5" />
             </div>
             Monitoring Realtime
@@ -282,7 +282,7 @@ export default function SurveilansHaisReport({
         <div className="p-0 overflow-x-auto relative z-10">
           <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead>
-              <tr className="bg-slate-800/50 text-[11px] uppercase tracking-widest text-slate-400">
+              <tr className="bg-[#12132e] text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 border-b border-indigo-900/30">
                 <th className="py-4 px-6 font-black w-16 text-center">No</th>
                 <th className="py-4 px-6 font-black">Tanggal Input</th>
                 <th className="py-4 px-6 font-black">Kategori Ruangan</th>
@@ -292,19 +292,19 @@ export default function SurveilansHaisReport({
                 <th className="py-4 px-6 font-black text-center">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/50 text-sm">
+            <tbody className="divide-y divide-white/5 text-xs sm:text-sm font-bold text-slate-200">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-500">
+                  <td colSpan={7} className="py-12 text-center text-slate-400 font-bold uppercase tracking-wider">
                     Memuat data realtime...
                   </td>
                 </tr>
               ) : currentPeriodData.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-16 text-center">
-                    <div className="flex flex-col items-center justify-center text-slate-500">
-                      <AlertCircle className="w-10 h-10 mb-3 opacity-50" />
-                      <p className="font-medium">
+                    <div className="flex flex-col items-center justify-center text-slate-400">
+                      <AlertCircle className="w-10 h-10 mb-3 opacity-50 text-slate-500" />
+                      <p className="font-bold uppercase tracking-wider text-xs">
                         Belum ada data surveilans pada periode ini.
                       </p>
                     </div>
@@ -320,30 +320,30 @@ export default function SurveilansHaisReport({
                   return (
                     <tr
                       key={row.id}
-                      className="hover:bg-slate-800/30 transition-colors"
+                      className="hover:bg-white/[0.03] transition-colors"
                     >
-                      <td className="py-4 px-6 text-center text-slate-500 font-bold">
+                      <td className="py-4 px-6 text-center text-slate-400 font-bold font-mono">
                         {idx + 1}
                       </td>
-                      <td className="py-4 px-6 text-slate-300">
+                      <td className="py-4 px-6 text-slate-300 font-mono text-xs">
                         {format(parseISO(row.created_at), "dd MMM yyyy HH:mm", {
                           locale: idLocale,
                         })}
                       </td>
-                      <td className="py-4 px-6 font-medium text-white">
+                      <td className="py-4 px-6 font-bold text-white uppercase">
                         {row.unit}
                       </td>
-                      <td className="py-4 px-6 text-right font-mono text-slate-400">
+                      <td className="py-4 px-6 text-right font-mono text-slate-300">
                         {row.jumlah_patuh}
                       </td>
-                      <td className="py-4 px-6 text-right font-mono text-slate-400">
+                      <td className="py-4 px-6 text-right font-mono text-slate-300">
                         {row.jumlah_dinilai}
                       </td>
                       <td className="py-4 px-6 text-right">
                         <span
-                          className="font-mono font-bold px-2.5 py-1 rounded-md"
+                          className="font-mono font-black px-2.5 py-1 rounded-lg border border-white/10 shadow-sm"
                           style={{
-                            backgroundColor: `${color}1A`,
+                            backgroundColor: `${color}25`,
                             color: color,
                           }}
                         >
@@ -357,7 +357,7 @@ export default function SurveilansHaisReport({
                             <button
                               onClick={() => handleEditClick(row.id)}
                               type="button"
-                              className="p-2 rounded-xl bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all duration-300 shadow-md border border-blue-500/20 group/btn"
+                              className="p-2 rounded-xl bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all duration-300 shadow-md border border-blue-500/20 group/btn select-none"
                               title="Edit Data"
                             >
                               <Edit className="w-3.5 h-3.5" />
@@ -365,14 +365,14 @@ export default function SurveilansHaisReport({
                             <button
                               onClick={() => setDeleteConfirmId(row.id)}
                               type="button"
-                              className="p-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all duration-300 shadow-md border border-red-500/20 group/btn"
+                              className="p-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all duration-300 shadow-md border border-red-500/20 group/btn select-none"
                               title="Hapus Data"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         ) : (
-                          <span className="text-xs text-slate-500">-</span>
+                          <span className="text-xs text-slate-500 font-mono">-</span>
                         )}
                       </td>
                     </tr>
@@ -452,30 +452,31 @@ export default function SurveilansHaisReport({
       </AnimatePresence>
 
       {/* CHART SECTION */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl relative p-6">
+      <div className="bg-[#18193b] rounded-[28px] md:rounded-[32px] border border-[#2b2d56] overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] relative p-6 sm:p-7">
+        <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
-            <h3 className="text-xl font-bold text-white flex items-center gap-3">
-              <div className="p-2 bg-slate-800 rounded-xl" style={{ color }}>
+            <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-3 uppercase tracking-wider">
+              <div className="p-2.5 bg-[#12132e] rounded-xl border border-indigo-900/40" style={{ color }}>
                 <TrendingUp className="w-5 h-5" />
               </div>
               Grafik Trend Capaian
             </h3>
-            <p className="text-sm font-medium text-slate-500 mt-2">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
               Visualisasi rate periode saat ini melawan standar
             </p>
           </div>
 
-          <div className="flex bg-slate-800 p-1 rounded-xl">
+          <div className="flex bg-[#12132e] p-1.5 rounded-2xl border border-indigo-900/40 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
             <button
               onClick={() => setChartMode("bar")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${chartMode === "bar" ? "bg-slate-700 text-white shadow-sm" : "text-slate-400 hover:text-white"}`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${chartMode === "bar" ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md" : "text-slate-400 hover:text-white"}`}
             >
               <BarChart className="w-4 h-4" /> Bar
             </button>
             <button
               onClick={() => setChartMode("line")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${chartMode === "line" ? "bg-slate-700 text-white shadow-sm" : "text-slate-400 hover:text-white"}`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${chartMode === "line" ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md" : "text-slate-400 hover:text-white"}`}
             >
               <LineChart className="w-4 h-4" /> Line
             </button>
@@ -497,30 +498,30 @@ export default function SurveilansHaisReport({
                 </defs>
                 <CartesianGrid
                   strokeDasharray="4 4"
-                  stroke="#ffffff10"
+                  stroke="#2b2d56"
                   vertical={false}
                 />
                 <XAxis
                   dataKey="period"
-                  stroke="#64748b"
+                  stroke="#94a3b8"
                   fontSize={11}
                   tickMargin={12}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
-                  stroke="#64748b"
+                  stroke="#94a3b8"
                   fontSize={11}
                   axisLine={false}
                   tickLine={false}
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#0f172a",
-                    borderRadius: "12px",
-                    border: "1px solid #1e293b",
+                    backgroundColor: "#18193b",
+                    borderRadius: "16px",
+                    border: "1px solid #2b2d56",
                     color: "#fff",
-                    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.5)",
+                    boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.7)",
                   }}
                   itemStyle={{
                     color: "#fff",
@@ -550,12 +551,12 @@ export default function SurveilansHaisReport({
                     activeDot={{
                       r: 6,
                       fill: color,
-                      stroke: "#1e293b",
+                      stroke: "#18193b",
                       strokeWidth: 2,
                     }}
                     dot={{
                       r: 4,
-                      fill: "#1e293b",
+                      fill: "#18193b",
                       stroke: color,
                       strokeWidth: 2,
                     }}
@@ -574,21 +575,22 @@ export default function SurveilansHaisReport({
               </ComposedChart>
             </ResponsiveContainer>
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 space-y-4 bg-slate-800/20 rounded-2xl border border-dashed border-slate-700">
-              <Activity className="w-12 h-12 text-slate-700/50" />
-              <p className="font-bold text-sm tracking-widest uppercase">
+            <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 space-y-4 bg-[#12132e] rounded-2xl border border-indigo-900/30">
+              <Activity className="w-12 h-12 text-slate-600" />
+              <p className="font-black text-xs tracking-widest uppercase">
                 Data monitoring belum cukup untuk menghasilkan grafik
               </p>
             </div>
           )}
         </div>
 
-        <div className="mt-8 p-5 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-start gap-4">
+        <div className="mt-8 p-6 bg-[#12132e] border border-indigo-900/40 rounded-2xl flex items-start gap-4 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
           <div className="flex-1">
-            <h4 className="text-sm font-bold text-blue-300 uppercase tracking-widest mb-1">
+            <h4 className="text-xs font-black text-cyan-400 uppercase tracking-widest mb-1.5 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
               Analisa Data
             </h4>
-            <p className="text-slate-300 text-sm text-justify leading-relaxed">{insight}</p>
+            <p className="text-slate-300 text-xs sm:text-sm text-justify leading-relaxed font-medium">{insight}</p>
           </div>
         </div>
       </div>
