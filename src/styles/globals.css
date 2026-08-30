@@ -15,9 +15,7 @@
 
 /* 120 FPS / 144 Hz frame rate pacing */
 @media (prefers-reduced-motion: no-preference) {
-  * {
-    scroll-behavior: smooth;
-  }
+  /* Scroll behavior is managed per container or via scrollHelper */
 }
 
 .optimize-gpu {
@@ -35,7 +33,6 @@ html, body {
   margin: 0;
   padding: 0;
   overflow: hidden; /* Mencegah double scrollbar di level window / webview */
-  scroll-behavior: smooth;
   scroll-padding-top: 5rem;
   /* Hardware Accelerated rendering optimizations */
   text-rendering: optimizeLegibility;

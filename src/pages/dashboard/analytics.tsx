@@ -876,48 +876,21 @@ export default function AnalyticsPage() {
           <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
-            <div className="flex items-center gap-4">
-              {/* 3D Floating Isometric Feature Plate */}
-              <div className="shrink-0 relative">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-[22px] bg-gradient-to-br from-[#272952] to-[#12132d] border-2 border-indigo-400/30 shadow-[-3px_-3px_10px_rgba(140,165,255,0.12),6px_8px_18px_rgba(0,0,0,0.7),inset_1.5px_1.5px_2px_rgba(255,255,255,0.2)] flex items-center justify-center transform hover:scale-105 transition-transform duration-300">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-[16px] bg-gradient-to-tr from-blue-600 via-indigo-500 to-sky-400 shadow-[0_6px_16px_rgba(59,130,246,0.5),inset_1px_1px_2px_rgba(255,255,255,0.4)] flex items-center justify-center text-white">
-                    <BarChart2 className="w-5 h-5 drop-shadow" />
-                  </div>
-                </div>
+            <div>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase">
+                  Grafik SMART PPI
+                </h1>
+                {loading && (
+                  <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#12132e] text-cyan-300 border border-cyan-500/30 flex items-center gap-1.5 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)] animate-pulse">
+                    <RefreshCw className="w-3 h-3 animate-spin text-cyan-400" />
+                    Memuat Data...
+                  </span>
+                )}
               </div>
-
-              <div>
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase font-heading flex items-center gap-2">
-                    GRAFIK <span className="text-cyan-400">SMART-PPI</span>
-                  </h1>
-                  {loading && (
-                    <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#12132e] text-cyan-300 border border-cyan-500/30 flex items-center gap-1.5 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)] animate-pulse">
-                      <RefreshCw className="w-3 h-3 animate-spin text-cyan-400" />
-                      Memuat Data...
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs sm:text-sm text-slate-300 font-medium mt-1">
-                  Pusat Visualisasi Realtime Capaian Indikator Mutu PPI Terintegrasi
-                </p>
-              </div>
-            </div>
-
-            {/* EXPORT BUTTONS with 3D tactile buttons */}
-            <div className="flex items-center gap-3 z-10 print:hidden flex-wrap">
-              <button
-                onClick={() => handleExport('excel')}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#12132e] hover:bg-[#161735] text-emerald-300 border border-emerald-500/35 font-black text-xs uppercase tracking-wider transition-all shadow-[-2px_-2px_6px_rgba(16,185,129,0.08),4px_6px_16px_rgba(0,0,0,0.5),inset_1px_1px_1.5px_rgba(255,255,255,0.15)] hover:scale-105 active:scale-95 cursor-pointer"
-              >
-                <FileSpreadsheet className="w-4 h-4 text-emerald-400" /> Export Excel
-              </button>
-              <button
-                onClick={() => handleExport('pdf')}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#12132e] hover:bg-[#161735] text-sky-300 border border-sky-500/35 font-black text-xs uppercase tracking-wider transition-all shadow-[-2px_-2px_6px_rgba(14,165,233,0.08),4px_6px_16px_rgba(0,0,0,0.5),inset_1px_1px_1.5px_rgba(255,255,255,0.15)] hover:scale-105 active:scale-95 cursor-pointer"
-              >
-                <FileText className="w-4 h-4 text-sky-400" /> Cetak / PDF
-              </button>
+              <p className="text-xs sm:text-sm text-slate-300 font-medium mt-1">
+                Pusat Visualisasi Realtime Capaian Indikator Mutu PPI Terintegrasi
+              </p>
             </div>
           </div>
         </div>
@@ -1097,10 +1070,6 @@ export default function AnalyticsPage() {
                   <h2 className="text-lg sm:text-xl font-black text-white tracking-wide uppercase font-heading">
                     KEPATUHAN KEBERSIHAN TANGAN
                   </h2>
-                  <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 flex items-center gap-1 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)]">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                    Standar Target: ≥ 85%
-                  </span>
                 </div>
                 <p className="text-xs text-slate-300 font-medium mt-0.5">
                   Capaian dan Perkembangan Kebersihan Tangan Berdasarkan Profesi & Periode
@@ -1238,10 +1207,6 @@ export default function AnalyticsPage() {
                   <h2 className="text-lg sm:text-xl font-black text-white tracking-wide uppercase font-heading">
                     KEPATUHAN PENGGUNAAN APD
                   </h2>
-                  <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-950/80 text-amber-300 border border-amber-500/40 flex items-center gap-1 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)]">
-                    <Award className="w-3 h-3 text-amber-400" />
-                    Standar Target: 100%
-                  </span>
                 </div>
                 <p className="text-xs text-slate-300 font-medium mt-0.5">
                   Capaian Kepatuhan Penggunaan Alat Pelindung Diri (APD) dan Baseline Target
@@ -1379,10 +1344,6 @@ export default function AnalyticsPage() {
                   <h2 className="text-lg sm:text-xl font-black text-white tracking-wide uppercase font-heading">
                     GRAFIK SURVEILANS HAIS
                   </h2>
-                  <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-950/80 text-purple-300 border border-purple-500/40 flex items-center gap-1 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)]">
-                    <AlertCircle className="w-3 h-3 text-purple-400" />
-                    Standar Indikator: Phlebitis ≤ 1.5‰ | ISK ≤ 5‰ | IDO ≤ 2% | VAP ≤ 5‰
-                  </span>
                 </div>
                 <p className="text-xs text-slate-300 font-medium mt-0.5">
                   Tren Insiden Phlebitis, CAUTI/ISK, IDO, VAP, dan Distribusi Berdasarkan Ruangan

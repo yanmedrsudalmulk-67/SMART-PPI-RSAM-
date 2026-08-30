@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '@/lib/supabase';
 import { useSafeRouter } from '@/hooks/useSafeRouter';
@@ -13,6 +13,7 @@ import {
 import { format, parseISO } from 'date-fns';
 import { useAppContext } from '@/components/Providers';
 import { ReportSkeleton } from '@/components/SkeletonLoading';
+import { forceScrollToTop } from '@/utils/scrollHelper';
 
 
 const ProfessionFilter = ({ 
@@ -34,11 +35,19 @@ const ProfessionFilter = ({
   return (
     <>
       <button 
+        type="button"
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg px-3 py-2 outline-none w-48 justify-between hover:border-blue-500/50 transition-colors"
+        className="flex items-center justify-between gap-3 bg-[#12132e] border border-indigo-900/50 text-slate-200 text-xs font-bold rounded-full pl-4 pr-2.5 py-1.5 outline-none min-w-[210px] shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.7),inset_-1px_-1px_2px_rgba(255,255,255,0.06)] hover:border-cyan-500/50 hover:text-white transition-all cursor-pointer group"
       >
-        <span className="truncate">{selectedProfessions.length > 0 ? `${selectedProfessions.length} Profesi dipilih` : 'Semua Profesi'}</span>
-        <ChevronDown className="w-4 h-4 flex-shrink-0" />
+        <div className="flex items-center gap-2 truncate">
+          <Users className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
+          <span className="truncate">
+            {selectedProfessions.length > 0 ? `${selectedProfessions.length} Profesi dipilih` : 'Semua Profesi'}
+          </span>
+        </div>
+        <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-cyan-300 group-hover:bg-cyan-500/20 transition-all flex-shrink-0 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.4)]">
+          <ChevronDown className="w-3.5 h-3.5" />
+        </div>
       </button>
 
       {mounted && createPortal(
@@ -49,33 +58,40 @@ const ProfessionFilter = ({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm" 
+                className="fixed inset-0 bg-black/70 backdrop-blur-md" 
                 onClick={() => setOpen(false)} 
               />
               <motion.div 
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                initial={{ opacity: 0, scale: 0.92, y: 15 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                exit={{ opacity: 0, scale: 0.92, y: 15 }}
                 transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                className="relative w-full max-w-sm bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/10 rounded-[2.5rem] shadow-2xl p-6 max-h-[80vh] flex flex-col"
+                className="relative w-full max-w-sm bg-[#18193b] border border-[#2b2d56] rounded-[32px] shadow-[-8px_-8px_24px_rgba(140,165,255,0.08),12px_16px_40px_rgba(0,0,0,0.8),inset_1px_1px_1.5px_rgba(255,255,255,0.2),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] p-6 max-h-[80vh] flex flex-col overflow-hidden"
               >
-                <div className="flex justify-between items-center mb-6">
+                {/* Top Bevel Highlight */}
+                <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+                <div className="flex justify-between items-center mb-5 relative z-10">
                     <div>
-                      <h3 className="text-lg font-black text-slate-900 dark:text-white">Filter Profesi</h3>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Pilih profesi untuk dianalisis</p>
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6)] mb-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                        <span className="text-[9px] font-black uppercase tracking-widest text-cyan-300">FILTER AUDIT</span>
+                      </div>
+                      <h3 className="text-lg font-black text-white">Filter Profesi</h3>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Pilih profesi untuk dianalisis</p>
                     </div>
                     <button 
                       onClick={() => setOpen(false)} 
-                      className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 hover:text-slate-700 dark:hover:text-white transition-colors"
+                      className="w-9 h-9 rounded-full bg-[#12132e] border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-rose-500/50 hover:bg-rose-500/20 transition-all shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6)] cursor-pointer"
                     >
-                      <X className="w-5 h-5"/>
+                      <X className="w-4 h-4"/>
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto pr-2 space-y-1 custom-scrollbar">
-                  <label className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-white/5 rounded-2xl cursor-pointer transition-colors group">
-                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${selectedProfessions.length === 0 ? 'bg-blue-500 border-blue-500' : 'border-slate-300 dark:border-white/20'}`}>
-                      {selectedProfessions.length === 0 && <Check className="w-3 h-3 text-white stroke-[4]" />}
+                <div className="flex-1 overflow-y-auto pr-1.5 space-y-2 custom-scrollbar relative z-10">
+                  <label className="flex items-center gap-3 p-3 bg-[#12132e] hover:bg-[#161842] border border-indigo-900/40 hover:border-cyan-500/40 rounded-2xl cursor-pointer transition-all group shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
+                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${selectedProfessions.length === 0 ? 'bg-gradient-to-r from-blue-600 to-indigo-600 border-cyan-400 shadow-md shadow-cyan-500/30' : 'border-slate-500 bg-[#0e0f26]'}`}>
+                      {selectedProfessions.length === 0 && <Check className="w-3 h-3 text-white stroke-[3.5]" />}
                     </div>
                     <input 
                       type="checkbox" 
@@ -83,10 +99,10 @@ const ProfessionFilter = ({
                       checked={selectedProfessions.length === 0} 
                       onChange={() => setSelectedProfessions([])} 
                     />
-                    <span className="text-sm font-bold text-slate-700 dark:text-white group-hover:text-blue-500 transition-colors">Semua Profesi</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-200 group-hover:text-cyan-300 transition-colors">Semua Profesi</span>
                   </label>
 
-                  <div className="h-px bg-slate-200 dark:bg-white/10 my-3 ml-3" />
+                  <div className="h-px bg-indigo-900/30 my-2 mx-1" />
 
                   {allProfessions.length === 0 && (
                     <div className="p-8 text-center text-slate-400 font-medium text-xs">
@@ -97,28 +113,29 @@ const ProfessionFilter = ({
                   {allProfessions.map(prof => {
                     const isSelected = selectedProfessions.includes(prof);
                     return (
-                      <label key={prof} className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-white/5 rounded-2xl cursor-pointer transition-colors group">
-                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-slate-300 dark:border-white/20'}`}>
-                          {isSelected && <Check className="w-3 h-3 text-white stroke-[4]" />}
+                      <label key={prof} className="flex items-center gap-3 p-3 bg-[#12132e] hover:bg-[#161842] border border-indigo-900/40 hover:border-cyan-500/40 rounded-2xl cursor-pointer transition-all group shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
+                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${isSelected ? 'bg-gradient-to-r from-blue-600 to-indigo-600 border-cyan-400 shadow-md shadow-cyan-500/30' : 'border-slate-500 bg-[#0e0f26]'}`}>
+                          {isSelected && <Check className="w-3 h-3 text-white stroke-[3.5]" />}
                         </div>
                         <input 
                           type="checkbox" 
-                          className="hidden"
+                          className="hidden" 
                           checked={isSelected} 
                           onChange={() => {
                             setSelectedProfessions(prev => prev.includes(prof) ? prev.filter(p => p !== prof) : [...prev, prof]);
                           }} 
                         />
-                        <span className="text-sm font-bold text-slate-700 dark:text-white uppercase group-hover:text-blue-500 transition-colors">{prof}</span>
+                        <span className="text-xs font-black text-slate-200 uppercase tracking-wider group-hover:text-cyan-300 transition-colors">{prof}</span>
                       </label>
                     );
                   })}
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-slate-100 dark:border-white/5">
+                <div className="mt-5 pt-4 border-t border-indigo-900/40 relative z-10">
                   <button 
+                    type="button"
                     onClick={() => setOpen(false)}
-                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-500/20 active:scale-[0.98]"
+                    className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-full font-black text-xs uppercase tracking-wider transition-all shadow-[0_10px_25px_-5px_rgba(59,130,246,0.5)] active:scale-[0.98] border border-cyan-400/30 cursor-pointer"
                   >
                     Selesai
                   </button>
@@ -304,41 +321,18 @@ export default function HandHygieneReport({
     return () => { supabase.removeChannel(ch); };
   }, [fetchData]);
 
-  // Ensure scroll resets to top when data loading finishes
+  const isInitialLoadRef = useRef(true);
+
+  // Ensure scroll resets to top when navigating to report and after initial data load
   useEffect(() => {
-    const scrollToTop = () => {
-      const mainEl = document.querySelector("main");
-      if (mainEl) {
-        mainEl.scrollTop = 0;
-        try {
-          mainEl.scrollTo({ top: 0, behavior: "instant" as any });
-        } catch (_) {}
-      }
-      const scrollableElements = document.querySelectorAll('.overflow-y-auto, [data-scroll-container]');
-      scrollableElements.forEach(el => {
-        el.scrollTop = 0;
-      });
+    forceScrollToTop();
+  }, []);
 
-      const headerEl = document.getElementById('report-detail-header') || document.getElementById('report-top-anchor');
-      if (headerEl) {
-        try {
-          headerEl.scrollIntoView({ behavior: 'instant' as any, block: 'start' });
-        } catch (_) {}
-      }
-
-      try {
-        window.scrollTo({ top: 0, behavior: "instant" as any });
-      } catch (_) {}
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    };
-
-    scrollToTop();
-    requestAnimationFrame(scrollToTop);
-    setTimeout(scrollToTop, 30);
-    setTimeout(scrollToTop, 100);
-    setTimeout(scrollToTop, 250);
-    setTimeout(scrollToTop, 500);
+  useEffect(() => {
+    if (!loading && isInitialLoadRef.current) {
+      isInitialLoadRef.current = false;
+      forceScrollToTop();
+    }
   }, [loading]);
 
   const filteredData = useMemo(() => {
@@ -541,7 +535,18 @@ export default function HandHygieneReport({
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-500">
       
       {/* Filter Bar */}
-      <div className="flex gap-4 p-4 bg-[#18193b] rounded-[24px] border border-[#2b2d56] shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] overflow-x-auto">
+      <div className="flex items-center gap-3 p-1.5 sm:p-2 sm:px-3 bg-[#18193b] rounded-full border border-[#2b2d56] shadow-[-4px_-4px_16px_rgba(140,165,255,0.05),8px_10px_24px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.15),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] w-fit relative overflow-hidden">
+        <div className="absolute top-0 inset-x-6 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+        
+        {/* Neumorphic Capsule Badge */}
+        <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)]">
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+          <Users className="w-3 h-3 text-cyan-400" />
+          <span className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-300">
+            FILTER PROFESI
+          </span>
+        </div>
+
         <ProfessionFilter 
            selectedProfessions={selectedProfessions}
            setSelectedProfessions={setSelectedProfessions}
@@ -579,19 +584,25 @@ export default function HandHygieneReport({
           <table className="w-full text-center border-collapse whitespace-nowrap">
             <thead>
               <tr className="bg-[#12132e] text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 border-b border-indigo-900/30">
-                <th className="px-4 py-4">WAKTU MULAI</th>
-                <th className="px-4 py-4">WAKTU SELESAI</th>
-                <th className="px-4 py-4 text-left">OBSERVER</th>
-                <th className="px-4 py-4 text-left">UNIT</th>
-                <th className="px-4 py-4">PROFESI</th>
-                <th className="px-2 py-4">M1</th>
-                <th className="px-2 py-4">M2</th>
-                <th className="px-2 py-4">M3</th>
-                <th className="px-2 py-4">M4</th>
-                <th className="px-2 py-4">M5</th>
-                <th className="px-4 py-4 text-rose-400">PELUANG HAND HYGIENE</th>
-                <th className="px-4 py-4 text-emerald-400">HAND HYGIENE DILAKUKAN</th>
-                <th className="px-4 py-4 text-cyan-400">PERSENTASE</th>
+                <th className="px-4 py-4 text-center">WAKTU MULAI</th>
+                <th className="px-4 py-4 text-center">WAKTU SELESAI</th>
+                <th className="px-4 py-4 text-center">OBSERVER</th>
+                <th className="px-4 py-4 text-center">UNIT</th>
+                <th className="px-4 py-4 text-center">PROFESI</th>
+                <th className="px-2 py-4 text-center">M1</th>
+                <th className="px-2 py-4 text-center">M2</th>
+                <th className="px-2 py-4 text-center">M3</th>
+                <th className="px-2 py-4 text-center">M4</th>
+                <th className="px-2 py-4 text-center">M5</th>
+                <th className="px-4 py-3 text-center text-rose-400 text-[9px] leading-tight font-black">
+                  <div>PELUANG</div>
+                  <div>HAND HYGIENE</div>
+                </th>
+                <th className="px-4 py-3 text-center text-emerald-400 text-[9px] leading-tight font-black">
+                  <div>HAND HYGIENE</div>
+                  <div>DILAKUKAN</div>
+                </th>
+                <th className="px-4 py-4 text-center text-cyan-400">PERSENTASE</th>
                 <th className="px-4 py-4 text-center">AKSI</th>
               </tr>
             </thead>
@@ -599,23 +610,23 @@ export default function HandHygieneReport({
               {filteredData.map((row) => {
                 return (
                   <tr key={row.id} className="hover:bg-white/[0.03] transition-colors group">
-                    <td className="px-4 py-4 text-slate-300 font-mono">
+                    <td className="px-4 py-4 text-center text-slate-300 font-mono">
                       {row.start_time || row.tanggal_waktu ? format(parseISO(row.start_time || row.tanggal_waktu), 'dd/MM/yyyy HH:mm') : '-'}
                     </td>
-                    <td className="px-4 py-4 text-slate-300 font-mono">
+                    <td className="px-4 py-4 text-center text-slate-300 font-mono">
                       {row.end_time ? format(parseISO(row.end_time), 'dd/MM/yyyy HH:mm') : '-'}
                     </td>
-                    <td className="px-4 py-4 text-left font-normal italic text-slate-400">{row.observer || '-'}</td>
-                    <td className="px-4 py-4 text-left font-semibold text-white">{row.unit || '-'}</td>
-                    <td className="px-4 py-4 uppercase text-slate-300 font-bold">{row.profesi || '-'}</td>
-                    <td className="px-2 py-4">{mapMomentAction(row.m1)}</td>
-                    <td className="px-2 py-4">{mapMomentAction(row.m2)}</td>
-                    <td className="px-2 py-4">{mapMomentAction(row.m3)}</td>
-                    <td className="px-2 py-4">{mapMomentAction(row.m4)}</td>
-                    <td className="px-2 py-4">{mapMomentAction(row.m5)}</td>
-                    <td className="px-4 py-4 text-rose-400 font-black font-mono">{row.peluang || 0}</td>
-                    <td className="px-4 py-4 text-emerald-400 font-black font-mono">{row.patuh || 0}</td>
-                    <td className="px-4 py-4 font-black">
+                    <td className="px-4 py-4 text-center font-normal italic text-slate-400">{row.observer || '-'}</td>
+                    <td className="px-4 py-4 text-center font-semibold text-white">{row.unit || '-'}</td>
+                    <td className="px-4 py-4 text-center uppercase text-slate-300 font-bold">{row.profesi || '-'}</td>
+                    <td className="px-2 py-4 text-center">{mapMomentAction(row.m1)}</td>
+                    <td className="px-2 py-4 text-center">{mapMomentAction(row.m2)}</td>
+                    <td className="px-2 py-4 text-center">{mapMomentAction(row.m3)}</td>
+                    <td className="px-2 py-4 text-center">{mapMomentAction(row.m4)}</td>
+                    <td className="px-2 py-4 text-center">{mapMomentAction(row.m5)}</td>
+                    <td className="px-4 py-4 text-center text-rose-400 font-black font-mono">{row.peluang || 0}</td>
+                    <td className="px-4 py-4 text-center text-emerald-400 font-black font-mono">{row.patuh || 0}</td>
+                    <td className="px-4 py-4 text-center font-black">
                       <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase border shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)] ${
                         (row.persentase || 0) >= 85 ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40' :
                         (row.persentase || 0) >= 70 ? 'bg-amber-950/80 text-amber-300 border-amber-500/40' :
@@ -771,62 +782,11 @@ export default function HandHygieneReport({
                    </svg>
                    <span className="absolute text-xs font-black text-white font-mono">{perc}%</span>
                  </div>
-                 <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Momen {idx + 1}</h4>
-              </div>
-            );
-          })}
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Momen {idx + 1}</h4>
+               </div>
+             );
+           })}
         </div>
-      </div>
-
-      {/* Chart and Analytics Section */}
-      <div className="bg-[#18193b] rounded-[28px] md:rounded-[32px] border border-[#2b2d56] shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] overflow-hidden relative group">
-        <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
-        <div className="flex px-6 sm:px-8 py-5 justify-between items-center border-b border-indigo-900/30 bg-[#141532]/60 backdrop-blur-md mb-6">
-           <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-3">
-             <BarChart2 className="w-5 h-5 text-emerald-400" /> Grafik Tren Kepatuhan
-           </h3>
-           <div className="flex gap-1.5 bg-[#12132e] p-1 rounded-xl border border-indigo-900/40 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
-             <button onClick={() => setChartType('line')} className={`px-3.5 py-1.5 text-[10px] sm:text-xs font-black uppercase tracking-wider rounded-lg transition-all ${chartType === 'line' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}>Run Chart</button>
-             <button onClick={() => setChartType('bar')} className={`px-3.5 py-1.5 text-[10px] sm:text-xs font-black uppercase tracking-wider rounded-lg transition-all ${chartType === 'bar' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}>Bar Chart</button>
-           </div>
-        </div>
-        <div className="h-[300px] w-full px-6 sm:px-8">
-          <ResponsiveContainer width="100%" height="100%">
-             {chartType === 'line' ? (
-               <ComposedChart data={trendData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                 <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} dy={10} />
-                 <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} domain={[0, 100]} axisLine={false} tickLine={false} dx={-10} />
-                 <Tooltip content={renderTooltipContent} cursor={{ fill: 'rgba(255,255,255,0.02)' }}/>
-                 {chartProfessions.map(prof => (
-                   <Line key={prof} type="monotone" dataKey={prof} stroke={getProfessionColor(prof)} strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                 ))}
-                 <ReferenceLine y={STANDARD_PPI} stroke="#06b6d4" strokeDasharray="5 5" label={{ position: 'top', value: `Standar ${STANDARD_PPI}%`, fill: '#06b6d4', fontSize: 10 }} />
-               </ComposedChart>
-             ) : (
-               <ComposedChart data={trendData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                 <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} dy={10} />
-                 <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} domain={[0, 100]} axisLine={false} tickLine={false} dx={-10} />
-                 <Tooltip content={renderTooltipContent} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
-                 {chartProfessions.map(prof => (
-                   <Bar key={prof} dataKey={prof} fill={getProfessionColor(prof)} radius={[4, 4, 0, 0]} />
-                 ))}
-                 <ReferenceLine y={STANDARD_PPI} stroke="#06b6d4" strokeDasharray="5 5" label={{ position: 'top', value: `Standar ${STANDARD_PPI}%`, fill: '#06b6d4', fontSize: 10 }} />
-               </ComposedChart>
-             )}
-          </ResponsiveContainer>
-        </div>
-
-        {/* Auto Insight Card */}
-        <div className="px-6 sm:px-8 pb-8 pt-6">
-            <div className="flex items-start gap-4 p-4 rounded-2xl bg-[#12132e] border border-indigo-900/40 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
-                <div className="flex-1">
-                   <h4 className="text-sm font-black text-white uppercase tracking-wider">Analisa Data</h4>
-                   <p className="text-xs text-slate-300 mt-1 leading-relaxed">{generateAutoInsight()}</p>
-                </div>
-            </div>
-         </div>
       </div>
 
       {/* Modal Konfirmasi Hapus */}

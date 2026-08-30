@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, ReactElement } from 'react';
+import { useState, useMemo, useEffect, ReactElement, useRef } from 'react';
 import { 
   FileText, Download, Calendar, Filter, FileSpreadsheet, Search, ArrowLeft, 
   Activity, ShieldCheck, ClipboardCheck, GraduationCap, Building2, User, AlertTriangle, Truck, Users, Wind, ShieldAlert,
@@ -18,6 +18,7 @@ import UnifiedSurveilansHaisReport from '@/components/reports/UnifiedSurveilansH
 import EtikaBatukReport from '@/components/reports/EtikaBatukReport';
 import DiklatReport from '@/components/reports/DiklatReport';
 import { ReportSkeleton } from '@/components/SkeletonLoading';
+import { forceScrollToTop } from '@/utils/scrollHelper';
 
 const INDICATORS_MAP: Record<string, { cat: string, subcat?: string, title: string, id: string, icon: any }> = {
   // Kewaspadaan Isolasi - Standar
@@ -347,6 +348,8 @@ export default function ReportsPage() {
   const [haisStatsMap, setHaisStatsMap] = useState<Map<string, { count: number, num: number, den: number, rate: number, prevRate: number }>>(new Map());
   const [loading, setLoading] = useState(true);
 
+  const topRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (isReportsLoaded && reportsData && reportsData.statsMap && reportsData.haisStatsMap) {
       setStatsMap(reportsData.statsMap);
@@ -355,50 +358,23 @@ export default function ReportsPage() {
     }
   }, [isReportsLoaded, reportsData]);
 
-  // Helper to force scroll reset across main layout, window, and all scroll containers
-  const forceScrollToTop = () => {
-    if (typeof window === 'undefined') return;
-    const reset = () => {
-      const mainEl = document.querySelector('main');
-      if (mainEl) {
-        mainEl.scrollTop = 0;
-        try {
-          mainEl.scrollTo({ top: 0, behavior: 'instant' as any });
-        } catch (_) {}
-      }
-      const scrollableElements = document.querySelectorAll('.overflow-y-auto, [data-scroll-container]');
-      scrollableElements.forEach(el => {
-        el.scrollTop = 0;
-      });
-
-      const headerEl = document.getElementById('report-detail-header') || document.getElementById('report-top-anchor');
-      if (headerEl) {
-        try {
-          headerEl.scrollIntoView({ behavior: 'instant' as any, block: 'start' });
-        } catch (_) {}
-      }
-
-      try {
-        window.scrollTo({ top: 0, behavior: 'instant' as any });
-      } catch (_) {}
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    };
-
-    reset();
-    requestAnimationFrame(reset);
-    setTimeout(reset, 20);
-    setTimeout(reset, 50);
-    setTimeout(reset, 100);
-    setTimeout(reset, 200);
-    setTimeout(reset, 350);
-    setTimeout(reset, 500);
-    setTimeout(reset, 800);
-  };
-
   // Automatically scroll main container to top when changing indicators, categories, or subcategories
   useEffect(() => {
     forceScrollToTop();
+    if (topRef.current) topRef.current.scrollIntoView({ behavior: 'instant', block: 'start' });
+    const interval = setInterval(() => {
+      forceScrollToTop();
+      if (topRef.current) topRef.current.scrollIntoView({ behavior: 'instant', block: 'start' });
+    }, 30);
+    const timer = setTimeout(() => {
+      clearInterval(interval);
+      forceScrollToTop();
+      if (topRef.current) topRef.current.scrollIntoView({ behavior: 'instant', block: 'start' });
+    }, 600);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timer);
+    };
   }, [selectedIndicator, kategori, subKategori]);
 
   const startDateISO = useMemo(() => {
@@ -515,136 +491,149 @@ export default function ReportsPage() {
     });
   }, [kategori, subKategori]);
 
+  const handleSelectIndicator = (id: string) => {
+    forceScrollToTop();
+    if (topRef.current) topRef.current.scrollIntoView({ behavior: 'instant', block: 'start' });
+    setSelectedIndicator(id);
+  };
+
   const handleBack = () => {
-     setSelectedIndicator(null);
-     forceScrollToTop();
+    forceScrollToTop();
+    if (topRef.current) topRef.current.scrollIntoView({ behavior: 'instant', block: 'start' });
+    setSelectedIndicator(null);
   };
 
   const selectedData = INDICATORS_MAP[selectedIndicator || ''];
 
   return (
-    <div className="max-w-[1600px] mx-auto pb-32">
-      <AnimatePresence mode="wait">
-        {!selectedIndicator && (
-          <motion.div key="hub" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20, scale: 0.98 }} onAnimationComplete={forceScrollToTop} className="space-y-8">
-            
-            {/* Header & Filter Periode */}
-            {kategori !== 'Surveilans HAIs' && (
-              <div className="mb-6 flex flex-col lg:flex-row justify-between items-center lg:items-center gap-4">
-                <div className="text-center lg:text-left w-full lg:w-auto shrink-0">
-                  <h1 className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase">
-                     Laporan SMART PPI
-                  </h1>
-                  <p className="text-sm text-slate-300 mt-1 font-medium">
-                     Laporan Data Monitoring PPI Terintegrasi
-                  </p>
+    <div className="max-w-[1600px] mx-auto pb-32 relative">
+      <div ref={topRef} className="absolute top-0 left-0 w-full h-0 pointer-events-none" />
+      
+      {/* Top Page Header Banner - Identik dengan Layout Menu Dashboard */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div className="text-center sm:text-left w-full sm:w-auto">
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase">
+            Laporan SMART PPI
+          </h1>
+          <div className="mt-1">
+            <p
+              className="text-slate-400 font-medium leading-tight max-w-[280px] sm:max-w-none mx-auto sm:mx-0 text-[14px]"
+              style={{ fontSize: "14px" }}
+            >
+              Pencegahan Dan Pengendalian Infeksi <br className="sm:hidden" /> di UOBK RSUD Al-Mulk Kota Sukabumi
+            </p>
+          </div>
+        </div>
+
+        {/* Filter Periode - Sejajar dengan Tulisan Laporan SMART PPI */}
+        <div className="flex justify-center sm:justify-end items-center shrink-0">
+          <div className="relative group w-full sm:w-auto">
+            <div className="relative bg-[#18193b] rounded-full p-1.5 sm:p-2 sm:px-3 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-4px_-4px_16px_rgba(140,165,255,0.05),8px_10px_24px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.15),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)]">
+              {/* Top Bevel Specular Highlight */}
+              <div className="absolute top-0 inset-x-6 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+              <div className="flex flex-wrap sm:flex-nowrap items-center justify-center lg:justify-end gap-1.5 sm:gap-2 relative z-10">
+                {/* Neumorphic Capsule Badge */}
+                <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <Calendar className="w-3 h-3 text-cyan-400" />
+                  <span className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-300">
+                    PERIODE
+                  </span>
                 </div>
 
-                {/* Filter Periode - 3D Tactile Neumorphic Container */}
-                <div className="relative group w-full lg:w-auto">
-                  <div className="relative bg-[#18193b] rounded-[24px] p-2.5 sm:p-3 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)]">
-                    {/* Top Bevel Specular Highlight */}
-                    <div className="absolute top-0 inset-x-6 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+                {/* Tipe Periode - Recessed Neumorphic Well */}
+                <div className="relative">
+                  <select 
+                    value={periode} 
+                    onChange={(e) => setPeriode(e.target.value)}
+                    className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs font-bold rounded-full pl-3 pr-7 py-1.5 outline-none focus:ring-1 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.6)] capitalize"
+                  >
+                    <option value="Bulanan" className="bg-[#18193b] text-white">Bulanan</option>
+                    <option value="Triwulan" className="bg-[#18193b] text-white">Triwulan</option>
+                    <option value="Semester" className="bg-[#18193b] text-white">Semester</option>
+                    <option value="Tahunan" className="bg-[#18193b] text-white">Tahunan</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                    <ChevronDown className="w-3 h-3" />
+                  </div>
+                </div>
 
-                    <div className="flex flex-wrap items-center justify-center lg:justify-end gap-2.5 relative z-10">
-                      {/* Neumorphic Capsule Badge */}
-                      <div className="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)]">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                        <Calendar className="w-3.5 h-3.5 text-cyan-400" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
-                          PERIODE
-                        </span>
-                      </div>
-
-                      {/* Tipe Periode - Recessed Neumorphic Well */}
-                      <div className="relative">
-                        <select 
-                          value={periode} 
-                          onChange={(e) => setPeriode(e.target.value)}
-                          className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] capitalize"
-                        >
-                          <option value="Bulanan" className="bg-[#18193b] text-white">Bulanan</option>
-                          <option value="Triwulan" className="bg-[#18193b] text-white">Triwulan</option>
-                          <option value="Semester" className="bg-[#18193b] text-white">Semester</option>
-                          <option value="Tahunan" className="bg-[#18193b] text-white">Tahunan</option>
-                        </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                          <ChevronDown className="w-3.5 h-3.5" />
-                        </div>
-                      </div>
-   
-                      {periode === 'Bulanan' && (
-                        <div className="relative">
-                          <select 
-                            value={selectedMonth} 
-                            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                            className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
-                          >
-                            {MONTHS_SHORT.map((m, i) => (
-                              <option key={m} value={i} className="bg-[#18193b] text-white">{m}</option>
-                            ))}
-                          </select>
-                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                            <ChevronDown className="w-3.5 h-3.5" />
-                          </div>
-                        </div>
-                      )}
-   
-                      {periode === 'Triwulan' && (
-                        <div className="relative">
-                          <select 
-                            value={selectedQuarter} 
-                            onChange={(e) => setSelectedQuarter(parseInt(e.target.value))}
-                            className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
-                          >
-                            <option value={0} className="bg-[#18193b] text-white">TW 1 (Jan-Mar)</option>
-                            <option value={1} className="bg-[#18193b] text-white">TW 2 (Apr-Jun)</option>
-                            <option value={2} className="bg-[#18193b] text-white">TW 3 (Jul-Sep)</option>
-                            <option value={3} className="bg-[#18193b] text-white">TW 4 (Okt-Des)</option>
-                          </select>
-                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                            <ChevronDown className="w-3.5 h-3.5" />
-                          </div>
-                        </div>
-                      )}
-   
-                      {periode === 'Semester' && (
-                        <div className="relative">
-                          <select 
-                            value={selectedSemester} 
-                            onChange={(e) => setSelectedSemester(parseInt(e.target.value))}
-                            className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
-                          >
-                            <option value={0} className="bg-[#18193b] text-white">SM 1 (Jan-Jun)</option>
-                            <option value={1} className="bg-[#18193b] text-white">SM 2 (Jul-Des)</option>
-                          </select>
-                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                            <ChevronDown className="w-3.5 h-3.5" />
-                          </div>
-                        </div>
-                      )}
-   
-                      {/* Tahun - Recessed Neumorphic Well */}
-                      <div className="relative">
-                        <select 
-                          value={selectedYear} 
-                          onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                          className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
-                        >
-                          <option value={2026} className="bg-[#18193b] text-white">2026</option>
-                          <option value={2025} className="bg-[#18193b] text-white">2025</option>
-                          <option value={2024} className="bg-[#18193b] text-white">2024</option>
-                        </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                          <ChevronDown className="w-3.5 h-3.5" />
-                        </div>
-                      </div>
+                {periode === 'Bulanan' && (
+                  <div className="relative">
+                    <select 
+                      value={selectedMonth} 
+                      onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                      className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs font-bold rounded-full pl-3 pr-7 py-1.5 outline-none focus:ring-1 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.6)]"
+                    >
+                      {MONTHS_SHORT.map((m, i) => (
+                        <option key={m} value={i} className="bg-[#18193b] text-white">{m}</option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                      <ChevronDown className="w-3 h-3" />
                     </div>
+                  </div>
+                )}
+
+                {periode === 'Triwulan' && (
+                  <div className="relative">
+                    <select 
+                      value={selectedQuarter} 
+                      onChange={(e) => setSelectedQuarter(parseInt(e.target.value))}
+                      className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs font-bold rounded-full pl-3 pr-7 py-1.5 outline-none focus:ring-1 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.6)]"
+                    >
+                      <option value={0} className="bg-[#18193b] text-white">TW 1 (Jan-Mar)</option>
+                      <option value={1} className="bg-[#18193b] text-white">TW 2 (Apr-Jun)</option>
+                      <option value={2} className="bg-[#18193b] text-white">TW 3 (Jul-Sep)</option>
+                      <option value={3} className="bg-[#18193b] text-white">TW 4 (Okt-Des)</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                      <ChevronDown className="w-3 h-3" />
+                    </div>
+                  </div>
+                )}
+
+                {periode === 'Semester' && (
+                  <div className="relative">
+                    <select 
+                      value={selectedSemester} 
+                      onChange={(e) => setSelectedSemester(parseInt(e.target.value))}
+                      className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs font-bold rounded-full pl-3 pr-7 py-1.5 outline-none focus:ring-1 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.6)]"
+                    >
+                      <option value={0} className="bg-[#18193b] text-white">SM 1 (Jan-Jun)</option>
+                      <option value={1} className="bg-[#18193b] text-white">SM 2 (Jul-Des)</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                      <ChevronDown className="w-3 h-3" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Tahun - Recessed Neumorphic Well */}
+                <div className="relative">
+                  <select 
+                    value={selectedYear} 
+                    onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                    className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs font-bold rounded-full pl-3 pr-7 py-1.5 outline-none focus:ring-1 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.6)]"
+                  >
+                    <option value={2026} className="bg-[#18193b] text-white">2026</option>
+                    <option value={2025} className="bg-[#18193b] text-white">2025</option>
+                    <option value={2024} className="bg-[#18193b] text-white">2024</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                    <ChevronDown className="w-3 h-3" />
                   </div>
                 </div>
               </div>
-            )}
+            </div>
+          </div>
+        </div>
+      </div>
 
+      <AnimatePresence mode="wait" onExitComplete={forceScrollToTop}>
+        {!selectedIndicator && (
+          <motion.div key="hub" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16, scale: 0.98 }} onAnimationComplete={forceScrollToTop} className="space-y-8">
             {/* Navigation Filter Kategori & Sub */}
             <div id="smart-ppi-category-cards" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               {CATEGORY_DETAILS.map(detail => {
@@ -671,7 +660,7 @@ export default function ReportsPage() {
                       <div className="flex flex-col gap-1 pr-3">
                         <div className="flex items-center gap-2.5">
                           <span className="text-2xl filter drop-shadow">{detail.emoji}</span>
-                          <h3 className={`text-sm sm:text-base font-black tracking-tight leading-snug ${
+                          <h3 className={`text-[24px] font-black tracking-tight leading-snug ${
                             isActive ? 'text-cyan-300' : 'text-white'
                           }`}>
                             {detail.title}
@@ -814,10 +803,7 @@ export default function ReportsPage() {
                       <SummaryCard
                         indicator={ind}
                         stats={statsMap.get(ind.id)}
-                        onClick={() => {
-                          setSelectedIndicator(ind.id);
-                          forceScrollToTop();
-                        }}
+                        onClick={() => handleSelectIndicator(ind.id)}
                       />
                     </motion.div>
                   ))}
@@ -832,9 +818,10 @@ export default function ReportsPage() {
           <motion.div
             key={`detail-${selectedIndicator}`}
             id="report-top-anchor"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -14 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
             onAnimationStart={forceScrollToTop}
             onAnimationComplete={forceScrollToTop}
             className="space-y-6"
@@ -843,149 +830,68 @@ export default function ReportsPage() {
             {/* Header Detail View */}
             <div
               id="report-detail-header"
-              className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative"
+              className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 rounded-2xl bg-[#141532]/90 border border-indigo-900/40 backdrop-blur-md shadow-[-4px_-4px_12px_rgba(140,165,255,0.06),6px_8px_20px_rgba(0,0,0,0.6)] relative z-10"
             >
-              <div className="flex items-center gap-4 relative z-10 w-full lg:w-auto shrink-0">
-                <button onClick={handleBack} className="p-3 bg-[#12132e] border border-white/10 rounded-2xl hover:bg-[#20224a] transition-colors text-slate-300 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)]">
+              <div className="flex items-center gap-3 relative z-10 w-full lg:w-auto shrink-0">
+                <button 
+                  onClick={handleBack} 
+                  className="p-2.5 bg-[#18193b] border border-indigo-500/40 rounded-xl hover:bg-[#20224a] hover:border-cyan-400 transition-all text-indigo-200 hover:text-cyan-300 flex items-center justify-center shadow-sm cursor-pointer shrink-0"
+                  title="Kembali ke Daftar Laporan"
+                  aria-label="Kembali ke Daftar Laporan"
+                >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
+
+                <div className="h-6 w-[1px] bg-indigo-800/60 shrink-0" />
+
                 <div>
-                  <h1 className="text-xl sm:text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase leading-none">
+                  <h2 className="text-lg sm:text-xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-emerald-400 to-cyan-300 uppercase leading-tight">
                     {selectedData?.title}
-                  </h1>
-                  <div className="flex items-center gap-2 mt-2 font-medium text-[11px] text-slate-400 uppercase tracking-widest">
+                  </h2>
+                  <div className="flex items-center gap-1.5 mt-0.5 font-bold text-[10px] text-cyan-300 uppercase tracking-wider">
                     <span>{selectedData?.cat}</span>
                     {selectedData?.subcat && (
                       <>
-                        <ChevronRight className="w-3 h-3" />
-                        <span>{selectedData.subcat}</span>
+                        <ChevronRight className="w-3 h-3 text-indigo-400" />
+                        <span className="text-slate-300">{selectedData.subcat}</span>
                       </>
                     )}
                   </div>
                 </div>
               </div>
               
-              <div className="flex flex-wrap justify-center lg:justify-end items-center gap-3 relative z-10 w-full lg:w-auto mt-2 lg:mt-0">
-                {/* Filter Periode - 3D Tactile Neumorphic Container */}
+              <div className="flex flex-wrap sm:flex-nowrap justify-center lg:justify-end items-center gap-2 relative z-10 w-full lg:w-auto mt-2 lg:mt-0">
+                {/* Single Neumorphic Bar containing Unit Filter Only */}
                 <div className="relative group w-full sm:w-auto">
-                  <div className="relative bg-[#18193b] rounded-[24px] p-2.5 sm:p-3 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)]">
+                  <div className="relative bg-[#18193b] rounded-full p-1.5 sm:p-2 sm:px-3 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-4px_-4px_16px_rgba(140,165,255,0.05),8px_10px_24px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.15),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)]">
                     {/* Top Bevel Highlight */}
                     <div className="absolute top-0 inset-x-6 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
-                    <div className="flex flex-wrap items-center justify-center lg:justify-end gap-2.5 relative z-10">
-                      {/* Neumorphic Capsule Badge */}
-                      <div className="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)]">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                        <Calendar className="w-3.5 h-3.5 text-cyan-400" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
-                          PERIODE
+                    <div className="flex items-center justify-center lg:justify-end gap-1.5 sm:gap-2 relative z-10">
+                      {/* Neumorphic Capsule Badge for UNIT */}
+                      <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                        <Building2 className="w-3 h-3 text-cyan-400" />
+                        <span className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-300">
+                          PILIH UNIT
                         </span>
                       </div>
 
-                      {/* Tipe Periode - Recessed Neumorphic Well */}
+                      {/* Unit Filter */}
                       <div className="relative">
                         <select 
-                          value={periode} 
-                          onChange={(e) => setPeriode(e.target.value)}
-                          className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] capitalize"
+                          value={selectedUnit} 
+                          onChange={(e) => setSelectedUnit(e.target.value)}
+                          className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs font-bold rounded-full pl-3 pr-7 py-1.5 outline-none focus:ring-1 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.6)]"
                         >
-                          <option value="Bulanan" className="bg-[#18193b] text-white">Bulanan</option>
-                          <option value="Triwulan" className="bg-[#18193b] text-white">Triwulan</option>
-                          <option value="Semester" className="bg-[#18193b] text-white">Semester</option>
-                          <option value="Tahunan" className="bg-[#18193b] text-white">Tahunan</option>
+                          <option value="Semua Unit" className="bg-[#18193b] text-white">Semua Unit</option>
+                          {['IGD', 'ICU', 'IBS', 'Rawat Jalan', 'Ranap Aisyah', 'Ranap Fatimah', 'Ranap Khadijah', 'Ranap Usman', 'Radiologi', 'Laboratorium', 'Pantry', 'Emergency Kebidanan'].map(u => (
+                            <option key={u} value={u} className="bg-[#18193b] text-white">{u}</option>
+                          ))}
                         </select>
                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                          <ChevronDown className="w-3.5 h-3.5" />
+                          <ChevronDown className="w-3 h-3" />
                         </div>
-                      </div>
-
-                      {periode === 'Bulanan' && (
-                        <div className="relative">
-                          <select 
-                            value={selectedMonth} 
-                            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                            className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
-                          >
-                            {MONTHS_SHORT.map((m, i) => (
-                              <option key={m} value={i} className="bg-[#18193b] text-white">{m}</option>
-                            ))}
-                          </select>
-                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                            <ChevronDown className="w-3.5 h-3.5" />
-                          </div>
-                        </div>
-                      )}
-
-                      {periode === 'Triwulan' && (
-                        <div className="relative">
-                          <select 
-                            value={selectedQuarter} 
-                            onChange={(e) => setSelectedQuarter(parseInt(e.target.value))}
-                            className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
-                          >
-                            <option value={0} className="bg-[#18193b] text-white">TW 1 (Jan-Mar)</option>
-                            <option value={1} className="bg-[#18193b] text-white">TW 2 (Apr-Jun)</option>
-                            <option value={2} className="bg-[#18193b] text-white">TW 3 (Jul-Sep)</option>
-                            <option value={3} className="bg-[#18193b] text-white">TW 4 (Okt-Des)</option>
-                          </select>
-                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                            <ChevronDown className="w-3.5 h-3.5" />
-                          </div>
-                        </div>
-                      )}
-
-                      {periode === 'Semester' && (
-                        <div className="relative">
-                          <select 
-                            value={selectedSemester} 
-                            onChange={(e) => setSelectedSemester(parseInt(e.target.value))}
-                            className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
-                          >
-                            <option value={0} className="bg-[#18193b] text-white">SM 1 (Jan-Jun)</option>
-                            <option value={1} className="bg-[#18193b] text-white">SM 2 (Jul-Des)</option>
-                          </select>
-                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                            <ChevronDown className="w-3.5 h-3.5" />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Tahun - Recessed Neumorphic Well */}
-                      <div className="relative">
-                        <select 
-                          value={selectedYear} 
-                          onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                          className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
-                        >
-                          <option value={2026} className="bg-[#18193b] text-white">2026</option>
-                          <option value={2025} className="bg-[#18193b] text-white">2025</option>
-                          <option value={2024} className="bg-[#18193b] text-white">2024</option>
-                        </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                          <ChevronDown className="w-3.5 h-3.5" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Unit Filter - Styled Matching Neumorphic Container */}
-                <div className="relative group">
-                  <div className="relative bg-[#18193b] rounded-[24px] p-2.5 sm:p-3 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)]">
-                    <div className="absolute top-0 inset-x-4 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
-                    <div className="relative z-10 flex items-center">
-                      <select 
-                        value={selectedUnit} 
-                        onChange={(e) => setSelectedUnit(e.target.value)}
-                        className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
-                      >
-                        <option value="Semua Unit" className="bg-[#18193b] text-white">Semua Unit</option>
-                        {['IGD', 'ICU', 'IBS', 'Rawat Jalan', 'Ranap Aisyah', 'Ranap Fatimah', 'Ranap Khadijah', 'Ranap Usman', 'Radiologi', 'Laboratorium', 'Pantry', 'Emergency Kebidanan'].map(u => (
-                          <option key={u} value={u} className="bg-[#18193b] text-white">{u}</option>
-                        ))}
-                      </select>
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                        <ChevronDown className="w-3.5 h-3.5" />
                       </div>
                     </div>
                   </div>

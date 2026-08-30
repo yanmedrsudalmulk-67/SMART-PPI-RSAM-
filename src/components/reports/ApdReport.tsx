@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { ReportSkeleton } from '@/components/SkeletonLoading';
+import { forceScrollToTop } from '@/utils/scrollHelper';
 import { supabase } from '@/lib/supabase';
 import { useSafeRouter } from '@/hooks/useSafeRouter';
 import { 
@@ -150,41 +151,18 @@ export default function ApdReport({
     return () => { supabase.removeChannel(ch); };
   }, [fetchData]);
 
-  // Ensure scroll resets to top when data loading finishes
+  const isInitialLoadRef = useRef(true);
+
+  // Ensure scroll resets to top when navigating to report and after initial data load
   useEffect(() => {
-    const scrollToTop = () => {
-      const mainEl = document.querySelector("main");
-      if (mainEl) {
-        mainEl.scrollTop = 0;
-        try {
-          mainEl.scrollTo({ top: 0, behavior: "instant" as any });
-        } catch (_) {}
-      }
-      const scrollableElements = document.querySelectorAll('.overflow-y-auto, [data-scroll-container]');
-      scrollableElements.forEach(el => {
-        el.scrollTop = 0;
-      });
+    forceScrollToTop();
+  }, []);
 
-      const headerEl = document.getElementById('report-detail-header') || document.getElementById('report-top-anchor');
-      if (headerEl) {
-        try {
-          headerEl.scrollIntoView({ behavior: 'instant' as any, block: 'start' });
-        } catch (_) {}
-      }
-
-      try {
-        window.scrollTo({ top: 0, behavior: "instant" as any });
-      } catch (_) {}
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    };
-
-    scrollToTop();
-    requestAnimationFrame(scrollToTop);
-    setTimeout(scrollToTop, 30);
-    setTimeout(scrollToTop, 100);
-    setTimeout(scrollToTop, 250);
-    setTimeout(scrollToTop, 500);
+  useEffect(() => {
+    if (!loading && isInitialLoadRef.current) {
+      isInitialLoadRef.current = false;
+      forceScrollToTop();
+    }
   }, [loading]);
 
   const filteredData = useMemo(() => {
@@ -522,59 +500,6 @@ export default function ApdReport({
             </div>
           </div>
        </div>
-
-       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-          {/* Grafik Card */}
-          <div className="bg-[#18193b] rounded-[28px] md:rounded-[32px] border border-[#2b2d56] p-6 sm:p-8 shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] flex flex-col relative overflow-hidden">
-             <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
-             <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-               <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-3">
-                 <TrendingUp className="w-5 h-5 text-emerald-400" /> Grafik Capaian Kepatuhan APD
-               </h3>
-               <div className="flex bg-[#12132e] p-1 rounded-xl border border-indigo-900/40 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6)]">
-                 <button onClick={() => setChartType('bar')} className={`px-3.5 py-1.5 text-xs font-black uppercase rounded-lg transition-all ${chartType === 'bar' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}>
-                   <BarChart2 className="w-3.5 h-3.5 inline mr-1" /> Bar
-                 </button>
-                 <button onClick={() => setChartType('line')} className={`px-3.5 py-1.5 text-xs font-black uppercase rounded-lg transition-all ${chartType === 'line' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}>
-                   <TrendingUp className="w-3.5 h-3.5 inline mr-1" /> Line
-                 </button>
-               </div>
-             </div>
-             <div className="h-[250px] w-full mt-auto">
-               <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={trendData} margin={{ top: 20, right: 30, left: -20, bottom: 0 }}>
-                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                     <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} dy={10} />
-                     <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} domain={[0, 100]} axisLine={false} tickLine={false} />
-                     <RechartsTooltip cursor={{ fill: 'rgba(255,255,255,0.02)' }} contentStyle={{ backgroundColor: '#12132e', borderColor: '#2b2d56', borderRadius: '16px', color: '#fff', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)' }} />
-                     {chartType === 'line' ? (
-                       <Line type="monotone" dataKey="val" name="Kepatuhan (%)" stroke="#10b981" strokeWidth={3} dot={{ r: 4, strokeWidth: 2, fill: '#10b981' }} activeDot={{ r: 6 }} animationDuration={1000} />
-                     ) : (
-                       <Bar dataKey="val" name="Kepatuhan (%)" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={40} animationDuration={1000}>
-                         {trendData.map((entry, index) => (
-                           <Cell key={`cell-${index}`} fill={entry.val >= 85 ? '#10b981' : entry.val >= 75 ? '#f59e0b' : '#f43f5e'} />
-                         ))}
-                       </Bar>
-                     )}
-                  </ComposedChart>
-               </ResponsiveContainer>
-             </div>
-          </div>
-          
-         {/* Analysis Otomatis Card */}
-         <div className="bg-[#18193b] rounded-[28px] md:rounded-[32px] border border-[#2b2d56] p-6 sm:p-8 shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] flex flex-col relative overflow-hidden">
-            <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
-            <h3 className="text-base sm:text-lg font-black text-white uppercase tracking-wider mb-4">
-               Analisa Data
-            </h3>
-            <div className="bg-[#12132e] rounded-2xl p-5 border border-indigo-900/40 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6)] flex-1 flex items-center">
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium text-justify">
-                Pada periode {filters.periode ? format(new Date(filters.periode), 'MMMM yyyy', {locale: idLocale}) : 'ini'} terdapat <span className="font-black text-white">{summaryStats.count} observasi</span> dengan total <span className="font-black text-white">{summaryStats.dinilai} item APD</span> yang dinilai. Sebanyak <span className="font-black text-emerald-400">{summaryStats.patuh} item dinyatakan patuh</span> dan <span className="font-black text-rose-400">{summaryStats.tidakPatuh} item tidak patuh</span> sehingga tingkat kepatuhan mencapai <span className="font-black text-cyan-300">{summaryStats.avg}%</span>.
-                {recommendationData.mostMissingCount > 0 ? ` Ketidakpatuhan paling banyak ditemukan pada penggunaan ${recommendationData.mostMissingItem}.` : ' Kepatuhan sangat baik tanpa ada ketidakpatuhan.'}
-              </p>
-            </div>
-         </div>
-      </div>
 
       {/* Modal Konfirmasi Hapus */}
       <AnimatePresence>

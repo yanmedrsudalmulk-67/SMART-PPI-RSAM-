@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { utils, writeFile } from "xlsx";
 import { supabase } from "@/lib/supabase";
 import { ReportSkeleton } from '@/components/SkeletonLoading';
+import { forceScrollToTop } from '@/utils/scrollHelper';
 import { useSafeRouter as useRouter } from '@/hooks/useSafeRouter';
 import {
   TrendingUp,
@@ -835,42 +836,19 @@ export default function GenericAuditReport({
     );
   }, [selectedRecordId]);
 
-  // Ensure scroll resets to top when data loading finishes or selected record changes
+  const isInitialLoadRef = useRef(true);
+
+  // Ensure scroll resets to top when navigating to report and after initial data load
   useEffect(() => {
-    const scrollToTop = () => {
-      const mainEl = document.querySelector("main");
-      if (mainEl) {
-        mainEl.scrollTop = 0;
-        try {
-          mainEl.scrollTo({ top: 0, behavior: "instant" as any });
-        } catch (_) {}
-      }
-      const scrollableElements = document.querySelectorAll('.overflow-y-auto, [data-scroll-container]');
-      scrollableElements.forEach(el => {
-        el.scrollTop = 0;
-      });
+    forceScrollToTop();
+  }, []);
 
-      const headerEl = document.getElementById('report-detail-header') || document.getElementById('report-top-anchor');
-      if (headerEl) {
-        try {
-          headerEl.scrollIntoView({ behavior: 'instant' as any, block: 'start' });
-        } catch (_) {}
-      }
-
-      try {
-        window.scrollTo({ top: 0, behavior: "instant" as any });
-      } catch (_) {}
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    };
-
-    scrollToTop();
-    requestAnimationFrame(scrollToTop);
-    setTimeout(scrollToTop, 30);
-    setTimeout(scrollToTop, 100);
-    setTimeout(scrollToTop, 250);
-    setTimeout(scrollToTop, 500);
-  }, [loading, selectedRecordId]);
+  useEffect(() => {
+    if (!loading && isInitialLoadRef.current) {
+      isInitialLoadRef.current = false;
+      forceScrollToTop();
+    }
+  }, [loading]);
 
   if (loading && !data.length)
     return <ReportSkeleton />;

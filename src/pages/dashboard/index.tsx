@@ -262,13 +262,15 @@ const HeroSlider = ({
   }, [slides, isLoading]);
 
   const duplicatedSlides = useMemo(() => {
-    if (visibleSlides.length === 2) {
-      return [...visibleSlides, ...visibleSlides, ...visibleSlides, ...visibleSlides];
+    if (visibleSlides.length === 0) return [];
+    if (visibleSlides.length === 1) return visibleSlides;
+    // For Swiper loop mode with fractional slidesPerView and centeredSlides,
+    // Swiper requires at least 6-8 slides to loop without warnings
+    let result = [...visibleSlides];
+    while (result.length < 8) {
+      result = [...result, ...visibleSlides];
     }
-    if (visibleSlides.length === 3) {
-      return [...visibleSlides, ...visibleSlides, ...visibleSlides];
-    }
-    return visibleSlides;
+    return result;
   }, [visibleSlides]);
 
   useEffect(() => {
@@ -1442,7 +1444,7 @@ export default function DashboardPage() {
                     INDIKATOR MUTU
                   </span>
                 </div>
-                <h3 className="text-[25px] font-extrabold text-white leading-snug tracking-tight">
+                <h3 className="text-[23px] font-extrabold text-white leading-snug tracking-tight">
                   Kepatuhan Kebersihan Tangan
                 </h3>
               </div>
@@ -1450,7 +1452,7 @@ export default function DashboardPage() {
               {/* 3D Floating Isometric Plate */}
               <div className="shrink-0 relative">
                 <div className="w-16 h-16 rounded-[22px] bg-gradient-to-br from-[#272952] to-[#12132d] border-2 border-indigo-400/30 shadow-[-3px_-3px_10px_rgba(140,165,255,0.12),6px_8px_18px_rgba(0,0,0,0.7),inset_1.5px_1.5px_2px_rgba(255,255,255,0.2)] flex items-center justify-center transform group-hover:scale-105 group-hover:-rotate-3 transition-transform duration-300">
-                  <div className="w-10 h-10 rounded-[16px] bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-400 shadow-[0_6px_16px_rgba(16,185,129,0.5),inset_1px_1px_2px_rgba(255,255,255,0.4)] flex items-center justify-center text-white">
+                  <div className="w-10 h-10 rounded-[16px] bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-400 shadow-[0_6px_16px_rgba(160,185,129,0.5),inset_1px_1px_2px_rgba(255,255,255,0.4)] flex items-center justify-center text-white">
                     <Droplets className="w-5 h-5 drop-shadow" />
                   </div>
                 </div>
@@ -1507,7 +1509,7 @@ export default function DashboardPage() {
                     INDIKATOR MUTU
                   </span>
                 </div>
-                <h3 className="text-[25px] font-extrabold text-white leading-snug tracking-tight">
+                <h3 className="text-[23px] font-extrabold text-white leading-snug tracking-tight">
                   Kepatuhan Penggunaan APD
                 </h3>
               </div>
@@ -1572,7 +1574,7 @@ export default function DashboardPage() {
                     INDIKATOR MUTU
                   </span>
                 </div>
-                <h3 className="text-[25px] font-extrabold text-white leading-snug tracking-tight">
+                <h3 className="text-[23px] font-extrabold text-white leading-snug tracking-tight">
                   Surveilans HAIs
                 </h3>
               </div>

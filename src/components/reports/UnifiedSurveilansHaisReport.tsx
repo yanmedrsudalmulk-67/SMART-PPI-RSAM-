@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
@@ -14,6 +14,7 @@ import {
 
 import { useAppContext } from '@/components/Providers';
 import { ReportSkeleton } from '@/components/SkeletonLoading';
+import { forceScrollToTop } from '@/utils/scrollHelper';
 
 // Standard clinical indicators for HAIs
 const INDICATORS = [
@@ -141,41 +142,18 @@ export default function UnifiedSurveilansHaisReport() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDateISO, endDateISO, selectedRuangan, selectedHais]);
 
-  // Ensure scroll resets to top when data loading finishes
+  const isInitialLoadRef = useRef(true);
+
+  // Ensure scroll resets to top when navigating to report and after initial data load
   useEffect(() => {
-    const scrollToTop = () => {
-      const mainEl = document.querySelector("main");
-      if (mainEl) {
-        mainEl.scrollTop = 0;
-        try {
-          mainEl.scrollTo({ top: 0, behavior: "instant" as any });
-        } catch (_) {}
-      }
-      const scrollableElements = document.querySelectorAll('.overflow-y-auto, [data-scroll-container]');
-      scrollableElements.forEach(el => {
-        el.scrollTop = 0;
-      });
+    forceScrollToTop();
+  }, []);
 
-      const headerEl = document.getElementById('report-detail-header') || document.getElementById('report-top-anchor');
-      if (headerEl) {
-        try {
-          headerEl.scrollIntoView({ behavior: 'instant' as any, block: 'start' });
-        } catch (_) {}
-      }
-
-      try {
-        window.scrollTo({ top: 0, behavior: "instant" as any });
-      } catch (_) {}
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    };
-
-    scrollToTop();
-    requestAnimationFrame(scrollToTop);
-    setTimeout(scrollToTop, 30);
-    setTimeout(scrollToTop, 100);
-    setTimeout(scrollToTop, 250);
-    setTimeout(scrollToTop, 500);
+  useEffect(() => {
+    if (!loading && isInitialLoadRef.current) {
+      isInitialLoadRef.current = false;
+      forceScrollToTop();
+    }
   }, [loading]);
 
   const { currentData, previousData } = useMemo(() => {
@@ -408,13 +386,13 @@ export default function UnifiedSurveilansHaisReport() {
         <div className="flex flex-wrap items-center justify-center lg:justify-end gap-3 w-full lg:w-auto">
           {/* Filter Periode - 3D Tactile Neumorphic Container */}
           <div className="relative group w-full sm:w-auto">
-            <div className="relative bg-[#18193b] rounded-[24px] p-2.5 sm:p-3 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)]">
+            <div className="relative bg-[#18193b] rounded-full p-2 sm:p-2.5 sm:px-3.5 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)]">
               {/* Top Bevel Highlight */}
               <div className="absolute top-0 inset-x-6 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
-              <div className="flex flex-wrap items-center justify-center lg:justify-end gap-2.5 relative z-10">
+              <div className="flex flex-wrap items-center justify-center lg:justify-end gap-2 relative z-10">
                 {/* Neumorphic Capsule Badge */}
-                <div className="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)]">
+                <div className="hidden sm:inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)]">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   <Calendar className="w-3.5 h-3.5 text-cyan-400" />
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
@@ -427,7 +405,7 @@ export default function UnifiedSurveilansHaisReport() {
                   <select 
                     value={periodeType} 
                     onChange={(e) => setPeriodeType(e.target.value)} 
-                    className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] capitalize"
+                    className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-full pl-3.5 pr-8 py-1.5 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] capitalize"
                   >
                     <option value="Bulanan" className="bg-[#18193b] text-white">Bulanan</option>
                     <option value="Triwulan" className="bg-[#18193b] text-white">Triwulan</option>
@@ -444,7 +422,7 @@ export default function UnifiedSurveilansHaisReport() {
                     <select 
                       value={selectedMonth} 
                       onChange={(e) => setSelectedMonth(parseInt(e.target.value))} 
-                      className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                      className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-full pl-3.5 pr-8 py-1.5 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
                     >
                       {["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"].map((m, i) => (
                         <option key={m} value={i} className="bg-[#18193b] text-white">{m}</option>
@@ -460,7 +438,7 @@ export default function UnifiedSurveilansHaisReport() {
                     <select 
                       value={selectedQuarter} 
                       onChange={(e) => setSelectedQuarter(parseInt(e.target.value))} 
-                      className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                      className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-full pl-3.5 pr-8 py-1.5 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
                     >
                       <option value={0} className="bg-[#18193b] text-white">TW 1 (Jan-Mar)</option>
                       <option value={1} className="bg-[#18193b] text-white">TW 2 (Apr-Jun)</option>
@@ -477,7 +455,7 @@ export default function UnifiedSurveilansHaisReport() {
                     <select 
                       value={selectedSemester} 
                       onChange={(e) => setSelectedSemester(parseInt(e.target.value))} 
-                      className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                      className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-full pl-3.5 pr-8 py-1.5 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
                     >
                       <option value={0} className="bg-[#18193b] text-white">SM 1 (Jan-Jun)</option>
                       <option value={1} className="bg-[#18193b] text-white">SM 2 (Jul-Des)</option>
@@ -493,7 +471,7 @@ export default function UnifiedSurveilansHaisReport() {
                   <select 
                     value={selectedYear} 
                     onChange={(e) => setSelectedYear(parseInt(e.target.value))} 
-                    className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                    className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-full pl-3.5 pr-8 py-1.5 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
                   >
                     <option value={2026} className="bg-[#18193b] text-white">2026</option>
                     <option value={2025} className="bg-[#18193b] text-white">2025</option>
@@ -509,13 +487,13 @@ export default function UnifiedSurveilansHaisReport() {
 
           {/* Ruangan - Matching Neumorphic Container */}
           <div className="relative group">
-            <div className="relative bg-[#18193b] rounded-[24px] p-2.5 sm:p-3 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)]">
+            <div className="relative bg-[#18193b] rounded-full p-2 sm:p-2.5 sm:px-3.5 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)]">
               <div className="absolute top-0 inset-x-4 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
               <div className="relative z-10 flex items-center">
                 <select 
                   value={selectedRuangan} 
                   onChange={(e) => setSelectedRuangan(e.target.value)} 
-                  className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-xl pl-3.5 pr-8 py-2 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                  className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-full pl-3.5 pr-8 py-1.5 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
                 >
                   {RUANGAN_LIST.map(r => (
                     <option key={r} value={r} className="bg-[#18193b] text-white">{r}</option>
