@@ -15,6 +15,15 @@
   will-change: transform, opacity;
 }
 
+.sidebar-layer-gpu {
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform;
+  contain: layout style paint;
+}
+
 /* 120 FPS / 144 Hz frame rate pacing & touch optimizations */
 @media (min-resolution: 120dpi) or (-webkit-min-device-pixel-ratio: 1.5) {
   * {

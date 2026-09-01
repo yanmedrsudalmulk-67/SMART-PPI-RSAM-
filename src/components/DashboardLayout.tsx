@@ -298,15 +298,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           opacity: (isSidebarOpen || !isMobile) ? 1 : 0
         }}
         transition={{ 
-          type: "spring",
-          stiffness: 450,
-          damping: 40,
-          mass: 0.8
+          duration: 0.22,
+          ease: [0.16, 1, 0.3, 1]
         }}
-        className="fixed inset-y-4 left-4 z-50 w-[280px] print:hidden transform-gpu will-change-transform pointer-events-auto"
+        className="fixed inset-y-4 left-4 z-50 w-[280px] print:hidden sidebar-layer-gpu fps-optimized pointer-events-auto select-none"
       >
         {/* Main Inner Card with Glass/Border/Shadow & overflow-hidden */}
-        <div className="flex flex-col h-full w-full rounded-[30px] transition-colors duration-500 backdrop-blur-2xl bg-gradient-to-b from-[#1c183a] via-[#14172f] to-[#0c0e1e] border border-[#2b2d56] shadow-[-6px_-6px_20px_rgba(140,165,255,0.08),12px_14px_36px_rgba(0,0,0,0.75),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] overflow-hidden relative">
+        <div className="flex flex-col h-full w-full rounded-[30px] transition-colors duration-300 backdrop-blur-2xl bg-gradient-to-b from-[#1c183a] via-[#14172f] to-[#0c0e1e] border border-[#2b2d56] shadow-[-6px_-6px_20px_rgba(140,165,255,0.08),12px_14px_36px_rgba(0,0,0,0.75),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] overflow-hidden relative">
           {/* Top Bevel Highlight */}
           <div className="absolute top-0 inset-x-6 h-[1.5px] bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none z-20" />
 
@@ -358,58 +356,63 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </div>
 
-        {/* Premium Vertical Scroll Handle Bar Toggle Button */}
+        {/* Circular Sidebar Toggle Button - Centered & Touch Friendly */}
         <button
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="absolute -right-3.5 top-1/2 -translate-y-1/2 w-4 h-20 rounded-r-xl flex flex-col items-center justify-center gap-1.5 border border-l-0 border-indigo-500/60 bg-gradient-to-b from-[#222452] via-[#161838] to-[#0e1026] text-cyan-300 shadow-[4px_0_16px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.3)] hover:border-cyan-400 hover:text-white hover:shadow-[0_0_18px_rgba(6,182,212,0.6)] hover:w-5 hover:-right-4.5 transition-all duration-300 z-[60] group hidden landscape:flex md:flex cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsSidebarOpen(!isSidebarOpen);
+          }}
+          className="absolute -right-4 sm:-right-4.5 top-1/2 -translate-y-1/2 w-8.5 h-8.5 sm:w-9.5 sm:h-9.5 rounded-full flex items-center justify-center border border-indigo-400/60 bg-gradient-to-b from-[#252858] via-[#17193c] to-[#0d0f26] text-cyan-300 shadow-[0_4px_16px_rgba(0,0,0,0.65),inset_1px_1px_2px_rgba(255,255,255,0.25)] hover:border-cyan-400 hover:text-white hover:shadow-[0_0_20px_rgba(6,182,212,0.65)] hover:scale-105 active:scale-90 transition-all duration-200 z-[60] group hidden landscape:flex md:flex cursor-pointer touch-manipulation select-none before:content-[''] before:absolute before:-inset-3 before:rounded-full before:z-10"
           title={isSidebarOpen ? "Sembunyikan Sidebar" : "Tampilkan Sidebar"}
           aria-label={isSidebarOpen ? "Sembunyikan Sidebar" : "Tampilkan Sidebar"}
         >
-          {/* Top Tactile Scroll Grip Bar */}
-          <div className="w-1.5 h-0.5 rounded-full bg-cyan-400/80 group-hover:bg-cyan-300 transition-colors shadow-[0_0_4px_rgba(6,182,212,0.6)]" />
-          
           {/* Chevron Indicator */}
-          <ChevronLeft className={`w-3.5 h-3.5 transition-transform duration-500 ${isSidebarOpen ? 'rotate-0' : 'rotate-180'}`} />
-          
-          {/* Bottom Tactile Scroll Grip Bar */}
-          <div className="w-1.5 h-0.5 rounded-full bg-cyan-400/80 group-hover:bg-cyan-300 transition-colors shadow-[0_0_4px_rgba(6,182,212,0.6)]" />
+          <ChevronLeft className={`w-4 h-4 sm:w-4.5 sm:h-4.5 text-cyan-300 group-hover:text-cyan-100 transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] ${isSidebarOpen ? 'rotate-0' : 'rotate-180'}`} strokeWidth={2.5} />
         </button>
       </motion.aside>
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col h-full min-w-0 overflow-hidden transition-[margin-left] duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] print:ml-0 ${
+      <div className={`flex-1 flex flex-col h-full min-w-0 overflow-hidden transition-[margin-left] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[margin-left] print:ml-0 ${
         !isMobile ? (isSidebarOpen ? 'ml-[312px]' : 'ml-[64px]') : 'ml-0'
       }`}>
         {/* Page Content */}
         <main ref={mainRef} className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 pb-32 sm:pb-10 relative overscroll-y-none [transform:translateZ(0)] will-change-scroll w-full max-w-full z-10 fps-optimized gpu-accelerated">
           {/* Header Desktop & Landscape saat Sidebar Minimized */}
-          {!isMobile && !isSidebarOpen && (
-            <div className="mb-6 flex items-center justify-between gap-4 p-3.5 px-5 rounded-2xl bg-[#141532]/80 border border-indigo-900/40 backdrop-blur-md shadow-[-4px_-4px_12px_rgba(140,165,255,0.06),6px_8px_20px_rgba(0,0,0,0.6)] print:hidden landscape:hidden">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center">
-                    {hospitalLogoUrl ? (
-                      <img src={hospitalLogoUrl} alt="Logo RS" className="w-full h-full object-contain" />
-                    ) : (
-                      <ShieldCheck className="w-5 h-5 text-indigo-300" />
-                    )}
-                  </div>
-                  <div className="flex flex-col text-left">
-                    <span className="font-heading font-bold text-xs tracking-wide text-white leading-tight">
-                      UOBK RSUD AL-MULK
-                    </span>
-                    <span className="text-[9.5px] font-bold uppercase tracking-[0.2em] text-indigo-200/80">
-                      KOTA SUKABUMI
-                    </span>
+          <AnimatePresence>
+            {!isMobile && !isSidebarOpen && (
+              <motion.div 
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                className="mb-6 flex items-center justify-between gap-4 p-3.5 px-5 rounded-2xl bg-[#141532]/80 border border-indigo-900/40 backdrop-blur-md shadow-[-4px_-4px_12px_rgba(140,165,255,0.06),6px_8px_20px_rgba(0,0,0,0.6)] print:hidden landscape:hidden"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center">
+                      {hospitalLogoUrl ? (
+                        <img src={hospitalLogoUrl} alt="Logo RS" className="w-full h-full object-contain" />
+                      ) : (
+                        <ShieldCheck className="w-5 h-5 text-indigo-300" />
+                      )}
+                    </div>
+                    <div className="flex flex-col text-left">
+                      <span className="font-heading font-bold text-xs tracking-wide text-white leading-tight">
+                        UOBK RSUD AL-MULK
+                      </span>
+                      <span className="text-[9.5px] font-bold uppercase tracking-[0.2em] text-indigo-200/80">
+                        KOTA SUKABUMI
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-4">
-                <ClockWidget />
-              </div>
-            </div>
-          )}
+                <div className="flex items-center gap-4">
+                  <ClockWidget />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Header Khusus Mode Mobile & Landscape */}
           <div className={`flex md:hidden flex-col mb-4 print:hidden ${!isSidebarOpen ? 'landscape:hidden' : ''}`}>
