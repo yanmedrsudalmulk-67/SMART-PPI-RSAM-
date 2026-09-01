@@ -18,7 +18,8 @@ import { supabase } from "@/lib/supabase";
 import { uploadImagesToSupabase } from "@/lib/upload";
 import DashboardLayout from "@/components/DashboardLayout";
 import { LiveStatisticsCard } from "@/components/LiveStatisticsCard";
-import { DocumentationUploader } from "@/components/DocumentationUploader";
+import { DocumentationUploader, DocImage } from "@/components/DocumentationUploader";
+import { UpayaPerbaikanSection } from "@/components/UpayaPerbaikanSection";
 import DigitalSignatureSection, {
   DigitalSignatureRef,
 } from "@/components/DigitalSignatureSection";
@@ -123,6 +124,8 @@ export default function InputPengendalianLingkunganPage() {
   const [temuan, setTemuan] = useState("");
   const [rekomendasi, setRekomendasi] = useState("");
   const [pjName, setPjName] = useState("");
+  const [preloadedPjSignature, setPreloadedPjSignature] = useState<string | null>(null);
+  const [preloadedIpcnSignature, setPreloadedIpcnSignature] = useState<string | null>(null);
 
   const [observers, setObservers] = useState<Observer[]>([]);
 
@@ -189,6 +192,9 @@ export default function InputPengendalianLingkunganPage() {
   });
 
   const [images, setImages] = useState<any[]>([]);
+  const [upayaPerbaikan, setUpayaPerbaikan] = useState("");
+  const [waktuPerbaikan, setWaktuPerbaikan] = useState("");
+  const [perbaikanImages, setPerbaikanImages] = useState<DocImage[]>([]);
   const signatureRef = useRef<DigitalSignatureRef>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -205,21 +211,34 @@ export default function InputPengendalianLingkunganPage() {
         setIsEditMode(true);
         setEditId(id);
         const loadEditData = async () => {
-          const { data: ed, error } = await supabase
+          let { data: ed, error } = await supabase
             .from("audit_sessions")
             .select("*")
             .eq("id", id)
-            .single();
-          if (ed && !error) {
+            .maybeSingle();
+
+          if (!ed) {
+            const { data: fallbackEd } = await supabase
+              .from("audit_pengendalian_lingkungan")
+              .select("*")
+              .eq("id", id)
+              .maybeSingle();
+            if (fallbackEd) ed = fallbackEd;
+          }
+
+          if (ed) {
             if (ed.tanggal_waktu) setStartTime(new Date(ed.tanggal_waktu));
             if (ed.observer) setObserver(ed.observer);
             if (ed.unit) setUnit(ed.unit);
 
             const indicatorsData = ed.data_indikator || ed.checklist_json || {};
-            if (indicatorsData.temuan) setTemuan(indicatorsData.temuan);
-            if (indicatorsData.rekomendasi) setRekomendasi(indicatorsData.rekomendasi);
+            const valTemuan = ed.temuan || indicatorsData.temuan || ed.temuan_lapangan || indicatorsData.temuan_lapangan || ed.catatan || indicatorsData.catatan || "";
+            if (valTemuan) setTemuan(valTemuan);
+
+            const valRekomendasi = ed.rekomendasi || indicatorsData.rekomendasi || ed.saran || indicatorsData.saran || "";
+            if (valRekomendasi) setRekomendasi(valRekomendasi);
             
-            const displayPjName = indicatorsData.nama_pj || indicatorsData.nama_pj_ruangan || ed.nama_pj_ruangan || "";
+            const displayPjName = indicatorsData.nama_pj || indicatorsData.nama_pj_ruangan || ed.nama_pj_ruangan || ed.nama_pj || "";
             if (typeof setPjName === "function") setPjName(displayPjName);
 
             try {
@@ -237,9 +256,11 @@ export default function InputPengendalianLingkunganPage() {
             
 
             // Prefill signatures
+            const t1 = ed.ttd_pj_ruangan || indicatorsData.ttd_pj || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
+            const t2 = ed.ttd_ipcn || indicatorsData.ttd_ipcn || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
+            if (t1) setPreloadedPjSignature(t1);
+            if (t2) setPreloadedIpcnSignature(t2);
             setTimeout(() => {
-              const t1 = ed.ttd_pj_ruangan || indicatorsData.ttd_pj || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
-              const t2 = ed.ttd_ipcn || indicatorsData.ttd_ipcn || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
               if (t1 && signatureRef.current?.setPjSignature) {
                 signatureRef.current.setPjSignature(t1);
               }
@@ -256,6 +277,18 @@ export default function InputPengendalianLingkunganPage() {
               );
             } else if (typeof docs === 'string' && docs.length > 0) {
               setImages([{ url: docs, file: null as any }]);
+            }
+
+            const upaya = indicatorsData.upaya_perbaikan || indicatorsData.upayaPerbaikan || ed.upaya_perbaikan || "";
+            if (upaya) setUpayaPerbaikan(upaya);
+
+            const waktuPerb = indicatorsData.waktu_perbaikan || indicatorsData.tanggal_perbaikan || ed.waktu_perbaikan || ed.tanggal_perbaikan || "";
+            if (waktuPerb) setWaktuPerbaikan(waktuPerb);
+
+            const perbaikanDocs = indicatorsData.foto_perbaikan || indicatorsData.dokumentasi_perbaikan || ed.foto_perbaikan;
+            if (perbaikanDocs) {
+              const pArr = Array.isArray(perbaikanDocs) ? perbaikanDocs : [perbaikanDocs];
+              setPerbaikanImages(pArr.map((url: string) => (typeof url === 'string' ? { url } : url)));
             }
           }
         };
@@ -334,8 +367,8 @@ export default function InputPengendalianLingkunganPage() {
     setIsSubmitting(true);
 
     try {
-      const pjSig = signatureRef.current?.getPjSignature();
-      const spvSig = signatureRef.current?.getSupervisorSignature();
+      const pjSig = signatureRef.current?.getPjSignature()?.trim() || preloadedPjSignature || "";
+      const spvSig = signatureRef.current?.getSupervisorSignature()?.trim() || preloadedIpcnSignature || "";
 
       const uploadedImages = await uploadImagesToSupabase(
         supabase,
@@ -343,6 +376,24 @@ export default function InputPengendalianLingkunganPage() {
         "audit_images",
         "images",
       );
+
+      const uploadedPerbaikanUrls: string[] = [];
+      for (const img of perbaikanImages) {
+        if (typeof img === "string") {
+          uploadedPerbaikanUrls.push(img);
+        } else if (img.url && !img.url.startsWith("blob:")) {
+          uploadedPerbaikanUrls.push(img.url);
+        } else if (img.file) {
+          const fileExt = img.file.name.split(".").pop();
+          const fileName = `perbaikan_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const filePath = `perbaikan/${fileName}`;
+          const { error: uploadErr } = await supabase.storage.from("dokumentasi").upload(filePath, img.file);
+          if (!uploadErr) {
+            const { data: pUrl } = supabase.storage.from("dokumentasi").getPublicUrl(filePath);
+            if (pUrl?.publicUrl) uploadedPerbaikanUrls.push(pUrl.publicUrl);
+          }
+        }
+      }
 
       const payload = {
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
@@ -355,42 +406,67 @@ export default function InputPengendalianLingkunganPage() {
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.statusText,
-                tanda_tangan_spv: spvSig,
+        tanda_tangan_spv: spvSig,
       };
 
-      const { data: sessionData, error: sessionError } = await supabase
-        .from("audit_sessions")
-        .insert([
-          {
-            indikator_id: "pengendalian_lingkungan",
-            nama_indikator: "PENGENDALIAN LINGKUNGAN",
-            tanggal_waktu: payload.tanggal_waktu,
-            observer,
-            unit,
-            jumlah_dinilai: stats.dinilai,
-            jumlah_patuh: stats.patuh,
-            persentase: stats.persentase,
-            status_kepatuhan: stats.statusText,
-            data_indikator: {
-              ...auditData,
-              temuan,
-              rekomendasi,
-              dokumentasi: uploadedImages,
-              tanda_tangan_pj: pjSig,
-              tanda_tangan_spv: spvSig,
-              nama_pj: pjName,
-            },
-          },
-        ])
-        .select("*")
-        .single();
+      const sessionPayload = {
+        indikator_id: "pengendalian_lingkungan",
+        nama_indikator: "PENGENDALIAN LINGKUNGAN",
+        tanggal_waktu: payload.tanggal_waktu,
+        observer,
+        unit,
+        nama_pj: pjName,
+        nama_pj_ruangan: pjName,
+        ttd_pj_ruangan: pjSig,
+        ttd_ipcn: spvSig,
+        temuan,
+        rekomendasi,
+        jumlah_dinilai: stats.dinilai,
+        jumlah_patuh: stats.patuh,
+        persentase: stats.persentase,
+        status_kepatuhan: stats.statusText,
+        upaya_perbaikan: upayaPerbaikan,
+        waktu_perbaikan: waktuPerbaikan,
+        tanggal_perbaikan: waktuPerbaikan,
+        foto_perbaikan: uploadedPerbaikanUrls,
+        data_indikator: {
+          ...auditData,
+          temuan,
+          rekomendasi,
+          dokumentasi: uploadedImages,
+          tanda_tangan_pj: pjSig,
+          tanda_tangan_spv: spvSig,
+          nama_pj: pjName,
+          upaya_perbaikan: upayaPerbaikan,
+          waktu_perbaikan: waktuPerbaikan,
+          foto_perbaikan: uploadedPerbaikanUrls,
+        },
+      };
+
+      let sessionError;
+      if (isEditMode && editId) {
+        const { error } = await supabase
+          .from("audit_sessions")
+          .update(sessionPayload)
+          .eq("id", editId);
+        sessionError = error;
+      } else {
+        const { error } = await supabase
+          .from("audit_sessions")
+          .insert([sessionPayload]);
+        sessionError = error;
+      }
 
       if (sessionError) throw sessionError;
 
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
-        router.push("/dashboard/input/isolasi");
+        if (isEditMode) {
+          router.push("/dashboard/reports");
+        } else {
+          router.push("/dashboard/input/isolasi");
+        }
       }, 2000);
     } catch (err: any) {
       handleError(err);
@@ -653,6 +729,17 @@ export default function InputPengendalianLingkunganPage() {
           </div>
 
           <DocumentationUploader images={images} setImages={setImages} />
+
+          {isEditMode && (
+            <UpayaPerbaikanSection
+              upayaPerbaikan={upayaPerbaikan}
+              setUpayaPerbaikan={setUpayaPerbaikan}
+              perbaikanImages={perbaikanImages}
+              setPerbaikanImages={setPerbaikanImages}
+              waktuPerbaikan={waktuPerbaikan}
+              setWaktuPerbaikan={setWaktuPerbaikan}
+            />
+          )}
 
           <DigitalSignatureSection
             ref={signatureRef}

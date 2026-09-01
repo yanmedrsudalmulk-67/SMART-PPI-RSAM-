@@ -26,6 +26,7 @@ import {
   DocumentationUploader,
   DocImage,
 } from "@/components/DocumentationUploader";
+import { UpayaPerbaikanSection } from "@/components/UpayaPerbaikanSection";
 import { EditableSelect } from "@/components/EditableSelect";
 const units = [
   "IGD",
@@ -99,6 +100,9 @@ export default function InputPengelolaanLimbahMedisPage() {
     item_10: null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [upayaPerbaikan, setUpayaPerbaikan] = useState("");
+  const [waktuPerbaikan, setWaktuPerbaikan] = useState("");
+  const [perbaikanImages, setPerbaikanImages] = useState<DocImage[]>([]);
   const [showToast, setShowToast] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -157,9 +161,14 @@ export default function InputPengelolaanLimbahMedisPage() {
             indicatorsData = indicatorsData || checklistJson || ed;
             
             if (indicatorsData) {
-              if (indicatorsData.temuan) setTemuan(indicatorsData.temuan);
-              if (indicatorsData.rekomendasi) setRekomendasi(indicatorsData.rekomendasi);
-              if (indicatorsData.nama_pj_ruangan) setPjName(indicatorsData.nama_pj_ruangan);
+              const valTemuan = ed.temuan || indicatorsData.temuan || ed.temuan_lapangan || indicatorsData.temuan_lapangan || ed.catatan || indicatorsData.catatan || "";
+              if (valTemuan) setTemuan(valTemuan);
+
+              const valRekomendasi = ed.rekomendasi || indicatorsData.rekomendasi || ed.saran || indicatorsData.saran || "";
+              if (valRekomendasi) setRekomendasi(valRekomendasi);
+
+              const displayPjName = indicatorsData.nama_pj_ruangan || indicatorsData.nama_pj || ed.nama_pj_ruangan || ed.nama_pj || "";
+              if (displayPjName) setPjName(displayPjName);
               
               if (indicatorsData.tanda_tangan_pj || ed.ttd_pj_ruangan) {
                 const sig = indicatorsData.tanda_tangan_pj || ed.ttd_pj_ruangan;
@@ -183,6 +192,18 @@ export default function InputPengelolaanLimbahMedisPage() {
               setImages(docs.map((url: any) => typeof url === 'string' ? { url, file: null as any } : url));
             } else if (typeof docs === 'string' && docs.length > 0) {
               setImages([{ url: docs, file: null as any }]);
+            }
+
+            const upaya = indicatorsData.upaya_perbaikan || indicatorsData.upayaPerbaikan || ed.upaya_perbaikan || "";
+            if (upaya) setUpayaPerbaikan(upaya);
+
+            const waktuPerb = indicatorsData.waktu_perbaikan || indicatorsData.tanggal_perbaikan || ed.waktu_perbaikan || ed.tanggal_perbaikan || "";
+            if (waktuPerb) setWaktuPerbaikan(waktuPerb);
+
+            const perbaikanDocs = indicatorsData.foto_perbaikan || indicatorsData.dokumentasi_perbaikan || ed.foto_perbaikan;
+            if (perbaikanDocs) {
+              const pArr = Array.isArray(perbaikanDocs) ? perbaikanDocs : [perbaikanDocs];
+              setPerbaikanImages(pArr.map((url: string) => (typeof url === 'string' ? { url } : url)));
             }
           }
         };
@@ -268,6 +289,24 @@ export default function InputPengelolaanLimbahMedisPage() {
         "audit_images",
         "images",
       );
+      const uploadedPerbaikanUrls: string[] = [];
+      for (const img of perbaikanImages) {
+        if (typeof img === "string") {
+          uploadedPerbaikanUrls.push(img);
+        } else if (img.url && !img.url.startsWith("blob:")) {
+          uploadedPerbaikanUrls.push(img.url);
+        } else if (img.file) {
+          const fileExt = img.file.name.split(".").pop();
+          const fileName = `perbaikan_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const filePath = `perbaikan/${fileName}`;
+          const { error: uploadErr } = await supabase.storage.from("dokumentasi").upload(filePath, img.file);
+          if (!uploadErr) {
+            const { data: pUrl } = supabase.storage.from("dokumentasi").getPublicUrl(filePath);
+            if (pUrl?.publicUrl) uploadedPerbaikanUrls.push(pUrl.publicUrl);
+          }
+        }
+      }
+
       const payload = {
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
         observer,
@@ -282,11 +321,21 @@ export default function InputPengelolaanLimbahMedisPage() {
         tanggal_waktu: payload.tanggal_waktu,
         observer,
         unit,
+        nama_pj: pjName.trim(),
+        nama_pj_ruangan: pjName.trim(),
+        ttd_pj_ruangan: pjSig,
+        ttd_ipcn: ipcnSig,
+        temuan,
+        rekomendasi,
         jenis_tindakan: "Limbah Medis Audit",
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.statusText,
+        upaya_perbaikan: upayaPerbaikan,
+        waktu_perbaikan: waktuPerbaikan,
+        tanggal_perbaikan: waktuPerbaikan,
+        foto_perbaikan: uploadedPerbaikanUrls,
         data_indikator: {
           ...auditData,
           temuan,
@@ -295,6 +344,9 @@ export default function InputPengelolaanLimbahMedisPage() {
           tanda_tangan_pj: pjSig,
           tanda_tangan_ipcn: ipcnSig,
           nama_pj_ruangan: pjName.trim(),
+          upaya_perbaikan: upayaPerbaikan,
+          waktu_perbaikan: waktuPerbaikan,
+          foto_perbaikan: uploadedPerbaikanUrls,
         },
       };
       if (isEditMode && editId) {
@@ -556,6 +608,16 @@ export default function InputPengelolaanLimbahMedisPage() {
             />
           </div>
           <DocumentationUploader images={images} setImages={setImages} />
+          {isEditMode && (
+            <UpayaPerbaikanSection
+              upayaPerbaikan={upayaPerbaikan}
+              setUpayaPerbaikan={setUpayaPerbaikan}
+              perbaikanImages={perbaikanImages}
+              setPerbaikanImages={setPerbaikanImages}
+              waktuPerbaikan={waktuPerbaikan}
+              setWaktuPerbaikan={setWaktuPerbaikan}
+            />
+          )}
           <DigitalSignatureSection
             ref={signatureRef}
             pjName={pjName}

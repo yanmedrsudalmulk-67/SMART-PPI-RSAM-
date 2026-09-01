@@ -22,6 +22,11 @@ import DigitalSignatureSection, {
 import { EditableSelect } from "@/components/EditableSelect";
 import { useAppContext } from "@/components/Providers";
 import { uploadImagesToSupabase } from "@/lib/upload";
+import {
+  DocumentationUploader,
+  DocImage,
+} from "@/components/DocumentationUploader";
+import { UpayaPerbaikanSection } from "@/components/UpayaPerbaikanSection";
 const checklistGroups = [
   {
     title: "A. Lingkungan Umum",
@@ -198,7 +203,10 @@ export default function InputMonitoringFarmasiPage() {
   const [data, setData] = useState<Record<string, AuditStatus>>({});
   const [temuan, setTemuan] = useState("");
   const [rekomendasi, setRekomendasi] = useState("");
-  const [images, setImages] = useState<File[]>([]);
+  const [images, setImages] = useState<DocImage[]>([]);
+  const [upayaPerbaikan, setUpayaPerbaikan] = useState("");
+  const [waktuPerbaikan, setWaktuPerbaikan] = useState("");
+  const [perbaikanImages, setPerbaikanImages] = useState<DocImage[]>([]);
   const [pjName, setPjName] = useState("");
   const sigRef = useRef<DigitalSignatureRef>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -244,9 +252,26 @@ export default function InputMonitoringFarmasiPage() {
             
 
             const indicatorsData = ed.data_indikator || ed.checklist_json || {};
-            if (indicatorsData.temuan) setTemuan(indicatorsData.temuan);
-            if (indicatorsData.rekomendasi) setRekomendasi(indicatorsData.rekomendasi);
+            const valTemuan = ed.temuan || indicatorsData.temuan || ed.temuan_lapangan || indicatorsData.temuan_lapangan || ed.catatan || indicatorsData.catatan || "";
+            if (valTemuan) setTemuan(valTemuan);
+
+            const valRekomendasi = ed.rekomendasi || indicatorsData.rekomendasi || ed.saran || indicatorsData.saran || "";
+            if (valRekomendasi) setRekomendasi(valRekomendasi);
             
+            const upaya = indicatorsData.upaya_perbaikan || indicatorsData.upayaPerbaikan || ed.upaya_perbaikan || "";
+            if (upaya) setUpayaPerbaikan(upaya);
+
+            const waktuPerb = indicatorsData.waktu_perbaikan || indicatorsData.tanggal_perbaikan || ed.waktu_perbaikan || ed.tanggal_perbaikan || "";
+            if (waktuPerb) setWaktuPerbaikan(waktuPerb);
+
+            const perbaikanDocs = indicatorsData.foto_perbaikan || indicatorsData.dokumentasi_perbaikan || ed.foto_perbaikan;
+            if (perbaikanDocs) {
+              const pArr = Array.isArray(perbaikanDocs) ? perbaikanDocs : [perbaikanDocs];
+              setPerbaikanImages(
+                pArr.map((url: any) => (typeof url === 'string' ? { url, file: null as any } : url))
+              );
+            }
+
             const displayPjName = indicatorsData.nama_pj || indicatorsData.nama_pj_ruangan || ed.nama_pj_ruangan || "";
             if (typeof setPjName === "function") setPjName(displayPjName);
 
@@ -301,14 +326,6 @@ export default function InputMonitoringFarmasiPage() {
   const handleActionClick = (id: string, stat: AuditStatus) => {
     setData((prev) => ({ ...prev, [id]: stat }));
   };
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setImages((prev) => [...prev, ...Array.from(e.target.files!)]);
-    }
-  };
-  const removeImage = (index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
-  };
   const stats = useMemo(() => {
     let patuh = 0;
     let dinilai = 0;
@@ -336,12 +353,17 @@ export default function InputMonitoringFarmasiPage() {
     try {
       const ttd_pj = sigRef.current?.getPjSignature();
       const ttd_ipcn = sigRef.current?.getSupervisorSignature();
-      const uploadPayload = images.map((img) => ({ file: img }));
       const uploadedUrls = images.length > 0 ? await uploadImagesToSupabase(
         supabase,
-        uploadPayload,
+        images,
         "audit_images",
         "monitoring_farmasi",
+      ) : [];
+      const uploadedPerbaikanUrls = perbaikanImages.length > 0 ? await uploadImagesToSupabase(
+        supabase,
+        perbaikanImages,
+        "audit_images",
+        "monitoring_farmasi/perbaikan",
       ) : [];
       const payload = {
         waktu: startTime?.toISOString() || new Date().toISOString(),
@@ -351,6 +373,10 @@ export default function InputMonitoringFarmasiPage() {
         persentase: stats.persentase,
         temuan,
         rekomendasi,
+        upaya_perbaikan: upayaPerbaikan,
+        waktu_perbaikan: waktuPerbaikan,
+        tanggal_perbaikan: waktuPerbaikan,
+        foto_perbaikan: uploadedPerbaikanUrls,
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         status_kepatuhan: stats.statusText,
@@ -364,6 +390,12 @@ export default function InputMonitoringFarmasiPage() {
         tanggal_waktu: payload.waktu,
         observer: observer,
         unit: "Farmasi",
+        nama_pj: pjName.trim(),
+        nama_pj_ruangan: pjName.trim(),
+        ttd_pj_ruangan: ttd_pj,
+        ttd_ipcn: ttd_ipcn,
+        temuan,
+        rekomendasi,
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
@@ -372,6 +404,10 @@ export default function InputMonitoringFarmasiPage() {
           ...data,
           temuan,
           rekomendasi,
+          upaya_perbaikan: upayaPerbaikan,
+          waktu_perbaikan: waktuPerbaikan,
+          tanggal_perbaikan: waktuPerbaikan,
+          foto_perbaikan: uploadedPerbaikanUrls,
           nama_pj: pjName.trim(),
           ttd_pj,
           ttd_ipcn,
@@ -605,54 +641,19 @@ export default function InputMonitoringFarmasiPage() {
             />
           </div>
         </div>
-        <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-          <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
-            📷 DOKUMENTASI
-          </h2>
-          <div className="flex flex-wrap gap-4">
-            {images.map((img, i) => (
-              <div
-                key={i}
-                className="relative w-24 h-24 rounded-xl overflow-hidden border border-white/10 shadow-sm"
-              >
-                <img
-                  src={
-                    (img as any) instanceof File || (img as any) instanceof Blob
-                      ? URL.createObjectURL(img as any)
-                      : (img as any)?.url || (typeof img === "string" ? img : "")
-                  }
-                  alt="img"
-                  className="w-full h-full object-cover"
-                />
-                <button
-                  onClick={() => removeImage(i)}
-                  type="button"
-                  className="absolute top-1 right-1 bg-red-500/80 p-1 rounded-full text-white backdrop-blur-md hover:bg-red-500 transition-colors"
-                >
-                  <X size={12} />
-                </button>
-              </div>
-            ))}
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              type="button"
-              className="w-24 h-24 rounded-[1.25rem] border-2 border-dashed border-white/20 flex flex-col items-center justify-center text-slate-500 hover:text-blue-400 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all cursor-pointer"
-            >
-              <Upload size={24} />
-              <span className="text-[10px] mt-2 font-bold uppercase tracking-widest">
-                Upload
-              </span>
-            </button>
-            <input
-              type="file"
-              ref={fileInputRef}
-              hidden
-              multiple
-              accept="image/*"
-              onChange={handleImageChange}
-            />
-          </div>
+        <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
+          <DocumentationUploader images={images} setImages={setImages} />
         </div>
+        {isEditMode && (
+          <UpayaPerbaikanSection
+            upayaPerbaikan={upayaPerbaikan}
+            setUpayaPerbaikan={setUpayaPerbaikan}
+            perbaikanImages={perbaikanImages}
+            setPerbaikanImages={setPerbaikanImages}
+            waktuPerbaikan={waktuPerbaikan}
+            setWaktuPerbaikan={setWaktuPerbaikan}
+          />
+        )}
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
             ✍️ TANDA TANGAN DIGITAL

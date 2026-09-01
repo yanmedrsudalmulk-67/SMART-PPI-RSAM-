@@ -46,6 +46,8 @@ export default function MonitoringAirbornePage() {
   const [temuan, setTemuan] = useState("");
   const [rekomendasi, setRekomendasi] = useState("");
   const [pjName, setPjName] = useState("");
+  const [preloadedPjSignature, setPreloadedPjSignature] = useState<string | null>(null);
+  const [preloadedIpcnSignature, setPreloadedIpcnSignature] = useState<string | null>(null);
   const [images, setImages] = useState<DocImage[]>([]);
   const [observers, setObservers] = useState<Observer[]>([]);
   const [isObserverModalOpen, setIsObserverModalOpen] = useState(false);
@@ -93,8 +95,11 @@ export default function MonitoringAirbornePage() {
             if (ed.observer || ed.supervisor) setObserver(ed.observer || ed.supervisor);
             
             const indicatorsData = ed.data_indikator || ed.checklist_json || {};
-            if (ed.temuan || indicatorsData.temuan) setTemuan(ed.temuan || indicatorsData.temuan);
-            if (ed.rekomendasi || indicatorsData.rekomendasi) setRekomendasi(ed.rekomendasi || indicatorsData.rekomendasi);
+            const valTemuan = ed.temuan || indicatorsData.temuan || ed.temuan_lapangan || indicatorsData.temuan_lapangan || ed.catatan || indicatorsData.catatan || "";
+            if (valTemuan) setTemuan(valTemuan);
+
+            const valRekomendasi = ed.rekomendasi || indicatorsData.rekomendasi || ed.saran || indicatorsData.saran || "";
+            if (valRekomendasi) setRekomendasi(valRekomendasi);
             
             const displayPjName =
               ed.nama_pj_ruangan ||
@@ -121,19 +126,21 @@ export default function MonitoringAirbornePage() {
             } catch (err) {}
 
             // Prefill signatures
+            const t1 =
+              ed.ttd_pj_ruangan ||
+              ed.ttd_pj ||
+              indicatorsData.ttd_pj ||
+              indicatorsData.ttd_pj_ruangan ||
+              (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
+            const t2 =
+              ed.ttd_ipcn ||
+              indicatorsData.ttd_ipcn ||
+              ed.ttd_supervisor ||
+              indicatorsData.ttd_supervisor ||
+              (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
+            if (t1) setPreloadedPjSignature(t1);
+            if (t2) setPreloadedIpcnSignature(t2);
             setTimeout(() => {
-              const t1 =
-                ed.ttd_pj_ruangan ||
-                ed.ttd_pj ||
-                indicatorsData.ttd_pj ||
-                indicatorsData.ttd_pj_ruangan ||
-                (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
-              const t2 =
-                ed.ttd_ipcn ||
-                indicatorsData.ttd_ipcn ||
-                ed.ttd_supervisor ||
-                indicatorsData.ttd_supervisor ||
-                (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
               if (t1 && sigRef.current?.setPjSignature) {
                 sigRef.current.setPjSignature(t1);
               }
@@ -272,8 +279,8 @@ export default function MonitoringAirbornePage() {
     }
     setIsSubmitting(true);
     try {
-      const ttd_pj = sigRef.current?.getPjSignature();
-      const ttd_ipcn = sigRef.current?.getSupervisorSignature();
+      const ttd_pj = sigRef.current?.getPjSignature()?.trim() || preloadedPjSignature || "";
+      const ttd_ipcn = sigRef.current?.getSupervisorSignature()?.trim() || preloadedIpcnSignature || "";
       const uploadedUrls = images.length > 0 ? await uploadImagesToSupabase(
         supabase,
         images,

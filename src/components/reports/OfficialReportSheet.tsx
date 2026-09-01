@@ -33,6 +33,10 @@ interface AuditRecord {
   persentase: number;
   temuan?: string;
   rekomendasi?: string;
+  upaya_perbaikan?: string;
+  waktu_perbaikan?: string;
+  tanggal_perbaikan?: string;
+  foto_perbaikan?: string[] | string;
   foto?: string[] | string;
   ttd_pj?: string;
   ttd_ipcn?: string;
@@ -80,6 +84,10 @@ export default function OfficialReportSheet({
   };
 
   const images = Array.isArray(data.foto) ? data.foto : (typeof data.foto === 'string' ? [data.foto] : []);
+  const upayaText = data.upaya_perbaikan || (checklist && checklist.upaya_perbaikan) || (checklist && checklist.upayaPerbaikan) || '';
+  const waktuPerbaikan = data.waktu_perbaikan || data.tanggal_perbaikan || (checklist && checklist.waktu_perbaikan) || (checklist && checklist.tanggal_perbaikan) || '';
+  const perbaikanRaw = data.foto_perbaikan || (checklist && checklist.foto_perbaikan) || (checklist && checklist.dokumentasi_perbaikan);
+  const perbaikanImages = Array.isArray(perbaikanRaw) ? perbaikanRaw : (typeof perbaikanRaw === 'string' ? [perbaikanRaw] : []);
 
   return (
     <div className="relative w-full font-sans bg-white text-slate-900 border border-slate-300 print:border-none p-8 rounded-2xl shadow-[0_15px_35px_-8px_rgba(0,0,0,0.15),0_6px_15px_-4px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.9)]">
@@ -182,6 +190,35 @@ export default function OfficialReportSheet({
                </div>
              ))}
            </div>
+         </div>
+      )}
+
+      {(upayaText || waktuPerbaikan || perbaikanImages.length > 0) && (
+         <div className="mb-12 p-4 border-2 border-amber-600 bg-amber-50/40 rounded-xl space-y-3">
+           <h4 className="text-xs font-black uppercase tracking-widest text-amber-900 border-b border-amber-400 pb-2 flex items-center justify-between">
+             <span>🛠️ Upaya Perbaikan & Tindak Lanjut</span>
+             <span className="text-[9px] px-2 py-0.5 bg-amber-200 text-amber-900 rounded font-bold">HASIL PERBAIKAN</span>
+           </h4>
+           {waktuPerbaikan && (
+             <div className="text-[10px] font-bold text-amber-900 bg-amber-200/60 px-2 py-0.5 rounded w-fit border border-amber-300">
+               📅 Tanggal &amp; Jam Perbaikan: {waktuPerbaikan.includes('T') ? waktuPerbaikan.replace('T', ' ') : waktuPerbaikan}
+             </div>
+           )}
+           {upayaText && (
+             <p className="text-xs text-black leading-relaxed whitespace-pre-wrap font-medium">{upayaText}</p>
+           )}
+           {perbaikanImages.length > 0 && (
+             <div className="pt-2">
+               <p className="text-[10px] font-bold text-amber-900 mb-2 uppercase tracking-wider">Foto Bukti Upaya Perbaikan:</p>
+               <div className="grid grid-cols-4 gap-4">
+                 {perbaikanImages.map((url, i) => (
+                   <div key={i} onClick={() => setZoomedImage(url)} className="relative aspect-video border-2 border-amber-500 bg-white cursor-zoom-in rounded-lg overflow-hidden shadow-sm">
+                     <Image src={url} alt="Foto Upaya Perbaikan" fill sizes="25vw" className="object-cover" referrerPolicy="no-referrer" />
+                   </div>
+                 ))}
+               </div>
+             </div>
+           )}
          </div>
       )}
 

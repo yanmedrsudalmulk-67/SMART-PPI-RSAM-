@@ -21,6 +21,7 @@ import {
   DocumentationUploader,
   DocImage,
 } from "@/components/DocumentationUploader";
+import { UpayaPerbaikanSection } from "@/components/UpayaPerbaikanSection";
 import { useAppContext } from "@/components/Providers";
 import DashboardLayout from "@/components/DashboardLayout";
 import { LiveStatisticsCard } from "@/components/LiveStatisticsCard";
@@ -199,6 +200,9 @@ export default function MonitoringCSSDPage() {
   const [rekomendasi, setRekomendasi] = useState("");
   const [pjName, setPjName] = useState("");
   const [images, setImages] = useState<DocImage[]>([]);
+  const [upayaPerbaikan, setUpayaPerbaikan] = useState("");
+  const [waktuPerbaikan, setWaktuPerbaikan] = useState("");
+  const [perbaikanImages, setPerbaikanImages] = useState<DocImage[]>([]);
   const [observers, setObservers] = useState<Observer[]>([]);
   const [isObserverModalOpen, setIsObserverModalOpen] = useState(false);
   const [newObserverName, setNewObserverName] = useState("");
@@ -245,9 +249,26 @@ export default function MonitoringCSSDPage() {
             if (ed.observer || ed.supervisor) setObserver(ed.observer || ed.supervisor);
 
             const indicatorsData = ed.data_indikator || ed.checklist_json || {};
-            if (indicatorsData.temuan || ed.temuan) setTemuan(indicatorsData.temuan || ed.temuan || "");
-            if (indicatorsData.rekomendasi || ed.rekomendasi) setRekomendasi(indicatorsData.rekomendasi || ed.rekomendasi || "");
+            const valTemuan = ed.temuan || indicatorsData.temuan || ed.temuan_lapangan || indicatorsData.temuan_lapangan || ed.catatan || indicatorsData.catatan || "";
+            if (valTemuan) setTemuan(valTemuan);
+
+            const valRekomendasi = ed.rekomendasi || indicatorsData.rekomendasi || ed.saran || indicatorsData.saran || "";
+            if (valRekomendasi) setRekomendasi(valRekomendasi);
             
+            const upaya = indicatorsData.upaya_perbaikan || indicatorsData.upayaPerbaikan || ed.upaya_perbaikan || "";
+            if (upaya) setUpayaPerbaikan(upaya);
+
+            const waktuPerb = indicatorsData.waktu_perbaikan || indicatorsData.tanggal_perbaikan || ed.waktu_perbaikan || ed.tanggal_perbaikan || "";
+            if (waktuPerb) setWaktuPerbaikan(waktuPerb);
+
+            const perbaikanDocs = indicatorsData.foto_perbaikan || indicatorsData.dokumentasi_perbaikan || ed.foto_perbaikan;
+            if (perbaikanDocs) {
+              const pArr = Array.isArray(perbaikanDocs) ? perbaikanDocs : [perbaikanDocs];
+              setPerbaikanImages(
+                pArr.map((url: any) => (typeof url === 'string' ? { url, file: null as any } : url))
+              );
+            }
+
             const displayPjName = indicatorsData.nama_pj || indicatorsData.nama_pj_ruangan || ed.nama_pj_ruangan || ed.nama_pj || "";
             if (typeof setPjName === "function") setPjName(displayPjName);
 
@@ -451,6 +472,39 @@ export default function MonitoringCSSDPage() {
       }
 
       const finalDocUrls = [...existingUrls, ...uploadedUrls];
+
+      // Upload perbaikan images if any
+      let uploadedPerbaikanUrls: string[] = [];
+      const existingPerbaikanUrls = perbaikanImages
+        .filter((img: any) => typeof img === "string" || img?.url)
+        .map((img: any) => (typeof img === "string" ? img : img.url));
+      const newPerbaikanFiles = perbaikanImages
+        .filter((img: any) => img instanceof File || img?.file instanceof File)
+        .map((img: any) => (img instanceof File ? img : img.file));
+
+      if (newPerbaikanFiles.length > 0) {
+        try {
+          const res = await uploadImagesToSupabase(
+            supabase,
+            newPerbaikanFiles.map((f) => ({ file: f })),
+            "audit_images",
+            "monitoring_cssd/perbaikan"
+          );
+          uploadedPerbaikanUrls = res || [];
+        } catch (uErr) {
+          try {
+            const res2 = await uploadImagesToSupabase(
+              supabase,
+              newPerbaikanFiles.map((f) => ({ file: f })),
+              "logos",
+              "audit/perbaikan"
+            );
+            uploadedPerbaikanUrls = res2 || [];
+          } catch (uErr2) {}
+        }
+      }
+      const finalPerbaikanUrls = [...existingPerbaikanUrls, ...uploadedPerbaikanUrls];
+
       const auditTime = startTime?.toISOString() || new Date().toISOString();
       const recordId = isEditMode && editId ? editId : crypto.randomUUID();
 
@@ -462,6 +516,12 @@ export default function MonitoringCSSDPage() {
         tanggal_waktu: auditTime,
         observer,
         unit: "CSSD",
+        nama_pj: pjName.trim(),
+        nama_pj_ruangan: pjName.trim(),
+        ttd_pj_ruangan: ttd_pj || null,
+        ttd_ipcn: ttd_ipcn || null,
+        temuan,
+        rekomendasi,
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
@@ -471,8 +531,12 @@ export default function MonitoringCSSDPage() {
           checklist_json: { ...data },
           temuan,
           rekomendasi,
-          dokumentasi: finalDocUrls,
-          foto: finalDocUrls,
+          upaya_perbaikan: upayaPerbaikan,
+          waktu_perbaikan: waktuPerbaikan,
+          tanggal_perbaikan: waktuPerbaikan,
+          foto_perbaikan: finalPerbaikanUrls,
+          dokumentasi: [...existingUrls, ...uploadedUrls],
+          foto: [...existingUrls, ...uploadedUrls],
           tanda_tangan: [ttd_pj || null, ttd_ipcn || null],
           ttd_pj: ttd_pj || null,
           ttd_ipcn: ttd_ipcn || null,
@@ -793,6 +857,17 @@ export default function MonitoringCSSDPage() {
         <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
           <DocumentationUploader images={images} setImages={setImages} />
         </div>
+
+        {isEditMode && (
+          <UpayaPerbaikanSection
+            upayaPerbaikan={upayaPerbaikan}
+            setUpayaPerbaikan={setUpayaPerbaikan}
+            perbaikanImages={perbaikanImages}
+            setPerbaikanImages={setPerbaikanImages}
+            waktuPerbaikan={waktuPerbaikan}
+            setWaktuPerbaikan={setWaktuPerbaikan}
+          />
+        )}
 
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">

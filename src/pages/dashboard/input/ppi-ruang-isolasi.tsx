@@ -48,6 +48,8 @@ export default function InputPPIRuangIsolasiPage() {
   const [rekomendasi, setRekomendasi] = useState("");
   const [images, setImages] = useState<File[]>([]);
   const [pjName, setPjName] = useState("");
+  const [preloadedPjSignature, setPreloadedPjSignature] = useState<string | null>(null);
+  const [preloadedIpcnSignature, setPreloadedIpcnSignature] = useState<string | null>(null);
   const sigRef = useRef<DigitalSignatureRef>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -97,8 +99,11 @@ export default function InputPPIRuangIsolasiPage() {
             if (indicatorsData.no_rm || ed.no_rm) setNoRm(indicatorsData.no_rm || ed.no_rm || "");
             if (indicatorsData.tekanan_udara || ed.tekanan_udara) setTekananUdara(indicatorsData.tekanan_udara || ed.tekanan_udara || null);
             if (indicatorsData.keterangan || ed.keterangan) setKeterangan(indicatorsData.keterangan || ed.keterangan || "");
-            if (indicatorsData.temuan || ed.temuan) setTemuan(indicatorsData.temuan || ed.temuan || "");
-            if (indicatorsData.rekomendasi || ed.rekomendasi) setRekomendasi(indicatorsData.rekomendasi || ed.rekomendasi || "");
+            const valTemuan = ed.temuan || indicatorsData.temuan || answersMap.temuan || indicatorsData.checklist_json?.temuan || ed.temuan_lapangan || indicatorsData.temuan_lapangan || ed.catatan || indicatorsData.catatan || "";
+            if (valTemuan) setTemuan(valTemuan);
+
+            const valRekomendasi = ed.rekomendasi || indicatorsData.rekomendasi || answersMap.rekomendasi || indicatorsData.checklist_json?.rekomendasi || ed.saran || indicatorsData.saran || "";
+            if (valRekomendasi) setRekomendasi(valRekomendasi);
 
             const displayPjName = ed.nama_pj_ruangan || ed.nama_pj || indicatorsData.nama_pj_ruangan || indicatorsData.nama_pj || "";
             if (typeof setPjName === "function") setPjName(displayPjName);
@@ -116,9 +121,11 @@ export default function InputPPIRuangIsolasiPage() {
             } catch (err) {}
 
             // Prefill signatures
+            const t1 = ed.ttd_pj_ruangan || ed.ttd_pj || indicatorsData.ttd_pj_ruangan || indicatorsData.ttd_pj || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
+            const t2 = ed.ttd_ipcn || ed.tanda_tangan_2 || indicatorsData.ttd_ipcn || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
+            if (t1) setPreloadedPjSignature(t1);
+            if (t2) setPreloadedIpcnSignature(t2);
             setTimeout(() => {
-              const t1 = ed.ttd_pj_ruangan || ed.ttd_pj || indicatorsData.ttd_pj_ruangan || indicatorsData.ttd_pj || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
-              const t2 = ed.ttd_ipcn || ed.tanda_tangan_2 || indicatorsData.ttd_ipcn || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
               if (t1 && sigRef.current?.setPjSignature) {
                 sigRef.current.setPjSignature(t1);
               }
@@ -180,8 +187,8 @@ export default function InputPPIRuangIsolasiPage() {
     if (!observer) return alert("Pilih Supervisor terlebih dahulu");
     setIsSubmitting(true);
     try {
-      const ttd_pj = sigRef.current?.getPjSignature();
-      const ttd_ipcn = sigRef.current?.getSupervisorSignature();
+      const ttd_pj = sigRef.current?.getPjSignature()?.trim() || preloadedPjSignature || "";
+      const ttd_ipcn = sigRef.current?.getSupervisorSignature()?.trim() || preloadedIpcnSignature || "";
       
       const { uploadImagesToSupabase } = await import("@/lib/upload");
       const uploadedUrls = images.length > 0 ? await uploadImagesToSupabase(
@@ -229,6 +236,8 @@ export default function InputPPIRuangIsolasiPage() {
         nama_pj_ruangan: pjName.trim(),
         ttd_pj_ruangan: ttd_pj,
         ttd_ipcn: ttd_ipcn,
+        temuan: payload.temuan,
+        rekomendasi: payload.rekomendasi,
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,

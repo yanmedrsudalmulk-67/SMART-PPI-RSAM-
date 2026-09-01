@@ -66,6 +66,9 @@ interface GenericAuditData {
   status_kepatuhan?: string;
   temuan?: string;
   rekomendasi?: string;
+  upaya_perbaikan?: string;
+  waktu_perbaikan?: string;
+  foto_perbaikan?: string[];
   foto?: string[];
   dokumentasi?: string[];
   tanda_tangan_1?: string;
@@ -249,6 +252,13 @@ export default function GenericAuditReport({
       ruangan: item.ruangan || item.unit || jsonFallback.ruangan || jsonFallback.unit || (tableName === "monitoring_airborne" ? "Ruang Isolasi" : tableName === "monitoring_immuno" ? "Ruang Isolasi" : tableName === "monitoring_jenazah" ? "Kamar Jenazah" : tableName === "monitoring_ambulance" ? "Ambulance" : ""),
       temuan: item.temuan || jsonFallback.temuan || "",
       rekomendasi: item.rekomendasi || jsonFallback.rekomendasi || "",
+      upaya_perbaikan: item.upaya_perbaikan || jsonFallback.upaya_perbaikan || jsonFallback.upayaPerbaikan || item.upayaPerbaikan || "",
+      waktu_perbaikan: item.waktu_perbaikan || item.tanggal_perbaikan || jsonFallback.waktu_perbaikan || jsonFallback.tanggal_perbaikan || jsonFallback.waktuPerbaikan || "",
+      foto_perbaikan:
+        (Array.isArray(item.foto_perbaikan) ? item.foto_perbaikan : typeof item.foto_perbaikan === 'string' && item.foto_perbaikan.length > 0 ? [item.foto_perbaikan] : null) ||
+        (Array.isArray(jsonFallback.foto_perbaikan) ? jsonFallback.foto_perbaikan : typeof jsonFallback.foto_perbaikan === 'string' && jsonFallback.foto_perbaikan.length > 0 ? [jsonFallback.foto_perbaikan] : []) ||
+        (Array.isArray(jsonFallback.dokumentasi_perbaikan) ? jsonFallback.dokumentasi_perbaikan : typeof jsonFallback.dokumentasi_perbaikan === 'string' && jsonFallback.dokumentasi_perbaikan.length > 0 ? [jsonFallback.dokumentasi_perbaikan] : []) ||
+        [],
     };
   }, [tableName]);
 
@@ -1220,6 +1230,63 @@ export default function GenericAuditReport({
                 </div>
               </div>
             )}
+
+          {/* UPAYA PERBAIKAN & FOTO PERBAIKAN SECTION */}
+          {(selectedRecord.upaya_perbaikan || selectedRecord.waktu_perbaikan || (selectedRecord.foto_perbaikan && (selectedRecord.foto_perbaikan as string[]).length > 0)) && (
+            <div className="mb-4 break-inside-avoid border-2 border-amber-600 bg-amber-50/40 p-3">
+              <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-amber-900 mb-2 border-b-2 border-amber-500/40 pb-1 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  🛠️ UPAYA PERBAIKAN & TINDAK LANJUT
+                </span>
+                <span className="text-[9px] px-2 py-0.5 bg-amber-200 text-amber-900 rounded font-bold">
+                  HASIL PERBAIKAN
+                </span>
+              </h4>
+              {selectedRecord.waktu_perbaikan && (
+                <div className="text-[10px] font-bold text-amber-900 mb-2 flex items-center gap-1.5 bg-amber-200/70 border border-amber-400/50 px-2.5 py-1 rounded-md w-fit">
+                  <span>📅 Tanggal &amp; Waktu Perbaikan:</span>
+                  <span className="font-mono">{selectedRecord.waktu_perbaikan.includes('T') ? selectedRecord.waktu_perbaikan.replace('T', ' ') : selectedRecord.waktu_perbaikan}</span>
+                </div>
+              )}
+              {selectedRecord.upaya_perbaikan && (
+                <div className="text-xs sm:text-sm text-force-black leading-relaxed whitespace-pre-wrap font-medium mb-3">
+                  {selectedRecord.upaya_perbaikan}
+                </div>
+              )}
+              {selectedRecord.foto_perbaikan && (selectedRecord.foto_perbaikan as string[]).length > 0 && (
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-wider text-amber-900/80 mb-2 flex items-center gap-1.5">
+                    <Camera className="w-3.5 h-3.5 text-amber-800" /> Foto Bukti Upaya Perbaikan:
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {(selectedRecord.foto_perbaikan as string[]).map(
+                      (url: string, i: number) => (
+                        <div
+                          key={i}
+                          onClick={() => setZoomedImage(url)}
+                          className="aspect-video relative border-2 border-amber-400/80 bg-white p-1 cursor-zoom-in shadow-sm rounded-sm"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={url}
+                            alt={`Foto Perbaikan ${i + 1}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                            crossOrigin="anonymous"
+                          />
+                          <div className="absolute bottom-1 left-1 bg-amber-900/80 text-white text-[8px] px-1 py-0.5 font-mono font-bold rounded">
+                            Bukti #{i + 1}
+                          </div>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {tableName === "perlindungan_petugas" ? (
             <div className="flex justify-end mt-4 mb-2 break-inside-avoid">

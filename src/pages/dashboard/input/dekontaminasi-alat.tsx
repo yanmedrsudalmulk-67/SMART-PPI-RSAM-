@@ -29,6 +29,7 @@ import {
   DocumentationUploader,
   DocImage,
 } from "@/components/DocumentationUploader";
+import { UpayaPerbaikanSection } from "@/components/UpayaPerbaikanSection";
 import { EditableSelect } from "@/components/EditableSelect";
 const units = [
   "IGD",
@@ -108,6 +109,9 @@ export default function InputDekontaminasiAlatPage() {
   const [rekomendasi, setRekomendasi] = useState("");
   const [images, setImages] = useState<DocImage[]>([]);
   const [pjName, setPjName] = useState("");
+  const [upayaPerbaikan, setUpayaPerbaikan] = useState("");
+  const [waktuPerbaikan, setWaktuPerbaikan] = useState("");
+  const [perbaikanImages, setPerbaikanImages] = useState<DocImage[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const sigRef = useRef<DigitalSignatureRef>(null);
@@ -134,22 +138,39 @@ export default function InputDekontaminasiAlatPage() {
         setIsEditMode(true);
         setEditId(id);
         const loadEditData = async () => {
-          const { data, error } = await supabase
+          let { data, error } = await supabase
             .from("audit_sessions")
             .select("*")
             .eq("id", id)
-            .single();
-          if (data && !error) {
+            .maybeSingle();
+
+          if (!data) {
+            const { data: fallbackData } = await supabase
+              .from("audit_dekontaminasi_alat")
+              .select("*")
+              .eq("id", id)
+              .maybeSingle();
+            if (fallbackData) data = fallbackData;
+          }
+
+          if (data) {
             if (data.tanggal_waktu) setStartTime(new Date(data.tanggal_waktu));
             if (data.observer) setObserver(data.observer);
             if (data.unit) setUnit(data.unit);
-            if (data.temuan) setTemuan(data.temuan);
-            if (data.rekomendasi) setRekomendasi(data.rekomendasi);
-            if (data.nama_pj_ruangan) setPjName(data.nama_pj_ruangan);
-            if (data.ttd_pj_ruangan) setPreloadedPjSignature(data.ttd_pj_ruangan);
-            if (data.ttd_ipcn) setPreloadedIpcnSignature(data.ttd_ipcn);
-            // Populate checklist items
+            
             const indicatorsData = data.data_indikator || data.checklist_json || {};
+            const valTemuan = data.temuan || indicatorsData.temuan || data.temuan_lapangan || indicatorsData.temuan_lapangan || data.catatan || indicatorsData.catatan || "";
+            if (valTemuan) setTemuan(valTemuan);
+
+            const valRekomendasi = data.rekomendasi || indicatorsData.rekomendasi || data.saran || indicatorsData.saran || "";
+            if (valRekomendasi) setRekomendasi(valRekomendasi);
+
+            if (data.nama_pj_ruangan || data.nama_pj || indicatorsData.nama_pj_ruangan || indicatorsData.nama_pj) {
+              setPjName(data.nama_pj_ruangan || data.nama_pj || indicatorsData.nama_pj_ruangan || indicatorsData.nama_pj);
+            }
+            if (data.ttd_pj_ruangan || indicatorsData.tanda_tangan_pj) setPreloadedPjSignature(data.ttd_pj_ruangan || indicatorsData.tanda_tangan_pj);
+            if (data.ttd_ipcn || indicatorsData.tanda_tangan_ipcn) setPreloadedIpcnSignature(data.ttd_ipcn || indicatorsData.tanda_tangan_ipcn);
+            // Populate checklist items
             setAuditData((prev) => {
               const updated = { ...prev };
               Object.keys(updated).forEach((key) => {
@@ -177,6 +198,18 @@ export default function InputDekontaminasiAlatPage() {
               setImages(docs.map((url: any) => typeof url === 'string' ? { url, file: null as any } : url));
             } else if (typeof docs === 'string' && docs.length > 0) {
               setImages([{ url: docs, file: null as any }]);
+            }
+
+            const upaya = indicatorsData.upaya_perbaikan || indicatorsData.upayaPerbaikan || data.upaya_perbaikan || "";
+            if (upaya) setUpayaPerbaikan(upaya);
+
+            const waktuPerb = indicatorsData.waktu_perbaikan || indicatorsData.tanggal_perbaikan || data.waktu_perbaikan || data.tanggal_perbaikan || "";
+            if (waktuPerb) setWaktuPerbaikan(waktuPerb);
+
+            const perbaikanDocs = indicatorsData.foto_perbaikan || indicatorsData.dokumentasi_perbaikan || data.foto_perbaikan;
+            if (perbaikanDocs) {
+              const pArr = Array.isArray(perbaikanDocs) ? perbaikanDocs : [perbaikanDocs];
+              setPerbaikanImages(pArr.map((url: string) => (typeof url === 'string' ? { url } : url)));
             }
           }
         };
@@ -235,14 +268,33 @@ export default function InputDekontaminasiAlatPage() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const ttd_pj = sigRef.current?.getPjSignature() || preloadedPjSignature;
-      const ttd_ipcn = sigRef.current?.getSupervisorSignature() || preloadedIpcnSignature;
+      const ttd_pj = sigRef.current?.getPjSignature()?.trim() || preloadedPjSignature || "";
+      const ttd_ipcn = sigRef.current?.getSupervisorSignature()?.trim() || preloadedIpcnSignature || "";
       const uploadedImages = await uploadImagesToSupabase(
         supabase,
         images || [],
         "audit_images",
         "images",
       );
+
+      const uploadedPerbaikanUrls: string[] = [];
+      for (const img of perbaikanImages) {
+        if (typeof img === "string") {
+          uploadedPerbaikanUrls.push(img);
+        } else if (img.url && !img.url.startsWith("blob:")) {
+          uploadedPerbaikanUrls.push(img.url);
+        } else if (img.file) {
+          const fileExt = img.file.name.split(".").pop();
+          const fileName = `perbaikan_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const filePath = `perbaikan/${fileName}`;
+          const { error: uploadErr } = await supabase.storage.from("dokumentasi").upload(filePath, img.file);
+          if (!uploadErr) {
+            const { data: pUrl } = supabase.storage.from("dokumentasi").getPublicUrl(filePath);
+            if (pUrl?.publicUrl) uploadedPerbaikanUrls.push(pUrl.publicUrl);
+          }
+        }
+      }
+
       const payload = {
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
         observer,
@@ -267,6 +319,10 @@ export default function InputDekontaminasiAlatPage() {
             jumlah_patuh: stats.patuh,
             persentase: stats.persentase,
             status_kepatuhan: stats.statusText,
+            upaya_perbaikan: upayaPerbaikan,
+            waktu_perbaikan: waktuPerbaikan,
+            tanggal_perbaikan: waktuPerbaikan,
+            foto_perbaikan: uploadedPerbaikanUrls,
             data_indikator: {
               ...auditData,
               temuan,
@@ -275,8 +331,11 @@ export default function InputDekontaminasiAlatPage() {
               tanda_tangan_pj: ttd_pj,
               tanda_tangan_ipcn: ttd_ipcn,
               nama_pj_ruangan: pjName.trim(),
+              upaya_perbaikan: upayaPerbaikan,
+              waktu_perbaikan: waktuPerbaikan,
+              foto_perbaikan: uploadedPerbaikanUrls,
             },
-                      })
+          })
           .eq("id", editId);
         sessionError = error;
       } else {
@@ -294,6 +353,10 @@ export default function InputDekontaminasiAlatPage() {
               jumlah_patuh: stats.patuh,
               persentase: stats.persentase,
               status_kepatuhan: stats.statusText,
+              upaya_perbaikan: upayaPerbaikan,
+              waktu_perbaikan: waktuPerbaikan,
+              tanggal_perbaikan: waktuPerbaikan,
+              foto_perbaikan: uploadedPerbaikanUrls,
               data_indikator: {
                 ...auditData,
                 temuan,
@@ -302,8 +365,11 @@ export default function InputDekontaminasiAlatPage() {
                 tanda_tangan_pj: ttd_pj,
                 tanda_tangan_ipcn: ttd_ipcn,
                 nama_pj_ruangan: pjName.trim(),
+                upaya_perbaikan: upayaPerbaikan,
+                waktu_perbaikan: waktuPerbaikan,
+                foto_perbaikan: uploadedPerbaikanUrls,
               },
-                          },
+            },
           ]);
         sessionError = error;
       }
@@ -543,6 +609,16 @@ export default function InputDekontaminasiAlatPage() {
             />
           </div>
           <DocumentationUploader images={images} setImages={setImages} />
+          {isEditMode && (
+            <UpayaPerbaikanSection
+              upayaPerbaikan={upayaPerbaikan}
+              setUpayaPerbaikan={setUpayaPerbaikan}
+              perbaikanImages={perbaikanImages}
+              setPerbaikanImages={setPerbaikanImages}
+              waktuPerbaikan={waktuPerbaikan}
+              setWaktuPerbaikan={setWaktuPerbaikan}
+            />
+          )}
           <DigitalSignatureSection
             ref={sigRef}
             pjName={pjName}
@@ -561,7 +637,7 @@ export default function InputDekontaminasiAlatPage() {
           ) : (
             <Save className="w-5 h-5" />
           )}
-          <span>Simpan Data Audit</span>
+          <span>{isEditMode ? "Update Data Audit" : "Simpan Data Audit"}</span>
         </button>
       </div>
     </div>

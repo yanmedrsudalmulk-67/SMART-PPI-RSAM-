@@ -12,9 +12,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useAppContext } from "@/components/Providers";
 import { supabase } from "@/lib/supabase";
+import { uploadImagesToSupabase } from "@/lib/upload";
 import DashboardLayout from "@/components/DashboardLayout";
 import { LiveStatisticsCard } from "@/components/LiveStatisticsCard";
 import { EditableSelect } from "@/components/EditableSelect";
+import {
+  DocumentationUploader,
+  DocImage,
+} from "@/components/DocumentationUploader";
+import { UpayaPerbaikanSection } from "@/components/UpayaPerbaikanSection";
 import DigitalSignatureSection, {
   DigitalSignatureRef,
 } from "@/components/DigitalSignatureSection";
@@ -69,6 +75,10 @@ export default function InputPerlindunganPetugasPage() {
   });
 
   const [keterangan, setKeterangan] = useState<Record<string, string>>({});
+  const [images, setImages] = useState<DocImage[]>([]);
+  const [upayaPerbaikan, setUpayaPerbaikan] = useState("");
+  const [waktuPerbaikan, setWaktuPerbaikan] = useState("");
+  const [perbaikanImages, setPerbaikanImages] = useState<DocImage[]>([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -131,6 +141,25 @@ export default function InputPerlindunganPetugasPage() {
                 );
               }
             }
+
+            const docs = indicatorsData.dokumentasi || ed.dokumentasi || indicatorsData.foto || ed.foto;
+            if (Array.isArray(docs)) {
+              setImages(docs.map((url: any) => typeof url === 'string' ? { url, file: null as any } : url));
+            } else if (typeof docs === 'string' && docs.length > 0) {
+              setImages([{ url: docs, file: null as any }]);
+            }
+
+            const upaya = indicatorsData.upaya_perbaikan || indicatorsData.upayaPerbaikan || ed.upaya_perbaikan || "";
+            if (upaya) setUpayaPerbaikan(upaya);
+
+            const waktuPerb = indicatorsData.waktu_perbaikan || indicatorsData.tanggal_perbaikan || ed.waktu_perbaikan || ed.tanggal_perbaikan || "";
+            if (waktuPerb) setWaktuPerbaikan(waktuPerb);
+
+            const perbaikanDocs = indicatorsData.foto_perbaikan || indicatorsData.dokumentasi_perbaikan || ed.foto_perbaikan;
+            if (perbaikanDocs) {
+              const pArr = Array.isArray(perbaikanDocs) ? perbaikanDocs : [perbaikanDocs];
+              setPerbaikanImages(pArr.map((url: string) => (typeof url === 'string' ? { url } : url)));
+            }
           }
         };
         loadEditData();
@@ -185,6 +214,31 @@ export default function InputPerlindunganPetugasPage() {
         signatureRef.current?.getSupervisorSignature() ||
         preloadedIpcnSignature;
 
+      const uploadedImages = await uploadImagesToSupabase(
+        supabase,
+        images || [],
+        "audit_images",
+        "images",
+      );
+
+      const uploadedPerbaikanUrls: string[] = [];
+      for (const img of perbaikanImages) {
+        if (typeof img === "string") {
+          uploadedPerbaikanUrls.push(img);
+        } else if (img.url && !img.url.startsWith("blob:")) {
+          uploadedPerbaikanUrls.push(img.url);
+        } else if (img.file) {
+          const fileExt = img.file.name.split(".").pop();
+          const fileName = `perbaikan_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const filePath = `perbaikan/${fileName}`;
+          const { error: uploadErr } = await supabase.storage.from("dokumentasi").upload(filePath, img.file);
+          if (!uploadErr) {
+            const { data: pUrl } = supabase.storage.from("dokumentasi").getPublicUrl(filePath);
+            if (pUrl?.publicUrl) uploadedPerbaikanUrls.push(pUrl.publicUrl);
+          }
+        }
+      }
+
       const payload = {
         indikator_id: "perlindungan_petugas",
         nama_indikator: "PERLINDUNGAN KESEHATAN PETUGAS",
@@ -195,11 +249,19 @@ export default function InputPerlindunganPetugasPage() {
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.statusText,
+        upaya_perbaikan: upayaPerbaikan,
+        waktu_perbaikan: waktuPerbaikan,
+        tanggal_perbaikan: waktuPerbaikan,
+        foto_perbaikan: uploadedPerbaikanUrls,
         data_indikator: {
           ...auditData,
           keterangan,
+          dokumentasi: uploadedImages,
           tanda_tangan_ipcn: ipcnSig,
           ttd_ipcn: ipcnSig,
+          upaya_perbaikan: upayaPerbaikan,
+          waktu_perbaikan: waktuPerbaikan,
+          foto_perbaikan: uploadedPerbaikanUrls,
         },
       };
 
@@ -446,6 +508,19 @@ export default function InputPerlindunganPetugasPage() {
             })}
           </div>
         </div>
+
+        <DocumentationUploader images={images} setImages={setImages} />
+
+        {isEditMode && (
+          <UpayaPerbaikanSection
+            upayaPerbaikan={upayaPerbaikan}
+            setUpayaPerbaikan={setUpayaPerbaikan}
+            perbaikanImages={perbaikanImages}
+            setPerbaikanImages={setPerbaikanImages}
+            waktuPerbaikan={waktuPerbaikan}
+            setWaktuPerbaikan={setWaktuPerbaikan}
+          />
+        )}
 
         {/* Verifikasi Digital IPCN Saja */}
         <DigitalSignatureSection

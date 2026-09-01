@@ -23,6 +23,8 @@ const DigitalSignatureSection = forwardRef<DigitalSignatureRef, DigitalSignature
     const sigPadPJ = useRef<SignatureCanvas>(null);
     const sigPadSupervisor = useRef<SignatureCanvas>(null);
     const [mounted, setMounted] = useState(false);
+    const [existingPjSig, setExistingPjSig] = useState<string | null>(null);
+    const [existingSupervisorSig, setExistingSupervisorSig] = useState<string | null>(null);
 
     useEffect(() => {
       setMounted(true);
@@ -30,28 +32,45 @@ const DigitalSignatureSection = forwardRef<DigitalSignatureRef, DigitalSignature
 
     useImperativeHandle(ref, () => ({
       getPjSignature: () => {
-        if (!hidePj && sigPadPJ.current && !sigPadPJ.current.isEmpty()) {
-          return sigPadPJ.current.getCanvas().toDataURL('image/png');
+        if (hidePj) return null;
+        if (sigPadPJ.current && !sigPadPJ.current.isEmpty()) {
+          try {
+            return sigPadPJ.current.getCanvas().toDataURL('image/png');
+          } catch (e) {
+            return existingPjSig;
+          }
         }
-        return null;
+        return existingPjSig;
       },
       getSupervisorSignature: () => {
         if (sigPadSupervisor.current && !sigPadSupervisor.current.isEmpty()) {
-          return sigPadSupervisor.current.getCanvas().toDataURL('image/png');
+          try {
+            return sigPadSupervisor.current.getCanvas().toDataURL('image/png');
+          } catch (e) {
+            return existingSupervisorSig;
+          }
         }
-        return null;
+        return existingSupervisorSig;
       },
       setPjSignature: (dataUrl: string) => {
         if (dataUrl && !hidePj) {
-          sigPadPJ.current?.fromDataURL(dataUrl);
+          setExistingPjSig(dataUrl);
+          try {
+            sigPadPJ.current?.fromDataURL(dataUrl);
+          } catch (e) {}
         }
       },
       setSupervisorSignature: (dataUrl: string) => {
         if (dataUrl) {
-          sigPadSupervisor.current?.fromDataURL(dataUrl);
+          setExistingSupervisorSig(dataUrl);
+          try {
+            sigPadSupervisor.current?.fromDataURL(dataUrl);
+          } catch (e) {}
         }
       },
       clearAll: () => {
+        setExistingPjSig(null);
+        setExistingSupervisorSig(null);
         if (!hidePj) sigPadPJ.current?.clear();
         sigPadSupervisor.current?.clear();
       }

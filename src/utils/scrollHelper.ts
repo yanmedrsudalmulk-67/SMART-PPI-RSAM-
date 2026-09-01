@@ -7,56 +7,61 @@ export const forceScrollToTop = () => {
   if (typeof window === 'undefined') return;
 
   const performReset = () => {
+    // 1. Dispatch custom event for DashboardLayout mainRef
+    try {
+      window.dispatchEvent(new CustomEvent('smart_ppi_scroll_top'));
+    } catch (_) {}
+
+    // 2. Query all potential scroll containers
     const scrollables = document.querySelectorAll(
       'main, html, body, #__next, [data-scroll-container], .overflow-y-auto, .overflow-y-scroll'
     );
 
     scrollables.forEach((el) => {
       if (el instanceof HTMLElement && el.tagName !== 'SELECT' && el.tagName !== 'TEXTAREA') {
+        const prevBehavior = el.style.scrollBehavior;
         el.style.scrollBehavior = 'auto';
         el.scrollTop = 0;
         el.scrollLeft = 0;
         try {
           el.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
         } catch (_) {}
+        el.style.scrollBehavior = prevBehavior;
       }
     });
 
+    // 3. Reset window & document scrolling
     try {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
     } catch (_) {}
-    
-    // Fallback: create a temporary anchor at the absolute top of the page and scroll it into view
+    if (document.documentElement) {
+      document.documentElement.scrollTop = 0;
+    }
+    if (document.body) {
+      document.body.scrollTop = 0;
+    }
+
+    // 4. Fallback anchor scroll
     try {
       const mainEl = document.querySelector('main');
-      if (mainEl) {
-        const anchor = document.createElement('div');
-        anchor.style.position = 'absolute';
-        anchor.style.top = '0';
-        anchor.style.left = '0';
-        anchor.style.width = '1px';
-        anchor.style.height = '1px';
-        anchor.style.pointerEvents = 'none';
-        anchor.style.visibility = 'hidden';
-        mainEl.prepend(anchor);
-        anchor.scrollIntoView({ behavior: 'instant', block: 'start' });
-        mainEl.removeChild(anchor);
+      if (mainEl && mainEl.scrollTop !== 0) {
+        mainEl.scrollTop = 0;
       }
-    } catch (e) {}
+    } catch (_) {}
   };
 
   // Execute synchronously
   performReset();
 
-  // Execute on next paint & staggered timeouts
+  // Execute on staggered intervals during render/animations
   if (typeof requestAnimationFrame !== 'undefined') {
     requestAnimationFrame(() => {
       performReset();
-      setTimeout(performReset, 10);
-      setTimeout(performReset, 40);
-      setTimeout(performReset, 100);
-      setTimeout(performReset, 250);
-      setTimeout(performReset, 500);
+      const intervals = [15, 40, 80, 150, 250, 400, 600];
+      intervals.forEach((delay) => {
+        setTimeout(performReset, delay);
+      });
     });
   }
 };
+

@@ -20,6 +20,7 @@ import {
   DocumentationUploader,
   DocImage,
 } from "@/components/DocumentationUploader";
+import { UpayaPerbaikanSection } from "@/components/UpayaPerbaikanSection";
 import DashboardLayout from "@/components/DashboardLayout";
 import { LiveStatisticsCard } from "@/components/LiveStatisticsCard";
 import DigitalSignatureSection, {
@@ -77,6 +78,9 @@ export default function MonitoringJenazahPage() {
   const [rekomendasi, setRekomendasi] = useState("");
   const [pjName, setPjName] = useState("");
   const [images, setImages] = useState<DocImage[]>([]);
+  const [upayaPerbaikan, setUpayaPerbaikan] = useState("");
+  const [waktuPerbaikan, setWaktuPerbaikan] = useState("");
+  const [perbaikanImages, setPerbaikanImages] = useState<DocImage[]>([]);
   const [observers, setObservers] = useState<Observer[]>([]);
   const [isObserverModalOpen, setIsObserverModalOpen] = useState(false);
   const [newObserverName, setNewObserverName] = useState("");
@@ -112,9 +116,26 @@ export default function MonitoringJenazahPage() {
             if (ed.unit) setRuangan(ed.unit);
 
             const indicatorsData = ed.data_indikator || ed.checklist_json || {};
-            if (indicatorsData.temuan) setTemuan(indicatorsData.temuan);
-            if (indicatorsData.rekomendasi) setRekomendasi(indicatorsData.rekomendasi);
+            const valTemuan = ed.temuan || indicatorsData.temuan || ed.temuan_lapangan || indicatorsData.temuan_lapangan || ed.catatan || indicatorsData.catatan || "";
+            if (valTemuan) setTemuan(valTemuan);
+
+            const valRekomendasi = ed.rekomendasi || indicatorsData.rekomendasi || ed.saran || indicatorsData.saran || "";
+            if (valRekomendasi) setRekomendasi(valRekomendasi);
             
+            const upaya = indicatorsData.upaya_perbaikan || indicatorsData.upayaPerbaikan || ed.upaya_perbaikan || "";
+            if (upaya) setUpayaPerbaikan(upaya);
+
+            const waktuPerb = indicatorsData.waktu_perbaikan || indicatorsData.tanggal_perbaikan || ed.waktu_perbaikan || ed.tanggal_perbaikan || "";
+            if (waktuPerb) setWaktuPerbaikan(waktuPerb);
+
+            const perbaikanDocs = indicatorsData.foto_perbaikan || indicatorsData.dokumentasi_perbaikan || ed.foto_perbaikan;
+            if (perbaikanDocs) {
+              const pArr = Array.isArray(perbaikanDocs) ? perbaikanDocs : [perbaikanDocs];
+              setPerbaikanImages(
+                pArr.map((url: any) => (typeof url === 'string' ? { url, file: null as any } : url))
+              );
+            }
+
             const displayPjName = indicatorsData.nama_pj || indicatorsData.nama_pj_ruangan || ed.nama_pj_ruangan || "";
             if (typeof setPjName === "function") setPjName(displayPjName);
 
@@ -273,6 +294,12 @@ export default function MonitoringJenazahPage() {
         "dokumentasi",
         "audit",
       );
+      const uploadedPerbaikanUrls = perbaikanImages.length > 0 ? await uploadImagesToSupabase(
+        supabase,
+        perbaikanImages,
+        "dokumentasi",
+        "audit/perbaikan",
+      ) : [];
       const payload = {
         waktu: startTime?.toISOString() || new Date().toISOString(),
         checklist_json: data,
@@ -280,6 +307,10 @@ export default function MonitoringJenazahPage() {
         status: stats.status,
         temuan,
         rekomendasi,
+        upaya_perbaikan: upayaPerbaikan,
+        waktu_perbaikan: waktuPerbaikan,
+        tanggal_perbaikan: waktuPerbaikan,
+        foto_perbaikan: uploadedPerbaikanUrls,
         ttd_pj,
         ttd_ipcn,
       };
@@ -290,6 +321,12 @@ export default function MonitoringJenazahPage() {
         tanggal_waktu: payload.waktu,
         observer,
         unit: "Kamar Jenazah",
+        nama_pj: pjName.trim(),
+        nama_pj_ruangan: pjName.trim(),
+        ttd_pj_ruangan: ttd_pj || null,
+        ttd_ipcn: ttd_ipcn || null,
+        temuan,
+        rekomendasi,
         jumlah_dinilai: stats.dinilai,
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
@@ -298,6 +335,10 @@ export default function MonitoringJenazahPage() {
           ...data,
           temuan,
           rekomendasi,
+          upaya_perbaikan: upayaPerbaikan,
+          waktu_perbaikan: waktuPerbaikan,
+          tanggal_perbaikan: waktuPerbaikan,
+          foto_perbaikan: uploadedPerbaikanUrls,
           dokumentasi: uploadedUrls,
           tanda_tangan: [ttd_pj || null, ttd_ipcn || null],
           nama_pj: pjName.trim(),
@@ -568,6 +609,16 @@ export default function MonitoringJenazahPage() {
         <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
           <DocumentationUploader images={images} setImages={setImages} />
         </div>
+        {isEditMode && (
+          <UpayaPerbaikanSection
+            upayaPerbaikan={upayaPerbaikan}
+            setUpayaPerbaikan={setUpayaPerbaikan}
+            perbaikanImages={perbaikanImages}
+            setPerbaikanImages={setPerbaikanImages}
+            waktuPerbaikan={waktuPerbaikan}
+            setWaktuPerbaikan={setWaktuPerbaikan}
+          />
+        )}
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
             ✍️ TANDA TANGAN DIGITAL

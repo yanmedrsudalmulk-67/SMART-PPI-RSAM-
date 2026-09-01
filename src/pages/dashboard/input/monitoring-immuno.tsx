@@ -60,6 +60,8 @@ export default function InputMonitoringImmunoPage() {
   const [rekomendasi, setRekomendasi] = useState("");
   const [images, setImages] = useState<File[]>([]);
   const [pjName, setPjName] = useState("");
+  const [preloadedPjSignature, setPreloadedPjSignature] = useState<string | null>(null);
+  const [preloadedIpcnSignature, setPreloadedIpcnSignature] = useState<string | null>(null);
   const sigRef = useRef<DigitalSignatureRef>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -132,11 +134,13 @@ export default function InputMonitoringImmunoPage() {
             }
 
             const indicatorsData = ed.data_indikator || ed.checklist_json || {};
-            if (ed.temuan || indicatorsData.temuan) {
-              setTemuan(ed.temuan || indicatorsData.temuan || "");
+            const valTemuan = ed.temuan || indicatorsData.temuan || detailsObj?.temuan || ed.temuan_lapangan || indicatorsData.temuan_lapangan || ed.catatan || indicatorsData.catatan || "";
+            if (valTemuan) {
+              setTemuan(valTemuan);
             }
-            if (ed.rekomendasi || indicatorsData.rekomendasi) {
-              setRekomendasi(ed.rekomendasi || indicatorsData.rekomendasi || "");
+            const valRekomendasi = ed.rekomendasi || indicatorsData.rekomendasi || detailsObj?.rekomendasi || ed.saran || indicatorsData.saran || "";
+            if (valRekomendasi) {
+              setRekomendasi(valRekomendasi);
             }
 
             const displayPjName =
@@ -221,6 +225,9 @@ export default function InputMonitoringImmunoPage() {
               indicatorsData.ttd_supervisor ||
               (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
 
+            if (t1) setPreloadedPjSignature(t1);
+            if (t2) setPreloadedIpcnSignature(t2);
+
             [300, 700, 1200].forEach((delay) => {
               setTimeout(() => {
                 if (t1 && sigRef.current?.setPjSignature) {
@@ -293,8 +300,8 @@ export default function InputMonitoringImmunoPage() {
     if (!observer) return alert("Pilih Supervisor terlebih dahulu");
     setIsSubmitting(true);
     try {
-      const ttd_pj = sigRef.current?.getPjSignature();
-      const ttd_ipcn = sigRef.current?.getSupervisorSignature();
+      const ttd_pj = sigRef.current?.getPjSignature()?.trim() || preloadedPjSignature || "";
+      const ttd_ipcn = sigRef.current?.getSupervisorSignature()?.trim() || preloadedIpcnSignature || "";
       const { uploadImagesToSupabase } = await import("@/lib/upload");
 
       const existingUrls = images

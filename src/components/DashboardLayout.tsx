@@ -21,18 +21,11 @@ import { ClockWidget } from '@/components/ClockWidget';
 import { useDashboardStore } from '@/hooks/useDashboardStore';
 import { supabase } from '@/lib/supabase';
 
-interface NavTheme {
-  bg: string;
-  shadow: string;
-  border: string;
-}
-
 interface NavItemData {
   name: string;
-  shortName: string;
+  shortName?: string;
   href: string;
   icon: any;
-  theme: NavTheme;
 }
 
 const navItems: NavItemData[] = [
@@ -41,64 +34,39 @@ const navItems: NavItemData[] = [
     shortName: 'Dashboard', 
     href: '/dashboard', 
     icon: LayoutDashboard,
-    theme: {
-      bg: "bg-gradient-to-br from-sky-500 to-blue-600",
-      shadow: "shadow-[2px_3px_8px_rgba(0,0,0,0.35)]",
-      border: "border-sky-400/40"
-    }
   },
   { 
     name: 'Input Data', 
     shortName: 'Input', 
     href: '/dashboard/input', 
     icon: ClipboardCheck,
-    theme: {
-      bg: "bg-gradient-to-br from-emerald-500 to-teal-600",
-      shadow: "shadow-[2px_3px_8px_rgba(0,0,0,0.35)]",
-      border: "border-emerald-400/40"
-    }
   },
   { 
     name: 'Grafik Capaian', 
     shortName: 'Grafik', 
     href: '/dashboard/analytics', 
     icon: BarChart2,
-    theme: {
-      bg: "bg-gradient-to-br from-purple-500 to-indigo-600",
-      shadow: "shadow-[2px_3px_8px_rgba(0,0,0,0.35)]",
-      border: "border-purple-400/40"
-    }
   },
   { 
     name: 'Laporan PPI', 
     shortName: 'Laporan', 
     href: '/dashboard/reports', 
     icon: FileText,
-    theme: {
-      bg: "bg-gradient-to-br from-amber-500 to-orange-600",
-      shadow: "shadow-[2px_3px_8px_rgba(0,0,0,0.35)]",
-      border: "border-amber-400/40"
-    }
   },
   { 
     name: 'Pengaturan', 
     shortName: 'Pengaturan', 
     href: '/dashboard/settings', 
     icon: Settings,
-    theme: {
-      bg: "bg-gradient-to-br from-rose-500 to-pink-600",
-      shadow: "shadow-[2px_3px_8px_rgba(0,0,0,0.35)]",
-      border: "border-rose-400/40"
-    }
   },
 ];
 
 const NavItem = memo(({ item, isActive, onClick }: { item: NavItemData, isActive: boolean, onClick?: () => void }) => {
-  const baseClasses = "relative flex items-center gap-3.5 px-3.5 py-3 rounded-[20px] transition-all duration-300 ease-out group antialiased transform-gpu will-change-transform";
+  const baseClasses = "relative flex items-center gap-3.5 px-4 py-3 rounded-[22px] transition-all duration-300 ease-out group antialiased transform-gpu will-change-transform";
   
-  // 3D Neumorphic Active Plate with rich extruded tactile elevation
-  const activeClasses = "bg-gradient-to-b from-[#f8fafc] via-[#e2e8f0] to-[#cbd5e1] text-[#1e293b] border border-white/90 shadow-[-3px_-3px_9px_rgba(255,255,255,0.35),4px_5px_16px_rgba(0,0,0,0.55),inset_1.5px_1.5px_2px_rgba(255,255,255,1),inset_-1.5px_-1.5px_2px_rgba(0,0,0,0.12)]";
-  const inactiveClasses = "text-slate-300/85 hover:bg-[#18193b]/70 hover:text-white border border-transparent shadow-none hover:shadow-[-2px_-2px_6px_rgba(140,165,255,0.05),3px_3px_8px_rgba(0,0,0,0.4)]";
+  // Neumorphic Active Plate matching Kepatuhan Kebersihan Tangan Card
+  const activeClasses = "bg-gradient-to-r from-[#272952] via-[#1e2044] to-[#141535] text-white border border-indigo-400/40 shadow-[-3px_-3px_9px_rgba(140,165,255,0.15),5px_6px_16px_rgba(0,0,0,0.65),inset_1px_1px_1.5px_rgba(255,255,255,0.25),inset_-1px_-1px_2px_rgba(0,0,0,0.4)]";
+  const inactiveClasses = "text-slate-300/80 hover:text-white hover:bg-[#18193b]/70 border border-transparent shadow-none hover:shadow-[-2px_-2px_6px_rgba(140,165,255,0.05),3px_3px_8px_rgba(0,0,0,0.4)]";
 
   return (
     <Link 
@@ -106,11 +74,11 @@ const NavItem = memo(({ item, isActive, onClick }: { item: NavItemData, isActive
       onClick={onClick}
       className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
     >
-      {/* Matte Colorful Icon - 3D Squircle with Tactile Shadow */}
+      {/* Direct Clean Icon without card/squircle background */}
       <motion.div 
         animate={isActive ? { 
-          y: [0, -9, 0, -4, 0],
-          scale: [1, 1.14, 1, 1.06, 1],
+          y: [0, -4, 0, -2, 0],
+          scale: [1, 1.08, 1, 1.04, 1],
         } : { 
           y: 0,
           scale: 1,
@@ -118,21 +86,26 @@ const NavItem = memo(({ item, isActive, onClick }: { item: NavItemData, isActive
         transition={isActive ? { 
           duration: 0.8,
           repeat: Infinity,
-          repeatDelay: 4.2, // Cycles every 5.0 seconds (0.8s jump + 4.2s delay = 5.0s)
+          repeatDelay: 4.2,
           ease: "easeInOut"
         } : { duration: 0.2 }}
-        className="relative z-10 flex items-center justify-center flex-shrink-0"
+        className="relative z-10 flex items-center justify-center flex-shrink-0 w-8 h-8"
       >
-        <div className={`relative w-[38px] h-[38px] rounded-[13px] flex items-center justify-center text-white border ${item.theme.bg} ${item.theme.border} ${isActive ? 'shadow-[-2px_-2px_6px_rgba(255,255,255,0.3),3px_3px_8px_rgba(0,0,0,0.45),inset_1px_1px_1.5px_rgba(255,255,255,0.4),inset_-1px_-1px_1.5px_rgba(0,0,0,0.2)]' : item.theme.shadow} overflow-hidden transform-gpu`}>
-          <item.icon className="w-5 h-5 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)] relative z-10" strokeWidth={2.4} />
-        </div>
+        <item.icon 
+          className={`w-6 h-6 transition-all duration-300 relative z-10 ${
+            isActive 
+              ? 'text-cyan-400 drop-shadow-[2px_3px_4px_rgba(0,0,0,0.9)] drop-shadow-[0_0_12px_rgba(6,182,212,0.7)]' 
+              : 'text-slate-300/85 group-hover:text-cyan-300 drop-shadow-[1.5px_2px_3px_rgba(0,0,0,0.85)]'
+          }`} 
+          strokeWidth={2.2} 
+        />
       </motion.div>
 
-      {/* Text label with high legibility */}
+      {/* Text label */}
       <span className={`text-[14px] tracking-wide relative z-10 transition-colors duration-200 ${
         isActive 
-          ? 'font-black text-[#1e293b] drop-shadow-[0_0.5px_0_rgba(255,255,255,0.8)]' 
-          : 'font-bold text-slate-300/90 group-hover:text-white'
+          ? 'font-black text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]' 
+          : 'font-bold text-slate-300/80 group-hover:text-white'
       }`}>
         {item.name}
       </span>
@@ -259,10 +232,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
+
+    const handleScrollTopEvent = () => {
+      if (mainRef.current) {
+        mainRef.current.scrollTop = 0;
+        mainRef.current.scrollLeft = 0;
+      }
+    };
+    window.addEventListener('smart_ppi_scroll_top', handleScrollTopEvent);
+
     return () => {
       window.removeEventListener('resize', checkScreenSize);
+      window.removeEventListener('smart_ppi_scroll_top', handleScrollTopEvent);
     };
   }, []);
+
+  useEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0;
+    }
+  }, [pathname]);
 
   useEffect(() => {
     if (!mounted) return;
@@ -284,8 +273,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="h-[100dvh] w-full overflow-hidden flex bg-gradient-to-b from-[#181938] via-[#12142e] to-[#0c0d20] text-slate-100 relative">
-      {/* Subtle Ambient Deep Indigo-Purple Radial Glow Accent */}
-      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-purple-700/12 rounded-full blur-[160px] pointer-events-none z-0" />
+      {/* Subtle Ambient Deep Blue-Purple Radial Glow Accent */}
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[160px] pointer-events-none z-0" />
       <div className="absolute top-1/3 right-0 w-[550px] h-[550px] bg-indigo-600/15 rounded-full blur-[160px] pointer-events-none z-0" />
       <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-blue-700/12 rounded-full blur-[170px] pointer-events-none z-0" />
 
@@ -297,7 +286,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsSidebarOpen(false)}
-            className="fixed inset-0 bg-black/60 z-40 transition-opacity duration-200 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/70 z-40 transition-opacity duration-200 backdrop-blur-sm"
           />
         )}
       </AnimatePresence>
@@ -323,7 +312,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="absolute top-0 inset-x-6 h-[1.5px] bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none z-20" />
 
           <div className="flex flex-col items-center justify-center pt-6 pb-5 border-b shrink-0 px-4 relative border-indigo-900/40 bg-[#141532]/70 backdrop-blur-md rounded-t-[29px]">
-            {/* 3D Neumorphic Floating SMART PPI Logo (No Box Container) */}
+            {/* 3D Neumorphic Floating SMART PPI Logo */}
             <div className="relative mb-3 flex items-center justify-center transition-transform duration-300 hover:scale-105">
               <AppLogo 
                 className="w-14 h-14 md:w-[68px] md:h-[68px] drop-shadow-[-3px_-3px_8px_rgba(140,165,255,0.2)] drop-shadow-[5px_8px_16px_rgba(0,0,0,0.85)] filter transition-all duration-300" 
@@ -423,8 +412,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           )}
 
-          {/* Header Khusus Mode Portrait untuk Seluruh Menu (Dashboard, Input, Grafik, Laporan, Pengaturan) */}
-          <div className="flex sm:hidden flex-col mb-4 print:hidden">
+          {/* Header Khusus Mode Mobile & Landscape */}
+          <div className="flex md:hidden flex-col mb-4 print:hidden">
             <div className="flex items-center justify-between gap-3 px-1">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 flex-shrink-0 flex items-center justify-center relative">
@@ -472,9 +461,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation - Neumorphic (Neuromorphism) Bar with 3D Tactile Squircle Icons */}
+      {/* Mobile Bottom Navigation - Neumorphic Bar matching Kepatuhan Kebersihan Tangan Card */}
       <div className="fixed bottom-4 inset-x-3 sm:inset-x-5 z-50 flex justify-center md:hidden pb-[env(safe-area-inset-bottom)]">
-        <nav className="w-full max-w-md flex justify-around items-center h-[76px] px-2.5 py-1.5 rounded-[30px] border border-white/10 bg-gradient-to-b from-[#1c1f40]/95 via-[#13162f]/95 to-[#0b0d1e]/95 backdrop-blur-2xl shadow-[-6px_-6px_18px_rgba(140,165,255,0.08),8px_8px_24px_rgba(0,0,0,0.8),inset_1px_1px_2px_rgba(255,255,255,0.15),inset_-1.5px_-1.5px_2px_rgba(0,0,0,0.6)]">
+        <nav className="w-full max-w-md flex justify-around items-center h-[76px] px-2.5 py-1.5 rounded-[30px] border border-[#2b2d56] bg-gradient-to-b from-[#1c1f40]/95 via-[#13162f]/95 to-[#0b0d1e]/95 backdrop-blur-2xl shadow-[-6px_-6px_18px_rgba(140,165,255,0.08),8px_8px_24px_rgba(0,0,0,0.8),inset_1px_1px_2px_rgba(255,255,255,0.15),inset_-1.5px_-1.5px_2px_rgba(0,0,0,0.6)]">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
 
@@ -484,19 +473,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 href={item.href}
                 className="relative flex-1 h-[62px] flex flex-col items-center justify-center transition-all duration-200 outline-none px-0.5"
               >
-                {/* Neumorphic Extruded Active Plate Indicator */}
+                {/* Neumorphic Active Plate Indicator */}
                 {isActive && (
                   <motion.div
-                    layoutId="mobileNavIndicatorWhite"
-                    className="absolute inset-x-1 inset-y-1 rounded-[22px] bg-gradient-to-b from-[#f8fafc] via-[#e2e8f0] to-[#cbd5e1] border border-white/90 shadow-[-2px_-2px_7px_rgba(255,255,255,0.3),4px_4px_12px_rgba(0,0,0,0.5),inset_1.5px_1.5px_2px_rgba(255,255,255,1),inset_-1.5px_-1.5px_2px_rgba(0,0,0,0.12)]"
+                    layoutId="mobileNavIndicatorNeumorphic"
+                    className="absolute inset-x-1 inset-y-1 rounded-[22px] bg-gradient-to-r from-[#272952] via-[#1e2044] to-[#141535] border border-indigo-400/40 shadow-[-2px_-2px_7px_rgba(140,165,255,0.15),4px_4px_12px_rgba(0,0,0,0.65),inset_1px_1px_1.5px_rgba(255,255,255,0.25)]"
                     transition={{ type: "spring", stiffness: 420, damping: 32 }}
                   />
                 )}
                 
                 <motion.div 
                   animate={isActive ? { 
-                    y: [0, -7, 0, -3, 0],
-                    scale: [1, 1.12, 1, 1.05, 1],
+                    y: [0, -6, 0, -3, 0],
+                    scale: [1, 1.08, 1, 1.04, 1],
                   } : { 
                     y: 0,
                     scale: 1,
@@ -508,19 +497,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     ease: "easeInOut"
                   } : { duration: 0.2 }}
                   className={`relative z-10 flex flex-col items-center justify-center transition-all duration-200 ${
-                    isActive ? 'scale-105' : 'opacity-85 hover:opacity-100 active:scale-95'
+                    isActive ? 'scale-105' : 'opacity-75 hover:opacity-100 active:scale-95'
                   }`}
                 >
-                  {/* Neumorphic 3D Squircle Icon */}
-                  <div className={`relative w-[34px] h-[34px] rounded-[11px] flex items-center justify-center text-white border ${item.theme.bg} ${item.theme.border} shadow-[-2px_-2px_6px_rgba(255,255,255,0.25),3px_3px_8px_rgba(0,0,0,0.45),inset_1px_1px_1.5px_rgba(255,255,255,0.4),inset_-1px_-1px_1.5px_rgba(0,0,0,0.2)] overflow-hidden transform-gpu`}>
-                    <item.icon className="w-4 h-4 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] relative z-10" strokeWidth={2.4} />
+                  {/* Direct Icon without card/squircle box */}
+                  <div className="flex items-center justify-center w-7 h-7 relative z-10">
+                    <item.icon 
+                      className={`w-[22px] h-[22px] transition-all duration-300 relative z-10 ${
+                        isActive 
+                          ? 'text-cyan-400 drop-shadow-[2px_3px_4px_rgba(0,0,0,0.9)] drop-shadow-[0_0_10px_rgba(6,182,212,0.7)]' 
+                          : 'text-slate-300/85 group-hover:text-cyan-300 drop-shadow-[1.5px_2px_3px_rgba(0,0,0,0.85)]'
+                      }`} 
+                      strokeWidth={2.2} 
+                    />
                   </div>
 
-                  {/* Neumorphic Embossed Text */}
+                  {/* Label Text */}
                   <span className={`text-[9.5px] tracking-tight mt-1 transition-colors duration-200 ${
                     isActive 
-                      ? 'text-[#1e293b] font-black drop-shadow-[0_0.5px_0_rgba(255,255,255,0.7)]' 
-                      : 'text-slate-400 font-semibold drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]'
+                      ? 'text-white font-black drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]' 
+                      : 'text-slate-400 font-semibold'
                   }`}>
                     {item.shortName || item.name}
                   </span>

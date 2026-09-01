@@ -24,6 +24,8 @@ import { useAppContext } from "@/components/Providers";
 import { supabase } from "@/lib/supabase";
 import DashboardLayout from "@/components/DashboardLayout";
 import { LiveStatisticsCard } from "@/components/LiveStatisticsCard";
+import { UpayaPerbaikanSection } from "@/components/UpayaPerbaikanSection";
+import { DocImage } from "@/components/DocumentationUploader";
 
 type Observer = { id: string; nama: string };
 
@@ -132,6 +134,10 @@ export default function InputApdPage() {
     gaun_pelindung: null,
   });
 
+  const [upayaPerbaikan, setUpayaPerbaikan] = useState("");
+  const [waktuPerbaikan, setWaktuPerbaikan] = useState("");
+  const [perbaikanImages, setPerbaikanImages] = useState<DocImage[]>([]);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
@@ -194,6 +200,18 @@ export default function InputApdPage() {
               sepatu_boot: indicatorsData.sepatu_boot || ed.sepatu_boot || null,
               gaun_pelindung: indicatorsData.gaun_pelindung || ed.gaun_pelindung || null,
             });
+
+            const upaya = indicatorsData.upaya_perbaikan || indicatorsData.upayaPerbaikan || ed.upaya_perbaikan || "";
+            if (upaya) setUpayaPerbaikan(upaya);
+
+            const waktuPerb = indicatorsData.waktu_perbaikan || indicatorsData.tanggal_perbaikan || ed.waktu_perbaikan || ed.tanggal_perbaikan || "";
+            if (waktuPerb) setWaktuPerbaikan(waktuPerb);
+
+            const perbaikanDocs = indicatorsData.foto_perbaikan || indicatorsData.dokumentasi_perbaikan || ed.foto_perbaikan;
+            if (perbaikanDocs) {
+              const pArr = Array.isArray(perbaikanDocs) ? perbaikanDocs : [perbaikanDocs];
+              setPerbaikanImages(pArr.map((url: string) => (typeof url === 'string' ? { url } : url)));
+            }
           }
         };
         loadEditData();
@@ -367,6 +385,24 @@ export default function InputApdPage() {
     setIsSubmitting(true);
 
     try {
+      const uploadedPerbaikanUrls: string[] = [];
+      for (const img of perbaikanImages) {
+        if (typeof img === "string") {
+          uploadedPerbaikanUrls.push(img);
+        } else if (img.url && !img.url.startsWith("blob:")) {
+          uploadedPerbaikanUrls.push(img.url);
+        } else if (img.file) {
+          const fileExt = img.file.name.split(".").pop();
+          const fileName = `perbaikan_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const filePath = `perbaikan/${fileName}`;
+          const { error: uploadErr } = await supabase.storage.from("dokumentasi").upload(filePath, img.file);
+          if (!uploadErr) {
+            const { data: pUrl } = supabase.storage.from("dokumentasi").getPublicUrl(filePath);
+            if (pUrl?.publicUrl) uploadedPerbaikanUrls.push(pUrl.publicUrl);
+          }
+        }
+      }
+
       const payload = {
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
         observer,
@@ -398,6 +434,10 @@ export default function InputApdPage() {
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.statusText,
+        upaya_perbaikan: upayaPerbaikan,
+        waktu_perbaikan: waktuPerbaikan,
+        tanggal_perbaikan: waktuPerbaikan,
+        foto_perbaikan: uploadedPerbaikanUrls,
         data_indikator: {
           masker: apdData.masker,
           sarung_tangan: apdData.sarung_tangan,
@@ -406,6 +446,9 @@ export default function InputApdPage() {
           goggle: apdData.goggle,
           sepatu_boot: apdData.sepatu_boot,
           gaun_pelindung: apdData.gaun_pelindung,
+          upaya_perbaikan: upayaPerbaikan,
+          waktu_perbaikan: waktuPerbaikan,
+          foto_perbaikan: uploadedPerbaikanUrls,
         },
       };
 
@@ -675,6 +718,17 @@ export default function InputApdPage() {
           statusText={stats.statusText}
           title="KEPATUHAN PENGGUNAAN APD"
         />
+
+        {isEditMode && (
+          <UpayaPerbaikanSection
+            upayaPerbaikan={upayaPerbaikan}
+            setUpayaPerbaikan={setUpayaPerbaikan}
+            perbaikanImages={perbaikanImages}
+            setPerbaikanImages={setPerbaikanImages}
+            waktuPerbaikan={waktuPerbaikan}
+            setWaktuPerbaikan={setWaktuPerbaikan}
+          />
+        )}
 
         <button
           onClick={handleSubmit}

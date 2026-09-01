@@ -18,6 +18,7 @@ import {
   DocumentationUploader,
   DocImage,
 } from "@/components/DocumentationUploader";
+import { UpayaPerbaikanSection } from "@/components/UpayaPerbaikanSection";
 import DigitalSignature, { DigitalSignatureRef } from "@/components/DigitalSignatureSection";
 import { useRef } from "react";
 
@@ -50,6 +51,11 @@ export default function InputEtikaBatukPage() {
   const [selectedMateri, setSelectedMateri] = useState<string[]>([]);
   const [selectedSasaran, setSelectedSasaran] = useState<string[]>([]);
   const [pjName, setPjName] = useState("");
+  const [preloadedPjSignature, setPreloadedPjSignature] = useState<string | null>(null);
+  const [preloadedIpcnSignature, setPreloadedIpcnSignature] = useState<string | null>(null);
+  const [upayaPerbaikan, setUpayaPerbaikan] = useState("");
+  const [waktuPerbaikan, setWaktuPerbaikan] = useState("");
+  const [perbaikanImages, setPerbaikanImages] = useState<DocImage[]>([]);
   const sigRef = useRef<DigitalSignatureRef>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -86,6 +92,9 @@ export default function InputEtikaBatukPage() {
             const displayPjName = indicatorsData.nama_pj_ruangan || data.nama_pj_ruangan || "";
             setPjName(displayPjName);
             
+            if (data.ttd_pj_ruangan) setPreloadedPjSignature(data.ttd_pj_ruangan);
+            if (data.ttd_ipcn) setPreloadedIpcnSignature(data.ttd_ipcn);
+
             // Prefill signatures to signature pads
             setTimeout(() => {
               if (data.ttd_pj_ruangan && sigRef.current?.setPjSignature) {
@@ -97,8 +106,23 @@ export default function InputEtikaBatukPage() {
             }, 800);
             
             // Prefill documentation
-            if (indicatorsData.dokumentasi) {
-              setImages(indicatorsData.dokumentasi.map((url: string) => ({ url, file: null as any })));
+            const docs = indicatorsData.dokumentasi || data.dokumentasi || indicatorsData.foto || data.foto;
+            if (Array.isArray(docs)) {
+              setImages(docs.map((url: any) => typeof url === 'string' ? { url, file: null as any } : url));
+            } else if (typeof docs === 'string' && docs.length > 0) {
+              setImages([{ url: docs, file: null as any }]);
+            }
+
+            const upaya = indicatorsData.upaya_perbaikan || indicatorsData.upayaPerbaikan || data.upaya_perbaikan || "";
+            if (upaya) setUpayaPerbaikan(upaya);
+
+            const waktuPerb = indicatorsData.waktu_perbaikan || indicatorsData.tanggal_perbaikan || data.waktu_perbaikan || data.tanggal_perbaikan || "";
+            if (waktuPerb) setWaktuPerbaikan(waktuPerb);
+
+            const perbaikanDocs = indicatorsData.foto_perbaikan || indicatorsData.dokumentasi_perbaikan || data.foto_perbaikan;
+            if (perbaikanDocs) {
+              const pArr = Array.isArray(perbaikanDocs) ? perbaikanDocs : [perbaikanDocs];
+              setPerbaikanImages(pArr.map((url: string) => (typeof url === 'string' ? { url } : url)));
             }
           }
         };
@@ -162,13 +186,8 @@ export default function InputEtikaBatukPage() {
     setIsSubmitting(true);
 
     try {
-      let ttd_pj = null;
-      let ttd_ipcn = null;
-
-      if (sigRef.current) {
-        ttd_pj = sigRef.current.getPjSignature();
-        ttd_ipcn = sigRef.current.getSupervisorSignature();
-      }
+      let ttd_pj = sigRef.current?.getPjSignature()?.trim() || preloadedPjSignature || null;
+      let ttd_ipcn = sigRef.current?.getSupervisorSignature()?.trim() || preloadedIpcnSignature || null;
 
       const existingUrls = images.filter(img => img.url && !img.file).map(img => img.url);
 
@@ -205,6 +224,28 @@ export default function InputEtikaBatukPage() {
 
       payload.dokumentasi = [...existingUrls, ...uploadedUrls];
 
+      const uploadedPerbaikanUrls: string[] = [];
+      for (const img of perbaikanImages) {
+        if (typeof img === "string") {
+          uploadedPerbaikanUrls.push(img);
+        } else if (img.url && !img.url.startsWith("blob:")) {
+          uploadedPerbaikanUrls.push(img.url);
+        } else if (img.file) {
+          const fileExt = img.file.name.split(".").pop();
+          const fileName = `perbaikan_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const filePath = `perbaikan/${fileName}`;
+          const { error: uploadErr } = await supabase.storage.from("dokumentasi").upload(filePath, img.file);
+          if (!uploadErr) {
+            const { data: pUrl } = supabase.storage.from("dokumentasi").getPublicUrl(filePath);
+            if (pUrl?.publicUrl) uploadedPerbaikanUrls.push(pUrl.publicUrl);
+          }
+        }
+      }
+
+      payload.upaya_perbaikan = upayaPerbaikan;
+      payload.waktu_perbaikan = waktuPerbaikan;
+      payload.foto_perbaikan = uploadedPerbaikanUrls;
+
       let sessionError;
       if (isEditMode && editId) {
         const { error } = await supabase
@@ -221,6 +262,10 @@ export default function InputEtikaBatukPage() {
             ttd_pj_ruangan: ttd_pj,
             ttd_ipcn: ttd_ipcn,
             nama_pj_ruangan: pjName.trim(),
+            upaya_perbaikan: upayaPerbaikan,
+            waktu_perbaikan: waktuPerbaikan,
+            tanggal_perbaikan: waktuPerbaikan,
+            foto_perbaikan: uploadedPerbaikanUrls,
             data_indikator: { ...payload },
           })
           .eq("id", editId);
@@ -243,6 +288,10 @@ export default function InputEtikaBatukPage() {
               ttd_pj_ruangan: ttd_pj,
               ttd_ipcn: ttd_ipcn,
               nama_pj_ruangan: pjName.trim(),
+              upaya_perbaikan: upayaPerbaikan,
+              waktu_perbaikan: waktuPerbaikan,
+              tanggal_perbaikan: waktuPerbaikan,
+              foto_perbaikan: uploadedPerbaikanUrls,
               data_indikator: { ...payload },
             },
           ])
@@ -250,15 +299,6 @@ export default function InputEtikaBatukPage() {
           .single();
 
         sessionError = insertError;
-
-        if (!insertError && sessionData && uploadedUrls.length > 0) {
-           await supabase.from("audit_sessions").update({
-             data_indikator: {
-               ...payload,
-               dokumentasi: uploadedUrls
-             }
-           }).eq('id', sessionData.id);
-        }
       }
 
       if (sessionError) throw sessionError;
@@ -428,8 +468,18 @@ export default function InputEtikaBatukPage() {
           </div>
         </div>
 
-        <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
+        <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm space-y-6">
           <DocumentationUploader images={images} setImages={setImages} />
+          {isEditMode && (
+            <UpayaPerbaikanSection
+              upayaPerbaikan={upayaPerbaikan}
+              setUpayaPerbaikan={setUpayaPerbaikan}
+              perbaikanImages={perbaikanImages}
+              setPerbaikanImages={setPerbaikanImages}
+              waktuPerbaikan={waktuPerbaikan}
+              setWaktuPerbaikan={setWaktuPerbaikan}
+            />
+          )}
         </div>
 
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
@@ -456,7 +506,7 @@ export default function InputEtikaBatukPage() {
           ) : (
             <Save className="w-5 h-5" />
           )}
-          <span>Simpan Data Audit</span>
+          <span>{isEditMode ? "Update Data Audit" : "Simpan Data Audit"}</span>
         </button>
       </div>
     </div>

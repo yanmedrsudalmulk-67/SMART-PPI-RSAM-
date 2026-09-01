@@ -23,6 +23,7 @@ import {
   DocumentationUploader,
   DocImage,
 } from "@/components/DocumentationUploader";
+import { UpayaPerbaikanSection } from "@/components/UpayaPerbaikanSection";
 
 const units = [
   "IGD",
@@ -93,6 +94,9 @@ export default function InputPenempatanPasienPage() {
   const [rekomendasi, setRekomendasi] = useState("");
   const [images, setImages] = useState<DocImage[]>([]);
   const [pjName, setPjName] = useState("");
+  const [upayaPerbaikan, setUpayaPerbaikan] = useState("");
+  const [waktuPerbaikan, setWaktuPerbaikan] = useState("");
+  const [perbaikanImages, setPerbaikanImages] = useState<DocImage[]>([]);
   const signatureRef = useRef<DigitalSignatureRef>(null);
 
   const [isEditMode, setIsEditMode] = useState(false);
@@ -124,24 +128,40 @@ export default function InputPenempatanPasienPage() {
         setEditId(id);
 
         const loadEditData = async () => {
-          const { data, error } = await supabase
+          let { data, error } = await supabase
             .from("audit_sessions")
             .select("*")
             .eq("id", id)
-            .single();
+            .maybeSingle();
 
-          if (data && !error) {
+          if (!data) {
+            const { data: fallbackData } = await supabase
+              .from("audit_penempatan_pasien")
+              .select("*")
+              .eq("id", id)
+              .maybeSingle();
+            if (fallbackData) data = fallbackData;
+          }
+
+          if (data) {
             if (data.tanggal_waktu) setStartTime(new Date(data.tanggal_waktu));
             if (data.observer) setObserver(data.observer);
             if (data.unit) setUnit(data.unit);
-            if (data.temuan) setTemuan(data.temuan);
-            if (data.rekomendasi) setRekomendasi(data.rekomendasi);
-            if (data.nama_pj_ruangan) setPjName(data.nama_pj_ruangan);
-            if (data.ttd_pj_ruangan) setPreloadedPjSignature(data.ttd_pj_ruangan);
-            if (data.ttd_ipcn) setPreloadedIpcnSignature(data.ttd_ipcn);
+            
+            const indicatorsData = data.data_indikator || data.checklist_json || {};
+            const valTemuan = data.temuan || indicatorsData.temuan || data.temuan_lapangan || indicatorsData.temuan_lapangan || data.catatan || indicatorsData.catatan || "";
+            if (valTemuan) setTemuan(valTemuan);
+
+            const valRekomendasi = data.rekomendasi || indicatorsData.rekomendasi || data.saran || indicatorsData.saran || "";
+            if (valRekomendasi) setRekomendasi(valRekomendasi);
+
+            if (data.nama_pj_ruangan || data.nama_pj || indicatorsData.nama_pj_ruangan || indicatorsData.nama_pj) {
+              setPjName(data.nama_pj_ruangan || data.nama_pj || indicatorsData.nama_pj_ruangan || indicatorsData.nama_pj);
+            }
+            if (data.ttd_pj_ruangan || indicatorsData.tanda_tangan_pj) setPreloadedPjSignature(data.ttd_pj_ruangan || indicatorsData.tanda_tangan_pj);
+            if (data.ttd_ipcn || indicatorsData.tanda_tangan_ipcn) setPreloadedIpcnSignature(data.ttd_ipcn || indicatorsData.tanda_tangan_ipcn);
 
             // Populate checklist items
-            const indicatorsData = data.data_indikator || data.checklist_json || {};
             setAuditData((prev) => {
               const updated = { ...prev };
               Object.keys(updated).forEach((key) => {
@@ -170,6 +190,18 @@ export default function InputPenempatanPasienPage() {
               setImages(docs.map((url: any) => typeof url === 'string' ? { url, file: null as any } : url));
             } else if (typeof docs === 'string' && docs.length > 0) {
               setImages([{ url: docs, file: null as any }]);
+            }
+
+            const upaya = indicatorsData.upaya_perbaikan || indicatorsData.upayaPerbaikan || data.upaya_perbaikan || "";
+            if (upaya) setUpayaPerbaikan(upaya);
+
+            const waktuPerb = indicatorsData.waktu_perbaikan || indicatorsData.tanggal_perbaikan || data.waktu_perbaikan || data.tanggal_perbaikan || "";
+            if (waktuPerb) setWaktuPerbaikan(waktuPerb);
+
+            const perbaikanDocs = indicatorsData.foto_perbaikan || indicatorsData.dokumentasi_perbaikan || data.foto_perbaikan;
+            if (perbaikanDocs) {
+              const pArr = Array.isArray(perbaikanDocs) ? perbaikanDocs : [perbaikanDocs];
+              setPerbaikanImages(pArr.map((url: string) => (typeof url === 'string' ? { url } : url)));
             }
           }
         };
@@ -245,6 +277,24 @@ export default function InputPenempatanPasienPage() {
         "images",
       );
 
+      const uploadedPerbaikanUrls: string[] = [];
+      for (const img of perbaikanImages) {
+        if (typeof img === "string") {
+          uploadedPerbaikanUrls.push(img);
+        } else if (img.url && !img.url.startsWith("blob:")) {
+          uploadedPerbaikanUrls.push(img.url);
+        } else if (img.file) {
+          const fileExt = img.file.name.split(".").pop();
+          const fileName = `perbaikan_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const filePath = `perbaikan/${fileName}`;
+          const { error: uploadErr } = await supabase.storage.from("dokumentasi").upload(filePath, img.file);
+          if (!uploadErr) {
+            const { data: pUrl } = supabase.storage.from("dokumentasi").getPublicUrl(filePath);
+            if (pUrl?.publicUrl) uploadedPerbaikanUrls.push(pUrl.publicUrl);
+          }
+        }
+      }
+
       const payload = {
         tanggal_waktu: startTime?.toISOString() || new Date().toISOString(),
         observer,
@@ -256,85 +306,53 @@ export default function InputPenempatanPasienPage() {
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.statusText,
-              };
+      };
+
+      const sessionPayload = {
+        indikator_id: "penempatan_pasien",
+        nama_indikator: "PENEMPATAN PASIEN",
+        tanggal_waktu: payload.tanggal_waktu,
+        observer,
+        unit,
+        nama_pj: pjName.trim(),
+        nama_pj_ruangan: pjName.trim(),
+        ttd_pj_ruangan: pjSig,
+        ttd_ipcn: ipcnSig,
+        temuan,
+        rekomendasi,
+        jumlah_dinilai: stats.dinilai,
+        jumlah_patuh: stats.patuh,
+        persentase: stats.persentase,
+        status_kepatuhan: stats.statusText,
+        upaya_perbaikan: upayaPerbaikan,
+        waktu_perbaikan: waktuPerbaikan,
+        tanggal_perbaikan: waktuPerbaikan,
+        foto_perbaikan: uploadedPerbaikanUrls,
+        data_indikator: {
+          ...auditData,
+          temuan,
+          rekomendasi,
+          dokumentasi: uploadedImages,
+          tanda_tangan_pj: pjSig,
+          tanda_tangan_ipcn: ipcnSig,
+          nama_pj_ruangan: pjName.trim(),
+          upaya_perbaikan: upayaPerbaikan,
+          waktu_perbaikan: waktuPerbaikan,
+          foto_perbaikan: uploadedPerbaikanUrls,
+        },
+      };
 
       let sessionError;
       if (isEditMode && editId) {
         const { error } = await supabase
           .from("audit_sessions")
-          .update({
-            tanggal_waktu: payload.tanggal_waktu,
-            observer,
-            unit,
-            nama_pj: pjName.trim(),
-            nama_pj_ruangan: pjName.trim(),
-            ttd_pj_ruangan: pjSig,
-            ttd_ipcn: ipcnSig,
-            temuan,
-            rekomendasi,
-            jumlah_dinilai: stats.dinilai,
-            jumlah_patuh: stats.patuh,
-            persentase: stats.persentase,
-            status_kepatuhan: stats.statusText,
-            data_indikator: {
-              ...auditData,
-              temuan,
-              rekomendasi,
-              dokumentasi: uploadedImages,
-              tanda_tangan_pj: pjSig,
-              tanda_tangan_ipcn: ipcnSig,
-              nama_pj: pjName.trim(),
-              nama_pj_ruangan: pjName.trim(),
-              ttd_pj: pjSig,
-              ttd_ipcn: ipcnSig,
-              tanda_tangan: [pjSig, ipcnSig].filter(Boolean),
-              unit,
-              ruangan: unit,
-              observer,
-              supervisor: observer,
-            },
-          })
+          .update(sessionPayload)
           .eq("id", editId);
         sessionError = error;
       } else {
         const { error } = await supabase
           .from("audit_sessions")
-          .insert([
-            {
-              indikator_id: "penempatan_pasien",
-              nama_indikator: "PENEMPATAN PASIEN",
-              tanggal_waktu: payload.tanggal_waktu,
-              observer,
-              unit,
-              nama_pj: pjName.trim(),
-              nama_pj_ruangan: pjName.trim(),
-              ttd_pj_ruangan: pjSig,
-              ttd_ipcn: ipcnSig,
-              temuan,
-              rekomendasi,
-              jumlah_dinilai: stats.dinilai,
-              jumlah_patuh: stats.patuh,
-              persentase: stats.persentase,
-              status_kepatuhan: stats.statusText,
-              data_indikator: {
-                ...auditData,
-                temuan,
-                rekomendasi,
-                dokumentasi: uploadedImages,
-                tanda_tangan_pj: pjSig,
-                tanda_tangan_ipcn: ipcnSig,
-                nama_pj: pjName.trim(),
-                nama_pj_ruangan: pjName.trim(),
-                ttd_pj: pjSig,
-                ttd_ipcn: ipcnSig,
-                tanda_tangan: [pjSig, ipcnSig].filter(Boolean),
-                unit,
-                ruangan: unit,
-                observer,
-                supervisor: observer,
-              },
-            },
-          ]);
+          .insert([sessionPayload]);
         sessionError = error;
       }
 
@@ -585,6 +603,17 @@ export default function InputPenempatanPasienPage() {
           </div>
 
           <DocumentationUploader images={images} setImages={setImages} />
+
+          {isEditMode && (
+            <UpayaPerbaikanSection
+              upayaPerbaikan={upayaPerbaikan}
+              setUpayaPerbaikan={setUpayaPerbaikan}
+              perbaikanImages={perbaikanImages}
+              setPerbaikanImages={setPerbaikanImages}
+              waktuPerbaikan={waktuPerbaikan}
+              setWaktuPerbaikan={setWaktuPerbaikan}
+            />
+          )}
 
           <DigitalSignatureSection
             ref={signatureRef}

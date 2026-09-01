@@ -506,11 +506,11 @@ export default function ReportsPage() {
   const selectedData = INDICATORS_MAP[selectedIndicator || ''];
 
   return (
-    <div className="max-w-[1600px] mx-auto pb-32 relative">
+    <div className="max-w-[1600px] mx-auto pb-32 relative space-y-4 sm:space-y-6">
       <div ref={topRef} className="absolute top-0 left-0 w-full h-0 pointer-events-none" />
       
       {/* Top Page Header Banner - Identik dengan Layout Menu Dashboard */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
         <div className="text-center sm:text-left w-full sm:w-auto">
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase">
             Laporan SMART PPI
