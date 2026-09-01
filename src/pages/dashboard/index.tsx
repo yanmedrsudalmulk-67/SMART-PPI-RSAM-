@@ -426,7 +426,7 @@ const getStatusColor = (val: number, std: Standard | undefined) => {
 };
 
 export default function DashboardPage() {
-  const { userRole } = useAppContext();
+  const { userRole, isSidebarOpen } = useAppContext();
 
   const {
     dashboardData,
@@ -1260,7 +1260,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Widget Jam & Tanggal - Desktop & Landscape */}
-        <div className="hidden sm:flex justify-end shrink-0">
+        <div className={`hidden sm:flex justify-end shrink-0 ${!isSidebarOpen ? 'landscape:hidden' : ''}`}>
           <ClockWidget />
         </div>
       </div>

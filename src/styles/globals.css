@@ -4,18 +4,22 @@
 
 /* 120Hz / High Refresh Rate GPU rendering optimizations for performance-critical elements */
 .will-gpu,
-.gpu-accelerated {
+.gpu-accelerated,
+.fps-optimized {
   transform: translate3d(0, 0, 0);
   -webkit-transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   perspective: 1000px;
   -webkit-perspective: 1000px;
+  will-change: transform, opacity;
 }
 
-/* 120 FPS / 144 Hz frame rate pacing */
-@media (prefers-reduced-motion: no-preference) {
-  /* Scroll behavior is managed per container or via scrollHelper */
+/* 120 FPS / 144 Hz frame rate pacing & touch optimizations */
+@media (min-resolution: 120dpi) or (-webkit-min-device-pixel-ratio: 1.5) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 .optimize-gpu {

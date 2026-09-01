@@ -118,9 +118,8 @@ NavItem.displayName = 'NavItem';
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = router.pathname;
-  const { setUserRole, hospitalLogoUrl } = useAppContext();
+  const { setUserRole, hospitalLogoUrl, isSidebarOpen, setIsSidebarOpen } = useAppContext();
   const { isDashboardLoaded, setDashboardData, isGlobalLoading, setIsGlobalLoading } = useDashboardStore();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -362,7 +361,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Premium Vertical Scroll Handle Bar Toggle Button */}
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="absolute -right-3.5 top-1/2 -translate-y-1/2 w-4 h-20 rounded-r-xl flex flex-col items-center justify-center gap-1.5 border border-l-0 border-indigo-500/60 bg-gradient-to-b from-[#222452] via-[#161838] to-[#0e1026] text-cyan-300 shadow-[4px_0_16px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.3)] hover:border-cyan-400 hover:text-white hover:shadow-[0_0_18px_rgba(6,182,212,0.6)] hover:w-5 hover:-right-4.5 transition-all duration-300 z-[60] group hidden md:flex cursor-pointer"
+          className="absolute -right-3.5 top-1/2 -translate-y-1/2 w-4 h-20 rounded-r-xl flex flex-col items-center justify-center gap-1.5 border border-l-0 border-indigo-500/60 bg-gradient-to-b from-[#222452] via-[#161838] to-[#0e1026] text-cyan-300 shadow-[4px_0_16px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.3)] hover:border-cyan-400 hover:text-white hover:shadow-[0_0_18px_rgba(6,182,212,0.6)] hover:w-5 hover:-right-4.5 transition-all duration-300 z-[60] group hidden landscape:flex md:flex cursor-pointer"
           title={isSidebarOpen ? "Sembunyikan Sidebar" : "Tampilkan Sidebar"}
           aria-label={isSidebarOpen ? "Sembunyikan Sidebar" : "Tampilkan Sidebar"}
         >
@@ -382,10 +381,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         !isMobile ? (isSidebarOpen ? 'ml-[312px]' : 'ml-[64px]') : 'ml-0'
       }`}>
         {/* Page Content */}
-        <main ref={mainRef} className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 pb-32 sm:pb-10 relative overscroll-y-none [transform:translateZ(0)] will-change-scroll w-full max-w-full z-10">
-          {/* Header Desktop saat Sidebar Minimized */}
+        <main ref={mainRef} className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 pb-32 sm:pb-10 relative overscroll-y-none [transform:translateZ(0)] will-change-scroll w-full max-w-full z-10 fps-optimized gpu-accelerated">
+          {/* Header Desktop & Landscape saat Sidebar Minimized */}
           {!isMobile && !isSidebarOpen && (
-            <div className="mb-6 flex items-center justify-between gap-4 p-3.5 px-5 rounded-2xl bg-[#141532]/80 border border-indigo-900/40 backdrop-blur-md shadow-[-4px_-4px_12px_rgba(140,165,255,0.06),6px_8px_20px_rgba(0,0,0,0.6)] print:hidden">
+            <div className="mb-6 flex items-center justify-between gap-4 p-3.5 px-5 rounded-2xl bg-[#141532]/80 border border-indigo-900/40 backdrop-blur-md shadow-[-4px_-4px_12px_rgba(140,165,255,0.06),6px_8px_20px_rgba(0,0,0,0.6)] print:hidden landscape:hidden">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center">
@@ -413,7 +412,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           )}
 
           {/* Header Khusus Mode Mobile & Landscape */}
-          <div className="flex md:hidden flex-col mb-4 print:hidden">
+          <div className={`flex md:hidden flex-col mb-4 print:hidden ${!isSidebarOpen ? 'landscape:hidden' : ''}`}>
             <div className="flex items-center justify-between gap-3 px-1">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 flex-shrink-0 flex items-center justify-center relative">

@@ -172,8 +172,8 @@ export default function InputMonitoringRuangIsolasiPage() {
             } catch (err) {}
 
             // Prefill signatures
-            const t1 = ed.ttd_pj_ruangan || ed.ttd_pj || indicatorsData.ttd_pj_ruangan || indicatorsData.ttd_pj || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
-            const t2 = ed.ttd_ipcn || ed.tanda_tangan_2 || indicatorsData.ttd_ipcn || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
+            const t1 = ed.ttd_pj_ruangan || ed.ttd_pj || ed.tanda_tangan_pj || indicatorsData.ttd_pj_ruangan || indicatorsData.ttd_pj || indicatorsData.tanda_tangan_pj || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
+            const t2 = ed.ttd_ipcn || ed.tanda_tangan_spv || ed.tanda_tangan_ipcn || indicatorsData.ttd_ipcn || indicatorsData.tanda_tangan_spv || indicatorsData.tanda_tangan_ipcn || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
             if (t1) setPreloadedPjSignature(t1);
             if (t2) setPreloadedIpcnSignature(t2);
             setTimeout(() => {
@@ -183,7 +183,7 @@ export default function InputMonitoringRuangIsolasiPage() {
               if (t2 && sigRef.current?.setSupervisorSignature) {
                 sigRef.current.setSupervisorSignature(t2);
               }
-            }, 800);
+            }, 400);
 
             // Prefill documentation
             const docs = ed.foto || indicatorsData.dokumentasi || indicatorsData.foto || [];
@@ -641,6 +641,8 @@ export default function InputMonitoringRuangIsolasiPage() {
             pjName={pjName}
             setPjName={setPjName}
             pjLabel="PJ RUANGAN"
+            preloadedPjSignature={preloadedPjSignature}
+            preloadedIpcnSignature={preloadedIpcnSignature}
           />
         </div>
         <button

@@ -406,7 +406,7 @@ export default function EtikaBatukReport({
               <p className="text-[10px] font-black uppercase tracking-widest text-force-black mb-2" style={{ color: "#000000" }}>PJ Ruangan</p>
               <div className="h-16 lg:h-20 relative w-full flex justify-center items-center">
                 {selectedRecord.tanda_tangan_1 ? (
-                  <img src={selectedRecord.tanda_tangan_1} className="object-contain h-full relative z-10 mix-blend-multiply" alt="TTD PJ" />
+                  <img src={selectedRecord.tanda_tangan_1} className="object-contain h-full relative z-10 filter brightness-0" alt="TTD PJ" />
                 ) : (
                   <span className="text-[9px] text-gray-500 uppercase tracking-widest font-black italic">Tanpa Tanda Tangan</span>
                 )}
@@ -422,7 +422,7 @@ export default function EtikaBatukReport({
               <p className="text-[10px] font-black uppercase tracking-widest text-force-black mb-2" style={{ color: "#000000" }}>TIM PPI RS</p>
               <div className="h-16 lg:h-20 relative w-full flex justify-center items-center">
                 {selectedRecord.tanda_tangan_2 ? (
-                  <img src={selectedRecord.tanda_tangan_2} className="object-contain h-full relative z-10 mix-blend-multiply" alt="TTD IPCN" />
+                  <img src={selectedRecord.tanda_tangan_2} className="object-contain h-full relative z-10 filter brightness-0" alt="TTD IPCN" />
                 ) : (
                   <span className="text-[9px] text-gray-500 uppercase tracking-widest font-black italic">Tanpa Tanda Tangan</span>
                 )}

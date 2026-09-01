@@ -527,6 +527,7 @@ export default function InputPerlindunganPetugasPage() {
           ref={signatureRef}
           hidePj={true}
           supervisorLabel="IPCN / AUDITOR"
+          preloadedIpcnSignature={preloadedIpcnSignature}
         />
 
         <LiveStatisticsCard

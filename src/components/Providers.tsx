@@ -8,6 +8,8 @@ interface AppContextType {
   setHospitalLogoUrl: (url: string | null) => void;
   userRole: string;
   setUserRole: (role: string) => void;
+  isSidebarOpen: boolean;
+  setIsSidebarOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -16,6 +18,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [appLogoUrl, setAppLogoUrl] = useState<string | null>(null);
   const [hospitalLogoUrl, setHospitalLogoUrl] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string>('IPCN');
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchLogos = async () => {
@@ -35,8 +38,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const contextValue = useMemo(() => ({
     appLogoUrl, setAppLogoUrl,
     hospitalLogoUrl, setHospitalLogoUrl,
-    userRole, setUserRole
-  }), [appLogoUrl, hospitalLogoUrl, userRole]);
+    userRole, setUserRole,
+    isSidebarOpen, setIsSidebarOpen
+  }), [appLogoUrl, hospitalLogoUrl, userRole, isSidebarOpen]);
 
   return (
     <AppContext.Provider value={contextValue}>

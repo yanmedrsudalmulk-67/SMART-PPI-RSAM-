@@ -10,15 +10,59 @@ interface SignaturePadProps {
   defaultValue?: string | null;
 }
 
+const toWhiteSignature = (dataUrl: string): Promise<string> => {
+  return new Promise((resolve) => {
+    if (!dataUrl || typeof dataUrl !== 'string') {
+      return resolve(dataUrl);
+    }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width || 300;
+        canvas.height = img.height || 150;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return resolve(dataUrl);
+
+        ctx.drawImage(img, 0, 0);
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const d = imgData.data;
+
+        for (let i = 0; i < d.length; i += 4) {
+          const alpha = d[i + 3];
+          if (alpha > 10) {
+            d[i] = 255;     // R
+            d[i + 1] = 255; // G
+            d[i + 2] = 255; // B
+          }
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      } catch (e) {
+        resolve(dataUrl);
+      }
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+};
+
 export default function SignaturePad({ label, onSave, defaultValue }: SignaturePadProps) {
   const sigCanvas = useRef<SignatureCanvas>(null);
   const [isEmpty, setIsEmpty] = useState(!defaultValue);
 
   useEffect(() => {
     if (defaultValue && sigCanvas.current) {
-      sigCanvas.current.fromDataURL(defaultValue);
-      requestAnimationFrame(() => {
-        setIsEmpty(false);
+      toWhiteSignature(defaultValue).then((whiteSig) => {
+        if (sigCanvas.current) {
+          sigCanvas.current.clear();
+          sigCanvas.current.fromDataURL(whiteSig);
+          requestAnimationFrame(() => {
+            setIsEmpty(false);
+          });
+        }
       });
     }
   }, [defaultValue]);
@@ -70,7 +114,7 @@ export default function SignaturePad({ label, onSave, defaultValue }: SignatureP
         <SignatureCanvas 
           ref={sigCanvas}
           onEnd={handleEnd}
-          penColor="#3b82f6"
+          penColor="#ffffff"
           canvasProps={{
             className: "w-full h-40 cursor-crosshair relative z-10 touch-none",
             style: { width: '100%', height: '160px' }

@@ -226,7 +226,7 @@ export default function OfficialReportSheet({
         <div className="text-center space-y-4">
           <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">PJ Ruangan / Auditee</p>
           <div className="h-20 relative w-full flex justify-center items-center">
-            {data.ttd_pj && <Image src={data.ttd_pj} fill sizes="200px" className="object-contain" alt="TTD PJ" referrerPolicy="no-referrer" />}
+            {data.ttd_pj && <Image src={data.ttd_pj} fill sizes="200px" className="object-contain filter brightness-0" alt="TTD PJ" referrerPolicy="no-referrer" />}
           </div>
           <div className="pt-2 border-t border-slate-300 w-full">
             <p className="font-bold text-xs uppercase tracking-wider text-black">
@@ -239,7 +239,7 @@ export default function OfficialReportSheet({
         <div className="text-center space-y-4">
           <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">TIM PPI RS</p>
           <div className="h-20 relative w-full flex justify-center items-center">
-            {data.ttd_ipcn && <Image src={data.ttd_ipcn} fill sizes="200px" className="object-contain" alt="TTD IPCN" referrerPolicy="no-referrer" />}
+            {data.ttd_ipcn && <Image src={data.ttd_ipcn} fill sizes="200px" className="object-contain filter brightness-0" alt="TTD IPCN" referrerPolicy="no-referrer" />}
           </div>
           <div className="pt-2 border-t border-slate-300 w-full">
             <p className="font-bold text-xs uppercase tracking-wider text-black">{inspector || '( ............................... )'}</p>

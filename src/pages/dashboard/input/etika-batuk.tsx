@@ -92,18 +92,21 @@ export default function InputEtikaBatukPage() {
             const displayPjName = indicatorsData.nama_pj_ruangan || data.nama_pj_ruangan || "";
             setPjName(displayPjName);
             
-            if (data.ttd_pj_ruangan) setPreloadedPjSignature(data.ttd_pj_ruangan);
-            if (data.ttd_ipcn) setPreloadedIpcnSignature(data.ttd_ipcn);
+            const pjSig = data.ttd_pj_ruangan || data.ttd_pj || data.tanda_tangan_pj || indicatorsData.tanda_tangan_pj || indicatorsData.ttd_pj_ruangan || indicatorsData.ttd_pj || (Array.isArray(indicatorsData.tanda_tangan) ? indicatorsData.tanda_tangan[0] : null);
+            const ipcnSig = data.ttd_ipcn || data.tanda_tangan_ipcn || data.tanda_tangan_spv || indicatorsData.tanda_tangan_ipcn || indicatorsData.ttd_ipcn || (Array.isArray(indicatorsData.tanda_tangan) ? indicatorsData.tanda_tangan[1] : null);
+
+            if (pjSig) setPreloadedPjSignature(pjSig);
+            if (ipcnSig) setPreloadedIpcnSignature(ipcnSig);
 
             // Prefill signatures to signature pads
             setTimeout(() => {
-              if (data.ttd_pj_ruangan && sigRef.current?.setPjSignature) {
-                sigRef.current.setPjSignature(data.ttd_pj_ruangan);
+              if (pjSig && sigRef.current?.setPjSignature) {
+                sigRef.current.setPjSignature(pjSig);
               }
-              if (data.ttd_ipcn && sigRef.current?.setSupervisorSignature) {
-                sigRef.current.setSupervisorSignature(data.ttd_ipcn);
+              if (ipcnSig && sigRef.current?.setSupervisorSignature) {
+                sigRef.current.setSupervisorSignature(ipcnSig);
               }
-            }, 800);
+            }, 400);
             
             // Prefill documentation
             const docs = indicatorsData.dokumentasi || data.dokumentasi || indicatorsData.foto || data.foto;
@@ -487,6 +490,8 @@ export default function InputEtikaBatukPage() {
             ref={sigRef}
             pjName={pjName}
             setPjName={setPjName}
+            preloadedPjSignature={preloadedPjSignature}
+            preloadedIpcnSignature={preloadedIpcnSignature}
           />
         </div>
 

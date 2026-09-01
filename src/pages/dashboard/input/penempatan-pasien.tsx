@@ -158,8 +158,11 @@ export default function InputPenempatanPasienPage() {
             if (data.nama_pj_ruangan || data.nama_pj || indicatorsData.nama_pj_ruangan || indicatorsData.nama_pj) {
               setPjName(data.nama_pj_ruangan || data.nama_pj || indicatorsData.nama_pj_ruangan || indicatorsData.nama_pj);
             }
-            if (data.ttd_pj_ruangan || indicatorsData.tanda_tangan_pj) setPreloadedPjSignature(data.ttd_pj_ruangan || indicatorsData.tanda_tangan_pj);
-            if (data.ttd_ipcn || indicatorsData.tanda_tangan_ipcn) setPreloadedIpcnSignature(data.ttd_ipcn || indicatorsData.tanda_tangan_ipcn);
+            const pjSig = data.ttd_pj_ruangan || data.ttd_pj || data.tanda_tangan_pj || indicatorsData.tanda_tangan_pj || indicatorsData.ttd_pj_ruangan || indicatorsData.ttd_pj || (Array.isArray(indicatorsData.tanda_tangan) ? indicatorsData.tanda_tangan[0] : null);
+            const ipcnSig = data.ttd_ipcn || data.tanda_tangan_ipcn || data.tanda_tangan_spv || indicatorsData.tanda_tangan_ipcn || indicatorsData.ttd_ipcn || (Array.isArray(indicatorsData.tanda_tangan) ? indicatorsData.tanda_tangan[1] : null);
+
+            if (pjSig) setPreloadedPjSignature(pjSig);
+            if (ipcnSig) setPreloadedIpcnSignature(ipcnSig);
 
             // Populate checklist items
             setAuditData((prev) => {
@@ -173,14 +176,14 @@ export default function InputPenempatanPasienPage() {
             });
 
             // Prefill signatures to signature pads
-            if (data.ttd_pj_ruangan && signatureRef.current?.setPjSignature) {
+            if (pjSig && signatureRef.current?.setPjSignature) {
               setTimeout(() => {
-                signatureRef.current?.setPjSignature?.(data.ttd_pj_ruangan!);
+                signatureRef.current?.setPjSignature?.(pjSig);
               }, 400);
             }
-            if (data.ttd_ipcn && signatureRef.current?.setSupervisorSignature) {
+            if (ipcnSig && signatureRef.current?.setSupervisorSignature) {
               setTimeout(() => {
-                signatureRef.current?.setSupervisorSignature?.(data.ttd_ipcn!);
+                signatureRef.current?.setSupervisorSignature?.(ipcnSig);
               }, 400);
             }
             
@@ -619,6 +622,8 @@ export default function InputPenempatanPasienPage() {
             ref={signatureRef}
             pjName={pjName}
             setPjName={setPjName}
+            preloadedPjSignature={preloadedPjSignature}
+            preloadedIpcnSignature={preloadedIpcnSignature}
           />
         </div>
 

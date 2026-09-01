@@ -256,8 +256,8 @@ export default function InputPengendalianLingkunganPage() {
             
 
             // Prefill signatures
-            const t1 = ed.ttd_pj_ruangan || indicatorsData.ttd_pj || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
-            const t2 = ed.ttd_ipcn || indicatorsData.ttd_ipcn || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
+            const t1 = ed.ttd_pj_ruangan || ed.ttd_pj || ed.tanda_tangan_pj || indicatorsData.ttd_pj_ruangan || indicatorsData.ttd_pj || indicatorsData.tanda_tangan_pj || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[0]);
+            const t2 = ed.ttd_ipcn || ed.tanda_tangan_spv || ed.tanda_tangan_ipcn || indicatorsData.ttd_ipcn || indicatorsData.tanda_tangan_spv || indicatorsData.tanda_tangan_ipcn || (indicatorsData.tanda_tangan && indicatorsData.tanda_tangan[1]);
             if (t1) setPreloadedPjSignature(t1);
             if (t2) setPreloadedIpcnSignature(t2);
             setTimeout(() => {
@@ -267,7 +267,7 @@ export default function InputPengendalianLingkunganPage() {
               if (t2 && signatureRef.current?.setSupervisorSignature) {
                 signatureRef.current.setSupervisorSignature(t2);
               }
-            }, 800);
+            }, 400);
 
             // Prefill documentation
             const docs = indicatorsData.dokumentasi || ed.dokumentasi || indicatorsData.foto || ed.foto;
@@ -745,6 +745,8 @@ export default function InputPengendalianLingkunganPage() {
             ref={signatureRef}
             pjName={pjName}
             setPjName={setPjName}
+            preloadedPjSignature={preloadedPjSignature}
+            preloadedIpcnSignature={preloadedIpcnSignature}
           />
         </div>
 

@@ -181,19 +181,16 @@ export default function LinenAuditPage() {
               const displayPjName = indicatorsData.nama_pj_ruangan || indicatorsData.nama_pj || ed.nama_pj_ruangan || ed.nama_pj || "";
               if (displayPjName) setPjName(displayPjName);
               
-              if (indicatorsData.tanda_tangan_pj || ed.ttd_pj_ruangan) {
-                const sig = indicatorsData.tanda_tangan_pj || ed.ttd_pj_ruangan;
-                setPreloadedPjSignature(sig);
-                if (signatureRef.current?.setPjSignature) {
-                  setTimeout(() => signatureRef.current?.setPjSignature?.(sig), 400);
-                }
+              const pjSig = indicatorsData.tanda_tangan_pj || ed.ttd_pj_ruangan || ed.ttd_pj || ed.tanda_tangan_pj || indicatorsData.ttd_pj_ruangan || indicatorsData.ttd_pj || (Array.isArray(indicatorsData.tanda_tangan) ? indicatorsData.tanda_tangan[0] : null);
+              const ipcnSig = indicatorsData.tanda_tangan_ipcn || ed.ttd_ipcn || ed.tanda_tangan_ipcn || ed.tanda_tangan_spv || indicatorsData.ttd_ipcn || (Array.isArray(indicatorsData.tanda_tangan) ? indicatorsData.tanda_tangan[1] : null);
+
+              if (pjSig) {
+                setPreloadedPjSignature(pjSig);
+                setTimeout(() => signatureRef.current?.setPjSignature?.(pjSig), 400);
               }
-              if (indicatorsData.tanda_tangan_ipcn || ed.ttd_ipcn) {
-                const sig = indicatorsData.tanda_tangan_ipcn || ed.ttd_ipcn;
-                setPreloadedIpcnSignature(sig);
-                if (signatureRef.current?.setSupervisorSignature) {
-                  setTimeout(() => signatureRef.current?.setSupervisorSignature?.(sig), 400);
-                }
+              if (ipcnSig) {
+                setPreloadedIpcnSignature(ipcnSig);
+                setTimeout(() => signatureRef.current?.setSupervisorSignature?.(ipcnSig), 400);
               }
 
               setAuditData(prev => ({ ...prev, ...indicatorsData }));
@@ -628,6 +625,8 @@ export default function LinenAuditPage() {
             pjName={pjName}
             setPjName={setPjName}
             pjLabel="PJ RUANGAN"
+            preloadedPjSignature={preloadedPjSignature}
+            preloadedIpcnSignature={preloadedIpcnSignature}
           />
         </div>
 

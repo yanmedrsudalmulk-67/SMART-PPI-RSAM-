@@ -1298,7 +1298,7 @@ export default function GenericAuditReport({
                   {(selectedRecord.tanda_tangan_2 || selectedRecord.tanda_tangan_1) ? (
                     <img
                       src={selectedRecord.tanda_tangan_2 || selectedRecord.tanda_tangan_1}
-                      className="object-contain h-full relative z-10 mix-blend-multiply"
+                      className="object-contain h-full relative z-10 filter brightness-0"
                       alt="TTD IPCN"
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
@@ -1332,7 +1332,7 @@ export default function GenericAuditReport({
                   {selectedRecord.tanda_tangan_1 ? (
                     <img
                       src={selectedRecord.tanda_tangan_1}
-                      className="object-contain h-full relative z-10 mix-blend-multiply"
+                      className="object-contain h-full relative z-10 filter brightness-0"
                       alt="TTD PJ"
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
@@ -1362,7 +1362,7 @@ export default function GenericAuditReport({
                   {selectedRecord.tanda_tangan_2 ? (
                     <img
                       src={selectedRecord.tanda_tangan_2}
-                      className="object-contain h-full relative z-10 mix-blend-multiply"
+                      className="object-contain h-full relative z-10 filter brightness-0"
                       alt="TTD IPCN"
                       onError={(e) => {
                         e.currentTarget.style.display = "none";

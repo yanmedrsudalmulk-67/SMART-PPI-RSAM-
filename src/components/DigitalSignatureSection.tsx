@@ -8,6 +8,8 @@ interface DigitalSignatureSectionProps {
   pjLabel?: string;
   supervisorLabel?: string;
   hidePj?: boolean;
+  preloadedPjSignature?: string | null;
+  preloadedIpcnSignature?: string | null;
 }
 
 export interface DigitalSignatureRef {
@@ -18,17 +20,112 @@ export interface DigitalSignatureRef {
   clearAll: () => void;
 }
 
+const toWhiteSignature = (dataUrl: string): Promise<string> => {
+  return new Promise((resolve) => {
+    if (!dataUrl || typeof dataUrl !== 'string') {
+      return resolve(dataUrl);
+    }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width || 300;
+        canvas.height = img.height || 150;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return resolve(dataUrl);
+
+        ctx.drawImage(img, 0, 0);
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const d = imgData.data;
+
+        for (let i = 0; i < d.length; i += 4) {
+          const alpha = d[i + 3];
+          if (alpha > 10) {
+            d[i] = 255;     // R
+            d[i + 1] = 255; // G
+            d[i + 2] = 255; // B
+          }
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      } catch (e) {
+        resolve(dataUrl);
+      }
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+};
+
 const DigitalSignatureSection = forwardRef<DigitalSignatureRef, DigitalSignatureSectionProps>(
-  ({ pjName = '', setPjName = () => {}, pjLabel = 'PJ RUANGAN', supervisorLabel = 'IPCN / IPCLN (SUPERVISOR)', hidePj = false }, ref) => {
+  ({ 
+    pjName = '', 
+    setPjName = () => {}, 
+    pjLabel = 'PJ RUANGAN', 
+    supervisorLabel = 'IPCN / IPCLN (SUPERVISOR)', 
+    hidePj = false,
+    preloadedPjSignature = null,
+    preloadedIpcnSignature = null,
+  }, ref) => {
     const sigPadPJ = useRef<SignatureCanvas>(null);
     const sigPadSupervisor = useRef<SignatureCanvas>(null);
     const [mounted, setMounted] = useState(false);
-    const [existingPjSig, setExistingPjSig] = useState<string | null>(null);
-    const [existingSupervisorSig, setExistingSupervisorSig] = useState<string | null>(null);
+    const [pjSigData, setPjSigData] = useState<string | null>(preloadedPjSignature);
+    const [supervisorSigData, setSupervisorSigData] = useState<string | null>(preloadedIpcnSignature);
 
     useEffect(() => {
       setMounted(true);
     }, []);
+
+    const loadPjSignature = async (sigUrl: string | null) => {
+      if (!sigUrl) {
+        setPjSigData(null);
+        if (!hidePj) sigPadPJ.current?.clear();
+        return;
+      }
+      const whiteSig = await toWhiteSignature(sigUrl);
+      setPjSigData(whiteSig);
+      setTimeout(() => {
+        try {
+          if (sigPadPJ.current) {
+            sigPadPJ.current.clear();
+            sigPadPJ.current.fromDataURL(whiteSig);
+          }
+        } catch (e) {}
+      }, 100);
+    };
+
+    const loadSupervisorSignature = async (sigUrl: string | null) => {
+      if (!sigUrl) {
+        setSupervisorSigData(null);
+        sigPadSupervisor.current?.clear();
+        return;
+      }
+      const whiteSig = await toWhiteSignature(sigUrl);
+      setSupervisorSigData(whiteSig);
+      setTimeout(() => {
+        try {
+          if (sigPadSupervisor.current) {
+            sigPadSupervisor.current.clear();
+            sigPadSupervisor.current.fromDataURL(whiteSig);
+          }
+        } catch (e) {}
+      }, 100);
+    };
+
+    useEffect(() => {
+      if (preloadedPjSignature && mounted) {
+        loadPjSignature(preloadedPjSignature);
+      }
+    }, [preloadedPjSignature, mounted]);
+
+    useEffect(() => {
+      if (preloadedIpcnSignature && mounted) {
+        loadSupervisorSignature(preloadedIpcnSignature);
+      }
+    }, [preloadedIpcnSignature, mounted]);
 
     useImperativeHandle(ref, () => ({
       getPjSignature: () => {
@@ -37,40 +134,32 @@ const DigitalSignatureSection = forwardRef<DigitalSignatureRef, DigitalSignature
           try {
             return sigPadPJ.current.getCanvas().toDataURL('image/png');
           } catch (e) {
-            return existingPjSig;
+            return pjSigData;
           }
         }
-        return existingPjSig;
+        return pjSigData;
       },
       getSupervisorSignature: () => {
         if (sigPadSupervisor.current && !sigPadSupervisor.current.isEmpty()) {
           try {
             return sigPadSupervisor.current.getCanvas().toDataURL('image/png');
           } catch (e) {
-            return existingSupervisorSig;
+            return supervisorSigData;
           }
         }
-        return existingSupervisorSig;
+        return supervisorSigData;
       },
       setPjSignature: (dataUrl: string) => {
-        if (dataUrl && !hidePj) {
-          setExistingPjSig(dataUrl);
-          try {
-            sigPadPJ.current?.fromDataURL(dataUrl);
-          } catch (e) {}
+        if (!hidePj) {
+          loadPjSignature(dataUrl);
         }
       },
       setSupervisorSignature: (dataUrl: string) => {
-        if (dataUrl) {
-          setExistingSupervisorSig(dataUrl);
-          try {
-            sigPadSupervisor.current?.fromDataURL(dataUrl);
-          } catch (e) {}
-        }
+        loadSupervisorSignature(dataUrl);
       },
       clearAll: () => {
-        setExistingPjSig(null);
-        setExistingSupervisorSig(null);
+        setPjSigData(null);
+        setSupervisorSigData(null);
         if (!hidePj) sigPadPJ.current?.clear();
         sigPadSupervisor.current?.clear();
       }
@@ -118,7 +207,10 @@ const DigitalSignatureSection = forwardRef<DigitalSignatureRef, DigitalSignature
                     </span>
                     <button
                       type="button"
-                      onClick={() => sigPadPJ.current?.clear()}
+                      onClick={() => {
+                        setPjSigData(null);
+                        sigPadPJ.current?.clear();
+                      }}
                       className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 hover:text-slate-300 transition-colors"
                     >
                       <Eraser className="w-3 h-3" />
@@ -126,15 +218,16 @@ const DigitalSignatureSection = forwardRef<DigitalSignatureRef, DigitalSignature
                     </button>
                   </div>
                   <div className="relative rounded-[1.5rem] border border-white/10 bg-black/20 overflow-hidden h-[160px] group/pad hover:border-blue-500/30 transition-all shadow-inner">
-                     <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-[0.03]">
+                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-[0.03]">
                       <span className="text-xl font-black uppercase tracking-tighter select-none">Tanda Tangan Di Sini</span>
                     </div>
                     <SignatureCanvas
                       ref={sigPadPJ}
-                      penColor="#3b82f6"
+                      penColor="#ffffff"
                       canvasProps={{
                         className: 'sigCanvas w-full h-full cursor-crosshair relative z-10 touch-none',
                       }}
+                      onBegin={() => setPjSigData(null)}
                     />
                   </div>
                 </div>
@@ -148,7 +241,10 @@ const DigitalSignatureSection = forwardRef<DigitalSignatureRef, DigitalSignature
                   </span>
                   <button
                     type="button"
-                    onClick={() => sigPadSupervisor.current?.clear()}
+                    onClick={() => {
+                      setSupervisorSigData(null);
+                      sigPadSupervisor.current?.clear();
+                    }}
                     className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 hover:text-slate-300 transition-colors"
                   >
                     <Eraser className="w-3 h-3" />
@@ -161,10 +257,11 @@ const DigitalSignatureSection = forwardRef<DigitalSignatureRef, DigitalSignature
                   </div>
                   <SignatureCanvas
                     ref={sigPadSupervisor}
-                    penColor="#3b82f6"
+                    penColor="#ffffff"
                     canvasProps={{
                       className: 'sigCanvas w-full h-full cursor-crosshair relative z-10 touch-none',
                     }}
+                    onBegin={() => setSupervisorSigData(null)}
                   />
                 </div>
               </div>
