@@ -985,10 +985,10 @@ export default function AnalyticsPage() {
           {/* Top Bevel Highlight */}
           <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
-            <div>
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase">
+          <div className="flex flex-col items-center text-center justify-between gap-6 relative z-10 landscape:lg:flex-row landscape:lg:items-center landscape:lg:text-left">
+            <div className="flex flex-col items-center text-center landscape:lg:items-start landscape:lg:text-left">
+              <div className="flex items-center justify-center landscape:lg:justify-start gap-2.5 flex-wrap">
+                <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase text-center landscape:lg:text-left">
                   Grafik SMART PPI
                 </h1>
                 {loading && (
@@ -998,7 +998,7 @@ export default function AnalyticsPage() {
                   </span>
                 )}
               </div>
-              <p className="text-xs sm:text-sm text-slate-300 font-medium mt-1">
+              <p className="text-xs sm:text-sm text-slate-300 font-medium mt-1 text-center landscape:lg:text-left">
                 Pusat Visualisasi Realtime Capaian Indikator Mutu PPI Terintegrasi
               </p>
             </div>

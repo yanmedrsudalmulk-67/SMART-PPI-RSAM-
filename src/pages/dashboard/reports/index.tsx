@@ -510,14 +510,14 @@ export default function ReportsPage() {
       <div ref={topRef} className="absolute top-0 left-0 w-full h-0 pointer-events-none" />
       
       {/* Top Page Header Banner - Identik dengan Layout Menu Dashboard */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
-        <div className="text-center sm:text-left w-full sm:w-auto">
+      <div className="flex flex-col items-center justify-between gap-4 mb-2 landscape:lg:flex-row landscape:lg:items-center">
+        <div className="text-center landscape:lg:text-left w-full landscape:lg:w-auto">
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase">
             Laporan SMART PPI
           </h1>
           <div className="mt-1">
             <p
-              className="text-slate-400 font-medium leading-tight max-w-[280px] sm:max-w-none mx-auto sm:mx-0 text-[14px]"
+              className="text-slate-400 font-medium leading-tight max-w-[280px] sm:max-w-none mx-auto landscape:lg:mx-0 text-[14px]"
               style={{ fontSize: "14px" }}
             >
               Pencegahan Dan Pengendalian Infeksi <br className="sm:hidden" /> di UOBK RSUD Al-Mulk Kota Sukabumi
@@ -525,8 +525,8 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        {/* Filter Periode - Sejajar dengan Tulisan Laporan SMART PPI */}
-        <div className="flex justify-center sm:justify-end items-center shrink-0">
+        {/* Filter Periode - Sejajar dengan Tulisan Laporan SMART PPI pada mode landscape */}
+        <div className="flex justify-center landscape:lg:justify-end items-center shrink-0 w-full landscape:lg:w-auto">
           <div className="relative group w-full sm:w-auto">
             <div className="relative bg-[#18193b] rounded-full p-1.5 sm:p-2 sm:px-3 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-4px_-4px_16px_rgba(140,165,255,0.05),8px_10px_24px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.15),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)]">
               {/* Top Bevel Specular Highlight */}

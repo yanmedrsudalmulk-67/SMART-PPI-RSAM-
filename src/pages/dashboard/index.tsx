@@ -1243,14 +1243,14 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 pb-10 w-full max-w-full overflow-x-hidden">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
-        <div className="text-center sm:text-left w-full sm:w-auto">
+      <div className="flex flex-col items-center justify-between gap-4 mb-2 landscape:lg:flex-row landscape:lg:items-center">
+        <div className="text-center landscape:lg:text-left w-full landscape:lg:w-auto">
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase">
             Dashboard SMART PPI
           </h1>
           <div className="mt-1">
             <p
-              className="text-slate-400 font-medium leading-tight max-w-[280px] sm:max-w-none mx-auto sm:mx-0 text-[14px]"
+              className="text-slate-400 font-medium leading-tight max-w-[280px] sm:max-w-none mx-auto landscape:lg:mx-0 text-[14px]"
               style={{ fontSize: "14px" }}
             >
               Pencegahan Dan Pengendalian Infeksi <br className="sm:hidden" />{" "}
@@ -1260,7 +1260,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Widget Jam & Tanggal - Desktop & Landscape */}
-        <div className={`hidden sm:flex justify-end shrink-0 ${!isSidebarOpen ? 'landscape:hidden' : ''}`}>
+        <div className="hidden landscape:lg:flex justify-end shrink-0">
           <ClockWidget />
         </div>
       </div>

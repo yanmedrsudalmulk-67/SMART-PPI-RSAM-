@@ -508,18 +508,18 @@ export default function InputIndexPage() {
         <title>Input Data - SMART PPI</title>
       </Head>
 
-      <div className="mb-2 flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div className="text-center sm:text-left w-full sm:w-auto shrink-0">
+      <div className="mb-2 flex flex-col items-center justify-center gap-4 landscape:lg:flex-row landscape:lg:justify-between landscape:lg:text-left">
+        <div className="text-center landscape:lg:text-left w-full landscape:lg:w-auto shrink-0">
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase">
             Input Data SMART PPI
           </h1>
-          <p className="text-sm text-slate-300 mt-1 font-medium">
+          <p className="text-sm text-slate-300 mt-1 font-medium text-center landscape:lg:text-left">
             Input Data Monitoring PPI Terintegrasi
           </p>
         </div>
 
         {/* Filter Periode - 3D Tactile Neumorphic Container */}
-        <div className="relative group w-full lg:w-auto">
+        <div className="relative group w-full landscape:lg:w-auto flex justify-center landscape:lg:justify-end">
           <div className="relative bg-[#18193b] rounded-[24px] p-2.5 sm:p-3 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)]">
             {/* Top Bevel Specular Highlight */}
             <div className="absolute top-0 inset-x-6 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />

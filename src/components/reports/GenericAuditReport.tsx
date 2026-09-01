@@ -660,12 +660,12 @@ export default function GenericAuditReport({
       ? indicatorItems
       : genericAuditConfigs[tableName]?.items || [];
     const found = configItems?.find((i) => i.id === itemId || i.key === itemId);
-    if (found && typeof found.isNegative === "boolean") return found.isNegative;
+    if (found) {
+      return Boolean(found.isNegative);
+    }
     return (
       itemId === "peralatan_berkarat" ||
       itemId === "jarum_suntik_bekas" ||
-      itemId === "item_5" ||
-      itemId === "item_11" ||
       itemId === "e_debu"
     );
   };
