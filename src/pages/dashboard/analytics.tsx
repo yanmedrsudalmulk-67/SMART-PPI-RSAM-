@@ -84,9 +84,15 @@ const SEMESTER_NAMES = [
 ];
 
 // Profession Group Classifier
-function getProfessionGroup(profesiStr: string | null | undefined): 'Perawat / Bidan' | 'Dokter' | 'Nakes Lainnya' {
+function getProfessionGroup(profesiStr: string | null | undefined): 'Perawat / Bidan' | 'Dokter' | 'Radiografer' | 'Analis Laboratorium' | 'Nakes Lainnya' {
   if (!profesiStr) return 'Nakes Lainnya';
   const p = profesiStr.toLowerCase().trim();
+  if (p.includes('radiografer') || p.includes('radiologi')) {
+    return 'Radiografer';
+  }
+  if (p.includes('analis') || p.includes('laboratorium') || p.includes('laboran') || p.includes('analis lab')) {
+    return 'Analis Laboratorium';
+  }
   if (p.includes('perawat') || p.includes('bidan') || p.includes('nurse') || p.includes('midwife')) {
     return 'Perawat / Bidan';
   }
@@ -95,6 +101,56 @@ function getProfessionGroup(profesiStr: string | null | undefined): 'Perawat / B
   }
   return 'Nakes Lainnya';
 }
+
+const getProfCardTheme = (profName: string) => {
+  switch (profName) {
+    case 'Perawat / Bidan':
+      return {
+        text: 'text-emerald-400',
+        border: 'hover:border-emerald-500/40',
+        glow: 'drop-shadow-[0_2px_6px_rgba(16,185,129,0.4)]',
+        gradient: 'from-emerald-600 via-teal-500 to-emerald-400',
+        shadow: 'shadow-[0_0_10px_rgba(52,211,153,0.5)]',
+        badge: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+      };
+    case 'Dokter':
+      return {
+        text: 'text-blue-400',
+        border: 'hover:border-blue-500/40',
+        glow: 'drop-shadow-[0_2px_6px_rgba(59,130,246,0.4)]',
+        gradient: 'from-blue-600 via-indigo-500 to-blue-400',
+        shadow: 'shadow-[0_0_10px_rgba(96,165,250,0.5)]',
+        badge: 'bg-blue-500/10 text-blue-300 border-blue-500/30'
+      };
+    case 'Radiografer':
+      return {
+        text: 'text-purple-400',
+        border: 'hover:border-purple-500/40',
+        glow: 'drop-shadow-[0_2px_6px_rgba(168,85,247,0.4)]',
+        gradient: 'from-purple-600 via-violet-500 to-purple-400',
+        shadow: 'shadow-[0_0_10px_rgba(192,132,252,0.5)]',
+        badge: 'bg-purple-500/10 text-purple-300 border-purple-500/30'
+      };
+    case 'Analis Laboratorium':
+      return {
+        text: 'text-cyan-400',
+        border: 'hover:border-cyan-500/40',
+        glow: 'drop-shadow-[0_2px_6px_rgba(6,182,212,0.4)]',
+        gradient: 'from-cyan-600 via-teal-500 to-cyan-400',
+        shadow: 'shadow-[0_0_10px_rgba(34,211,238,0.5)]',
+        badge: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30'
+      };
+    default:
+      return {
+        text: 'text-amber-400',
+        border: 'hover:border-amber-500/40',
+        glow: 'drop-shadow-[0_2px_6px_rgba(245,158,11,0.4)]',
+        gradient: 'from-amber-600 via-orange-500 to-amber-400',
+        shadow: 'shadow-[0_0_10px_rgba(251,191,36,0.5)]',
+        badge: 'bg-amber-500/10 text-amber-300 border-amber-500/30'
+      };
+  }
+};
 
 // Custom Glassmorphism / Neumorphic Tooltip Component
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -562,14 +618,16 @@ export default function AnalyticsPage() {
 
   // --- HAND HYGIENE PROFESSION BREAKDOWN ---
   const hhProfBreakdown = useMemo(() => {
-    const groups = {
+    const groups: Record<string, { patuh: number; dinilai: number; tidakPatuh: number; na: number; obs: number }> = {
       'Perawat / Bidan': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 },
       'Dokter': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 },
+      'Radiografer': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 },
+      'Analis Laboratorium': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 },
       'Nakes Lainnya': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 }
     };
 
     normalizedHH.forEach(r => {
-      const g = groups[r.profGroup as keyof typeof groups];
+      const g = groups[r.profGroup];
       if (g) {
         g.patuh += r.patuh;
         g.dinilai += r.dinilai;
@@ -579,7 +637,7 @@ export default function AnalyticsPage() {
       }
     });
 
-    return [
+    const all = [
       {
         name: 'Perawat / Bidan',
         pct: groups['Perawat / Bidan'].dinilai > 0 ? Math.round((groups['Perawat / Bidan'].patuh / groups['Perawat / Bidan'].dinilai) * 100) : 0,
@@ -591,12 +649,27 @@ export default function AnalyticsPage() {
         data: groups['Dokter']
       },
       {
+        name: 'Radiografer',
+        pct: groups['Radiografer'].dinilai > 0 ? Math.round((groups['Radiografer'].patuh / groups['Radiografer'].dinilai) * 100) : 0,
+        data: groups['Radiografer']
+      },
+      {
+        name: 'Analis Laboratorium',
+        pct: groups['Analis Laboratorium'].dinilai > 0 ? Math.round((groups['Analis Laboratorium'].patuh / groups['Analis Laboratorium'].dinilai) * 100) : 0,
+        data: groups['Analis Laboratorium']
+      },
+      {
         name: 'Nakes Lainnya',
         pct: groups['Nakes Lainnya'].dinilai > 0 ? Math.round((groups['Nakes Lainnya'].patuh / groups['Nakes Lainnya'].dinilai) * 100) : 0,
         data: groups['Nakes Lainnya']
       }
     ];
-  }, [normalizedHH]);
+
+    if (selectedProfesiGroup !== 'Semua Profesi') {
+      return all.filter(p => p.name === selectedProfesiGroup);
+    }
+    return all;
+  }, [normalizedHH, selectedProfesiGroup]);
 
   // --- TIME BUCKETS GENERATOR FOR TREND CHARTS ---
   const timeBuckets = useMemo(() => {
@@ -642,6 +715,8 @@ export default function AnalyticsPage() {
       bucketMap[b] = {
         'Perawat / Bidan': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 },
         'Dokter': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 },
+        'Radiografer': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 },
+        'Analis Laboratorium': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 },
         'Nakes Lainnya': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 }
       };
     });
@@ -661,20 +736,28 @@ export default function AnalyticsPage() {
     return timeBuckets.map(b => {
       const pData = bucketMap[b]['Perawat / Bidan'];
       const dData = bucketMap[b]['Dokter'];
+      const rData = bucketMap[b]['Radiografer'];
+      const aData = bucketMap[b]['Analis Laboratorium'];
       const nData = bucketMap[b]['Nakes Lainnya'];
 
       const pPct = pData.dinilai > 0 ? Math.round((pData.patuh / pData.dinilai) * 100) : 0;
       const dPct = dData.dinilai > 0 ? Math.round((dData.patuh / dData.dinilai) * 100) : 0;
+      const rPct = rData.dinilai > 0 ? Math.round((rData.patuh / rData.dinilai) * 100) : 0;
+      const aPct = aData.dinilai > 0 ? Math.round((aData.patuh / aData.dinilai) * 100) : 0;
       const nPct = nData.dinilai > 0 ? Math.round((nData.patuh / nData.dinilai) * 100) : 0;
 
       return {
         periode: b,
         'Perawat / Bidan': pPct,
         'Dokter': dPct,
+        'Radiografer': rPct,
+        'Analis Laboratorium': aPct,
         'Nakes Lainnya': nPct,
         details: {
           'Perawat / Bidan': { observasi: pData.obs, patuh: pData.patuh, tidakPatuh: pData.tidakPatuh, na: pData.na },
           'Dokter': { observasi: dData.obs, patuh: dData.patuh, tidakPatuh: dData.tidakPatuh, na: dData.na },
+          'Radiografer': { observasi: rData.obs, patuh: rData.patuh, tidakPatuh: rData.tidakPatuh, na: rData.na },
+          'Analis Laboratorium': { observasi: aData.obs, patuh: aData.patuh, tidakPatuh: aData.tidakPatuh, na: aData.na },
           'Nakes Lainnya': { observasi: nData.obs, patuh: nData.patuh, tidakPatuh: nData.tidakPatuh, na: nData.na }
         }
       };
@@ -683,14 +766,16 @@ export default function AnalyticsPage() {
 
   // --- APD PROFESSION BREAKDOWN ---
   const apdProfBreakdown = useMemo(() => {
-    const groups = {
+    const groups: Record<string, { patuh: number; dinilai: number; tidakPatuh: number; na: number; obs: number }> = {
       'Perawat / Bidan': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 },
       'Dokter': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 },
+      'Radiografer': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 },
+      'Analis Laboratorium': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 },
       'Nakes Lainnya': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 }
     };
 
     normalizedApd.forEach(r => {
-      const g = groups[r.profGroup as keyof typeof groups];
+      const g = groups[r.profGroup];
       if (g) {
         g.patuh += r.patuh;
         g.dinilai += r.dinilai;
@@ -700,7 +785,7 @@ export default function AnalyticsPage() {
       }
     });
 
-    return [
+    const all = [
       {
         name: 'Perawat / Bidan',
         pct: groups['Perawat / Bidan'].dinilai > 0 ? Math.round((groups['Perawat / Bidan'].patuh / groups['Perawat / Bidan'].dinilai) * 100) : 0,
@@ -712,12 +797,27 @@ export default function AnalyticsPage() {
         data: groups['Dokter']
       },
       {
+        name: 'Radiografer',
+        pct: groups['Radiografer'].dinilai > 0 ? Math.round((groups['Radiografer'].patuh / groups['Radiografer'].dinilai) * 100) : 0,
+        data: groups['Radiografer']
+      },
+      {
+        name: 'Analis Laboratorium',
+        pct: groups['Analis Laboratorium'].dinilai > 0 ? Math.round((groups['Analis Laboratorium'].patuh / groups['Analis Laboratorium'].dinilai) * 100) : 0,
+        data: groups['Analis Laboratorium']
+      },
+      {
         name: 'Nakes Lainnya',
         pct: groups['Nakes Lainnya'].dinilai > 0 ? Math.round((groups['Nakes Lainnya'].patuh / groups['Nakes Lainnya'].dinilai) * 100) : 0,
         data: groups['Nakes Lainnya']
       }
     ];
-  }, [normalizedApd]);
+
+    if (selectedProfesiGroup !== 'Semua Profesi') {
+      return all.filter(p => p.name === selectedProfesiGroup);
+    }
+    return all;
+  }, [normalizedApd, selectedProfesiGroup]);
 
   // --- APD TREND DATA ---
   const apdTrendData = useMemo(() => {
@@ -729,6 +829,8 @@ export default function AnalyticsPage() {
       bucketMap[b] = {
         'Perawat / Bidan': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 },
         'Dokter': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 },
+        'Radiografer': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 },
+        'Analis Laboratorium': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 },
         'Nakes Lainnya': { patuh: 0, dinilai: 0, tidakPatuh: 0, na: 0, obs: 0 }
       };
     });
@@ -748,21 +850,29 @@ export default function AnalyticsPage() {
     return timeBuckets.map(b => {
       const pData = bucketMap[b]['Perawat / Bidan'];
       const dData = bucketMap[b]['Dokter'];
+      const rData = bucketMap[b]['Radiografer'];
+      const aData = bucketMap[b]['Analis Laboratorium'];
       const nData = bucketMap[b]['Nakes Lainnya'];
 
       const pPct = pData.dinilai > 0 ? Math.round((pData.patuh / pData.dinilai) * 100) : 0;
       const dPct = dData.dinilai > 0 ? Math.round((dData.patuh / dData.dinilai) * 100) : 0;
+      const rPct = rData.dinilai > 0 ? Math.round((rData.patuh / rData.dinilai) * 100) : 0;
+      const aPct = aData.dinilai > 0 ? Math.round((aData.patuh / aData.dinilai) * 100) : 0;
       const nPct = nData.dinilai > 0 ? Math.round((nData.patuh / nData.dinilai) * 100) : 0;
 
       return {
         periode: b,
         'Perawat / Bidan': pPct,
         'Dokter': dPct,
+        'Radiografer': rPct,
+        'Analis Laboratorium': aPct,
         'Nakes Lainnya': nPct,
         'Target': 100,
         details: {
           'Perawat / Bidan': { observasi: pData.obs, patuh: pData.patuh, tidakPatuh: pData.tidakPatuh, na: pData.na },
           'Dokter': { observasi: dData.obs, patuh: dData.patuh, tidakPatuh: dData.tidakPatuh, na: dData.na },
+          'Radiografer': { observasi: rData.obs, patuh: rData.patuh, tidakPatuh: rData.tidakPatuh, na: rData.na },
+          'Analis Laboratorium': { observasi: aData.obs, patuh: aData.patuh, tidakPatuh: aData.tidakPatuh, na: aData.na },
           'Nakes Lainnya': { observasi: nData.obs, patuh: nData.patuh, tidakPatuh: nData.tidakPatuh, na: nData.na }
         }
       };
@@ -1048,6 +1158,8 @@ export default function AnalyticsPage() {
                   <option value="Semua Profesi" className="bg-[#18193b] text-white">Semua Profesi</option>
                   <option value="Perawat / Bidan" className="bg-[#18193b] text-white">Perawat / Bidan</option>
                   <option value="Dokter" className="bg-[#18193b] text-white">Dokter</option>
+                  <option value="Radiografer" className="bg-[#18193b] text-white">Radiografer</option>
+                  <option value="Analis Laboratorium" className="bg-[#18193b] text-white">Analis Laboratorium</option>
                   <option value="Nakes Lainnya" className="bg-[#18193b] text-white">Nakes Lainnya</option>
                 </select>
               </div>
@@ -1094,34 +1206,37 @@ export default function AnalyticsPage() {
                 <p className="text-xs text-slate-400">Data grafik akan ditampilkan secara otomatis setelah terdapat data pada Menu Input.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {hhProfBreakdown.map((prof) => (
-                  <div
-                    key={prof.name}
-                    className="p-5 rounded-2xl bg-[#12132e] border border-indigo-900/40 space-y-3 relative overflow-hidden shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] hover:border-emerald-500/40 transition-all"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-black uppercase tracking-wider text-slate-200">{prof.name}</span>
-                      <span className="text-2xl font-black text-emerald-400 font-heading drop-shadow-[0_2px_6px_rgba(16,185,129,0.4)]">{prof.pct}%</span>
-                    </div>
+              <div className={`grid gap-4 ${hhProfBreakdown.length === 1 ? 'grid-cols-1 max-w-sm' : hhProfBreakdown.length <= 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5'}`}>
+                {hhProfBreakdown.map((prof) => {
+                  const theme = getProfCardTheme(prof.name);
+                  return (
+                    <div
+                      key={prof.name}
+                      className={`p-5 rounded-2xl bg-[#12132e] border border-indigo-900/40 space-y-3 relative overflow-hidden shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] ${theme.border} transition-all`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black uppercase tracking-wider text-slate-200">{prof.name}</span>
+                        <span className={`text-2xl font-black ${theme.text} font-heading ${theme.glow}`}>{prof.pct}%</span>
+                      </div>
 
-                    {/* Recessed Progress Bar */}
-                    <div className="w-full h-3 bg-[#0a0a1a] rounded-full overflow-hidden p-0.5 border border-black/40 shadow-[inset_1px_1px_3px_rgba(0,0,0,0.8)]">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${prof.pct}%` }}
-                        transition={{ duration: 0.8, ease: 'easeOut' }}
-                        className="h-full bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-400 rounded-full shadow-[0_0_10px_rgba(52,211,153,0.5)]"
-                      />
-                    </div>
+                      {/* Recessed Progress Bar */}
+                      <div className="w-full h-3 bg-[#0a0a1a] rounded-full overflow-hidden p-0.5 border border-black/40 shadow-[inset_1px_1px_3px_rgba(0,0,0,0.8)]">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${prof.pct}%` }}
+                          transition={{ duration: 0.8, ease: 'easeOut' }}
+                          className={`h-full bg-gradient-to-r ${theme.gradient} rounded-full ${theme.shadow}`}
+                        />
+                      </div>
 
-                    <div className="grid grid-cols-3 gap-1 pt-2 border-t border-indigo-900/30 text-[10px] text-slate-400 text-center font-bold">
-                      <div className="bg-[#161735]/60 p-1.5 rounded-lg border border-white/5">Obs: <strong className="text-white font-mono">{prof.data.obs}</strong></div>
-                      <div className="bg-[#161735]/60 p-1.5 rounded-lg border border-white/5">Patuh: <strong className="text-emerald-400 font-mono">{prof.data.patuh}</strong></div>
-                      <div className="bg-[#161735]/60 p-1.5 rounded-lg border border-white/5">T.Patuh: <strong className="text-rose-400 font-mono">{prof.data.tidakPatuh}</strong></div>
+                      <div className="grid grid-cols-3 gap-1 pt-2 border-t border-indigo-900/30 text-[10px] text-slate-400 text-center font-bold">
+                        <div className="bg-[#161735]/60 p-1.5 rounded-lg border border-white/5">Obs: <strong className="text-white font-mono">{prof.data.obs}</strong></div>
+                        <div className="bg-[#161735]/60 p-1.5 rounded-lg border border-white/5">Patuh: <strong className={`${theme.text} font-mono`}>{prof.data.patuh}</strong></div>
+                        <div className="bg-[#161735]/60 p-1.5 rounded-lg border border-white/5">T.Patuh: <strong className="text-rose-400 font-mono">{prof.data.tidakPatuh}</strong></div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -1156,15 +1271,31 @@ export default function AnalyticsPage() {
                         <Tooltip content={<CustomTooltip />} />
                         <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
                         <ReferenceLine y={85} stroke="#34d399" strokeDasharray="5 5" strokeWidth={2} label={{ value: 'Standar Target: ≥85%', fill: '#34d399', fontSize: 11, position: 'top', fontWeight: 'bold' }} />
-                        <Line type="monotone" dataKey="Perawat / Bidan" stroke="#10b981" strokeWidth={3} dot={{ r: 5, fill: '#10b981' }} activeDot={{ r: 8 }}>
-                          <LabelList dataKey="Perawat / Bidan" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#34d399" fontSize={10} fontWeight="bold" dy={-6} />
-                        </Line>
-                        <Line type="monotone" dataKey="Dokter" stroke="#3b82f6" strokeWidth={3} dot={{ r: 5, fill: '#3b82f6' }} activeDot={{ r: 8 }}>
-                          <LabelList dataKey="Dokter" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#60a5fa" fontSize={10} fontWeight="bold" dy={-6} />
-                        </Line>
-                        <Line type="monotone" dataKey="Nakes Lainnya" stroke="#f59e0b" strokeWidth={3} dot={{ r: 5, fill: '#f59e0b' }} activeDot={{ r: 8 }}>
-                          <LabelList dataKey="Nakes Lainnya" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#fbbf24" fontSize={10} fontWeight="bold" dy={-6} />
-                        </Line>
+                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Perawat / Bidan') && (
+                          <Line type="monotone" dataKey="Perawat / Bidan" stroke="#10b981" strokeWidth={3} dot={{ r: 5, fill: '#10b981' }} activeDot={{ r: 8 }}>
+                            <LabelList dataKey="Perawat / Bidan" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#34d399" fontSize={10} fontWeight="bold" dy={-6} />
+                          </Line>
+                        )}
+                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Dokter') && (
+                          <Line type="monotone" dataKey="Dokter" stroke="#3b82f6" strokeWidth={3} dot={{ r: 5, fill: '#3b82f6' }} activeDot={{ r: 8 }}>
+                            <LabelList dataKey="Dokter" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#60a5fa" fontSize={10} fontWeight="bold" dy={-6} />
+                          </Line>
+                        )}
+                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Radiografer') && (
+                          <Line type="monotone" dataKey="Radiografer" stroke="#a855f7" strokeWidth={3} dot={{ r: 5, fill: '#a855f7' }} activeDot={{ r: 8 }}>
+                            <LabelList dataKey="Radiografer" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#c084fc" fontSize={10} fontWeight="bold" dy={-6} />
+                          </Line>
+                        )}
+                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Analis Laboratorium') && (
+                          <Line type="monotone" dataKey="Analis Laboratorium" stroke="#06b6d4" strokeWidth={3} dot={{ r: 5, fill: '#06b6d4' }} activeDot={{ r: 8 }}>
+                            <LabelList dataKey="Analis Laboratorium" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#22d3ee" fontSize={10} fontWeight="bold" dy={-6} />
+                          </Line>
+                        )}
+                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Nakes Lainnya') && (
+                          <Line type="monotone" dataKey="Nakes Lainnya" stroke="#f59e0b" strokeWidth={3} dot={{ r: 5, fill: '#f59e0b' }} activeDot={{ r: 8 }}>
+                            <LabelList dataKey="Nakes Lainnya" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#fbbf24" fontSize={10} fontWeight="bold" dy={-6} />
+                          </Line>
+                        )}
                       </LineChart>
                     ) : (
                       <BarChart data={hhTrendData} margin={{ top: 25, right: 30, left: -20, bottom: 0 }}>
@@ -1174,15 +1305,31 @@ export default function AnalyticsPage() {
                         <Tooltip content={<CustomTooltip />} />
                         <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
                         <ReferenceLine y={85} stroke="#34d399" strokeDasharray="5 5" strokeWidth={2} label={{ value: 'Standar Target: ≥85%', fill: '#34d399', fontSize: 11, position: 'top', fontWeight: 'bold' }} />
-                        <Bar dataKey="Perawat / Bidan" fill="#10b981" radius={[4, 4, 0, 0]}>
-                          <LabelList dataKey="Perawat / Bidan" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#34d399" fontSize={10} fontWeight="bold" />
-                        </Bar>
-                        <Bar dataKey="Dokter" fill="#3b82f6" radius={[4, 4, 0, 0]}>
-                          <LabelList dataKey="Dokter" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#60a5fa" fontSize={10} fontWeight="bold" />
-                        </Bar>
-                        <Bar dataKey="Nakes Lainnya" fill="#f59e0b" radius={[4, 4, 0, 0]}>
-                          <LabelList dataKey="Nakes Lainnya" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#fbbf24" fontSize={10} fontWeight="bold" />
-                        </Bar>
+                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Perawat / Bidan') && (
+                          <Bar dataKey="Perawat / Bidan" fill="#10b981" radius={[4, 4, 0, 0]}>
+                            <LabelList dataKey="Perawat / Bidan" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#34d399" fontSize={10} fontWeight="bold" />
+                          </Bar>
+                        )}
+                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Dokter') && (
+                          <Bar dataKey="Dokter" fill="#3b82f6" radius={[4, 4, 0, 0]}>
+                            <LabelList dataKey="Dokter" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#60a5fa" fontSize={10} fontWeight="bold" />
+                          </Bar>
+                        )}
+                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Radiografer') && (
+                          <Bar dataKey="Radiografer" fill="#a855f7" radius={[4, 4, 0, 0]}>
+                            <LabelList dataKey="Radiografer" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#c084fc" fontSize={10} fontWeight="bold" />
+                          </Bar>
+                        )}
+                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Analis Laboratorium') && (
+                          <Bar dataKey="Analis Laboratorium" fill="#06b6d4" radius={[4, 4, 0, 0]}>
+                            <LabelList dataKey="Analis Laboratorium" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#22d3ee" fontSize={10} fontWeight="bold" />
+                          </Bar>
+                        )}
+                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Nakes Lainnya') && (
+                          <Bar dataKey="Nakes Lainnya" fill="#f59e0b" radius={[4, 4, 0, 0]}>
+                            <LabelList dataKey="Nakes Lainnya" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#fbbf24" fontSize={10} fontWeight="bold" />
+                          </Bar>
+                        )}
                       </BarChart>
                     )}
                   </ResponsiveContainer>
@@ -1231,34 +1378,37 @@ export default function AnalyticsPage() {
                 <p className="text-xs text-slate-400">Data grafik akan ditampilkan secara otomatis setelah terdapat data pada Menu Input.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {apdProfBreakdown.map((prof) => (
-                  <div
-                    key={prof.name}
-                    className="p-5 rounded-2xl bg-[#12132e] border border-indigo-900/40 space-y-3 relative overflow-hidden shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] hover:border-sky-500/40 transition-all"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-black uppercase tracking-wider text-slate-200">{prof.name}</span>
-                      <span className="text-2xl font-black text-sky-400 font-heading drop-shadow-[0_2px_6px_rgba(56,189,248,0.4)]">{prof.pct}%</span>
-                    </div>
+              <div className={`grid gap-4 ${apdProfBreakdown.length === 1 ? 'grid-cols-1 max-w-sm' : apdProfBreakdown.length <= 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5'}`}>
+                {apdProfBreakdown.map((prof) => {
+                  const theme = getProfCardTheme(prof.name);
+                  return (
+                    <div
+                      key={prof.name}
+                      className={`p-5 rounded-2xl bg-[#12132e] border border-indigo-900/40 space-y-3 relative overflow-hidden shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] ${theme.border} transition-all`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black uppercase tracking-wider text-slate-200">{prof.name}</span>
+                        <span className={`text-2xl font-black ${theme.text} font-heading ${theme.glow}`}>{prof.pct}%</span>
+                      </div>
 
-                    {/* Recessed Progress Bar */}
-                    <div className="w-full h-3 bg-[#0a0a1a] rounded-full overflow-hidden p-0.5 border border-black/40 shadow-[inset_1px_1px_3px_rgba(0,0,0,0.8)]">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${prof.pct}%` }}
-                        transition={{ duration: 0.8, ease: 'easeOut' }}
-                        className="h-full bg-gradient-to-r from-sky-600 via-indigo-500 to-sky-400 rounded-full shadow-[0_0_10px_rgba(56,189,248,0.5)]"
-                      />
-                    </div>
+                      {/* Recessed Progress Bar */}
+                      <div className="w-full h-3 bg-[#0a0a1a] rounded-full overflow-hidden p-0.5 border border-black/40 shadow-[inset_1px_1px_3px_rgba(0,0,0,0.8)]">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${prof.pct}%` }}
+                          transition={{ duration: 0.8, ease: 'easeOut' }}
+                          className={`h-full bg-gradient-to-r ${theme.gradient} rounded-full ${theme.shadow}`}
+                        />
+                      </div>
 
-                    <div className="grid grid-cols-3 gap-1 pt-2 border-t border-indigo-900/30 text-[10px] text-slate-400 text-center font-bold">
-                      <div className="bg-[#161735]/60 p-1.5 rounded-lg border border-white/5">Obs: <strong className="text-white font-mono">{prof.data.obs}</strong></div>
-                      <div className="bg-[#161735]/60 p-1.5 rounded-lg border border-white/5">Patuh: <strong className="text-sky-400 font-mono">{prof.data.patuh}</strong></div>
-                      <div className="bg-[#161735]/60 p-1.5 rounded-lg border border-white/5">T.Patuh: <strong className="text-rose-400 font-mono">{prof.data.tidakPatuh}</strong></div>
+                      <div className="grid grid-cols-3 gap-1 pt-2 border-t border-indigo-900/30 text-[10px] text-slate-400 text-center font-bold">
+                        <div className="bg-[#161735]/60 p-1.5 rounded-lg border border-white/5">Obs: <strong className="text-white font-mono">{prof.data.obs}</strong></div>
+                        <div className="bg-[#161735]/60 p-1.5 rounded-lg border border-white/5">Patuh: <strong className={`${theme.text} font-mono`}>{prof.data.patuh}</strong></div>
+                        <div className="bg-[#161735]/60 p-1.5 rounded-lg border border-white/5">T.Patuh: <strong className="text-rose-400 font-mono">{prof.data.tidakPatuh}</strong></div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -1293,15 +1443,31 @@ export default function AnalyticsPage() {
                         <Tooltip content={<CustomTooltip />} />
                         <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
                         <ReferenceLine y={100} label={{ value: 'Standar Target: 100%', fill: '#f59e0b', fontSize: 11, position: 'top', fontWeight: 'bold' }} stroke="#f59e0b" strokeDasharray="5 5" strokeWidth={2} />
-                        <Line type="monotone" dataKey="Perawat / Bidan" stroke="#0284c7" strokeWidth={3} dot={{ r: 5, fill: '#0284c7' }} activeDot={{ r: 8 }}>
-                          <LabelList dataKey="Perawat / Bidan" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#38bdf8" fontSize={10} fontWeight="bold" dy={-6} />
-                        </Line>
-                        <Line type="monotone" dataKey="Dokter" stroke="#6366f1" strokeWidth={3} dot={{ r: 5, fill: '#6366f1' }} activeDot={{ r: 8 }}>
-                          <LabelList dataKey="Dokter" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#818cf8" fontSize={10} fontWeight="bold" dy={-6} />
-                        </Line>
-                        <Line type="monotone" dataKey="Nakes Lainnya" stroke="#ec4899" strokeWidth={3} dot={{ r: 5, fill: '#ec4899' }} activeDot={{ r: 8 }}>
-                          <LabelList dataKey="Nakes Lainnya" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#f472b6" fontSize={10} fontWeight="bold" dy={-6} />
-                        </Line>
+                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Perawat / Bidan') && (
+                          <Line type="monotone" dataKey="Perawat / Bidan" stroke="#0284c7" strokeWidth={3} dot={{ r: 5, fill: '#0284c7' }} activeDot={{ r: 8 }}>
+                            <LabelList dataKey="Perawat / Bidan" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#38bdf8" fontSize={10} fontWeight="bold" dy={-6} />
+                          </Line>
+                        )}
+                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Dokter') && (
+                          <Line type="monotone" dataKey="Dokter" stroke="#6366f1" strokeWidth={3} dot={{ r: 5, fill: '#6366f1' }} activeDot={{ r: 8 }}>
+                            <LabelList dataKey="Dokter" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#818cf8" fontSize={10} fontWeight="bold" dy={-6} />
+                          </Line>
+                        )}
+                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Radiografer') && (
+                          <Line type="monotone" dataKey="Radiografer" stroke="#a855f7" strokeWidth={3} dot={{ r: 5, fill: '#a855f7' }} activeDot={{ r: 8 }}>
+                            <LabelList dataKey="Radiografer" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#c084fc" fontSize={10} fontWeight="bold" dy={-6} />
+                          </Line>
+                        )}
+                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Analis Laboratorium') && (
+                          <Line type="monotone" dataKey="Analis Laboratorium" stroke="#06b6d4" strokeWidth={3} dot={{ r: 5, fill: '#06b6d4' }} activeDot={{ r: 8 }}>
+                            <LabelList dataKey="Analis Laboratorium" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#22d3ee" fontSize={10} fontWeight="bold" dy={-6} />
+                          </Line>
+                        )}
+                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Nakes Lainnya') && (
+                          <Line type="monotone" dataKey="Nakes Lainnya" stroke="#ec4899" strokeWidth={3} dot={{ r: 5, fill: '#ec4899' }} activeDot={{ r: 8 }}>
+                            <LabelList dataKey="Nakes Lainnya" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#f472b6" fontSize={10} fontWeight="bold" dy={-6} />
+                          </Line>
+                        )}
                       </LineChart>
                     ) : (
                       <BarChart data={apdTrendData} margin={{ top: 25, right: 30, left: -20, bottom: 0 }}>
@@ -1311,15 +1477,31 @@ export default function AnalyticsPage() {
                         <Tooltip content={<CustomTooltip />} />
                         <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
                         <ReferenceLine y={100} label={{ value: 'Standar Target: 100%', fill: '#f59e0b', fontSize: 11, position: 'top', fontWeight: 'bold' }} stroke="#f59e0b" strokeDasharray="5 5" strokeWidth={2} />
-                        <Bar dataKey="Perawat / Bidan" fill="#0284c7" radius={[4, 4, 0, 0]}>
-                          <LabelList dataKey="Perawat / Bidan" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#38bdf8" fontSize={10} fontWeight="bold" />
-                        </Bar>
-                        <Bar dataKey="Dokter" fill="#6366f1" radius={[4, 4, 0, 0]}>
-                          <LabelList dataKey="Dokter" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#818cf8" fontSize={10} fontWeight="bold" />
-                        </Bar>
-                        <Bar dataKey="Nakes Lainnya" fill="#ec4899" radius={[4, 4, 0, 0]}>
-                          <LabelList dataKey="Nakes Lainnya" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#f472b6" fontSize={10} fontWeight="bold" />
-                        </Bar>
+                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Perawat / Bidan') && (
+                          <Bar dataKey="Perawat / Bidan" fill="#0284c7" radius={[4, 4, 0, 0]}>
+                            <LabelList dataKey="Perawat / Bidan" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#38bdf8" fontSize={10} fontWeight="bold" />
+                          </Bar>
+                        )}
+                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Dokter') && (
+                          <Bar dataKey="Dokter" fill="#6366f1" radius={[4, 4, 0, 0]}>
+                            <LabelList dataKey="Dokter" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#818cf8" fontSize={10} fontWeight="bold" />
+                          </Bar>
+                        )}
+                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Radiografer') && (
+                          <Bar dataKey="Radiografer" fill="#a855f7" radius={[4, 4, 0, 0]}>
+                            <LabelList dataKey="Radiografer" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#c084fc" fontSize={10} fontWeight="bold" />
+                          </Bar>
+                        )}
+                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Analis Laboratorium') && (
+                          <Bar dataKey="Analis Laboratorium" fill="#06b6d4" radius={[4, 4, 0, 0]}>
+                            <LabelList dataKey="Analis Laboratorium" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#22d3ee" fontSize={10} fontWeight="bold" />
+                          </Bar>
+                        )}
+                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Nakes Lainnya') && (
+                          <Bar dataKey="Nakes Lainnya" fill="#ec4899" radius={[4, 4, 0, 0]}>
+                            <LabelList dataKey="Nakes Lainnya" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#f472b6" fontSize={10} fontWeight="bold" />
+                          </Bar>
+                        )}
                       </BarChart>
                     )}
                   </ResponsiveContainer>
