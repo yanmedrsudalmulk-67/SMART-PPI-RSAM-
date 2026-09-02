@@ -337,10 +337,6 @@ export default function HandHygieneAuditPage() {
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.statusText,
-        upaya_perbaikan: upayaPerbaikan,
-        waktu_perbaikan: waktuPerbaikan,
-        tanggal_perbaikan: waktuPerbaikan,
-        foto_perbaikan: uploadedPerbaikanUrls,
         data_indikator: {
           m1: payload.m1,
           m2: payload.m2,

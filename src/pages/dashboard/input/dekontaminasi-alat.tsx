@@ -322,10 +322,6 @@ export default function InputDekontaminasiAlatPage() {
             jumlah_patuh: stats.patuh,
             persentase: stats.persentase,
             status_kepatuhan: stats.statusText,
-            upaya_perbaikan: upayaPerbaikan,
-            waktu_perbaikan: waktuPerbaikan,
-            tanggal_perbaikan: waktuPerbaikan,
-            foto_perbaikan: uploadedPerbaikanUrls,
             data_indikator: {
               ...auditData,
               temuan,
@@ -356,10 +352,6 @@ export default function InputDekontaminasiAlatPage() {
               jumlah_patuh: stats.patuh,
               persentase: stats.persentase,
               status_kepatuhan: stats.statusText,
-              upaya_perbaikan: upayaPerbaikan,
-              waktu_perbaikan: waktuPerbaikan,
-              tanggal_perbaikan: waktuPerbaikan,
-              foto_perbaikan: uploadedPerbaikanUrls,
               data_indikator: {
                 ...auditData,
                 temuan,

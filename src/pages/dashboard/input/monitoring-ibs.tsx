@@ -385,13 +385,9 @@ export default function MonitoringIBSPage() {
           persentase: stats.persentase,
           temuan,
           rekomendasi,
-          upaya_perbaikan: upayaPerbaikan,
-          waktu_perbaikan: waktuPerbaikan,
-          tanggal_perbaikan: waktuPerbaikan,
           ttd_pj,
           ttd_ipcn,
           foto: uploadedUrls,
-          foto_perbaikan: uploadedPerbaikanUrls,
           nama_pj_ruangan: pjName,
           created_at: new Date().toISOString(),
         };

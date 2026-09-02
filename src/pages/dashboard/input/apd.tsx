@@ -434,10 +434,6 @@ export default function InputApdPage() {
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.statusText,
-        upaya_perbaikan: upayaPerbaikan,
-        waktu_perbaikan: waktuPerbaikan,
-        tanggal_perbaikan: waktuPerbaikan,
-        foto_perbaikan: uploadedPerbaikanUrls,
         data_indikator: {
           masker: apdData.masker,
           sarung_tangan: apdData.sarung_tangan,

@@ -531,10 +531,6 @@ export default function MonitoringCSSDPage() {
           checklist_json: { ...data },
           temuan,
           rekomendasi,
-          upaya_perbaikan: upayaPerbaikan,
-          waktu_perbaikan: waktuPerbaikan,
-          tanggal_perbaikan: waktuPerbaikan,
-          foto_perbaikan: finalPerbaikanUrls,
           dokumentasi: [...existingUrls, ...uploadedUrls],
           foto: [...existingUrls, ...uploadedUrls],
           tanda_tangan: [ttd_pj || null, ttd_ipcn || null],
@@ -546,6 +542,10 @@ export default function MonitoringCSSDPage() {
           supervisor: observer,
           unit: "CSSD",
           ruangan: "CSSD",
+          upaya_perbaikan: upayaPerbaikan,
+          waktu_perbaikan: waktuPerbaikan,
+          tanggal_perbaikan: waktuPerbaikan,
+          foto_perbaikan: finalPerbaikanUrls,
         },
       };
 

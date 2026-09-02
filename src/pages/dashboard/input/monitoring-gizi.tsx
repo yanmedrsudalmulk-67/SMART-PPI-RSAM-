@@ -521,8 +521,6 @@ export default function MonitoringGiziPage() {
         status: stats.status,
         temuan,
         rekomendasi,
-        upaya_perbaikan: upayaPerbaikan,
-        foto_perbaikan: uploadedPerbaikanUrls,
         ttd_pj,
         ttd_pj_ruangan: ttd_pj,
         tanda_tangan_1: ttd_pj,

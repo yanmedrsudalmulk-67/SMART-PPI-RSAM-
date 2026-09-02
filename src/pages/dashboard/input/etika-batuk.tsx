@@ -245,9 +245,6 @@ export default function InputEtikaBatukPage() {
         }
       }
 
-      payload.upaya_perbaikan = upayaPerbaikan;
-      payload.waktu_perbaikan = waktuPerbaikan;
-      payload.foto_perbaikan = uploadedPerbaikanUrls;
 
       let sessionError;
       if (isEditMode && editId) {
@@ -265,11 +262,13 @@ export default function InputEtikaBatukPage() {
             ttd_pj_ruangan: ttd_pj,
             ttd_ipcn: ttd_ipcn,
             nama_pj_ruangan: pjName.trim(),
-            upaya_perbaikan: upayaPerbaikan,
-            waktu_perbaikan: waktuPerbaikan,
-            tanggal_perbaikan: waktuPerbaikan,
-            foto_perbaikan: uploadedPerbaikanUrls,
-            data_indikator: { ...payload },
+            data_indikator: {
+              ...payload,
+              upaya_perbaikan: upayaPerbaikan,
+              waktu_perbaikan: waktuPerbaikan,
+              tanggal_perbaikan: waktuPerbaikan,
+              foto_perbaikan: uploadedPerbaikanUrls,
+            },
           })
           .eq("id", editId);
         sessionError = error;
@@ -291,11 +290,13 @@ export default function InputEtikaBatukPage() {
               ttd_pj_ruangan: ttd_pj,
               ttd_ipcn: ttd_ipcn,
               nama_pj_ruangan: pjName.trim(),
-              upaya_perbaikan: upayaPerbaikan,
-              waktu_perbaikan: waktuPerbaikan,
-              tanggal_perbaikan: waktuPerbaikan,
-              foto_perbaikan: uploadedPerbaikanUrls,
-              data_indikator: { ...payload },
+              data_indikator: {
+                ...payload,
+                upaya_perbaikan: upayaPerbaikan,
+                waktu_perbaikan: waktuPerbaikan,
+                tanggal_perbaikan: waktuPerbaikan,
+                foto_perbaikan: uploadedPerbaikanUrls,
+              },
             },
           ])
           .select("id")

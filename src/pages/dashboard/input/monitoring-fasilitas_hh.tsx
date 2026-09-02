@@ -288,12 +288,8 @@ export default function FasilitasHandHygienePage() {
              ttd_pj_ruangan: ttd_pj,
              ttd_ipcn,
              foto: uploadedUrls,
-             foto_perbaikan: uploadedPerbaikanUrls,
              temuan,
              rekomendasi,
-             upaya_perbaikan: upayaPerbaikan,
-             waktu_perbaikan: waktuPerbaikan,
-             tanggal_perbaikan: waktuPerbaikan,
              nama_pj: pjName,
              nama_pj_ruangan: pjName,
           }]);
