@@ -20,7 +20,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useAppContext } from "@/components/Providers";
-import { supabase } from "@/lib/supabase";
+import { supabase, broadcastChannelMessage } from "@/lib/supabase";
 import DashboardLayout from "@/components/DashboardLayout";
 import { LiveStatisticsCard } from "@/components/LiveStatisticsCard";
 
@@ -116,34 +116,36 @@ export default function HandHygieneAuditPage() {
         setIsEditMode(true);
         setEditId(id);
         const loadEditData = async () => {
-          let { data: ed } = await supabase
-            .from("audit_sessions")
-            .select("*")
-            .eq("id", id)
-            .maybeSingle();
+          const [{ data: sEd }, { data: hEd }] = await Promise.all([
+            supabase.from("audit_sessions").select("*").eq("id", id).maybeSingle(),
+            supabase.from("audit_hand_hygiene").select("*").eq("id", id).maybeSingle(),
+          ]);
 
-          if (!ed) {
-            const { data: nativeEd } = await supabase
-              .from("audit_hand_hygiene")
-              .select("*")
-              .eq("id", id)
-              .maybeSingle();
-            if (nativeEd) ed = nativeEd;
-          }
-
+          const ed = sEd || hEd;
           if (ed) {
-            if (ed.tanggal_waktu || ed.start_time) setStartTime(new Date(ed.tanggal_waktu || ed.start_time));
-            if (ed.observer) setObserver(ed.observer);
-            if (ed.unit) setUnit(ed.unit);
-            if (ed.profesi) setProfesi(ed.profesi);
+            const startVal = hEd?.start_time || sEd?.tanggal_waktu || sEd?.start_time || ed.tanggal_waktu || ed.start_time;
+            if (startVal) {
+              setStartTime(new Date(startVal));
+            }
+
+            const indicatorsData = sEd?.data_indikator || ed.data_indikator || ed.checklist_json || {};
+            const endVal = hEd?.end_time || sEd?.end_time || indicatorsData.end_time || indicatorsData.waktu_selesai || ed.end_time;
+            if (endVal) {
+              setEndTime(new Date(endVal));
+            } else if (startVal) {
+              setEndTime(new Date(new Date(startVal).getTime() + 15 * 60 * 1000));
+            }
+
+            if (ed.observer || hEd?.observer) setObserver(ed.observer || hEd?.observer);
+            if (ed.unit || hEd?.unit) setUnit(ed.unit || hEd?.unit);
+            if (ed.profesi || hEd?.profesi) setProfesi(ed.profesi || hEd?.profesi);
             
-            const indicatorsData = ed.data_indikator || ed.checklist_json || {};
             setMomenData({
-              m1: indicatorsData.m1 || ed.m1 || null,
-              m2: indicatorsData.m2 || ed.m2 || null,
-              m3: indicatorsData.m3 || ed.m3 || null,
-              m4: indicatorsData.m4 || ed.m4 || null,
-              m5: indicatorsData.m5 || ed.m5 || null,
+              m1: indicatorsData.m1 || ed.m1 || hEd?.m1 || null,
+              m2: indicatorsData.m2 || ed.m2 || hEd?.m2 || null,
+              m3: indicatorsData.m3 || ed.m3 || hEd?.m3 || null,
+              m4: indicatorsData.m4 || ed.m4 || hEd?.m4 || null,
+              m5: indicatorsData.m5 || ed.m5 || hEd?.m5 || null,
             });
 
             const upaya = indicatorsData.upaya_perbaikan || indicatorsData.upayaPerbaikan || ed.upaya_perbaikan || "";
@@ -162,9 +164,11 @@ export default function HandHygieneAuditPage() {
         loadEditData();
       } else {
         setStartTime(d);
+        setEndTime(new Date(d.getTime() + 15 * 60 * 1000));
       }
     } else {
       setStartTime(d);
+      setEndTime(new Date(d.getTime() + 15 * 60 * 1000));
     }
 
     return () => clearInterval(timer);
@@ -286,8 +290,17 @@ export default function HandHygieneAuditPage() {
       return;
     }
 
-    const end = endTime || new Date();
-    setEndTime(end);
+    const effectiveStart = startTime || new Date();
+    let effectiveEnd = endTime;
+    if (!effectiveEnd) {
+      effectiveEnd = new Date(effectiveStart.getTime() + 15 * 60000);
+    } else {
+      // Ensure effectiveEnd matches the exact calendar date of effectiveStart
+      const synced = new Date(effectiveStart);
+      synced.setHours(effectiveEnd.getHours(), effectiveEnd.getMinutes(), 0, 0);
+      effectiveEnd = synced;
+    }
+    setEndTime(effectiveEnd);
     setIsSubmitting(true);
 
     try {
@@ -321,8 +334,8 @@ export default function HandHygieneAuditPage() {
         patuh: stats.patuh,
         peluang: stats.peluang,
         persentase: stats.persentase,
-        start_time: startTime?.toISOString() || new Date().toISOString(),
-        end_time: end.toISOString(),
+        start_time: effectiveStart.toISOString(),
+        end_time: effectiveEnd.toISOString(),
       };
 
       const sessionPayload = {
@@ -343,6 +356,10 @@ export default function HandHygieneAuditPage() {
           m3: payload.m3,
           m4: payload.m4,
           m5: payload.m5,
+          start_time: payload.start_time,
+          end_time: payload.end_time,
+          waktu_mulai: payload.start_time,
+          waktu_selesai: payload.end_time,
           upaya_perbaikan: upayaPerbaikan,
           waktu_perbaikan: waktuPerbaikan,
           foto_perbaikan: uploadedPerbaikanUrls,
@@ -370,14 +387,22 @@ export default function HandHygieneAuditPage() {
 
       try {
         if (isEditMode && editId) {
-          await supabase.from("audit_hand_hygiene").update([payload]).eq("id", editId);
+          const { error: hhErr } = await supabase.from("audit_hand_hygiene").update([payload]).eq("id", editId);
+          if (hhErr) {
+            await supabase.from("audit_hand_hygiene").insert([{ ...payload, id: editId }]);
+          }
         } else {
           const nativePayload = createdSessionId ? { ...payload, id: createdSessionId } : payload;
-          await supabase.from("audit_hand_hygiene").insert([nativePayload]);
+          await supabase.from("audit_hand_hygiene").upsert([nativePayload], { onConflict: 'id' });
         }
       } catch (err) {
         console.warn("Failed to insert native hand hygiene table", err);
       }
+
+      await broadcastChannelMessage("audit_hand_hygiene_changes", "audit_submitted", {
+        indikator_id: "audit_hand_hygiene",
+        id: createdSessionId,
+      });
 
       setShowToast(true);
       setTimeout(() => {
@@ -415,46 +440,54 @@ export default function HandHygieneAuditPage() {
   };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const [year, month, day] = e.target.value.split("-").map(Number);
-    if (!year) return;
+    const val = e.target.value;
+    if (!val) return;
+    const [year, month, day] = val.split("-").map(Number);
+    if (!year || !month || !day) return;
 
-    if (startTime) {
-      const newD = new Date(startTime);
-      newD.setFullYear(year, month - 1, day);
-      setStartTime(newD);
-    }
-    if (endTime) {
-      const newD = new Date(endTime);
-      newD.setFullYear(year, month - 1, day);
-      setEndTime(newD);
-    }
+    const newStart = startTime ? new Date(startTime) : new Date();
+    newStart.setFullYear(year, month - 1, day);
+    setStartTime(newStart);
+
+    const newEnd = endTime ? new Date(endTime) : new Date(newStart.getTime() + 15 * 60000);
+    newEnd.setFullYear(year, month - 1, day);
+    setEndTime(newEnd);
   };
 
   const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const [hours, mins] = e.target.value.split(":").map(Number);
-    if (startTime) {
-      const newD = new Date(startTime);
-      newD.setHours(hours, mins);
-      setStartTime(newD);
+    const val = e.target.value;
+    if (!val) return;
+    const [hours, mins] = val.split(":").map(Number);
+    const base = startTime ? new Date(startTime) : new Date();
+    const newStart = new Date(base);
+    newStart.setHours(hours, mins, 0, 0);
+    setStartTime(newStart);
+
+    if (!endTime || endTime.getTime() <= newStart.getTime()) {
+      const newEnd = new Date(newStart.getTime() + 15 * 60 * 1000);
+      setEndTime(newEnd);
+    } else {
+      const newEnd = new Date(endTime);
+      newEnd.setFullYear(newStart.getFullYear(), newStart.getMonth(), newStart.getDate());
+      setEndTime(newEnd);
     }
   };
 
   const handleEndTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const [hours, mins] = e.target.value.split(":").map(Number);
-    const newD = endTime
-      ? new Date(endTime)
-      : startTime
-        ? new Date(startTime)
-        : new Date();
-    newD.setHours(hours, mins);
-    setEndTime(newD);
+    const val = e.target.value;
+    if (!val) return;
+    const [hours, mins] = val.split(":").map(Number);
+    const base = startTime ? new Date(startTime) : new Date();
+    const newEnd = new Date(base);
+    newEnd.setHours(hours, mins, 0, 0);
+    setEndTime(newEnd);
   };
 
   const getDuration = () => {
     if (!startTime) return "0 Menit";
-    const end = endTime || now || new Date();
+    const end = endTime || new Date(startTime.getTime() + 15 * 60000);
     const diff = Math.floor((end.getTime() - startTime.getTime()) / 60000);
-    return `${diff} Menit`;
+    return `${Math.max(0, diff)} Menit`;
   };
 
   return (
@@ -551,7 +584,7 @@ export default function HandHygieneAuditPage() {
                   <div className="relative flex items-center">
                     <input
                       type="time"
-                      value={formatTimeForInput(endTime || now || new Date())}
+                      value={formatTimeForInput(endTime)}
                       onChange={handleEndTimeChange}
                       className="w-full bg-transparent text-xl font-bold text-white outline-none cursor-pointer [appearance:none] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:left-0 [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:top-0 [&::-webkit-calendar-picker-indicator]:bottom-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                     />

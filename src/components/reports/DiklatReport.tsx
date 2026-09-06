@@ -11,6 +11,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAppContext } from '@/components/Providers';
 import { useSafeRouter } from '@/hooks/useSafeRouter';
 import { forceScrollToTop } from '@/utils/scrollHelper';
+import PdfDownloadButton from '@/components/reports/PdfDownloadButton';
+import ZoomableReportViewer from '@/components/reports/ZoomableReportViewer';
 
 export interface TrainingMaterial {
   id: string;
@@ -426,13 +428,34 @@ export default function DiklatReport({
     <div className="flex flex-col gap-8 relative items-center w-full">
       
       {/* PREVIEW & OFFICIAL REPORT */}
-      <div className="w-full max-w-4xl space-y-6">
+      <div className="w-full max-w-4xl space-y-4">
+        <div className="flex items-center justify-between gap-3 px-1">
+          <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
+            Laporan Resmi Pelatihan
+          </h4>
+          {selectedSession && (
+            <PdfDownloadButton
+              targetElementId="diklat-official-report"
+              filename={`Laporan_Resmi_Diklat_${(selectedSession.judul || 'Pelatihan').replace(/[^a-zA-Z0-9]/g, '_')}_${format(new Date(), 'yyyyMMdd_HHmmss')}.pdf`}
+              title="Download PDF Laporan Resmi"
+            />
+          )}
+        </div>
         
         {/* OFFICIAL PRINT-READY CONTAINER */}
-        <div 
-          id="diklat-official-report"
-          className="bg-white text-slate-900 border border-slate-200 shadow-2xl rounded-[2.5rem] p-8 sm:p-12 relative overflow-hidden print:shadow-none print:border-none print:p-0 print:m-0"
-        >
+        <div className="w-full">
+          <ZoomableReportViewer>
+            <div 
+              id="diklat-official-report"
+              data-pdf-page="true"
+              className="official-report-paper official-pdf-page bg-force-white text-slate-900 border border-slate-300 shadow-2xl rounded-2xl p-6 sm:p-12 relative overflow-hidden print:shadow-none print:border-none print:p-0 print:m-0 min-w-[650px] sm:min-w-0 sm:w-full max-w-[210mm] mx-auto"
+              style={{
+                backgroundColor: "#ffffff",
+                color: "#000000",
+                fontFamily: "'Calibri', 'Carlito', 'Candara', 'Segoe UI', Arial, sans-serif",
+                fontSize: "11pt",
+              }}
+            >
           {/* STYLING MEDIA PRINT INLINE */}
           <style dangerouslySetInnerHTML={{__html: `
             @media print {
@@ -468,28 +491,30 @@ export default function DiklatReport({
           `}} />
 
           {/* HOSPITAL LOGO & LETTERHEAD (No PPI-09 code in top right) */}
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 border-b-4 border-slate-900 pb-6 mb-8 text-center sm:text-left">
-            {hospitalLogoUrl ? (
-              <img 
-                src={hospitalLogoUrl} 
-                alt="Hospital Logo" 
-                className="w-20 h-20 object-contain shrink-0 filter contrast-125"
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <div className="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-300 font-extrabold shrink-0 border border-slate-200">
-                LOGO
-              </div>
-            )}
-            <div className="flex-1">
-              <h2 className="text-xl font-black uppercase tracking-tight text-slate-900 leading-tight">
-                Tim Pencegahan Dan Pengendalian Infeksi (PPI)
+          <div className="flex items-center gap-4 sm:gap-6 border-b-4 border-slate-900 pb-4 mb-6">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shrink-0 pl-2 sm:pl-3">
+              {hospitalLogoUrl ? (
+                <img 
+                  src={hospitalLogoUrl} 
+                  alt="Hospital Logo" 
+                  className="w-full h-full object-contain filter contrast-125"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-300 font-extrabold shrink-0 border border-slate-200">
+                  LOGO
+                </div>
+              )}
+            </div>
+            <div className="flex-1 text-center pr-8 sm:pr-12">
+              <h2 className="text-lg sm:text-xl font-black uppercase tracking-tight text-slate-900 leading-tight">
+                TIM PENCEGAHAN DAN PENGENDALIAN INFEKSI (PPI)
               </h2>
-              <p className="text-xs uppercase tracking-widest text-slate-500 font-bold mt-1">
+              <p className="text-xs sm:text-sm uppercase tracking-wider text-slate-900 font-black mt-0.5">
                 UOBK RSUD AL-MULK KOTA SUKABUMI
               </p>
-              <p className="text-[10px] text-slate-400 mt-0.5 leading-relaxed font-mono">
-                Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota Sukabumi, Jawa Barat.
+              <p className="text-[10px] sm:text-[11px] text-slate-600 italic mt-0.5">
+                Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota Sukabumi, Jawa Barat 43168
               </p>
             </div>
           </div>
@@ -649,6 +674,8 @@ export default function DiklatReport({
             </div>
           )}
         </div>
+      </ZoomableReportViewer>
+    </div>
 
       </div>
 

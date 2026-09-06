@@ -9,7 +9,6 @@ import {
   BarChart2,
   FileText, 
   Settings, 
-  Menu,
   LogOut,
   ShieldCheck,
   ChevronLeft
@@ -224,13 +223,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setMounted(true);
     
     const checkScreenSize = () => {
-      const mobile = window.innerWidth < 768;
+      const isPortrait = typeof window !== 'undefined' && (window.matchMedia("(orientation: portrait)").matches || window.innerHeight > window.innerWidth);
+      const isTabletOrPhone = typeof window !== 'undefined' && window.innerWidth <= 1024;
+      const mobile = typeof window !== 'undefined' && (window.innerWidth < 768 || (isTabletOrPhone && isPortrait));
       setIsMobile(mobile);
       setIsSidebarOpen(!mobile);
     };
     
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
+    window.addEventListener('orientationchange', checkScreenSize);
 
     const handleScrollTopEvent = () => {
       if (mainRef.current) {
@@ -242,9 +244,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     return () => {
       window.removeEventListener('resize', checkScreenSize);
+      window.removeEventListener('orientationchange', checkScreenSize);
       window.removeEventListener('smart_ppi_scroll_top', handleScrollTopEvent);
     };
-  }, []);
+  }, [setIsSidebarOpen]);
 
   useEffect(() => {
     if (mainRef.current) {
@@ -277,7 +280,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="absolute top-1/3 right-0 w-[550px] h-[550px] bg-indigo-600/15 rounded-full blur-[160px] pointer-events-none z-0" />
       <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-blue-700/12 rounded-full blur-[170px] pointer-events-none z-0" />
 
-      {/* Mobile Backdrop Overlay */}
+      {/* Mobile Backdrop Overlay - Portrait mode uses bottom nav */}
       <AnimatePresence>
         {isMobile && isSidebarOpen && (
           <motion.div 
@@ -285,12 +288,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsSidebarOpen(false)}
-            className="fixed inset-0 bg-black/70 z-40 transition-opacity duration-200 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/70 z-40 transition-opacity duration-200 backdrop-blur-sm portrait:hidden"
           />
         )}
       </AnimatePresence>
 
-      {/* Desktop & Mobile Sidebar Drawer */}
+      {/* Desktop & Landscape Sidebar Drawer (Hidden in portrait as bottom nav is active) */}
       <motion.aside 
         initial={false}
         animate={{ 
@@ -301,7 +304,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           duration: 0.22,
           ease: [0.16, 1, 0.3, 1]
         }}
-        className="fixed inset-y-4 left-4 z-50 w-[280px] print:hidden sidebar-layer-gpu fps-optimized pointer-events-auto select-none"
+        className="fixed inset-y-4 left-4 z-50 w-[280px] print:hidden sidebar-layer-gpu fps-optimized pointer-events-auto select-none portrait:hidden landscape:block"
       >
         {/* Main Inner Card with Glass/Border/Shadow & overflow-hidden */}
         <div className="flex flex-col h-full w-full rounded-[30px] transition-colors duration-300 backdrop-blur-2xl bg-gradient-to-b from-[#1c183a] via-[#14172f] to-[#0c0e1e] border border-[#2b2d56] shadow-[-6px_-6px_20px_rgba(140,165,255,0.08),12px_14px_36px_rgba(0,0,0,0.75),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] overflow-hidden relative">
@@ -362,7 +365,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             e.stopPropagation();
             setIsSidebarOpen(!isSidebarOpen);
           }}
-          className="absolute -right-4 sm:-right-4.5 top-1/2 -translate-y-1/2 w-8.5 h-8.5 sm:w-9.5 sm:h-9.5 rounded-full flex items-center justify-center border border-indigo-400/60 bg-gradient-to-b from-[#252858] via-[#17193c] to-[#0d0f26] text-cyan-300 shadow-[0_4px_16px_rgba(0,0,0,0.65),inset_1px_1px_2px_rgba(255,255,255,0.25)] hover:border-cyan-400 hover:text-white hover:shadow-[0_0_20px_rgba(6,182,212,0.65)] hover:scale-105 active:scale-90 transition-all duration-200 z-[60] group hidden landscape:flex md:flex cursor-pointer touch-manipulation select-none before:content-[''] before:absolute before:-inset-3 before:rounded-full before:z-10"
+          className="absolute -right-4 sm:-right-4.5 top-1/2 -translate-y-1/2 w-8.5 h-8.5 sm:w-9.5 sm:h-9.5 rounded-full flex items-center justify-center border border-indigo-400/60 bg-gradient-to-b from-[#252858] via-[#17193c] to-[#0d0f26] text-cyan-300 shadow-[0_4px_16px_rgba(0,0,0,0.65),inset_1px_1px_2px_rgba(255,255,255,0.25)] hover:border-cyan-400 hover:text-white hover:shadow-[0_0_20px_rgba(6,182,212,0.65)] hover:scale-105 active:scale-90 transition-all duration-150 z-[60] group hidden landscape:flex cursor-pointer touch-manipulation select-none before:content-[''] before:absolute before:-inset-3 before:rounded-full before:z-10"
           title={isSidebarOpen ? "Sembunyikan Sidebar" : "Tampilkan Sidebar"}
           aria-label={isSidebarOpen ? "Sembunyikan Sidebar" : "Tampilkan Sidebar"}
         >
@@ -414,8 +417,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             )}
           </AnimatePresence>
 
-          {/* Header Khusus Mode Mobile & Landscape */}
-          <div className={`flex md:hidden flex-col mb-4 print:hidden ${!isSidebarOpen ? 'landscape:hidden' : ''}`}>
+          {/* Header Khusus Mode Mobile & Tablet Portrait */}
+          <div className="flex landscape:hidden portrait:flex flex-col mb-4 print:hidden">
             <div className="flex items-center justify-between gap-3 px-1">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 flex-shrink-0 flex items-center justify-center relative">
@@ -463,8 +466,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation - Neumorphic Bar matching Kepatuhan Kebersihan Tangan Card */}
-      <div className="fixed bottom-4 inset-x-3 sm:inset-x-5 z-50 flex justify-center md:hidden pb-[env(safe-area-inset-bottom)]">
+      {/* Mobile & Tablet Portrait Bottom Navigation - Neumorphic Bar matching Kepatuhan Kebersihan Tangan Card */}
+      <div className="fixed bottom-4 inset-x-3 sm:inset-x-5 z-50 flex justify-center landscape:hidden portrait:flex pb-[env(safe-area-inset-bottom)]">
         <nav className="w-full max-w-md flex justify-around items-center h-[76px] px-2.5 py-1.5 rounded-[30px] border border-[#2b2d56] bg-gradient-to-b from-[#1c1f40]/95 via-[#13162f]/95 to-[#0b0d1e]/95 backdrop-blur-2xl shadow-[-6px_-6px_18px_rgba(140,165,255,0.08),8px_8px_24px_rgba(0,0,0,0.8),inset_1px_1px_2px_rgba(255,255,255,0.15),inset_-1.5px_-1.5px_2px_rgba(0,0,0,0.6)]">
           {navItems.map((item) => {
             const isActive = pathname === item.href;

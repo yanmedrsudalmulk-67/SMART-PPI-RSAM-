@@ -17,6 +17,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAppContext } from "@/components/Providers";
 import { useSafeRouter as useRouter } from "@/hooks/useSafeRouter";
 import { forceScrollToTop } from "@/utils/scrollHelper";
+import { exportElementToA4Pdf } from "@/utils/pdfExport";
+import PdfDownloadButton from "@/components/reports/PdfDownloadButton";
+import ZoomableReportViewer from "@/components/reports/ZoomableReportViewer";
 
 interface EtikaBatukData {
   id: string;
@@ -196,47 +199,8 @@ export default function EtikaBatukReport({
         setDownloading(false);
         return;
       }
-      
-      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
-        import("html2canvas"),
-        import("jspdf")
-      ]);
-      
-      const canvas = await html2canvas(element, { 
-        scale: 2, 
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#ffffff"
-      });
-      
-      const imgData = canvas.toDataURL("image/jpeg", 0.98);
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4"
-      });
-      
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 10;
-      const printWidth = pageWidth - (margin * 2);
-      const printHeight = (canvas.height * printWidth) / canvas.width;
-      
-      let heightLeft = printHeight;
-      let position = margin;
-      
-      pdf.addImage(imgData, "JPEG", margin, position, printWidth, printHeight);
-      heightLeft -= (pageHeight - (margin * 2));
-      
-      while (heightLeft > 0) {
-        position = heightLeft - printHeight + margin;
-        pdf.addPage();
-        pdf.addImage(imgData, "JPEG", margin, position, printWidth, printHeight);
-        heightLeft -= (pageHeight - (margin * 2));
-      }
-      
-      const filename = `Laporan_Edukasi_Etika_Batuk_${selectedRecord.unit || "Unit"}_${format(new Date(), "yyyyMMdd_HHmmss")}.pdf`;
-      pdf.save(filename);
+      const filename = `Laporan_Edukasi_Etika_Batuk_${(selectedRecord.unit || "Unit").replace(/[^a-zA-Z0-9]/g, '_')}_${format(new Date(), "yyyyMMdd_HHmmss")}.pdf`;
+      await exportElementToA4Pdf(element, { filename });
     } catch (err) {
       console.error("PDF download error:", err);
       window.print();
@@ -263,57 +227,72 @@ export default function EtikaBatukReport({
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
       {/* Judul di atas Laporan Resmi */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:hidden">
+      <div className="flex justify-between items-center gap-4 print:hidden">
         <div className="pt-2">
           <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 pl-1">Laporan Resmi</h4>
         </div>
+        {selectedRecord && (
+          <PdfDownloadButton
+            targetElementId="etika-batuk-official-report"
+            filename={`Laporan_Edukasi_Etika_Batuk_${(selectedRecord.unit || 'Unit').replace(/[^a-zA-Z0-9]/g, '_')}_${format(new Date(), 'yyyyMMdd_HHmmss')}.pdf`}
+            title="Download PDF Laporan Resmi"
+          />
+        )}
       </div>
 
       {/* Lembar Laporan Resmi - Dipaksa Putih Bersih di Dark Mode */}
       {selectedRecord ? (
-        <div 
-          id="etika-batuk-official-report"
-          className="p-4 sm:p-8 rounded-none sm:rounded-2xl shadow-[0_15px_35px_-8px_rgba(0,0,0,0.15),0_6px_15px_-4px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.9)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.95),0_10px_25px_-6px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)] print-container print:shadow-none print:w-full print:p-0 min-h-[800px] print:min-h-0 mx-auto max-w-[210mm] border border-slate-200/80 dark:border-white/10 bg-force-white text-force-black report-card-premium relative"
-          style={{
-            backgroundColor: "#ffffff",
-            color: "#000000",
-            pageBreakAfter: "always",
-          }}
-        >
+        <div className="w-full">
+          <ZoomableReportViewer>
+            <div 
+              id="etika-batuk-official-report"
+              data-pdf-page="true"
+              className="official-report-paper official-pdf-page p-6 sm:p-10 shadow-xl print:shadow-none print:w-full print:p-8 min-h-[297mm] mx-auto min-w-[650px] sm:min-w-0 sm:w-full max-w-[210mm] border border-slate-300 bg-force-white text-black relative flex flex-col justify-between"
+              style={{
+                backgroundColor: "#ffffff",
+                color: "#000000",
+                fontFamily: "'Calibri', 'Carlito', 'Candara', 'Segoe UI', Arial, sans-serif",
+                fontSize: "11pt",
+                pageBreakAfter: "always",
+              }}
+            >
           {/* Header Kop Surat */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b-2 border-slate-800 pb-3 mb-6" id="kop-surat" style={{ borderColor: "#000000" }}>
-            <div className="flex items-center gap-2 sm:gap-4 w-full justify-center text-center max-w-full">
-              <div className="w-10 h-10 sm:w-16 sm:h-16 flex-shrink-0 flex items-center justify-center p-1">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b-[2.5px] border-black pb-2 mb-1" id="kop-surat">
+            <div className="flex items-center gap-4 w-full justify-center text-center max-w-full">
+              <div className="w-16 h-16 flex-shrink-0 flex items-center justify-center p-1 pl-2 sm:pl-3">
                 {hospitalLogoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={hospitalLogoUrl}
                     alt="Logo RS"
-                    className="w-full h-full object-contain"
+                    className="max-w-full max-h-full object-contain"
                     onError={(e) => {
                       e.currentTarget.style.display = "none";
                     }}
                     crossOrigin="anonymous"
                   />
                 ) : (
-                  <ShieldCheck className="w-10 h-10 sm:w-16 sm:h-16 text-force-black shrink-0" />
+                  <ShieldCheck className="w-12 h-12 text-black shrink-0" />
                 )}
               </div>
-              <div className="text-left">
-                <h1 className="text-[9px] min-[400px]:text-[11px] sm:text-[13px] md:text-[15px] font-black tracking-tight leading-tight uppercase font-heading text-force-black whitespace-nowrap">
-                  TIM PENCEGAHAN & PENGENDALIAN INFEKSI (PPI)
+              <div className="text-center flex-1 pr-10 sm:pr-14">
+                <h1 className="text-[11pt] sm:text-[12pt] font-black uppercase tracking-wide leading-tight text-black">
+                  TIM PENCEGAHAN DAN PENGENDALIAN INFEKSI (PPI)
                 </h1>
-                <p className="text-[7.5px] min-[400px]:text-[8.5px] sm:text-[10px] md:text-[12px] font-bold uppercase text-force-black tracking-widest mt-0.5 whitespace-nowrap">
+                <h2 className="text-[11pt] sm:text-[12pt] font-black uppercase tracking-wider leading-tight text-black mt-0.5">
                   UOBK RSUD AL-MULK KOTA SUKABUMI
-                </p>
-                <p className="text-[6.5px] min-[400px]:text-[7px] sm:text-[8px] md:text-[9px] text-force-black mt-0.5 italic whitespace-nowrap">
-                  Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota Sukabumi, Jawa Barat.
+                </h2>
+                <p className="text-[8.5pt] text-black italic mt-0.5 leading-tight">
+                  Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota Sukabumi, Jawa Barat 43168
                 </p>
               </div>
             </div>
           </div>
+          {/* Garis batas kop surat */}
+          <div className="border-b border-black mb-4" />
 
-          <div className="text-center mb-6">
-            <h2 className="text-[16px] sm:text-[18px] font-black tracking-tight font-heading text-force-black w-full text-center uppercase">
+          <div className="text-center mb-4">
+            <h2 className="text-[13pt] font-black uppercase tracking-wider text-black underline decoration-1 underline-offset-4">
               LAPORAN EDUKASI ETIKA BATUK
             </h2>
           </div>
@@ -435,7 +414,9 @@ export default function EtikaBatukReport({
             </div>
           </div>
         </div>
-      ) : (
+      </ZoomableReportViewer>
+    </div>
+  ) : (
         <div className="h-full bg-[#18193b] rounded-[28px] md:rounded-[32px] border border-[#2b2d56] shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center p-12 md:p-20 text-center text-slate-400 min-h-[400px] relative overflow-hidden">
           <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
           <FileText className="w-16 h-16 md:w-20 md:h-20 mb-6 text-slate-600" />
@@ -445,27 +426,6 @@ export default function EtikaBatukReport({
           <p className="text-xs md:text-sm max-w-sm font-medium text-slate-400">
             Data laporan edukasi etika batuk untuk unit dan periode yang dipilih saat ini belum tersedia.
           </p>
-        </div>
-      )}
-
-      {/* Tombol Download Laporan di bawah Laporan Resmi */}
-      {selectedRecord && (
-        <div className="flex justify-center items-center print:hidden pt-2">
-          <button
-            onClick={handleDownloadPdf}
-            disabled={filteredData.length === 0 || downloading}
-            className="flex justify-center items-center gap-2.5 px-8 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 text-white text-xs sm:text-sm font-black uppercase tracking-wider rounded-2xl transition-all duration-300 shadow-[0_10px_25px_-5px_rgba(59,130,246,0.4)] select-none cursor-pointer w-full sm:w-auto min-w-[240px] border border-blue-400/30"
-          >
-            {downloading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" /> Mengunduh PDF...
-              </>
-            ) : (
-              <>
-                <Download className="w-4 h-4" /> Download Laporan (PDF)
-              </>
-            )}
-          </button>
         </div>
       )}
 

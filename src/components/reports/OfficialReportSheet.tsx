@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppContext } from '@/components/Providers';
+import PdfDownloadButton from '@/components/reports/PdfDownloadButton';
+import ZoomableReportViewer from '@/components/reports/ZoomableReportViewer';
 
 interface Item {
   id: string;
@@ -90,52 +92,80 @@ export default function OfficialReportSheet({
   const perbaikanImages = Array.isArray(perbaikanRaw) ? perbaikanRaw : (typeof perbaikanRaw === 'string' ? [perbaikanRaw] : []);
 
   return (
-    <div className="relative w-full font-sans bg-white text-slate-900 border border-slate-300 print:border-none p-8 rounded-2xl shadow-[0_15px_35px_-8px_rgba(0,0,0,0.15),0_6px_15px_-4px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.9)]">
-      <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8 border-b-4 border-slate-300 pb-6">
-          <div className="flex items-center gap-5 w-full justify-center text-center">
-             <div className="w-20 h-20 bg-white flex items-center justify-center relative">
+    <div className="w-full">
+      <ZoomableReportViewer>
+        <div 
+          id="official-report-sheet" 
+          data-pdf-page="true"
+          className="official-report-paper official-pdf-page relative w-full min-w-[650px] sm:min-w-0 sm:w-full bg-force-white text-black border border-slate-300 print:border-none p-6 sm:p-10 rounded-2xl shadow-xl max-w-[210mm] mx-auto"
+          style={{
+            backgroundColor: "#ffffff",
+            color: "#000000",
+            fontFamily: "'Calibri', 'Carlito', 'Candara', 'Segoe UI', Arial, sans-serif",
+            fontSize: "11pt",
+          }}
+        >
+      {/* PDF Download Button - Hidden when printing / exporting */}
+      <div className="absolute top-6 right-6 z-20 no-print" data-html2canvas-ignore="true">
+        <PdfDownloadButton
+          targetElementId="official-report-sheet"
+          filename={`Laporan_Resmi_${title.replace(/[^a-zA-Z0-9]/g, '_')}_${(data.unit || data.ruangan || 'Unit').replace(/[^a-zA-Z0-9]/g, '_')}_${format(new Date(), 'yyyyMMdd_HHmmss')}.pdf`}
+          title="Download PDF Laporan Resmi"
+        />
+      </div>
+
+      <div className="flex items-center gap-4 sm:gap-6 mb-6 border-b-4 border-slate-900 pb-4">
+          <div className="flex items-center gap-4 sm:gap-5 w-full">
+             <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white flex items-center justify-center relative shrink-0 pl-2 sm:pl-3">
                {hospitalLogoUrl ? (
                  <Image src={hospitalLogoUrl} alt="Logo RS" fill sizes="80px" className="object-contain" referrerPolicy="no-referrer" />
                ) : (
                  <ShieldCheck className="w-12 h-12 text-black" />
                )}
              </div>
-             <div className="text-left">
-               <h1 className="text-2xl font-black tracking-tight leading-tight uppercase text-black"> TIM PENCEGAHAN & PENGENDALIAN INFEKSI</h1>
-               <p className="text-sm font-bold uppercase text-black tracking-widest mt-1">UOBK RSUD AL-MULK KOTA SUKABUMI</p>
+             <div className="text-center flex-1 pr-8 sm:pr-12">
+               <h1 className="text-lg sm:text-xl font-black tracking-tight leading-tight uppercase text-black">
+                 TIM PENCEGAHAN DAN PENGENDALIAN INFEKSI (PPI)
+               </h1>
+               <p className="text-xs sm:text-sm font-black uppercase text-black tracking-wider mt-0.5">
+                 UOBK RSUD AL-MULK KOTA SUKABUMI
+               </p>
+               <p className="text-[10px] sm:text-[11px] text-slate-600 italic mt-0.5">
+                 Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota Sukabumi, Jawa Barat 43168
+               </p>
              </div>
           </div>
       </div>
 
-      <div className="text-center mb-8">
-        <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-black w-full text-center">LAPORAN AUDIT <br className="md:hidden" /> {title}</h2>
+      <div className="text-center mb-6">
+        <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight text-black w-full text-center">LAPORAN AUDIT <br className="md:hidden" /> {title}</h2>
       </div>
 
-      <div className="w-full mb-8 border-t border-l border-r border-slate-300 grid grid-cols-1 md:grid-cols-3 bg-white">
-        <div className="border-b border-slate-300 p-3 border-r text-center">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Waktu Pelaksanaan</p>
-          <div className="font-bold text-sm text-black">{auditDate ? format(new Date(auditDate), 'dd MMM yyyy HH:mm', { locale: idLocale }) : '-'}</div>
+      <div className="w-full mb-6 border-t border-l border-r border-slate-300 grid grid-cols-1 md:grid-cols-3 bg-white">
+        <div className="border-b border-slate-300 p-2.5 border-r text-center">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Waktu Pelaksanaan</p>
+          <div className="font-bold text-xs sm:text-sm text-black">{auditDate ? format(new Date(auditDate), 'dd MMM yyyy HH:mm', { locale: idLocale }) : '-'}</div>
         </div>
-        <div className="border-b border-slate-300 p-3 border-r text-center">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Supervisor</p>
-          <p className="font-bold text-sm uppercase text-black">{inspector || '-'}</p>
+        <div className="border-b border-slate-300 p-2.5 border-r text-center">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Supervisor</p>
+          <p className="font-bold text-xs sm:text-sm uppercase text-black">{inspector || '-'}</p>
         </div>
-        <div className="border-b border-slate-300 p-3 text-center">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Unit / Ruangan</p>
-          <p className="font-bold text-sm uppercase text-black">{unit || '-'}</p>
+        <div className="border-b border-slate-300 p-2.5 text-center">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Unit / Ruangan</p>
+          <p className="font-bold text-xs sm:text-sm uppercase text-black">{unit || '-'}</p>
         </div>
       </div>
 
-      <div className="mb-10 overflow-x-auto print:overflow-visible">
-        <table className="w-full min-w-[600px] border-collapse text-left text-sm bg-white text-black border border-slate-300">
+      <div className="mb-8 overflow-x-auto print:overflow-visible">
+        <table className="w-full min-w-[600px] border-collapse text-sm bg-white text-black border border-slate-300">
           <thead>
             <tr className="bg-slate-50 text-slate-900 font-bold uppercase tracking-widest text-[11px] border-b border-slate-300">
-              <th className="px-4 py-3 w-12 text-center border-r border-slate-300">NO</th>
-              <th className="px-6 py-3 border-r border-slate-300 font-bold">INDIKATOR</th>
-              <th className="px-4 py-3 w-16 text-center border-r border-slate-300">YA</th>
-              <th className="px-4 py-3 w-16 text-center border-r border-slate-300">TDK</th>
-              <th className="px-4 py-3 w-16 text-center border-r border-slate-300">N/A</th>
-              <th className="px-4 py-3 border-r border-slate-300 text-center">KETERANGAN</th>
+              <th className="px-3 py-2.5 w-12 text-center border-r border-slate-300">NO</th>
+              <th className="px-4 py-2.5 text-center border-r border-slate-300 font-bold">INDIKATOR</th>
+              <th className="px-3 py-2.5 w-14 text-center border-r border-slate-300">YA</th>
+              <th className="px-3 py-2.5 w-14 text-center border-r border-slate-300">TDK</th>
+              <th className="px-3 py-2.5 w-14 text-center border-r border-slate-300">N/A</th>
+              <th className="px-4 py-2.5 text-center border-r border-slate-300">KETERANGAN</th>
             </tr>
           </thead>
           <tbody>
@@ -147,9 +177,9 @@ export default function OfficialReportSheet({
                   <tr key={item.id} className="border-b border-slate-300 text-black">
                     <td className="px-4 py-3 text-center border-r border-slate-300">{itemIdx + 1}</td>
                     <td className="px-6 py-3 font-semibold border-r border-slate-300">{item.label}</td>
-                    <td className="px-4 py-3 text-center border-r border-slate-300">{status === 'ya' && '✓'}</td>
-                    <td className="px-4 py-3 text-center border-r border-slate-300">{status === 'tidak' && '✓'}</td>
-                    <td className="px-4 py-3 text-center border-r border-slate-300">{status === 'na' && '✓'}</td>
+                    <td className="px-4 py-3 text-center border-r border-slate-300 font-bold text-emerald-600">{status === 'ya' && '✓'}</td>
+                    <td className="px-4 py-3 text-center border-r border-slate-300 font-bold text-red-600">{status === 'tidak' && '✗'}</td>
+                    <td className="px-4 py-3 text-center border-r border-slate-300 font-bold text-slate-500">{(status === 'na' || status === 'n/a') && '-'}</td>
                     <td className="px-4 py-3 text-xs border-r border-slate-300">{keterangan}</td>
                   </tr>
                 );
@@ -159,7 +189,7 @@ export default function OfficialReportSheet({
         </table>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="md:col-span-3 grid grid-cols-3 gap-6">
             <div className="p-4 border border-slate-300 text-center flex flex-col justify-center">
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Patuh</p>
@@ -176,13 +206,35 @@ export default function OfficialReportSheet({
           </div>
           <div className="border border-slate-300 p-4 flex flex-col items-center justify-center text-center">
              <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-slate-500">Capaian</p>
-             <p className="text-5xl font-black mb-2 text-black">{data.persentase}%</p>
+             <p className="text-5xl font-black mb-2 text-black">
+               {(() => {
+                 const patuh = Object.values(checklist).filter(v => getSafeStatus(v) === 'ya').length;
+                 const tidak = Object.values(checklist).filter(v => getSafeStatus(v) === 'tidak').length;
+                 const total = patuh + tidak;
+                 return total > 0 ? Math.round((patuh / total) * 100) : (data.persentase || 0);
+               })()}%
+             </p>
           </div>
       </div>
 
+      {/* Temuan & Rekomendasi */}
+      {(data.temuan || data.rekomendasi) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="p-4 border border-slate-300 bg-white">
+            <h4 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-2 border-b border-slate-200 pb-1">Temuan Lapangan</h4>
+            <p className="text-xs text-black leading-relaxed whitespace-pre-wrap">{data.temuan || '-'}</p>
+          </div>
+          <div className="p-4 border border-slate-300 bg-white">
+            <h4 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-2 border-b border-slate-200 pb-1">Rekomendasi / Tindak Lanjut</h4>
+            <p className="text-xs text-black leading-relaxed whitespace-pre-wrap">{data.rekomendasi || '-'}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Foto Dokumentasi */}
       {images.length > 0 && (
-         <div className="mb-12 space-y-4">
-           <h4 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-4 border-b border-slate-300 pb-2">Dokumentasi</h4>
+         <div className="mb-8 space-y-4">
+           <h4 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-4 border-b border-slate-300 pb-2">Dokumentasi Audit</h4>
            <div className="grid grid-cols-4 gap-4">
              {images.map((url, i) => (
                <div key={i} onClick={() => setZoomedImage(url)} className="relative aspect-video border border-slate-300 cursor-zoom-in">
@@ -193,8 +245,9 @@ export default function OfficialReportSheet({
          </div>
       )}
 
+      {/* Upaya Perbaikan & Bukti Perbaikan */}
       {(upayaText || waktuPerbaikan || perbaikanImages.length > 0) && (
-         <div className="mb-12 p-4 border-2 border-amber-600 bg-amber-50/40 rounded-xl space-y-3">
+         <div className="mb-8 p-4 border-2 border-amber-600 bg-amber-50/40 rounded-xl space-y-3">
            <h4 className="text-xs font-black uppercase tracking-widest text-amber-900 border-b border-amber-400 pb-2 flex items-center justify-between">
              <span>🛠️ Upaya Perbaikan & Tindak Lanjut</span>
              <span className="text-[9px] px-2 py-0.5 bg-amber-200 text-amber-900 rounded font-bold">HASIL PERBAIKAN</span>
@@ -222,9 +275,10 @@ export default function OfficialReportSheet({
          </div>
       )}
 
-      <div className="grid grid-cols-2 gap-12 mt-12 mb-8">
+      {/* Tanda Tangan Pengesahan (Paling Bawah - Tunggal) */}
+      <div className="grid grid-cols-2 gap-12 mt-10 mb-6">
         <div className="text-center space-y-4">
-          <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">PJ Ruangan / Auditee</p>
+          <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">Petugas / PJ Ruangan</p>
           <div className="h-20 relative w-full flex justify-center items-center">
             {data.ttd_pj && <Image src={data.ttd_pj} fill sizes="200px" className="object-contain filter brightness-0" alt="TTD PJ" referrerPolicy="no-referrer" />}
           </div>
@@ -237,7 +291,7 @@ export default function OfficialReportSheet({
           </div>
         </div>
         <div className="text-center space-y-4">
-          <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">TIM PPI RS</p>
+          <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">Tim PPI</p>
           <div className="h-20 relative w-full flex justify-center items-center">
             {data.ttd_ipcn && <Image src={data.ttd_ipcn} fill sizes="200px" className="object-contain filter brightness-0" alt="TTD IPCN" referrerPolicy="no-referrer" />}
           </div>
@@ -256,6 +310,8 @@ export default function OfficialReportSheet({
           </motion.div>
         )}
       </AnimatePresence>
+        </div>
+      </ZoomableReportViewer>
     </div>
   );
 }

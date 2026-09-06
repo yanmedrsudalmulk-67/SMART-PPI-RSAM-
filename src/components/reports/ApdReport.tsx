@@ -314,19 +314,20 @@ export default function ApdReport({
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
       
       {/* LAPORAN HEADER (PRINT READY) */}
-      <div className="hidden print:flex items-center justify-between gap-6 mb-8 border-b-4 border-slate-300 pb-6 w-full">
-         <div className="flex items-center gap-5 w-full justify-center text-center">
-            <div className="w-20 h-20 bg-white flex items-center justify-center relative">
+      <div className="hidden print:flex items-center gap-6 mb-8 border-b-4 border-slate-900 pb-6 w-full">
+         <div className="flex items-center gap-5 w-full">
+            <div className="w-20 h-20 bg-white flex items-center justify-center relative pl-2 sm:pl-3 shrink-0">
               {hospitalLogoUrl ? (
                 <Image src={hospitalLogoUrl} alt="Logo RS" fill sizes="80px" className="object-contain" referrerPolicy="no-referrer" />
               ) : (
                 <ShieldCheck className="w-12 h-12 text-black" />
               )}
             </div>
-            <div className="text-left">
-              <h1 className="text-2xl font-black tracking-tight leading-tight uppercase text-black">LAPORAN MONITORING KEPATUHAN PENGGUNAAN APD</h1>
-              <p className="text-sm font-bold uppercase text-black tracking-widest mt-1">UOBK RSUD AL-MULK KOTA SUKABUMI</p>
-              <p className="text-xs text-slate-600 mt-1">Periode: {filters.periode ? format(new Date(filters.periode), 'MMMM yyyy', {locale: idLocale}) : 'Semua Periode'} {filters.type ? `| Tipe: ${filters.type}` : ''}</p>
+            <div className="text-center flex-1 pr-8 sm:pr-12">
+              <h1 className="text-xl font-black tracking-tight leading-tight uppercase text-black">TIM PENCEGAHAN DAN PENGENDALIAN INFEKSI (PPI)</h1>
+              <p className="text-sm font-black uppercase text-black tracking-wider mt-0.5">UOBK RSUD AL-MULK KOTA SUKABUMI</p>
+              <p className="text-xs text-slate-600 italic mt-0.5">Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota Sukabumi, Jawa Barat 43168</p>
+              <p className="text-xs text-slate-700 font-bold mt-1">LAPORAN MONITORING KEPATUHAN PENGGUNAAN APD | Periode: {filters.periode ? format(new Date(filters.periode), 'MMMM yyyy', {locale: idLocale}) : 'Semua Periode'} {filters.type ? `| Tipe: ${filters.type}` : ''}</p>
             </div>
          </div>
       </div>

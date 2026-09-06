@@ -1,6 +1,128 @@
+@import url('https://fonts.googleapis.com/css2?family=Carlito:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Font Calibri Standar Laporan Resmi */
+.font-calibri {
+  font-family: 'Calibri', 'Carlito', 'Candara', 'Segoe UI', Arial, sans-serif;
+}
+
+.official-report-sheet {
+  font-family: 'Calibri', 'Carlito', 'Candara', 'Segoe UI', Arial, sans-serif !important;
+  font-size: 11pt !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+/* PDF Generation & Print Styles: Default vertical alignment to middle for table cells, while respecting align-top */
+.official-report-sheet th:not(.align-top):not([class*="align-top"]),
+.official-report-sheet td:not(.align-top):not([class*="align-top"]),
+#official-report-sheet th:not(.align-top):not([class*="align-top"]),
+#official-report-sheet td:not(.align-top):not([class*="align-top"]),
+.official-report-paper th:not(.align-top):not([class*="align-top"]),
+.official-report-paper td:not(.align-top):not([class*="align-top"]),
+.official-pdf-page th:not(.align-top):not([class*="align-top"]),
+.official-pdf-page td:not(.align-top):not([class*="align-top"]),
+[data-pdf-page="true"] th:not(.align-top):not([class*="align-top"]),
+[data-pdf-page="true"] td:not(.align-top):not([class*="align-top"]),
+#generic-official-report th:not(.align-top):not([class*="align-top"]),
+#generic-official-report td:not(.align-top):not([class*="align-top"]),
+#etika-batuk-official-report th:not(.align-top):not([class*="align-top"]),
+#etika-batuk-official-report td:not(.align-top):not([class*="align-top"]),
+#diklat-official-report th:not(.align-top):not([class*="align-top"]),
+#diklat-official-report td:not(.align-top):not([class*="align-top"]) {
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+/* Ensure align-top is strictly respected for findings, recommendations, and signatures */
+.official-report-sheet .align-top,
+.official-report-paper .align-top,
+.official-pdf-page .align-top,
+[data-pdf-page="true"] .align-top,
+#generic-official-report .align-top,
+.align-top,
+[class*="align-top"] {
+  vertical-align: top !important;
+}
+
+.official-report-sheet table,
+#official-report-sheet table,
+.official-report-paper table,
+.official-pdf-page table,
+[data-pdf-page="true"] table {
+  border-collapse: collapse !important;
+  border: 0.5px solid #000000 !important;
+}
+
+.official-report-sheet table th,
+.official-report-sheet table td,
+#official-report-sheet table th,
+#official-report-sheet table td,
+.official-report-paper table th,
+.official-report-paper table td,
+.official-pdf-page table th,
+.official-pdf-page table td,
+[data-pdf-page="true"] table th,
+[data-pdf-page="true"] table td {
+  border: 0.5px solid #000000 !important;
+}
+
+/* Ensure borderless tables (such as signature blocks) do not receive borders */
+.official-report-sheet table.border-none,
+.official-report-sheet table.border-none th,
+.official-report-sheet table.border-none td,
+.official-report-paper table.border-none,
+.official-report-paper table.border-none th,
+.official-report-paper table.border-none td,
+.official-pdf-page table.border-none,
+.official-pdf-page table.border-none th,
+.official-pdf-page table.border-none td,
+[data-pdf-page="true"] table.border-none,
+[data-pdf-page="true"] table.border-none th,
+[data-pdf-page="true"] table.border-none td,
+.official-report-sheet table[class*="border-none"],
+.official-report-sheet table[class*="border-none"] th,
+.official-report-sheet table[class*="border-none"] td,
+.official-report-paper table[class*="border-none"],
+.official-report-paper table[class*="border-none"] th,
+.official-report-paper table[class*="border-none"] td,
+.official-pdf-page table[class*="border-none"],
+.official-pdf-page table[class*="border-none"] th,
+.official-pdf-page table[class*="border-none"] td,
+[data-pdf-page="true"] table[class*="border-none"],
+[data-pdf-page="true"] table[class*="border-none"] th,
+[data-pdf-page="true"] table[class*="border-none"] td {
+  border: none !important;
+}
+
+@media print {
+  .official-report-sheet table,
+  #official-report-sheet table,
+  .official-report-paper table,
+  .official-pdf-page table,
+  [data-pdf-page="true"] table {
+    border-collapse: collapse !important;
+    border: 0.5px solid #000000 !important;
+  }
+
+  .official-report-sheet th,
+  .official-report-sheet td,
+  #official-report-sheet th,
+  #official-report-sheet td,
+  .official-report-paper th,
+  .official-report-paper td,
+  .official-pdf-page th,
+  .official-pdf-page td,
+  [data-pdf-page="true"] th,
+  [data-pdf-page="true"] td {
+    vertical-align: middle !important;
+    padding: 0.25rem 0.5rem !important;
+    border: 0.5px solid #000000 !important;
+  }
+}
 
 /* 120Hz / High Refresh Rate GPU rendering optimizations for performance-critical elements */
 .will-gpu,
@@ -205,16 +327,16 @@ html, body {
 }
 
 
-/* Dark Mode Overrides (Default) for legacy components */
-:root:not(.light) .text-navy-dark,
-:root:not(.light) .text-slate-900,
-:root:not(.light) .text-slate-800,
-:root:not(.light) .text-slate-700 {
+/* Dark Mode Overrides (Default) for legacy components - EXCLUDING official report paper */
+:root:not(.light) .text-navy-dark:not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *),
+:root:not(.light) .text-slate-900:not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *),
+:root:not(.light) .text-slate-800:not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *),
+:root:not(.light) .text-slate-700:not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *) {
   color: #ffffff !important;
 }
-:root:not(.light) .bg-white,
-:root:not(.light) .bg-slate-50,
-:root:not(.light) .bg-gray-50 {
+:root:not(.light) .bg-white:not(.official-report-paper):not(.official-pdf-page):not(.official-report-sheet):not([data-pdf-page="true"]):not(#generic-official-report):not(#official-report-sheet):not(#etika-batuk-official-report):not(#diklat-official-report):not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *),
+:root:not(.light) .bg-slate-50:not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *),
+:root:not(.light) .bg-gray-50:not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *) {
   background-color: rgba(255, 255, 255, 0.05) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
 }
@@ -232,6 +354,169 @@ html, body {
 }
 :root:not(.light) .text-text-muted {
   color: #94a3b8 !important;
+}
+
+/* =========================================================================
+   OFFICIAL REPORT PAPERS (Pencegahan & Pengendalian Infeksi RSUD Al-Mulk)
+   Ensures 100% pure white paper (#ffffff) and crisp black ink (#000000)
+   in ALL themes (dark/light/mobile/portrait/desktop/print)
+========================================================================= */
+.official-report-paper,
+.official-pdf-page,
+.official-report-sheet,
+#generic-official-report,
+#official-report-sheet,
+#etika-batuk-official-report,
+#diklat-official-report,
+[data-pdf-page="true"],
+:root:not(.light) .official-report-paper,
+:root:not(.light) .official-pdf-page,
+:root:not(.light) .official-report-sheet,
+:root:not(.light) #generic-official-report,
+:root:not(.light) #official-report-sheet,
+:root:not(.light) #etika-batuk-official-report,
+:root:not(.light) #diklat-official-report,
+:root:not(.light) [data-pdf-page="true"] {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+  opacity: 1 !important;
+}
+
+.official-report-paper .bg-white,
+.official-pdf-page .bg-white,
+.official-report-sheet .bg-white,
+#generic-official-report .bg-white,
+#official-report-sheet .bg-white,
+#etika-batuk-official-report .bg-white,
+#diklat-official-report .bg-white,
+[data-pdf-page="true"] .bg-white,
+:root:not(.light) .official-report-paper .bg-white,
+:root:not(.light) .official-pdf-page .bg-white,
+:root:not(.light) .official-report-sheet .bg-white,
+:root:not(.light) #generic-official-report .bg-white,
+:root:not(.light) #official-report-sheet .bg-white,
+:root:not(.light) #etika-batuk-official-report .bg-white,
+:root:not(.light) #diklat-official-report .bg-white,
+:root:not(.light) [data-pdf-page="true"] .bg-white {
+  background-color: #ffffff !important;
+}
+
+.official-report-paper .bg-slate-50,
+.official-pdf-page .bg-slate-50,
+.official-report-sheet .bg-slate-50,
+#generic-official-report .bg-slate-50,
+#official-report-sheet .bg-slate-50,
+#etika-batuk-official-report .bg-slate-50,
+#diklat-official-report .bg-slate-50,
+[data-pdf-page="true"] .bg-slate-50,
+:root:not(.light) .official-report-paper .bg-slate-50,
+:root:not(.light) .official-pdf-page .bg-slate-50,
+:root:not(.light) .official-report-sheet .bg-slate-50,
+:root:not(.light) #generic-official-report .bg-slate-50,
+:root:not(.light) #official-report-sheet .bg-slate-50,
+:root:not(.light) #etika-batuk-official-report .bg-slate-50,
+:root:not(.light) #diklat-official-report .bg-slate-50,
+:root:not(.light) [data-pdf-page="true"] .bg-slate-50 {
+  background-color: #f8fafc !important;
+}
+
+.official-report-paper .bg-slate-100,
+.official-pdf-page .bg-slate-100,
+.official-report-sheet .bg-slate-100,
+#generic-official-report .bg-slate-100,
+#official-report-sheet .bg-slate-100,
+#etika-batuk-official-report .bg-slate-100,
+#diklat-official-report .bg-slate-100,
+[data-pdf-page="true"] .bg-slate-100,
+:root:not(.light) .official-report-paper .bg-slate-100,
+:root:not(.light) .official-pdf-page .bg-slate-100,
+:root:not(.light) .official-report-sheet .bg-slate-100,
+:root:not(.light) #generic-official-report .bg-slate-100,
+:root:not(.light) #official-report-sheet .bg-slate-100,
+:root:not(.light) #etika-batuk-official-report .bg-slate-100,
+:root:not(.light) #diklat-official-report .bg-slate-100,
+:root:not(.light) [data-pdf-page="true"] .bg-slate-100 {
+  background-color: #f1f5f9 !important;
+}
+
+.official-report-paper .text-black,
+.official-pdf-page .text-black,
+.official-report-sheet .text-black,
+#generic-official-report .text-black,
+#official-report-sheet .text-black,
+#etika-batuk-official-report .text-black,
+#diklat-official-report .text-black,
+[data-pdf-page="true"] .text-black,
+:root:not(.light) .official-report-paper .text-black,
+:root:not(.light) .official-pdf-page .text-black,
+:root:not(.light) .official-report-sheet .text-black,
+:root:not(.light) #generic-official-report .text-black,
+:root:not(.light) #official-report-sheet .text-black,
+:root:not(.light) #etika-batuk-official-report .text-black,
+:root:not(.light) #diklat-official-report .text-black,
+:root:not(.light) [data-pdf-page="true"] .text-black {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}
+
+.official-report-paper .text-slate-700,
+.official-pdf-page .text-slate-700,
+.official-report-sheet .text-slate-700,
+#generic-official-report .text-slate-700,
+#official-report-sheet .text-slate-700,
+#etika-batuk-official-report .text-slate-700,
+#diklat-official-report .text-slate-700,
+[data-pdf-page="true"] .text-slate-700,
+:root:not(.light) .official-report-paper .text-slate-700,
+:root:not(.light) .official-pdf-page .text-slate-700,
+:root:not(.light) .official-report-sheet .text-slate-700,
+:root:not(.light) #generic-official-report .text-slate-700,
+:root:not(.light) #official-report-sheet .text-slate-700,
+:root:not(.light) #etika-batuk-official-report .text-slate-700,
+:root:not(.light) #diklat-official-report .text-slate-700,
+:root:not(.light) [data-pdf-page="true"] .text-slate-700 {
+  color: #334155 !important;
+  -webkit-text-fill-color: #334155 !important;
+}
+
+.official-report-paper .text-slate-600,
+.official-pdf-page .text-slate-600,
+.official-report-sheet .text-slate-600,
+#generic-official-report .text-slate-600,
+#official-report-sheet .text-slate-600,
+#etika-batuk-official-report .text-slate-600,
+#diklat-official-report .text-slate-600,
+[data-pdf-page="true"] .text-slate-600,
+:root:not(.light) .official-report-paper .text-slate-600,
+:root:not(.light) .official-pdf-page .text-slate-600,
+:root:not(.light) .official-report-sheet .text-slate-600,
+:root:not(.light) #generic-official-report .text-slate-600,
+:root:not(.light) #official-report-sheet .text-slate-600,
+:root:not(.light) #etika-batuk-official-report .text-slate-600,
+:root:not(.light) #diklat-official-report .text-slate-600,
+:root:not(.light) [data-pdf-page="true"] .text-slate-600 {
+  color: #475569 !important;
+  -webkit-text-fill-color: #475569 !important;
+}
+
+.official-report-paper .border-black,
+.official-pdf-page .border-black,
+.official-report-sheet .border-black,
+#generic-official-report .border-black,
+#official-report-sheet .border-black,
+#etika-batuk-official-report .border-black,
+#diklat-official-report .border-black,
+[data-pdf-page="true"] .border-black,
+:root:not(.light) .official-report-paper .border-black,
+:root:not(.light) .official-pdf-page .border-black,
+:root:not(.light) .official-report-sheet .border-black,
+:root:not(.light) #generic-official-report .border-black,
+:root:not(.light) #official-report-sheet .border-black,
+:root:not(.light) #etika-batuk-official-report .border-black,
+:root:not(.light) #diklat-official-report .border-black,
+:root:not(.light) [data-pdf-page="true"] .border-black {
+  border-color: #000000 !important;
 }
 
 /* Sidebar Scrollbar Hidden (Scroll capability fully preserved) */

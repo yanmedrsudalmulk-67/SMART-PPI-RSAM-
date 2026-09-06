@@ -5,6 +5,8 @@ import { supabase } from "@/lib/supabase";
 import { ReportSkeleton } from '@/components/SkeletonLoading';
 import { forceScrollToTop } from '@/utils/scrollHelper';
 import { useSafeRouter as useRouter } from '@/hooks/useSafeRouter';
+import PdfDownloadButton from "@/components/reports/PdfDownloadButton";
+import ZoomableReportViewer from "@/components/reports/ZoomableReportViewer";
 import {
   TrendingUp,
   Activity,
@@ -656,12 +658,21 @@ export default function GenericAuditReport({
   };
 
   const checkIsNegative = (itemId: string) => {
+    // Indikator Pengelolaan Limbah Medis: seluruh pertanyaan nomor 1-10 adalah indikator kepatuhan positif (Ya = Patuh, Tidak = Tidak Patuh)
+    if (
+      tableName === "pengelolaan_limbah_medis" ||
+      tableName === "audit_pengelolaan_limbah_medis" ||
+      tableName.includes("limbah_medis")
+    ) {
+      return false;
+    }
+
     const configItems = (indicatorItems && indicatorItems.length > 0)
       ? indicatorItems
       : genericAuditConfigs[tableName]?.items || [];
     const found = configItems?.find((i) => i.id === itemId || i.key === itemId);
-    if (found) {
-      return Boolean(found.isNegative);
+    if (found && typeof found.isNegative === 'boolean') {
+      return found.isNegative;
     }
     return (
       itemId === "peralatan_berkarat" ||
@@ -933,464 +944,447 @@ export default function GenericAuditReport({
         )}
       </AnimatePresence>
 
-      <div className="pt-6 border-t border-white/5">
-        <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 mb-4 pl-1">Lembar Laporan Resmi</h4>
+      <div className="pt-6 border-t border-white/5 flex items-center justify-between gap-3 mb-4">
+        <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 pl-1">Lembar Laporan Resmi</h4>
+        {filteredRecords.length > 0 && selectedRecord && (
+          <PdfDownloadButton
+            targetElementId="generic-official-report"
+            filename={`Laporan_Resmi_${title.replace(/[^a-zA-Z0-9]/g, '_')}_${(selectedRecord.unit || selectedRecord.ruangan || 'Unit').replace(/[^a-zA-Z0-9]/g, '_')}_${format(new Date(), 'yyyyMMdd_HHmmss')}.pdf`}
+            title="Download PDF Laporan Resmi"
+          />
+        )}
       </div>
 
-      {filteredRecords.length > 0 && selectedRecord ? (
-        <div
-          className="p-4 md:p-6 print:p-0 relative break-inside-avoid w-full max-w-[800px] mx-auto bg-force-white mb-8 border border-slate-200/80 dark:border-white/10 rounded-2xl print:border-none print:rounded-none print:mb-0 font-sans report-card-premium shadow-[0_15px_35px_-8px_rgba(0,0,0,0.15),0_6px_15px_-4px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.9)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.95),0_10px_25px_-6px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.05)]"
-          style={{
-            pageBreakAfter: "always",
-            fontFamily: "var(--font-sans), Poppins, sans-serif",
-          }}
-        >
-          <div className="flex flex-col md:flex-row items-center justify-between gap-3 mb-4 border-b-2 border-slate-800 pb-3 w-full text-center mt-6 print:mt-0">
-            <div className="flex items-center gap-2 sm:gap-4 w-full justify-center text-center max-w-full">
-              <div className="w-10 h-10 sm:w-16 sm:h-16 flex-shrink-0 flex items-center justify-center p-1">
+      {filteredRecords.length > 0 && selectedRecord ? (() => {
+        const auditDate = selectedRecord.waktu || selectedRecord.tanggal_waktu;
+        const formattedDate = auditDate
+          ? format(parseISO(auditDate), "dd MMMM yyyy HH:mm", { locale: idLocale })
+          : "-";
+        const supervisorName = selectedRecord.supervisor || selectedRecord.observer || "-";
+        const unitName = selectedRecord.unit || selectedRecord.ruangan || "-";
+        const pjName = selectedRecord.nama_pj_ruangan || selectedRecord.nama_pj || "";
+
+        const patuhCount = checklistItems.filter((item) => {
+          const status = getStatus(item.id);
+          return checkIsNegative(item.id) ? status === "tidak" : status === "ya";
+        }).length;
+        const tidakPatuhCount = checklistItems.filter((item) => {
+          const status = getStatus(item.id);
+          return checkIsNegative(item.id) ? status === "ya" : status === "tidak";
+        }).length;
+        const naCount = checklistItems.filter((item) => {
+          const status = getStatus(item.id);
+          return status === "na" || status === "n/a";
+        }).length;
+        const totalDinilai = patuhCount + tidakPatuhCount;
+        const persentaseVal = totalDinilai > 0
+          ? Math.round((patuhCount / totalDinilai) * 100)
+          : (selectedRecord.persentase || 0);
+        const isSesuai = persentaseVal >= 85;
+
+        const photosList = Array.isArray(selectedRecord.foto)
+          ? selectedRecord.foto
+          : (typeof selectedRecord.foto === "string" && selectedRecord.foto ? [selectedRecord.foto] : []);
+        const perbaikanPhotosList = Array.isArray(selectedRecord.foto_perbaikan)
+          ? selectedRecord.foto_perbaikan
+          : (typeof selectedRecord.foto_perbaikan === "string" && selectedRecord.foto_perbaikan ? [selectedRecord.foto_perbaikan] : []);
+        const hasPerbaikanContent = Boolean(
+          selectedRecord.upaya_perbaikan ||
+          selectedRecord.waktu_perbaikan ||
+          perbaikanPhotosList.length > 0
+        );
+        const hasPhotos = photosList.length > 0 || perbaikanPhotosList.length > 0;
+
+        // Checklist items are rendered in a single unified proportional table
+        const pageItems = checklistItems;
+
+        const renderKopSurat = () => (
+          <div className="mb-2">
+            <div className="flex items-center gap-3 sm:gap-4 border-b-[2.5px] border-black pb-2 mb-1">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 flex items-center justify-center pl-1.5 sm:pl-2.5">
                 {hospitalLogoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={hospitalLogoUrl}
                     alt="Logo RS"
-                    className="w-full h-full object-contain"
+                    className="max-w-full max-h-full object-contain"
                     onError={(e) => {
                       e.currentTarget.style.display = "none";
                     }}
                     crossOrigin="anonymous"
                   />
                 ) : (
-                  <ShieldCheck className="w-6 h-6 sm:w-8 sm:h-8 text-force-black" />
+                  <ShieldCheck className="w-10 h-10 sm:w-12 sm:h-12 text-black" />
                 )}
               </div>
-              <div className="text-left">
-                <h1 className="text-[9px] min-[400px]:text-[11px] sm:text-[13px] md:text-[15px] font-black tracking-tight leading-tight uppercase font-heading text-force-black whitespace-nowrap">
-                  TIM PENCEGAHAN & PENGENDALIAN INFEKSI (PPI)
+              <div className="text-center flex-1 pr-10 sm:pr-14">
+                <h1 className="text-[11pt] sm:text-[12pt] font-black uppercase tracking-wide leading-tight text-black">
+                  TIM PENCEGAHAN DAN PENGENDALIAN INFEKSI (PPI)
                 </h1>
-                <p className="text-[7.5px] min-[400px]:text-[8.5px] sm:text-[10px] md:text-[12px] font-bold uppercase text-force-black tracking-widest mt-0.5 whitespace-nowrap">
+                <h2 className="text-[11pt] sm:text-[12pt] font-black uppercase tracking-wider leading-tight text-black mt-0.5">
                   UOBK RSUD AL-MULK KOTA SUKABUMI
-                </p>
-                <p className="text-[6.5px] min-[400px]:text-[7px] sm:text-[8px] md:text-[9px] text-force-black mt-0.5 italic whitespace-nowrap">
-                  Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota
-                  Sukabumi, Jawa Barat.
+                </h2>
+                <p className="text-[8pt] sm:text-[8.5pt] text-black italic mt-0.5 leading-tight">
+                  Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota Sukabumi, Jawa Barat 43168
                 </p>
               </div>
             </div>
+            {/* Garis batas ganda kop surat standar dinas */}
+            <div className="border-b border-black mb-3" />
           </div>
+        );
 
-          <div className="text-center mb-3">
-            <h2 className="text-[16px] sm:text-[18px] font-black tracking-tight font-heading text-force-black w-full text-center uppercase">
-              {title}
-            </h2>
-          </div>
+        const renderMetadata = () => (
+          <table className="w-full border-collapse border border-black mb-3 text-[11pt]" style={{ backgroundColor: "#ffffff" }}>
+            <tbody>
+              <tr>
+                <td className="w-1/3 border border-black p-2 bg-slate-50 text-center" style={{ backgroundColor: "#f8fafc" }}>
+                  <div className="text-[9pt] font-bold uppercase text-slate-700">Waktu Pelaksanaan</div>
+                  <div className="text-[11pt] font-bold text-black mt-0.5">{formattedDate}</div>
+                </td>
+                <td className="w-1/3 border border-black p-2 bg-slate-50 text-center" style={{ backgroundColor: "#f8fafc" }}>
+                  <div className="text-[9pt] font-bold uppercase text-slate-700">Supervisor / Observer</div>
+                  <div className="text-[11pt] font-bold text-black mt-0.5 uppercase">{supervisorName}</div>
+                </td>
+                <td className="w-1/3 border border-black p-2 bg-slate-50 text-center" style={{ backgroundColor: "#f8fafc" }}>
+                  <div className="text-[9pt] font-bold uppercase text-slate-700">Unit / Ruangan</div>
+                  <div className="text-[11pt] font-bold text-black mt-0.5 uppercase">{unitName}</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        );
 
-          <div className="w-full mb-4 border-2 border-slate-800 border-collapse grid grid-cols-3">
-            <div className="border-r border-slate-800 p-2 text-center flex flex-col items-center justify-center bg-slate-50">
-              <p className="text-[8px] font-black uppercase tracking-widest text-force-black flex items-center justify-center gap-1 mb-0.5">
-                Waktu Pelaksanaan
-              </p>
-              <div className="font-bold text-[10px] sm:text-[11px] text-force-black">
-                {selectedRecord.waktu
-                  ? format(
-                      parseISO(selectedRecord.waktu),
-                      "dd MMM yyyy HH:mm",
-                      { locale: idLocale },
-                    )
-                  : "-"}
-              </div>
-            </div>
-            <div className="border-r border-slate-800 p-2 text-center flex flex-col items-center justify-center bg-slate-50">
-              <p className="text-[8px] font-black uppercase tracking-widest text-force-black flex items-center justify-center gap-1 mb-0.5">
-                Supervisor
-              </p>
-              <p className="font-bold text-[10px] sm:text-[11px] uppercase text-force-black">
-                {selectedRecord.supervisor || selectedRecord.observer || "-"}
-              </p>
-            </div>
-            <div className="p-2 text-center flex flex-col items-center justify-center bg-slate-50">
-              <p className="text-[8px] font-black uppercase tracking-widest text-force-black flex items-center justify-center gap-1 mb-0.5">
-                Unit / Ruangan
-              </p>
-              <p className="font-bold text-[10px] sm:text-[11px] uppercase text-force-black">
-                {selectedRecord.unit || selectedRecord.ruangan || "-"}
-              </p>
-            </div>
-          </div>
+        const renderTable = (items: typeof checklistItems, startIndex: number) => (
+          <table className="w-full border-collapse border border-black text-[11pt] text-black mb-3 bg-white" style={{ backgroundColor: "#ffffff" }}>
+            <thead>
+              <tr className="bg-slate-100 font-bold border-b border-black" style={{ backgroundColor: "#f1f5f9" }}>
+                <th className="border border-black px-2 py-1.5 text-center w-10 text-[11pt]">NO</th>
+                <th className="border border-black px-3 py-1.5 text-center text-[11pt]">INDIKATOR</th>
+                <th className="border border-black px-2 py-1.5 text-center w-12 text-[11pt]">YA</th>
+                <th className="border border-black px-2 py-1.5 text-center w-14 text-[11pt]">TIDAK</th>
+                <th className="border border-black px-2 py-1.5 text-center w-12 text-[11pt]">N/A</th>
+                <th className="border border-black px-3 py-1.5 text-center w-36 text-[11pt]">KETERANGAN</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item, localIdx) => {
+                const globalIdx = startIndex + localIdx;
+                const status = getStatus(item.id);
+                const ket = getKeterangan(item.id);
+                const isNegative = checkIsNegative(item.id);
+                const prevItem = globalIdx > 0 ? checklistItems[globalIdx - 1] : null;
+                const showSectionHeader = Boolean(item.section && (!prevItem || prevItem.section !== item.section));
 
-          <div className="mb-4 overflow-x-auto w-full print:overflow-visible">
-            <table className="w-full border-collapse text-left text-[7.5px] min-[360px]:text-[8.5px] sm:text-[10px] text-force-black bg-force-white border-2 border-slate-800 mb-2 print:min-w-0">
-              <thead>
-                <tr className="bg-slate-50 font-black tracking-wider text-[7px] min-[340px]:text-[7.5px] sm:text-[9px] uppercase border-b-2 border-slate-800">
-                  <th className="px-1 py-1.5 sm:px-2 sm:py-2 w-6 sm:w-8 text-center border border-slate-800 text-force-black">
-                    No
-                  </th>
-                  <th className="px-1.5 py-1.5 sm:px-3 sm:py-2 border border-slate-800 text-force-black text-center">
-                    Indikator
-                  </th>
-                  <th className="px-1 py-1.5 sm:px-2 sm:py-2 w-7 sm:w-10 text-center border border-slate-800 text-force-black">
-                    Ya
-                  </th>
-                  <th className="px-1 py-1.5 sm:px-2 sm:py-2 w-8 sm:w-12 text-center border border-slate-800 text-force-black">
-                    Tidak
-                  </th>
-                  <th className="px-1 py-1.5 sm:px-2 sm:py-2 w-7 sm:w-10 text-center border border-slate-800 text-force-black">
-                    N/A
-                  </th>
-                  <th className="px-1.5 py-1.5 sm:px-3 sm:py-2 border border-slate-800 text-force-black text-center w-20 min-[400px]:w-28 sm:w-32">
-                    Keterangan
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {checklistItems.map((item, itemIdx) => {
-                  const status = getStatus(item.id);
-                  const ket = getKeterangan(item.id);
-                  const prevItem = itemIdx > 0 ? checklistItems[itemIdx - 1] : null;
-                  const showSectionHeader = Boolean(item.section && (!prevItem || prevItem.section !== item.section));
-
-                  return (
-                    <React.Fragment key={item.id}>
-                      {showSectionHeader && (
-                        <tr className="bg-slate-100 font-bold border-y-2 border-slate-800 text-force-black">
-                          <td
-                            colSpan={6}
-                            className="px-2 py-1.5 sm:px-3 sm:py-2 font-black uppercase text-[9px] sm:text-[11px] tracking-wider bg-slate-100/90 border border-slate-800 text-force-black"
-                          >
-                            {item.section}
-                          </td>
-                        </tr>
-                      )}
-                      <tr
-                        className="border-b border-slate-800 hover:bg-slate-50/50 transition-colors text-force-black"
-                      >
-                        <td className="px-1 py-1 sm:px-2 sm:py-2 text-center border border-slate-800 font-bold leading-tight">
-                          {itemIdx + 1}
-                        </td>
-                        <td className="px-1.5 py-1 sm:px-3 sm:py-2 font-medium border border-slate-800 leading-tight">
-                          {item.label.replace(/^\d+\.\s*/, "")}
-                        </td>
-                        <td className="px-1 py-1 sm:px-2 sm:py-2 text-center border border-slate-800 align-middle">
-                          {status === "ya" && (
-                            <span
-                              className={`font-black text-[10px] sm:text-[14px] ${checkIsNegative(item.id) ? "text-red-600" : "text-emerald-600"}`}
-                            >
-                              {checkIsNegative(item.id) ? "✗" : "✓"}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-1 py-1 sm:px-2 sm:py-2 text-center border border-slate-800 align-middle">
-                          {status === "tidak" && (
-                            <span
-                              className={`font-black text-[10px] sm:text-[14px] ${checkIsNegative(item.id) ? "text-emerald-600" : "text-red-600"}`}
-                            >
-                              {checkIsNegative(item.id) ? "✓" : "✗"}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-1 py-1 sm:px-2 sm:py-2 text-center border border-slate-800 align-middle">
-                          {(status === "na" || status === "n/a") && (
-                            <span className="font-black text-[12px] sm:text-[16px] text-slate-500">
-                              -
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-1.5 py-1 sm:px-3 sm:py-2 text-[7px] sm:text-[10px] italic border border-slate-800 leading-tight break-words">
-                          {ket}
+                return (
+                  <React.Fragment key={item.id}>
+                    {showSectionHeader && (
+                      <tr className="bg-slate-100 font-bold border-y border-black text-black" style={{ backgroundColor: "#f1f5f9" }}>
+                        <td
+                          colSpan={6}
+                          className="px-3 py-1 font-black uppercase text-[10pt] tracking-wide border border-black text-black"
+                        >
+                          {item.section}
                         </td>
                       </tr>
-                    </React.Fragment>
-                  );
-                })}
+                    )}
+                    <tr className="border-b border-black text-black bg-white" style={{ backgroundColor: "#ffffff" }}>
+                      <td className="px-2 py-1.5 text-center border border-black font-bold text-[11pt]">
+                        {globalIdx + 1}
+                      </td>
+                      <td className="px-3 py-1.5 font-medium border border-black text-[11pt] leading-snug">
+                        {item.label.replace(/^\d+\.\s*/, "")}
+                      </td>
+                      <td className="px-2 py-1.5 text-center border border-black align-middle">
+                        {status === "ya" && (
+                          <span className={`font-black text-[12pt] ${isNegative ? "text-red-700" : "text-emerald-700"}`}>
+                            {isNegative ? "✗" : "✓"}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-2 py-1.5 text-center border border-black align-middle">
+                        {status === "tidak" && (
+                          <span className={`font-black text-[12pt] ${isNegative ? "text-emerald-700" : "text-red-700"}`}>
+                            {isNegative ? "✓" : "✗"}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-2 py-1.5 text-center border border-black align-middle text-[11pt] font-bold text-slate-600">
+                        {(status === "na" || status === "n/a") ? "-" : ""}
+                      </td>
+                      <td className="px-3 py-1.5 text-[10.5pt] italic border border-black leading-snug break-words">
+                        {ket}
+                      </td>
+                    </tr>
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        );
+
+        const renderSummaryScore = () => (
+          <table className="w-full border-collapse border-2 border-black mb-3 text-black" style={{ backgroundColor: "#ffffff" }}>
+            <tbody>
+              <tr>
+                <td className="w-1/4 border border-black p-2 bg-slate-50 text-center" style={{ backgroundColor: "#f8fafc" }}>
+                  <div className="text-[9pt] font-bold uppercase text-slate-700">Patuh</div>
+                  <div className="text-[16pt] font-black text-black mt-0.5">{patuhCount}</div>
+                </td>
+                <td className="w-1/4 border border-black p-2 bg-slate-50 text-center" style={{ backgroundColor: "#f8fafc" }}>
+                  <div className="text-[9pt] font-bold uppercase text-slate-700">Tidak Patuh</div>
+                  <div className="text-[16pt] font-black text-black mt-0.5">{tidakPatuhCount}</div>
+                </td>
+                <td className="w-1/4 border border-black p-2 bg-slate-50 text-center" style={{ backgroundColor: "#f8fafc" }}>
+                  <div className="text-[9pt] font-bold uppercase text-slate-700">N/A</div>
+                  <div className="text-[16pt] font-black text-black mt-0.5">{naCount}</div>
+                </td>
+                <td className="w-1/4 border border-black p-2 bg-slate-100 text-center" style={{ backgroundColor: "#f1f5f9" }}>
+                  <div className="text-[9pt] font-bold uppercase text-slate-700">Persentase Capaian</div>
+                  <div className="text-[18pt] font-black text-black mt-0.5">{persentaseVal}%</div>
+                  <div className={`text-[9pt] font-black uppercase mt-0.5 ${isSesuai ? "text-emerald-700" : "text-rose-700"}`}>
+                    {isSesuai ? "SESUAI STANDAR" : "TIDAK SESUAI"}
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        );
+
+        const renderFindingsAndRecommendations = () => {
+          if (tableName === "perlindungan_petugas") return null;
+          return (
+            <table className="w-full border-collapse border border-black mb-3 text-[11pt] text-black bg-white" style={{ backgroundColor: "#ffffff" }}>
+              <tbody>
+                <tr>
+                  <td className="w-1/2 border border-black p-2.5 align-top bg-white" style={{ backgroundColor: "#ffffff" }}>
+                    <div className="text-[10pt] font-black uppercase text-black border-b border-black pb-1 mb-1.5">
+                      Temuan Lapangan
+                    </div>
+                    <div className="text-[11pt] leading-snug whitespace-pre-wrap">
+                      {selectedRecord.temuan || "Tidak ada temuan spesifik yang dicatat."}
+                    </div>
+                  </td>
+                  <td className="w-1/2 border border-black p-2.5 align-top bg-white" style={{ backgroundColor: "#ffffff" }}>
+                    <div className="text-[10pt] font-black uppercase text-black border-b border-black pb-1 mb-1.5">
+                      Rekomendasi & Tindak Lanjut
+                    </div>
+                    <div className="text-[11pt] leading-snug whitespace-pre-wrap">
+                      {selectedRecord.rekomendasi || "Sesuai dengan standar prosedur operasional yang berlaku."}
+                    </div>
+                  </td>
+                </tr>
               </tbody>
             </table>
-          </div>
+          );
+        };
 
-          <div className="flex flex-col md:grid md:grid-cols-4 gap-0 mb-4 break-inside-avoid border-2 border-slate-800">
-            <div className="w-full md:col-span-3 grid grid-cols-3 gap-0 border-b-2 border-slate-800 md:border-b-0 md:border-r-2">
-              <div className="p-3 border-r border-slate-800 text-center flex flex-col justify-center bg-slate-50">
-                <p className="text-[10px] font-black uppercase tracking-widest text-force-black mb-1">
-                  Patuh
-                </p>
-                <p className="text-xl sm:text-2xl font-black text-force-black font-mono leading-none">
-                  {(() => {
-                    return checklistItems.filter((item) => {
-                      const status = getStatus(item.id);
-                      if (checkIsNegative(item.id)) {
-                        return status === "tidak";
-                      } else {
-                        return status === "ya";
-                      }
-                    }).length;
-                  })()}
-                </p>
-              </div>
-              <div className="p-3 border-r border-slate-800 text-center flex flex-col justify-center bg-slate-50">
-                <p className="text-[10px] font-black uppercase tracking-widest text-force-black mb-1">
-                  Tdk Patuh
-                </p>
-                <p className="text-xl sm:text-2xl font-black text-force-black font-mono leading-none">
-                  {(() => {
-                    return checklistItems.filter((item) => {
-                      const status = getStatus(item.id);
-                      if (checkIsNegative(item.id)) {
-                        return status === "ya";
-                      } else {
-                        return status === "tidak";
-                      }
-                    }).length;
-                  })()}
-                </p>
-              </div>
-              <div className="p-3 text-center flex flex-col justify-center bg-slate-50">
-                <p className="text-[10px] font-black uppercase tracking-widest text-force-black mb-1">
-                  N/A
-                </p>
-                <p className="text-xl sm:text-2xl font-black text-force-black font-mono leading-none">
-                  {(() => {
-                    return checklistItems.filter((item) => {
-                      const status = getStatus(item.id);
-                      return status === "na" || status === "n/a";
-                    }).length;
-                  })()}
-                </p>
-              </div>
-            </div>
-            <div className="w-full md:col-span-1 p-3 flex flex-col items-center justify-center text-center bg-blue-50/50">
-              <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-force-black">
-                Persentase Capaian
-              </p>
-              <p className="text-2xl sm:text-3xl font-black font-heading mb-1.5 leading-none text-force-black">
-                {selectedRecord.persentase || 0}%
-              </p>
-              <div className="text-[9px] font-black uppercase tracking-widest py-0.5 px-2 text-force-black print:p-0">
-                {(selectedRecord.persentase || 0) >= 85
-                  ? "SESUAI STANDAR"
-                  : "TIDAK SESUAI"}
-              </div>
-            </div>
-          </div>
-
-          {tableName !== "perlindungan_petugas" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 break-inside-avoid">
-              <div className="border-2 border-slate-800 p-3 bg-slate-50/50">
-                <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-force-black mb-2 border-b-2 border-slate-800 pb-1 flex items-center gap-2">
-                  Temuan Lapangan
-                </h4>
-                <div className="text-xs sm:text-sm text-force-black leading-tight whitespace-pre-wrap">
-                  {selectedRecord.temuan || (
-                    <span className="italic">
-                      Tidak ada temuan spesifik yang dicatat.
-                    </span>
-                  )}
+        const renderSignatures = () => (
+          <div className="mt-3 mb-2">
+            {tableName === "perlindungan_petugas" ? (
+              <div className="flex justify-end pr-6">
+                <div className="text-center w-64">
+                  <div className="font-bold text-black uppercase text-[11pt]">TIM PPI RS</div>
+                  <div className="h-16 flex items-center justify-center my-1">
+                    {(selectedRecord.tanda_tangan_2 || selectedRecord.tanda_tangan_1) ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={selectedRecord.tanda_tangan_2 || selectedRecord.tanda_tangan_1}
+                        className="max-h-16 object-contain filter brightness-0"
+                        alt="TTD IPCN"
+                        crossOrigin="anonymous"
+                      />
+                    ) : (
+                      <span className="text-[9pt] text-slate-400 italic">Tanpa Tanda Tangan</span>
+                    )}
+                  </div>
+                  <div className="font-bold text-black uppercase text-[11pt] underline">
+                    ( {supervisorName || "........................................"} )
+                  </div>
                 </div>
               </div>
-              <div className="border-2 border-slate-800 p-3 bg-slate-50/50">
-                <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-force-black mb-2 border-b-2 border-slate-800 pb-1 flex items-center gap-2">
-                  Rekomendasi & Tindak Lanjut
-                </h4>
-                <div className="text-xs sm:text-sm text-force-black leading-tight whitespace-pre-wrap">
-                  {selectedRecord.rekomendasi || (
-                    <span className="italic">
-                      Sesuai dengan standar prosedur operasional yang berlaku.
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {selectedRecord.foto &&
-            (selectedRecord.foto as string[]).length > 0 && (
-              <div className="mb-4 break-inside-avoid">
-                <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-force-black mb-3 flex items-center gap-2">
-                  <Camera className="w-4 h-4 text-force-black" /> Lampiran
-                  Dokumentasi
-                </h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {(selectedRecord.foto as string[]).map(
-                    (url: string, i: number) => (
-                      <div
-                        key={i}
-                        onClick={() => setZoomedImage(url)}
-                        className="aspect-video relative border border-slate-300 p-1 cursor-zoom-in"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={url}
-                          alt={`Dokumentasi ${i + 1}`}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.style.display = "none";
-                          }}
-                          crossOrigin="anonymous"
-                        />
+            ) : (
+              <table className="w-full border-none text-[11pt] text-black">
+                <tbody>
+                  <tr>
+                    <td className="w-1/2 text-center align-top p-1">
+                      <div className="font-bold text-black uppercase text-[11pt]">Petugas / PJ Ruangan</div>
+                      <div className="h-16 flex items-center justify-center my-1">
+                        {selectedRecord.tanda_tangan_1 ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={selectedRecord.tanda_tangan_1}
+                            className="max-h-16 object-contain filter brightness-0"
+                            alt="TTD PJ"
+                            crossOrigin="anonymous"
+                          />
+                        ) : (
+                          <span className="text-[9pt] text-slate-400 italic">Tanpa Tanda Tangan</span>
+                        )}
                       </div>
-                    ),
-                  )}
-                </div>
-              </div>
+                      <div className="font-bold text-black uppercase text-[11pt] underline">
+                        ( {pjName || "........................................"} )
+                      </div>
+                    </td>
+                    <td className="w-1/2 text-center align-top p-1">
+                      <div className="font-bold text-black uppercase text-[11pt]">Tim PPI</div>
+                      <div className="h-16 flex items-center justify-center my-1">
+                        {selectedRecord.tanda_tangan_2 ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={selectedRecord.tanda_tangan_2}
+                            className="max-h-16 object-contain filter brightness-0"
+                            alt="TTD IPCN"
+                            crossOrigin="anonymous"
+                          />
+                        ) : (
+                          <span className="text-[9pt] text-slate-400 italic">Tanpa Tanda Tangan</span>
+                        )}
+                      </div>
+                      <div className="font-bold text-black uppercase text-[11pt] underline">
+                        ( {supervisorName || "........................................"} )
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             )}
+          </div>
+        );
 
-          {/* UPAYA PERBAIKAN & FOTO PERBAIKAN SECTION */}
-          {(selectedRecord.upaya_perbaikan || selectedRecord.waktu_perbaikan || (selectedRecord.foto_perbaikan && (selectedRecord.foto_perbaikan as string[]).length > 0)) && (
-            <div className="mb-4 break-inside-avoid border-2 border-amber-600 bg-amber-50/40 p-3">
-              <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-amber-900 mb-2 border-b-2 border-amber-500/40 pb-1 flex items-center justify-between">
-                <span className="flex items-center gap-1.5">
-                  🛠️ UPAYA PERBAIKAN & TINDAK LANJUT
-                </span>
-                <span className="text-[9px] px-2 py-0.5 bg-amber-200 text-amber-900 rounded font-bold">
-                  HASIL PERBAIKAN
-                </span>
-              </h4>
-              {selectedRecord.waktu_perbaikan && (
-                <div className="text-[10px] font-bold text-amber-900 mb-2 flex items-center gap-1.5 bg-amber-200/70 border border-amber-400/50 px-2.5 py-1 rounded-md w-fit">
-                  <span>📅 Tanggal &amp; Waktu Perbaikan:</span>
-                  <span className="font-mono">{selectedRecord.waktu_perbaikan.includes('T') ? selectedRecord.waktu_perbaikan.replace('T', ' ') : selectedRecord.waktu_perbaikan}</span>
+        return (
+          <div className="w-full">
+            <ZoomableReportViewer>
+              <div
+                id="generic-official-report"
+                data-pdf-page="true"
+                className="official-report-paper official-pdf-page w-full min-w-[650px] sm:min-w-0 sm:w-full max-w-[210mm] mx-auto bg-force-white text-black p-4 sm:p-8 md:p-10 border border-slate-300 rounded-2xl shadow-xl print:shadow-none print:border-none print:p-0 my-2 sm:my-4"
+                style={{
+                  fontFamily: "'Calibri', 'Carlito', 'Candara', 'Segoe UI', Arial, sans-serif",
+                  fontSize: "11pt",
+                  backgroundColor: "#ffffff",
+                  color: "#000000",
+                  boxSizing: "border-box",
+                }}
+              >
+                {/* 1. Kop Surat Resmi RSUD AL-MULK */}
+                {renderKopSurat()}
+
+                {/* 2. Judul Lembar Audit */}
+                <div className="text-center mb-3">
+                  <h2 className="text-[12pt] font-black uppercase tracking-wider text-black underline decoration-1 underline-offset-4">
+                    LEMBAR AUDIT {title.toUpperCase()}
+                  </h2>
                 </div>
-              )}
-              {selectedRecord.upaya_perbaikan && (
-                <div className="text-xs sm:text-sm text-force-black leading-relaxed whitespace-pre-wrap font-medium mb-3">
-                  {selectedRecord.upaya_perbaikan}
-                </div>
-              )}
-              {selectedRecord.foto_perbaikan && (selectedRecord.foto_perbaikan as string[]).length > 0 && (
-                <div>
-                  <p className="text-[9px] font-bold uppercase tracking-wider text-amber-900/80 mb-2 flex items-center gap-1.5">
-                    <Camera className="w-3.5 h-3.5 text-amber-800" /> Foto Bukti Upaya Perbaikan:
-                  </p>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {(selectedRecord.foto_perbaikan as string[]).map(
-                      (url: string, i: number) => (
+
+                {/* 3. Metadata Pelaksanaan */}
+                {renderMetadata()}
+
+                {/* 4. Tabel Checklist Indikator Utuh */}
+                {renderTable(pageItems, 0)}
+
+                {/* 5. Rekap Skor & Capaian Standar */}
+                {renderSummaryScore()}
+
+                {/* 6. Temuan & Rekomendasi */}
+                {renderFindingsAndRecommendations()}
+
+                {/* 7. Foto Dokumentasi Temuan Audit (Jika Ada) */}
+                {photosList.length > 0 && (
+                  <div className="mb-4 border border-black p-3 bg-white">
+                    <h4 className="text-[11pt] font-black uppercase tracking-wide text-black mb-2 flex items-center gap-2 border-b border-black pb-1">
+                      <Camera className="w-4 h-4 text-black" /> FOTO DOKUMENTASI AUDIT
+                    </h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {photosList.map((url: string, i: number) => (
                         <div
                           key={i}
                           onClick={() => setZoomedImage(url)}
-                          className="aspect-video relative border-2 border-amber-400/80 bg-white p-1 cursor-zoom-in shadow-sm rounded-sm"
+                          className="aspect-video relative border border-slate-800 p-1 cursor-zoom-in bg-white shadow-sm"
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={url}
-                            alt={`Foto Perbaikan ${i + 1}`}
+                            alt={`Dokumentasi ${i + 1}`}
                             className="w-full h-full object-cover"
                             onError={(e) => {
                               e.currentTarget.style.display = "none";
                             }}
                             crossOrigin="anonymous"
                           />
-                          <div className="absolute bottom-1 left-1 bg-amber-900/80 text-white text-[8px] px-1 py-0.5 font-mono font-bold rounded">
-                            Bukti #{i + 1}
+                          <div className="absolute bottom-1 left-1 bg-black/80 text-white text-[8pt] px-1 font-mono font-bold">
+                            Foto #{i + 1}
                           </div>
                         </div>
-                      ),
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 8. Tindak Lanjut & Upaya Perbaikan (Jika Ada) */}
+                {hasPerbaikanContent && (
+                  <div className="mb-4 border-2 border-black p-3 bg-slate-50">
+                    <h4 className="text-[11pt] font-black uppercase tracking-wide text-black mb-2 border-b border-black pb-1 flex items-center justify-between">
+                      <span>🛠️ TINDAK LANJUT &amp; UPAYA PERBAIKAN</span>
+                      <span className="text-[9pt] px-2 py-0.5 border border-black font-bold uppercase bg-white">
+                        HASIL PERBAIKAN
+                      </span>
+                    </h4>
+                    {selectedRecord.waktu_perbaikan && (
+                      <div className="text-[10pt] font-bold text-black mb-2 flex items-center gap-1.5 border border-black px-2.5 py-1 bg-white w-fit">
+                        <span>📅 Tanggal &amp; Waktu Perbaikan:</span>
+                        <span className="font-mono">
+                          {selectedRecord.waktu_perbaikan.includes("T")
+                            ? selectedRecord.waktu_perbaikan.replace("T", " ")
+                            : selectedRecord.waktu_perbaikan}
+                        </span>
+                      </div>
+                    )}
+                    {selectedRecord.upaya_perbaikan && (
+                      <div className="text-[11pt] text-black leading-relaxed whitespace-pre-wrap font-medium mb-3 p-2 bg-white border border-slate-300">
+                        {selectedRecord.upaya_perbaikan}
+                      </div>
+                    )}
+                    {perbaikanPhotosList.length > 0 && (
+                      <div>
+                        <p className="text-[10pt] font-bold uppercase tracking-wider text-black mb-2 flex items-center gap-1.5">
+                          <Camera className="w-3.5 h-3.5 text-black" /> Foto Bukti Upaya Perbaikan:
+                        </p>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          {perbaikanPhotosList.map((url: string, i: number) => (
+                            <div
+                              key={i}
+                              onClick={() => setZoomedImage(url)}
+                              className="aspect-video relative border-2 border-black bg-white p-1 cursor-zoom-in shadow-sm"
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={url}
+                                alt={`Foto Perbaikan ${i + 1}`}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = "none";
+                                }}
+                                crossOrigin="anonymous"
+                              />
+                              <div className="absolute bottom-1 left-1 bg-black text-white text-[8pt] px-1 py-0.5 font-mono font-bold">
+                                Bukti #{i + 1}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     )}
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
 
-          {tableName === "perlindungan_petugas" ? (
-            <div className="flex justify-end mt-4 mb-2 break-inside-avoid">
-              <div className="text-center space-y-2 w-64">
-                <p className="text-[9px] font-black uppercase tracking-widest text-force-black mb-2">
-                  TIM PPI RS
-                </p>
-                <div className="h-16 relative w-full flex justify-center items-center">
-                  {(selectedRecord.tanda_tangan_2 || selectedRecord.tanda_tangan_1) ? (
-                    <img
-                      src={selectedRecord.tanda_tangan_2 || selectedRecord.tanda_tangan_1}
-                      className="object-contain h-full relative z-10 filter brightness-0"
-                      alt="TTD IPCN"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                      crossOrigin="anonymous"
-                    />
-                  ) : (
-                    <span className="text-[8px] text-gray-500 uppercase tracking-widest font-black italic">
-                      Tanpa Tanda Tangan
-                    </span>
-                  )}
-                </div>
-                <div className="pt-1 border-t border-slate-300 w-[90%] md:w-48 mx-auto">
-                  <p className="font-bold text-[10px] uppercase tracking-wider text-force-black mt-1 text-wrap">
-                    ({" "}
-                    {selectedRecord.supervisor ||
-                      selectedRecord.observer ||
-                      "........................................"}{" "}
-                    )
-                  </p>
-                </div>
+                {/* 9. Tanda Tangan Pengesahan (Paling Bawah - Tunggal, Tidak Duplikat) */}
+                {renderSignatures()}
               </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-8 mt-4 mb-2 break-inside-avoid">
-              <div className="text-center space-y-2">
-                <p className="text-[9px] font-black uppercase tracking-widest text-force-black mb-2">
-                  PJ Ruangan
-                </p>
-                <div className="h-16 relative w-full flex justify-center items-center">
-                  {selectedRecord.tanda_tangan_1 ? (
-                    <img
-                      src={selectedRecord.tanda_tangan_1}
-                      className="object-contain h-full relative z-10 filter brightness-0"
-                      alt="TTD PJ"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                      crossOrigin="anonymous"
-                    />
-                  ) : (
-                    <span className="text-[8px] text-gray-500 uppercase tracking-widest font-black italic">
-                      Tanpa Tanda Tangan
-                    </span>
-                  )}
-                </div>
-                <div className="pt-1 border-t border-slate-300 w-[90%] md:w-48 mx-auto">
-                  <p className="font-bold text-[10px] uppercase tracking-wider text-force-black mt-1 text-wrap">
-                    {selectedRecord.nama_pj_ruangan || selectedRecord.nama_pj
-                      ? `( ${selectedRecord.nama_pj_ruangan || selectedRecord.nama_pj} )`
-                      : "( ........................................ )"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="text-center space-y-2">
-                <p className="text-[9px] font-black uppercase tracking-widest text-force-black mb-2">
-                  TIM PPI RS
-                </p>
-                <div className="h-16 relative w-full flex justify-center items-center">
-                  {selectedRecord.tanda_tangan_2 ? (
-                    <img
-                      src={selectedRecord.tanda_tangan_2}
-                      className="object-contain h-full relative z-10 filter brightness-0"
-                      alt="TTD IPCN"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                      crossOrigin="anonymous"
-                    />
-                  ) : (
-                    <span className="text-[8px] text-gray-500 uppercase tracking-widest font-black italic">
-                      Tanpa Tanda Tangan
-                    </span>
-                  )}
-                </div>
-                <div className="pt-1 border-t border-slate-300 w-[90%] md:w-48 mx-auto">
-                  <p className="font-bold text-[10px] uppercase tracking-wider text-force-black mt-1 text-wrap">
-                    ({" "}
-                    {selectedRecord.supervisor ||
-                      selectedRecord.observer ||
-                      "........................................"}{" "}
-                    )
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-
-        </div>
-      ) : (
+            </ZoomableReportViewer>
+          </div>
+        );
+      })() : (
         <div className="h-full bg-slate-50 dark:bg-[#111827]/80 rounded-[2rem] border border-slate-200/80 dark:border-white/10 flex flex-col items-center justify-center p-12 md:p-20 text-center text-slate-500 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.08),0_4px_10px_-2px_rgba(0,0,0,0.04)] dark:shadow-[0_16px_32px_-8px_rgba(0,0,0,0.8)] min-h-[400px]">
           <FileText className="w-16 h-16 md:w-20 md:h-20 mb-6 text-slate-300 dark:text-slate-700" />
           <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white mb-2">

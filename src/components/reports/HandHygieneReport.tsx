@@ -209,16 +209,30 @@ export default function HandHygieneReport({
     </div>
   );
 
+  const formatDateTimeSafe = (val: any) => {
+    if (!val) return '-';
+    try {
+      const d = typeof val === 'string' ? parseISO(val) : new Date(val);
+      if (isNaN(d.getTime())) return '-';
+      return format(d, 'dd/MM/yyyy HH:mm');
+    } catch {
+      return '-';
+    }
+  };
+
   const normalizeHH = (item: any) => {
     const json = item.data_indikator || item.checklist_json || {};
+    const startTime = item.start_time || json.start_time || json.waktu_mulai || item.tanggal_waktu || item.created_at;
+    const endTime = item.end_time || json.end_time || json.waktu_selesai || (startTime ? new Date(new Date(startTime).getTime() + 15 * 60000).toISOString() : null);
+
     return {
       ...item,
       id: item.id,
       observer: item.observer || item.supervisor || '',
       unit: item.unit || item.ruangan || '',
       profesi: item.profesi || json.profesi || 'LAINNYA',
-      start_time: item.start_time || item.tanggal_waktu || item.created_at,
-      end_time: item.end_time || item.tanggal_waktu || item.start_time || item.created_at,
+      start_time: startTime,
+      end_time: endTime,
       m1: item.m1 || json.m1 || null,
       m2: item.m2 || json.m2 || null,
       m3: item.m3 || json.m3 || null,
@@ -262,36 +276,94 @@ export default function HandHygieneReport({
         supabase.from('audit_sessions').select('*').eq('indikator_id', 'audit_hand_hygiene').order('tanggal_waktu', { ascending: true })
       ]);
 
-      const sessions = (sessionsRes.data || []).map(normalizeHH);
-      const hh = (hhRes.data || []).map(normalizeHH);
+      const rawSessions = sessionsRes.data || [];
+      const rawHH = hhRes.data || [];
 
-      const seenIds = new Set<string>();
-      const seenKeys = new Set<string>();
-      const combined: any[] = [];
-
-      for (const item of sessions) {
-        if (!item.id || seenIds.has(item.id)) continue;
-        seenIds.add(item.id);
-        const obs = (item.observer || '').toLowerCase().trim();
-        const unt = (item.unit || '').toLowerCase().trim();
-        const timeKey = item.start_time ? new Date(item.start_time).toISOString().substring(0, 16) : '';
-        if (obs && unt && timeKey) {
-          seenKeys.add(`${obs}_${unt}_${timeKey}`);
-        }
-        combined.push(item);
+      const rawHHById = new Map<string, any>();
+      for (const h of rawHH) {
+        if (h.id) rawHHById.set(h.id, h);
       }
 
-      for (const item of hh) {
-        if (!item.id || seenIds.has(item.id)) continue;
-        const obs = (item.observer || '').toLowerCase().trim();
-        const unt = (item.unit || '').toLowerCase().trim();
-        const timeKey = item.start_time ? new Date(item.start_time).toISOString().substring(0, 16) : '';
-        const key = `${obs}_${unt}_${timeKey}`;
-        if (obs && unt && timeKey && seenKeys.has(key)) continue;
+      const usedHhIds = new Set<string>();
+      const seenIds = new Set<string>();
+      const combined: any[] = [];
 
-        seenIds.add(item.id);
-        if (obs && unt && timeKey) seenKeys.add(key);
-        combined.push(item);
+      // 1. Process all sessions, matching first by exact ID, then by observer+unit+timestamp proximity
+      for (const s of rawSessions) {
+        if (!s.id || seenIds.has(s.id)) continue;
+
+        let match: any = null;
+        if (rawHHById.has(s.id) && !usedHhIds.has(s.id)) {
+          match = rawHHById.get(s.id);
+          usedHhIds.add(s.id);
+        } else {
+          const sStart = s.tanggal_waktu || s.start_time || s.created_at;
+          const sTime = sStart ? new Date(sStart).getTime() : 0;
+          match = rawHH.find((h: any) => {
+            if (usedHhIds.has(h.id)) return false;
+            const hTime = h.start_time ? new Date(h.start_time).getTime() : 0;
+            return (
+              (h.observer || '').trim().toLowerCase() === (s.observer || '').trim().toLowerCase() &&
+              (h.unit || '').trim().toLowerCase() === (s.unit || '').trim().toLowerCase() &&
+              Math.abs(hTime - sTime) < 120000 // within 2 minutes
+            );
+          });
+          if (match) {
+            usedHhIds.add(match.id);
+          }
+        }
+
+        const sJson = s.data_indikator || s.checklist_json || {};
+        const startTime = match?.start_time || s.tanggal_waktu || s.start_time || s.created_at;
+        const endTime = match?.end_time || s.end_time || sJson.end_time || sJson.waktu_selesai || (startTime ? new Date(new Date(startTime).getTime() + 15 * 60000).toISOString() : null);
+
+        seenIds.add(s.id);
+        combined.push({
+          ...s,
+          ...(match || {}),
+          id: s.id,
+          observer: s.observer || match?.observer || '',
+          unit: s.unit || match?.unit || '',
+          profesi: s.profesi || match?.profesi || sJson.profesi || 'LAINNYA',
+          start_time: startTime,
+          end_time: endTime,
+          m1: match?.m1 ?? sJson.m1 ?? s.m1 ?? null,
+          m2: match?.m2 ?? sJson.m2 ?? s.m2 ?? null,
+          m3: match?.m3 ?? sJson.m3 ?? s.m3 ?? null,
+          m4: match?.m4 ?? sJson.m4 ?? s.m4 ?? null,
+          m5: match?.m5 ?? sJson.m5 ?? s.m5 ?? null,
+          peluang: match?.peluang !== undefined ? match.peluang : s.jumlah_dinilai !== undefined ? s.jumlah_dinilai : 0,
+          patuh: match?.patuh !== undefined ? match.patuh : s.jumlah_patuh !== undefined ? s.jumlah_patuh : 0,
+          persentase: match?.persentase !== undefined ? match.persentase : s.persentase !== undefined ? s.persentase : 0,
+          data_indikator: s.data_indikator || sJson,
+        });
+      }
+
+      // 2. Add remaining records from audit_hand_hygiene that were not matched or seen
+      for (const h of rawHH) {
+        if (!h.id || usedHhIds.has(h.id) || seenIds.has(h.id)) continue;
+
+        const startTime = h.start_time || h.created_at;
+        const endTime = h.end_time || (startTime ? new Date(new Date(startTime).getTime() + 15 * 60000).toISOString() : null);
+
+        seenIds.add(h.id);
+        combined.push({
+          ...h,
+          id: h.id,
+          observer: h.observer || '',
+          unit: h.unit || '',
+          profesi: h.profesi || 'LAINNYA',
+          start_time: startTime,
+          end_time: endTime,
+          m1: h.m1 ?? null,
+          m2: h.m2 ?? null,
+          m3: h.m3 ?? null,
+          m4: h.m4 ?? null,
+          m5: h.m5 ?? null,
+          peluang: h.peluang !== undefined ? h.peluang : h.jumlah_dinilai !== undefined ? h.jumlah_dinilai : 0,
+          patuh: h.patuh !== undefined ? h.patuh : h.jumlah_patuh !== undefined ? h.jumlah_patuh : 0,
+          persentase: h.persentase !== undefined ? h.persentase : 0,
+        });
       }
 
       combined.sort((a, b) => new Date(a.start_time || 0).getTime() - new Date(b.start_time || 0).getTime());
@@ -607,14 +679,14 @@ export default function HandHygieneReport({
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 text-[10px] sm:text-xs font-bold text-slate-200">
-              {filteredData.map((row) => {
+              {filteredData.map((row, index) => {
                 return (
-                  <tr key={row.id} className="hover:bg-white/[0.03] transition-colors group">
+                  <tr key={row.id ? `hh_row_${row.id}` : `hh_row_idx_${index}`} className="hover:bg-white/[0.03] transition-colors group">
                     <td className="px-4 py-4 text-center text-slate-300 font-mono">
-                      {row.start_time || row.tanggal_waktu ? format(parseISO(row.start_time || row.tanggal_waktu), 'dd/MM/yyyy HH:mm') : '-'}
+                      {formatDateTimeSafe(row.start_time || row.tanggal_waktu)}
                     </td>
                     <td className="px-4 py-4 text-center text-slate-300 font-mono">
-                      {row.end_time ? format(parseISO(row.end_time), 'dd/MM/yyyy HH:mm') : '-'}
+                      {formatDateTimeSafe(row.end_time)}
                     </td>
                     <td className="px-4 py-4 text-center font-normal italic text-slate-400">{row.observer || '-'}</td>
                     <td className="px-4 py-4 text-center font-semibold text-white">{row.unit || '-'}</td>
