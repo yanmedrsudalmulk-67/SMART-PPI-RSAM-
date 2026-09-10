@@ -1258,7 +1258,7 @@ export default function GenericAuditReport({
               <div
                 id="generic-official-report"
                 data-pdf-page="true"
-                className="official-report-paper official-pdf-page w-full min-w-[650px] sm:min-w-0 sm:w-full max-w-[210mm] mx-auto bg-force-white text-black p-4 sm:p-8 md:p-10 border border-slate-300 rounded-2xl shadow-xl print:shadow-none print:border-none print:p-0 my-2 sm:my-4"
+                className="official-report-paper official-pdf-page w-full min-w-[650px] sm:min-w-0 sm:w-full max-w-[215mm] mx-auto bg-force-white text-black p-4 sm:p-8 md:p-10 border border-slate-300 rounded-2xl shadow-xl print:shadow-none print:border-none print:p-0 my-2 sm:my-4"
                 style={{
                   fontFamily: "'Calibri', 'Carlito', 'Candara', 'Segoe UI', Arial, sans-serif",
                   fontSize: "11pt",

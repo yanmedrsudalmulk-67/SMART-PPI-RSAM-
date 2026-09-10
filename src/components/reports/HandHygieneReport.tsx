@@ -11,9 +11,13 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, ReferenceLine, ComposedChart, Line, Cell
 } from '@/components/ChartComponents';
 import { format, parseISO } from 'date-fns';
+import { id as idLocale } from 'date-fns/locale';
 import { useAppContext } from '@/components/Providers';
 import { ReportSkeleton } from '@/components/SkeletonLoading';
 import { forceScrollToTop } from '@/utils/scrollHelper';
+import PdfDownloadButton from '@/components/reports/PdfDownloadButton';
+import ZoomableReportViewer from '@/components/reports/ZoomableReportViewer';
+import { exportElementToA4Pdf } from '@/utils/pdfExport';
 
 
 const ProfessionFilter = ({ 
@@ -221,9 +225,12 @@ export default function HandHygieneReport({
   };
 
   const normalizeHH = (item: any) => {
-    const json = item.data_indikator || item.checklist_json || {};
-    const startTime = item.start_time || json.start_time || json.waktu_mulai || item.tanggal_waktu || item.created_at;
-    const endTime = item.end_time || json.end_time || json.waktu_selesai || (startTime ? new Date(new Date(startTime).getTime() + 15 * 60000).toISOString() : null);
+    const rawJson = item.data_indikator || item.checklist_json || {};
+    const json = typeof rawJson === 'string'
+      ? (() => { try { return JSON.parse(rawJson); } catch { return {}; } })()
+      : rawJson;
+    const startTime = json.waktu_mulai || json.start_time || item.start_time || item.tanggal_waktu || item.created_at;
+    const endTime = json.waktu_selesai || json.end_time || item.end_time || (startTime ? new Date(new Date(startTime).getTime() + 15 * 60000).toISOString() : null);
 
     return {
       ...item,
@@ -267,6 +274,18 @@ export default function HandHygieneReport({
       setDeleteConfirmId(null);
     }
   };
+
+  useEffect(() => {
+    const handleCustomDownload = async () => {
+      const el = document.getElementById('hand-hygiene-official-report');
+      if (el) {
+        const filename = `Laporan_Kepatuhan_Kebersihan_Tangan_RSUD_AL_MULK_${(filters.periode || 'Periode').replace(/[^a-zA-Z0-9]/g, '_')}_${format(new Date(), 'yyyyMMdd_HHmmss')}.pdf`;
+        await exportElementToA4Pdf(el, { filename });
+      }
+    };
+    window.addEventListener('download-hh-pdf', handleCustomDownload);
+    return () => window.removeEventListener('download-hh-pdf', handleCustomDownload);
+  }, [filters.periode]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -313,11 +332,20 @@ export default function HandHygieneReport({
           }
         }
 
-        const sJson = s.data_indikator || s.checklist_json || {};
-        const startTime = match?.start_time || s.tanggal_waktu || s.start_time || s.created_at;
-        const endTime = match?.end_time || s.end_time || sJson.end_time || sJson.waktu_selesai || (startTime ? new Date(new Date(startTime).getTime() + 15 * 60000).toISOString() : null);
+        const rawSJson = s.data_indikator || s.checklist_json || {};
+        const sJson = typeof rawSJson === 'string'
+          ? (() => { try { return JSON.parse(rawSJson); } catch { return {}; } })()
+          : rawSJson;
+        
+        // Prioritize waktu_selesai / end_time explicitly saved from the input data menu
+        const startTime = sJson.waktu_mulai || sJson.start_time || match?.start_time || s.tanggal_waktu || s.start_time || s.created_at;
+        const endTime = sJson.waktu_selesai || sJson.end_time || match?.end_time || s.end_time || (startTime ? new Date(new Date(startTime).getTime() + 15 * 60000).toISOString() : null);
 
         seenIds.add(s.id);
+        if (match?.id) {
+          seenIds.add(match.id);
+          usedHhIds.add(match.id);
+        }
         combined.push({
           ...s,
           ...(match || {}),
@@ -342,6 +370,9 @@ export default function HandHygieneReport({
       // 2. Add remaining records from audit_hand_hygiene that were not matched or seen
       for (const h of rawHH) {
         if (!h.id || usedHhIds.has(h.id) || seenIds.has(h.id)) continue;
+
+        seenIds.add(h.id);
+        usedHhIds.add(h.id);
 
         const startTime = h.start_time || h.created_at;
         const endTime = h.end_time || (startTime ? new Date(new Date(startTime).getTime() + 15 * 60000).toISOString() : null);
@@ -606,24 +637,26 @@ export default function HandHygieneReport({
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-500">
       
-      {/* Filter Bar */}
-      <div className="flex items-center gap-3 p-1.5 sm:p-2 sm:px-3 bg-[#18193b] rounded-full border border-[#2b2d56] shadow-[-4px_-4px_16px_rgba(140,165,255,0.05),8px_10px_24px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.15),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] w-fit relative overflow-hidden">
-        <div className="absolute top-0 inset-x-6 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
-        
-        {/* Neumorphic Capsule Badge */}
-        <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)]">
-          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-          <Users className="w-3 h-3 text-cyan-400" />
-          <span className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-300">
-            FILTER PROFESI
-          </span>
-        </div>
+      {/* Filter Bar & Quick Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
+        <div className="flex items-center gap-3 p-1.5 sm:p-2 sm:px-3 bg-[#18193b] rounded-full border border-[#2b2d56] shadow-[-4px_-4px_16px_rgba(140,165,255,0.05),8px_10px_24px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.15),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] w-fit relative overflow-hidden">
+          <div className="absolute top-0 inset-x-6 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+          
+          {/* Neumorphic Capsule Badge */}
+          <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+            <Users className="w-3 h-3 text-cyan-400" />
+            <span className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-300">
+              FILTER PROFESI
+            </span>
+          </div>
 
-        <ProfessionFilter 
-           selectedProfessions={selectedProfessions}
-           setSelectedProfessions={setSelectedProfessions}
-           allProfessions={allProfessions}
-        />
+          <ProfessionFilter 
+             selectedProfessions={selectedProfessions}
+             setSelectedProfessions={setSelectedProfessions}
+             allProfessions={allProfessions}
+          />
+        </div>
       </div>
       
       {/* Tabel Data Audit */}
@@ -632,23 +665,27 @@ export default function HandHygieneReport({
         <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
         <div className="p-6 sm:p-8 border-b border-indigo-900/30 bg-[#141532]/60 backdrop-blur-md">
-           <div className="flex flex-col md:flex-row items-center gap-6">
-             {hospitalLogoUrl && (
-               <img src={hospitalLogoUrl} alt="Logo RS" className="w-16 h-16 sm:w-20 sm:h-20 object-contain" />
-             )}
-             <div className="text-center md:text-left">
-               <h2 className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-300 uppercase tracking-tight">Laporan Audit Kebersihan Tangan</h2>
-               <h3 className="text-base sm:text-lg font-black text-slate-200 uppercase mt-0.5">UOBK RSUD AL-MULK KOTA SUKABUMI</h3>
-               <p className="text-slate-400 font-bold text-xs sm:text-sm mt-1 uppercase tracking-wider">
-                 Periode: {filters.periode ? (
-                   (() => {
-                     const date = parseISO(filters.periode);
-                     const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-                     return `${months[date.getMonth()]} ${date.getFullYear()}`;
-                   })()
-                 ) : '-'}
-               </p>
+           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+             <div className="flex items-center gap-6">
+               {hospitalLogoUrl && (
+                 <img src={hospitalLogoUrl} alt="Logo RS" className="w-16 h-16 sm:w-20 sm:h-20 object-contain" />
+               )}
+               <div className="text-center md:text-left">
+                 <h2 className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-300 uppercase tracking-tight">Laporan Audit Kebersihan Tangan</h2>
+                 <h3 className="text-base sm:text-lg font-black text-slate-200 uppercase mt-0.5">UOBK RSUD AL-MULK KOTA SUKABUMI</h3>
+                 <p className="text-slate-400 font-bold text-xs sm:text-sm mt-1 uppercase tracking-wider">
+                   Periode: {filters.periode ? (
+                     (() => {
+                       const date = parseISO(filters.periode);
+                       const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+                       return `${months[date.getMonth()]} ${date.getFullYear()}`;
+                     })()
+                   ) : '-'}
+                 </p>
+               </div>
              </div>
+
+
            </div>
         </div>
 
@@ -681,7 +718,7 @@ export default function HandHygieneReport({
             <tbody className="divide-y divide-white/5 text-[10px] sm:text-xs font-bold text-slate-200">
               {filteredData.map((row, index) => {
                 return (
-                  <tr key={row.id ? `hh_row_${row.id}` : `hh_row_idx_${index}`} className="hover:bg-white/[0.03] transition-colors group">
+                  <tr key={`hh_row_${row.id || 'row'}_${index}`} className="hover:bg-white/[0.03] transition-colors group">
                     <td className="px-4 py-4 text-center text-slate-300 font-mono">
                       {formatDateTimeSafe(row.start_time || row.tanggal_waktu)}
                     </td>
@@ -859,6 +896,375 @@ export default function HandHygieneReport({
              );
            })}
         </div>
+      </div>
+
+      {/* Lembar Cetak Laporan Resmi (Official Printable Document & Viewer) */}
+      <div className="pt-8 border-t border-indigo-900/30 space-y-4">
+        <div className="flex items-center justify-between gap-3 px-1">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
+            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+              Laporan Resmi
+            </h4>
+          </div>
+          <PdfDownloadButton
+            targetElementId="hand-hygiene-official-report"
+            filename={`Laporan_Kepatuhan_Kebersihan_Tangan_RSUD_AL_MULK_${(filters.periode || 'Periode').replace(/[^a-zA-Z0-9]/g, '_')}_${format(new Date(), 'yyyyMMdd_HHmmss')}.pdf`}
+            title="Download PDF Laporan Kepatuhan Kebersihan Tangan (Landscape)"
+            size="md"
+            orientation="landscape"
+          />
+        </div>
+
+        <ZoomableReportViewer>
+          <div
+            id="hand-hygiene-official-report"
+            data-pdf-page="true"
+            data-orientation="landscape"
+            className="official-report-paper official-pdf-page landscape bg-force-white text-black border border-slate-300 shadow-2xl p-6 sm:p-8 relative overflow-hidden print:shadow-none print:border-none print:p-0 print:m-0 w-[1248px] min-w-[1248px] max-w-[330mm] mx-auto flex flex-col justify-between"
+            style={{
+              width: "1248px",
+              minWidth: "1248px",
+              maxWidth: "1248px",
+              backgroundColor: "#ffffff",
+              color: "#000000",
+              fontFamily: "'Calibri', 'Carlito', 'Candara', 'Segoe UI', Arial, sans-serif",
+              fontSize: "9.5pt",
+            }}
+          >
+            {/* Inline CSS print isolation */}
+            <style dangerouslySetInnerHTML={{__html: `
+              @media print {
+                @page {
+                  size: 330mm 215mm;
+                  margin: 6mm;
+                }
+                body * {
+                  visibility: hidden !important;
+                }
+                #hand-hygiene-official-report, #hand-hygiene-official-report * {
+                  visibility: visible !important;
+                }
+                #hand-hygiene-official-report {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 100% !important;
+                  margin: 0 !important;
+                  padding: 6mm !important;
+                  border: none !important;
+                  box-shadow: none !important;
+                  background: white !important;
+                }
+              }
+            `}} />
+
+            {/* Kop Surat Resmi RSUD AL-MULK (Standar Dinas Sesuai Indikator Dekontaminasi Alat) */}
+            <div className="mb-2">
+              <div className="flex items-center gap-3 sm:gap-4 border-b-[2.5px] border-black pb-2 mb-1">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 flex items-center justify-center pl-1.5 sm:pl-2.5">
+                  {hospitalLogoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={hospitalLogoUrl}
+                      alt="Logo RS"
+                      className="max-w-full max-h-full object-contain"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                      crossOrigin="anonymous"
+                    />
+                  ) : (
+                    <ShieldCheck className="w-10 h-10 sm:w-12 sm:h-12 text-black" />
+                  )}
+                </div>
+                <div className="text-center flex-1 pr-10 sm:pr-14">
+                  <h1 className="text-[11pt] sm:text-[12pt] font-black uppercase tracking-wide leading-tight text-black">
+                    TIM PENCEGAHAN DAN PENGENDALIAN INFEKSI (PPI)
+                  </h1>
+                  <h2 className="text-[11pt] sm:text-[12pt] font-black uppercase tracking-wider leading-tight text-black mt-0.5">
+                    UOBK RSUD AL-MULK KOTA SUKABUMI
+                  </h2>
+                  <p className="text-[8pt] sm:text-[8.5pt] text-black italic mt-0.5 leading-tight">
+                    Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota Sukabumi, Jawa Barat 43168
+                  </p>
+                </div>
+              </div>
+              {/* Garis batas ganda kop surat standar dinas */}
+              <div className="border-b border-black mb-3" />
+            </div>
+
+            {/* Judul & Metadata Laporan */}
+            <div className="text-center mb-4">
+              <h1 className="text-[14pt] font-black uppercase text-black underline tracking-tight">
+                LAPORAN KEPATUHAN KEBERSIHAN TANGAN (HAND HYGIENE)
+              </h1>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[9pt] mt-3 p-2.5 bg-slate-50 border border-slate-300 rounded text-left">
+                <div>
+                  <span className="font-bold text-slate-600 block text-[8pt] uppercase">Periode:</span>
+                  <span className="font-black text-black">
+                    {filters.periode ? (
+                      (() => {
+                        const date = parseISO(filters.periode);
+                        const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+                        return `${months[date.getMonth()]} ${date.getFullYear()}`;
+                      })()
+                    ) : '-'}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-bold text-slate-600 block text-[8pt] uppercase">Unit / Ruangan:</span>
+                  <span className="font-black text-black">{filters.unitFilter || 'Semua Unit'}</span>
+                </div>
+                <div>
+                  <span className="font-bold text-slate-600 block text-[8pt] uppercase">Profesi:</span>
+                  <span className="font-black text-black">
+                    {selectedProfessions.length > 0 ? selectedProfessions.join(', ') : 'Semua Profesi'}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-bold text-slate-600 block text-[8pt] uppercase">Tanggal Unduh:</span>
+                  <span className="font-black text-black">{format(new Date(), 'dd/MM/yyyy HH:mm')} WIB</span>
+                </div>
+              </div>
+            </div>
+
+            {/* TABEL KEPATUHAN KEBERSIHAN TANGAN (Format Sama Persis Tampilan Aplikasi & Tanpa Text Wrap) */}
+            <div className="mb-4">
+              <h4 className="text-[10pt] font-black uppercase tracking-wider text-slate-900 mb-1.5">
+                I. Tabel Data Audit Kepatuhan Kebersihan Tangan
+              </h4>
+              <table className="w-full text-center border-collapse border border-black text-[9pt] whitespace-nowrap">
+                <thead>
+                  <tr className="bg-slate-100 text-black font-black uppercase tracking-wider border-b border-black text-[8.5pt]">
+                    <th className="border border-black px-2.5 py-2 text-center whitespace-nowrap align-middle">WAKTU MULAI</th>
+                    <th className="border border-black px-2.5 py-2 text-center whitespace-nowrap align-middle">WAKTU SELESAI</th>
+                    <th className="border border-black px-3 py-2 text-center whitespace-nowrap align-middle">OBSERVER</th>
+                    <th className="border border-black px-3 py-2 text-center whitespace-nowrap align-middle">UNIT</th>
+                    <th className="border border-black px-3 py-2 text-center whitespace-nowrap align-middle">PROFESI</th>
+                    <th className="border border-black px-1.5 py-2 text-center w-[36px] whitespace-nowrap align-middle">M1</th>
+                    <th className="border border-black px-1.5 py-2 text-center w-[36px] whitespace-nowrap align-middle">M2</th>
+                    <th className="border border-black px-1.5 py-2 text-center w-[36px] whitespace-nowrap align-middle">M3</th>
+                    <th className="border border-black px-1.5 py-2 text-center w-[36px] whitespace-nowrap align-middle">M4</th>
+                    <th className="border border-black px-1.5 py-2 text-center w-[36px] whitespace-nowrap align-middle">M5</th>
+                    <th className="border border-black px-2.5 py-1.5 text-center whitespace-nowrap align-middle">
+                      <div className="text-[8pt] font-black leading-snug">PELUANG</div>
+                      <div className="text-[7.5pt] font-bold leading-snug">HAND HYGIENE</div>
+                    </th>
+                    <th className="border border-black px-2.5 py-1.5 text-center whitespace-nowrap align-middle">
+                      <div className="text-[8pt] font-black leading-snug">HAND HYGIENE</div>
+                      <div className="text-[7.5pt] font-bold leading-snug">DILAKUKAN</div>
+                    </th>
+                    <th className="border border-black px-3 py-2 text-center text-[8.5pt] font-black whitespace-nowrap align-middle">
+                      PERSENTASE
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredData.map((row, index) => {
+                    const perc = row.persentase || 0;
+                    const formatMoment = (val: string | null) => {
+                      if (val === 'hr') return <span className="font-bold text-emerald-800">HR</span>;
+                      if (val === 'hw') return <span className="font-bold text-blue-800">HW</span>;
+                      if (val === 'miss') return <span className="font-bold text-rose-800">Miss</span>;
+                      return <span className="text-slate-400 font-bold">-</span>;
+                    };
+
+                    return (
+                      <tr key={`print_${row.id || 'row'}_${index}`} className="even:bg-slate-50/50">
+                        <td className="border border-black px-2.5 py-2 text-center font-mono text-[8.5pt] whitespace-nowrap align-middle">
+                          {formatDateTimeSafe(row.start_time || row.tanggal_waktu)}
+                        </td>
+                        <td className="border border-black px-2.5 py-2 text-center font-mono text-[8.5pt] whitespace-nowrap align-middle">
+                          {formatDateTimeSafe(row.end_time)}
+                        </td>
+                        <td className="border border-black px-3 py-2 text-center text-slate-800 whitespace-nowrap text-[8.5pt] align-middle">
+                          {row.observer || '-'}
+                        </td>
+                        <td className="border border-black px-3 py-2 text-center font-semibold whitespace-nowrap text-[8.5pt] align-middle">
+                          {row.unit || '-'}
+                        </td>
+                        <td className="border border-black px-3 py-2 text-center uppercase font-bold text-[8.5pt] whitespace-nowrap align-middle">
+                          {row.profesi || '-'}
+                        </td>
+                        <td className="border border-black px-1.5 py-2 text-center font-semibold whitespace-nowrap align-middle">{formatMoment(row.m1)}</td>
+                        <td className="border border-black px-1.5 py-2 text-center font-semibold whitespace-nowrap align-middle">{formatMoment(row.m2)}</td>
+                        <td className="border border-black px-1.5 py-2 text-center font-semibold whitespace-nowrap align-middle">{formatMoment(row.m3)}</td>
+                        <td className="border border-black px-1.5 py-2 text-center font-semibold whitespace-nowrap align-middle">{formatMoment(row.m4)}</td>
+                        <td className="border border-black px-1.5 py-2 text-center font-semibold whitespace-nowrap align-middle">{formatMoment(row.m5)}</td>
+                        <td className="border border-black px-2.5 py-2 text-center font-bold font-mono text-[9pt] whitespace-nowrap align-middle">
+                          {row.peluang || 0}
+                        </td>
+                        <td className="border border-black px-2.5 py-2 text-center font-bold font-mono text-[9pt] whitespace-nowrap align-middle">
+                          {row.patuh || 0}
+                        </td>
+                        <td className="border border-black px-2.5 py-2 text-center font-black text-[9pt] whitespace-nowrap align-middle">
+                          <span className={perc >= 85 ? 'text-emerald-800 font-bold' : perc >= 70 ? 'text-amber-800 font-bold' : 'text-rose-800 font-bold'}>
+                            {perc}%
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {filteredData.length === 0 && (
+                    <tr>
+                      <td colSpan={13} className="border border-black px-4 py-6 text-center text-slate-500 font-bold align-middle">
+                        Tidak ada data audit untuk periode ini
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+                <tfoot>
+                  <tr className="bg-slate-100 font-black border-t-2 border-black text-black">
+                    <td colSpan={10} className="border border-black px-3 py-2 text-right uppercase tracking-wider text-[8.5pt] whitespace-nowrap align-middle">
+                      TOTAL DAN RATA-RATA KESELURUHAN:
+                    </td>
+                    <td className="border border-black px-2 py-2 text-center font-mono text-[9.5pt] whitespace-nowrap align-middle">
+                      {overallStats.total}
+                    </td>
+                    <td className="border border-black px-2 py-2 text-center font-mono text-[9.5pt] whitespace-nowrap align-middle">
+                      {overallStats.patuh}
+                    </td>
+                    <td className="border border-black px-2 py-2 text-center font-mono text-[10pt] whitespace-nowrap align-middle">
+                      <span className={overallStats.avg >= 85 ? 'text-emerald-800 font-black' : 'text-rose-800 font-black'}>
+                        {overallStats.avg}%
+                      </span>
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            {/* KOLOM-KOLOM DI BAWAH TABEL */}
+            <div className="space-y-3.5 mt-2 break-inside-avoid">
+              <h4 className="text-[10pt] font-black uppercase tracking-wider text-slate-900">
+                II. Ringkasan Evaluasi & Analisis Indikator Kepatuhan
+              </h4>
+
+              {/* Keterangan 5 Momen & Legenda */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[8.5pt]">
+                <div className="p-3 bg-slate-50 border border-slate-300 rounded">
+                  <h5 className="font-black text-black uppercase text-[8.5pt] mb-1.5 border-b border-slate-200 pb-1">
+                    Keterangan 5 Momen Kebersihan Tangan (WHO Five Moments)
+                  </h5>
+                  <ul className="space-y-1 text-slate-800 text-[8pt]">
+                    <li><strong className="text-black">M1:</strong> Sebelum kontak dengan pasien</li>
+                    <li><strong className="text-black">M2:</strong> Sebelum tindakan aseptik</li>
+                    <li><strong className="text-black">M3:</strong> Setelah terkena cairan tubuh pasien</li>
+                    <li><strong className="text-black">M4:</strong> Setelah kontak dengan pasien</li>
+                    <li><strong className="text-black">M5:</strong> Setelah kontak dengan lingkungan pasien</li>
+                  </ul>
+                </div>
+                <div className="p-3 bg-slate-50 border border-slate-300 rounded flex flex-col justify-between">
+                  <div>
+                    <h5 className="font-black text-black uppercase text-[8.5pt] mb-1.5 border-b border-slate-200 pb-1">
+                      Keterangan
+                    </h5>
+                    <div className="grid grid-cols-2 gap-1.5 text-[8pt] text-slate-800">
+                      <div><strong className="text-emerald-800">HR:</strong> Handrub (Alkohol)</div>
+                      <div><strong className="text-blue-800">HW:</strong> Handwash (Air & Sabun)</div>
+                      <div><strong className="text-rose-800">Miss:</strong> Tidak Melakukan</div>
+                      <div><strong className="text-slate-500">-:</strong> N/A (Tidak Ada Peluang)</div>
+                    </div>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-slate-200 text-[8pt] text-slate-600">
+                    <span className="font-bold text-black">Standar Mutu Nasional PPI:</span> Kepatuhan Kebersihan Tangan minimal <strong className="text-emerald-800">≥ 85%</strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3 Overview Cards */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="p-3 bg-slate-50 border border-slate-300 rounded text-center">
+                  <span className="text-[7.5pt] font-black uppercase tracking-wider text-slate-600 block">Total Observasi</span>
+                  <span className="text-[16pt] font-black font-mono text-black leading-tight block mt-0.5">
+                    {filteredData.length}
+                  </span>
+                  <span className="text-[7.5pt] text-slate-500 font-bold uppercase">Sesi Audit Terdata</span>
+                </div>
+                <div className="p-3 bg-slate-50 border border-slate-300 rounded text-center">
+                  <span className="text-[7.5pt] font-black uppercase tracking-wider text-slate-600 block">Kepatuhan Tindakan</span>
+                  <span className="text-[16pt] font-black font-mono text-emerald-800 leading-tight block mt-0.5">
+                    {overallStats.patuh} / {overallStats.total}
+                  </span>
+                  <span className="text-[7.5pt] text-slate-500 font-bold uppercase">Momen Patuh Dilakukan</span>
+                </div>
+                <div className="p-3 bg-slate-50 border border-slate-300 rounded text-center">
+                  <span className="text-[7.5pt] font-black uppercase tracking-wider text-slate-600 block">Rata-rata Kepatuhan</span>
+                  <span className={`text-[16pt] font-black font-mono leading-tight block mt-0.5 ${overallStats.avg >= 85 ? 'text-emerald-800' : 'text-rose-800'}`}>
+                    {overallStats.avg}%
+                  </span>
+                  <span className={`text-[7.5pt] font-black uppercase inline-block px-1.5 py-0.5 rounded mt-0.5 ${overallStats.avg >= 85 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                    {overallStats.avg >= 85 ? 'Tercapai (≥85%)' : 'Di Bawah Standar'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Analisis Persentase Per Momen */}
+              <div className="p-3 bg-slate-50 border border-slate-300 rounded">
+                <div className="flex items-center justify-between mb-2">
+                  <h5 className="font-black text-black uppercase text-[8.5pt]">
+                    Analisis Persentase Capaian Per Momen (M1 - M5)
+                  </h5>
+                  <span className="text-[7.5pt] text-slate-600 font-bold">Target Mutu PPI: ≥ 85%</span>
+                </div>
+                <div className="grid grid-cols-5 gap-2">
+                  {[
+                    { id: 'M1', label: 'Sebelum Kontak Pasien', perc: momentStats.m1 },
+                    { id: 'M2', label: 'Sebelum Tindakan Aseptik', perc: momentStats.m2 },
+                    { id: 'M3', label: 'Setelah Cairan Tubuh', perc: momentStats.m3 },
+                    { id: 'M4', label: 'Setelah Kontak Pasien', perc: momentStats.m4 },
+                    { id: 'M5', label: 'Setelah Lingkungan Pasien', perc: momentStats.m5 },
+                  ].map((m) => {
+                    const isMet = m.perc >= 85;
+                    return (
+                      <div key={m.id} className="p-2 bg-white border border-slate-300 rounded text-center">
+                        <span className="text-[8pt] font-black text-black block">{m.id}</span>
+                        <span className={`text-[14pt] font-black font-mono leading-none block my-1 ${isMet ? 'text-emerald-800' : 'text-rose-800'}`}>
+                          {m.perc}%
+                        </span>
+                        <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden my-1">
+                          <div
+                            className={`h-full ${isMet ? 'bg-emerald-600' : 'bg-rose-600'}`}
+                            style={{ width: `${Math.min(m.perc, 100)}%` }}
+                          />
+                        </div>
+                        <span className="text-[6.5pt] font-bold text-slate-600 block leading-tight">
+                          {m.label}
+                        </span>
+                        <span className={`text-[6.5pt] font-black uppercase mt-0.5 inline-block px-1 rounded ${isMet ? 'text-emerald-800 bg-emerald-50' : 'text-rose-800 bg-rose-50'}`}>
+                          {isMet ? 'Tercapai' : '< 85%'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Lembar Tanda Tangan / Pengesahan */}
+              <div className="mt-4 pt-3 border-t border-slate-300 grid grid-cols-2 gap-8 text-[9pt] text-center signature-block break-inside-avoid">
+                <div>
+                  <p className="text-slate-700 font-bold mb-16">
+                    Mengetahui,<br />
+                    <span className="text-black font-black">Ketua PPI</span>
+                  </p>
+                  <p className="font-black text-black underline text-[9.5pt]">
+                    dr. Nurul Iman
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-700 font-bold mb-16">
+                    Sukabumi, {format(new Date(), 'd MMMM yyyy', { locale: idLocale })}<br />
+                    <span className="text-black font-black">IPCN</span>
+                  </p>
+                  <p className="font-black text-black underline text-[9.5pt]">
+                    Adi Tresa Purnama
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ZoomableReportViewer>
       </div>
 
       {/* Modal Konfirmasi Hapus */}

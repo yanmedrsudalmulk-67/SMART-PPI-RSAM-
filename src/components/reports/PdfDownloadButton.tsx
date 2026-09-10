@@ -19,6 +19,10 @@ interface PdfDownloadButtonProps {
   size?: 'sm' | 'md' | 'lg';
   /** Disabled state */
   disabled?: boolean;
+  /** Page orientation */
+  orientation?: 'portrait' | 'landscape';
+  /** Paper size */
+  paperSize?: 'f4' | 'a4';
 }
 
 /**
@@ -78,6 +82,8 @@ export default function PdfDownloadButton({
   className = '',
   size = 'md',
   disabled = false,
+  orientation,
+  paperSize = 'f4',
 }: PdfDownloadButtonProps) {
   const [downloading, setDownloading] = useState(false);
 
@@ -103,8 +109,10 @@ export default function PdfDownloadButton({
     try {
       await exportElementToA4Pdf(element, {
         filename: filename || `Laporan_Resmi_${Date.now()}.pdf`,
-        margin: 8,
-        scale: 2,
+        margin: 6,
+        scale: 2.5,
+        orientation,
+        paperSize,
       });
     } catch (err) {
       console.error('Failed to download PDF:', err);

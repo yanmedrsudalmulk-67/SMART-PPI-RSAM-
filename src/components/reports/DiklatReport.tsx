@@ -448,7 +448,7 @@ export default function DiklatReport({
             <div 
               id="diklat-official-report"
               data-pdf-page="true"
-              className="official-report-paper official-pdf-page bg-force-white text-slate-900 border border-slate-300 shadow-2xl rounded-2xl p-6 sm:p-12 relative overflow-hidden print:shadow-none print:border-none print:p-0 print:m-0 min-w-[650px] sm:min-w-0 sm:w-full max-w-[210mm] mx-auto"
+              className="official-report-paper official-pdf-page bg-force-white text-slate-900 border border-slate-300 shadow-2xl rounded-2xl p-6 sm:p-12 relative overflow-hidden print:shadow-none print:border-none print:p-0 print:m-0 min-w-[650px] sm:min-w-0 sm:w-full max-w-[215mm] mx-auto"
               style={{
                 backgroundColor: "#ffffff",
                 color: "#000000",

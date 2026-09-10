@@ -247,7 +247,7 @@ export default function EtikaBatukReport({
             <div 
               id="etika-batuk-official-report"
               data-pdf-page="true"
-              className="official-report-paper official-pdf-page p-6 sm:p-10 shadow-xl print:shadow-none print:w-full print:p-8 min-h-[297mm] mx-auto min-w-[650px] sm:min-w-0 sm:w-full max-w-[210mm] border border-slate-300 bg-force-white text-black relative flex flex-col justify-between"
+              className="official-report-paper official-pdf-page p-6 sm:p-10 shadow-xl print:shadow-none print:w-full print:p-8 min-h-[330mm] mx-auto min-w-[650px] sm:min-w-0 sm:w-full max-w-[215mm] border border-slate-300 bg-force-white text-black relative flex flex-col justify-between"
               style={{
                 backgroundColor: "#ffffff",
                 color: "#000000",

@@ -32,9 +32,11 @@
 #etika-batuk-official-report th:not(.align-top):not([class*="align-top"]),
 #etika-batuk-official-report td:not(.align-top):not([class*="align-top"]),
 #diklat-official-report th:not(.align-top):not([class*="align-top"]),
-#diklat-official-report td:not(.align-top):not([class*="align-top"]) {
-  vertical-align: middle;
-  box-sizing: border-box;
+#diklat-official-report td:not(.align-top):not([class*="align-top"]),
+#hand-hygiene-official-report th:not(.align-top):not([class*="align-top"]),
+#hand-hygiene-official-report td:not(.align-top):not([class*="align-top"]) {
+  vertical-align: middle !important;
+  box-sizing: border-box !important;
 }
 
 /* Ensure align-top is strictly respected for findings, recommendations, and signatures */
@@ -54,7 +56,7 @@
 .official-pdf-page table,
 [data-pdf-page="true"] table {
   border-collapse: collapse !important;
-  border: 0.5px solid #000000 !important;
+  border: 1px solid #000000 !important;
 }
 
 .official-report-sheet table th,
@@ -67,7 +69,7 @@
 .official-pdf-page table td,
 [data-pdf-page="true"] table th,
 [data-pdf-page="true"] table td {
-  border: 0.5px solid #000000 !important;
+  border: 1px solid #000000 !important;
 }
 
 /* Ensure borderless tables (such as signature blocks) do not receive borders */
@@ -105,7 +107,7 @@
   .official-pdf-page table,
   [data-pdf-page="true"] table {
     border-collapse: collapse !important;
-    border: 0.5px solid #000000 !important;
+    border: 1px solid #000000 !important;
   }
 
   .official-report-sheet th,
@@ -120,7 +122,7 @@
   [data-pdf-page="true"] td {
     vertical-align: middle !important;
     padding: 0.25rem 0.5rem !important;
-    border: 0.5px solid #000000 !important;
+    border: 1px solid #000000 !important;
   }
 }
 
@@ -328,15 +330,15 @@ html, body {
 
 
 /* Dark Mode Overrides (Default) for legacy components - EXCLUDING official report paper */
-:root:not(.light) .text-navy-dark:not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *),
-:root:not(.light) .text-slate-900:not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *),
-:root:not(.light) .text-slate-800:not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *),
-:root:not(.light) .text-slate-700:not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *) {
+:root:not(.light) .text-navy-dark:not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *):not(#hand-hygiene-official-report *),
+:root:not(.light) .text-slate-900:not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *):not(#hand-hygiene-official-report *),
+:root:not(.light) .text-slate-800:not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *):not(#hand-hygiene-official-report *),
+:root:not(.light) .text-slate-700:not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *):not(#hand-hygiene-official-report *) {
   color: #ffffff !important;
 }
-:root:not(.light) .bg-white:not(.official-report-paper):not(.official-pdf-page):not(.official-report-sheet):not([data-pdf-page="true"]):not(#generic-official-report):not(#official-report-sheet):not(#etika-batuk-official-report):not(#diklat-official-report):not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *),
-:root:not(.light) .bg-slate-50:not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *),
-:root:not(.light) .bg-gray-50:not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *) {
+:root:not(.light) .bg-white:not(.official-report-paper):not(.official-pdf-page):not(.official-report-sheet):not([data-pdf-page="true"]):not(#generic-official-report):not(#official-report-sheet):not(#etika-batuk-official-report):not(#diklat-official-report):not(#hand-hygiene-official-report):not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *):not(#hand-hygiene-official-report *),
+:root:not(.light) .bg-slate-50:not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *):not(#hand-hygiene-official-report *),
+:root:not(.light) .bg-gray-50:not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *):not(#hand-hygiene-official-report *) {
   background-color: rgba(255, 255, 255, 0.05) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
 }

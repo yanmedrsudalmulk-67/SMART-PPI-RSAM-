@@ -97,7 +97,7 @@ export default function OfficialReportSheet({
         <div 
           id="official-report-sheet" 
           data-pdf-page="true"
-          className="official-report-paper official-pdf-page relative w-full min-w-[650px] sm:min-w-0 sm:w-full bg-force-white text-black border border-slate-300 print:border-none p-6 sm:p-10 rounded-2xl shadow-xl max-w-[210mm] mx-auto"
+          className="official-report-paper official-pdf-page relative w-full min-w-[650px] sm:min-w-0 sm:w-full bg-force-white text-black border border-slate-300 print:border-none p-6 sm:p-10 rounded-2xl shadow-xl max-w-[215mm] mx-auto"
           style={{
             backgroundColor: "#ffffff",
             color: "#000000",

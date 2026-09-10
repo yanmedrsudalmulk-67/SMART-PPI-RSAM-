@@ -123,13 +123,17 @@ export default function HandHygieneAuditPage() {
 
           const ed = sEd || hEd;
           if (ed) {
-            const startVal = hEd?.start_time || sEd?.tanggal_waktu || sEd?.start_time || ed.tanggal_waktu || ed.start_time;
+            const rawIndicators = sEd?.data_indikator || ed.data_indikator || ed.checklist_json || {};
+            const indicatorsData = typeof rawIndicators === "string"
+              ? (() => { try { return JSON.parse(rawIndicators); } catch { return {}; } })()
+              : rawIndicators;
+
+            const startVal = indicatorsData.waktu_mulai || indicatorsData.start_time || hEd?.start_time || sEd?.tanggal_waktu || sEd?.start_time || ed.tanggal_waktu || ed.start_time;
             if (startVal) {
               setStartTime(new Date(startVal));
             }
 
-            const indicatorsData = sEd?.data_indikator || ed.data_indikator || ed.checklist_json || {};
-            const endVal = hEd?.end_time || sEd?.end_time || indicatorsData.end_time || indicatorsData.waktu_selesai || ed.end_time;
+            const endVal = indicatorsData.waktu_selesai || indicatorsData.end_time || hEd?.end_time || sEd?.end_time || ed.end_time;
             if (endVal) {
               setEndTime(new Date(endVal));
             } else if (startVal) {
@@ -298,6 +302,9 @@ export default function HandHygieneAuditPage() {
       // Ensure effectiveEnd matches the exact calendar date of effectiveStart
       const synced = new Date(effectiveStart);
       synced.setHours(effectiveEnd.getHours(), effectiveEnd.getMinutes(), 0, 0);
+      if (synced.getTime() < effectiveStart.getTime()) {
+        synced.setDate(synced.getDate() + 1);
+      }
       effectiveEnd = synced;
     }
     setEndTime(effectiveEnd);
@@ -387,7 +394,7 @@ export default function HandHygieneAuditPage() {
 
       try {
         if (isEditMode && editId) {
-          const { error: hhErr } = await supabase.from("audit_hand_hygiene").update([payload]).eq("id", editId);
+          const { error: hhErr } = await supabase.from("audit_hand_hygiene").update(payload).eq("id", editId);
           if (hhErr) {
             await supabase.from("audit_hand_hygiene").insert([{ ...payload, id: editId }]);
           }
