@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { exportElementToA4Pdf } from '@/utils/pdfExport';
+import { exportElementToA4Pdf, deliverPdf, PdfExportResult } from '@/utils/pdfExport';
+import PdfViewerModal, { PdfViewerData } from './PdfViewerModal';
 
 interface PdfDownloadButtonProps {
   /** Target element ID to export */
@@ -23,6 +24,8 @@ interface PdfDownloadButtonProps {
   orientation?: 'portrait' | 'landscape';
   /** Paper size */
   paperSize?: 'f4' | 'a4';
+  /** Always open in-app preview modal upon generation */
+  openPreviewOnGenerate?: boolean;
 }
 
 /**
@@ -84,8 +87,12 @@ export default function PdfDownloadButton({
   disabled = false,
   orientation,
   paperSize = 'f4',
+  openPreviewOnGenerate = false,
 }: PdfDownloadButtonProps) {
   const [downloading, setDownloading] = useState(false);
+  const [viewerData, setViewerData] = useState<PdfViewerData | null>(null);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [exportResult, setExportResult] = useState<PdfExportResult | null>(null);
 
   const handleDownload = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -107,19 +114,53 @@ export default function PdfDownloadButton({
 
     setDownloading(true);
     try {
-      await exportElementToA4Pdf(element, {
+      const isMobile =
+        typeof navigator !== 'undefined' &&
+        /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+      const result = await exportElementToA4Pdf(element, {
         filename: filename || `Laporan_Resmi_${Date.now()}.pdf`,
         margin: 4,
         scale: 2.5,
         orientation,
         paperSize,
+        action: isMobile ? 'auto' : 'download',
       });
+
+      if (result) {
+        setExportResult(result);
+        setViewerData({
+          filename: result.filename,
+          pageImages: result.pageImages,
+          pdfBase64: result.base64,
+          file: result.file,
+          downloadUrl: result.downloadUrl,
+        });
+
+        // On mobile devices or when explicitly requested, open the in-app viewer modal
+        // so users can view the PDF and tap "Buka di Viewer" or "Unduh PDF" with 0 errors!
+        if (isMobile || openPreviewOnGenerate) {
+          setIsViewerOpen(true);
+        }
+      }
     } catch (err) {
       console.error('Failed to download PDF:', err);
       // Fallback to window.print if critical error
       window.print();
     } finally {
       setDownloading(false);
+    }
+  };
+
+  const handleModalDownload = async () => {
+    if (exportResult) {
+      await deliverPdf(exportResult, 'download');
+    }
+  };
+
+  const handleModalShare = async () => {
+    if (exportResult) {
+      await deliverPdf(exportResult, 'open');
     }
   };
 
@@ -136,20 +177,32 @@ export default function PdfDownloadButton({
   }[size];
 
   return (
-    <button
-      type="button"
-      onClick={handleDownload}
-      disabled={disabled || downloading}
-      title={downloading ? 'Sedang memproses PDF...' : title}
-      aria-label={title}
-      data-html2canvas-ignore="true"
-      className={`relative group inline-flex items-center justify-center rounded-2xl transition-all duration-200 cursor-pointer select-none no-print shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${sizeClasses} bg-gradient-to-br from-rose-500/15 via-red-500/10 to-rose-600/20 hover:from-rose-500 hover:via-red-600 hover:to-rose-600 text-rose-500 hover:text-white border border-rose-500/30 hover:border-rose-400/80 shadow-[0_4px_12px_rgba(244,63,94,0.15)] hover:shadow-[0_6px_20px_rgba(244,63,94,0.35)] active:scale-95 ${className}`}
-    >
-      {downloading ? (
-        <Loader2 className={`${iconSizes} animate-spin text-rose-400 group-hover:text-white`} />
-      ) : (
-        <PdfIcon className={`${iconSizes} transition-transform group-hover:scale-110 drop-shadow-sm`} />
+    <>
+      <button
+        type="button"
+        onClick={handleDownload}
+        disabled={disabled || downloading}
+        title={downloading ? 'Sedang memproses PDF...' : title}
+        aria-label={title}
+        data-html2canvas-ignore="true"
+        className={`relative group inline-flex items-center justify-center rounded-2xl transition-all duration-200 cursor-pointer select-none no-print shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${sizeClasses} bg-gradient-to-br from-rose-500/15 via-red-500/10 to-rose-600/20 hover:from-rose-500 hover:via-red-600 hover:to-rose-600 text-rose-500 hover:text-white border border-rose-500/30 hover:border-rose-400/80 shadow-[0_4px_12px_rgba(244,63,94,0.15)] hover:shadow-[0_6px_20px_rgba(244,63,94,0.35)] active:scale-95 ${className}`}
+      >
+        {downloading ? (
+          <Loader2 className={`${iconSizes} animate-spin text-rose-400 group-hover:text-white`} />
+        ) : (
+          <PdfIcon className={`${iconSizes} transition-transform group-hover:scale-110 drop-shadow-sm`} />
+        )}
+      </button>
+
+      {viewerData && (
+        <PdfViewerModal
+          isOpen={isViewerOpen}
+          onClose={() => setIsViewerOpen(false)}
+          data={viewerData}
+          onDownload={handleModalDownload}
+          onShare={handleModalShare}
+        />
       )}
-    </button>
+    </>
   );
 }

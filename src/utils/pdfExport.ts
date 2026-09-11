@@ -17,6 +17,119 @@ export interface ExportPdfOptions {
   title?: string;
   orientation?: 'portrait' | 'landscape';
   paperSize?: 'f4' | 'a4'; // default: 'f4'
+  action?: 'download' | 'preview' | 'open' | 'auto';
+  onGenerated?: (result: PdfExportResult) => void;
+}
+
+export interface PdfExportResult {
+  pdf: any;
+  blob: Blob;
+  file: File;
+  dataUri: string;
+  base64: string;
+  filename: string;
+  pageImages: string[];
+  downloadUrl?: string;
+}
+
+/**
+ * Safely delivers a generated PDF to the user's device without triggering
+ * "Can not handle uri: blob:..." on Android/mobile.
+ */
+export async function deliverPdf(
+  result: PdfExportResult,
+  action: 'download' | 'preview' | 'open' | 'auto' = 'auto'
+): Promise<void> {
+  const { filename, file, blob, base64 } = result;
+  const isMobile =
+    typeof navigator !== 'undefined' &&
+    /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
+
+  // If explicit action is preview, do not trigger external download
+  if (action === 'preview') {
+    return;
+  }
+
+  // 1. If action is 'open' or on Android/mobile when user wants to open/share:
+  if (
+    (action === 'open' || (isMobile && action === 'auto')) &&
+    typeof navigator !== 'undefined' &&
+    navigator.canShare &&
+    navigator.canShare({ files: [file] })
+  ) {
+    try {
+      await navigator.share({
+        files: [file],
+        title: filename,
+        text: 'Laporan Resmi SMART-PPI RSUD AL-MULK',
+      });
+      return;
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        // User dismissed share sheet, do not crash or force duplicate download
+        return;
+      }
+      console.warn('Navigator share error, falling back to download:', err);
+    }
+  }
+
+  // 2. Safe Download via HTTPS API route (/api/download-pdf):
+  // Android's DownloadManager natively downloads HTTPS URLs with zero blob URI issues!
+  try {
+    const res = await fetch('/api/download-pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pdfBase64: base64,
+        filename,
+      }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.downloadUrl) {
+        result.downloadUrl = data.downloadUrl;
+        const link = document.createElement('a');
+        link.href = data.downloadUrl;
+        link.download = filename;
+        link.target = '_self';
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          if (link.parentNode) link.parentNode.removeChild(link);
+        }, 500);
+        return;
+      }
+    }
+  } catch (apiErr) {
+    console.warn('API download route failed, using client fallback:', apiErr);
+  }
+
+  // 3. Fallback: Client-side Download
+  if (isAndroid || isMobile) {
+    // Mobile fallback: use Data URI which avoids blob: protocol errors on many mobile webviews
+    const link = document.createElement('a');
+    link.href = base64.startsWith('data:') ? base64 : `data:application/pdf;base64,${base64}`;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      if (link.parentNode) link.parentNode.removeChild(link);
+    }, 1000);
+  } else {
+    // Desktop: safe blob URL with immediate revoke
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      if (link.parentNode) link.parentNode.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    }, 2000);
+  }
 }
 
 /**
@@ -160,7 +273,7 @@ export const injectA4PrintStyles = injectPrintStyles;
 export async function exportElementToA4Pdf(
   element: HTMLElement,
   options: ExportPdfOptions = {}
-): Promise<void> {
+): Promise<PdfExportResult> {
   if (!element || typeof window === 'undefined') {
     throw new Error('Elemen tidak ditemukan untuk diunduh sebagai PDF');
   }
@@ -170,6 +283,8 @@ export async function exportElementToA4Pdf(
     margin = 5, // 5mm balanced clean margin
     scale = 2.5, // 2.5 for razor-sharp typography matching screen
   } = options;
+
+  const pageImages: string[] = [];
 
   // Import libraries dynamically on client
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
@@ -285,9 +400,9 @@ export async function exportElementToA4Pdf(
         const pageEl = pageElements[i];
 
         // Ensure all images in this page are fully loaded
-        const pageImages = Array.from(pageEl.querySelectorAll('img'));
+        const pageImagesInElement = Array.from(pageEl.querySelectorAll('img'));
         await Promise.all(
-          pageImages.map(
+          pageImagesInElement.map(
             (img) =>
               new Promise<void>((resolve) => {
                 if (img.complete) {
@@ -383,13 +498,31 @@ export async function exportElementToA4Pdf(
         }
 
         const imgData = canvas.toDataURL('image/png');
+        pageImages.push(imgData);
         const naturalHeightMm = (canvas.height / canvas.width) * printableWidthMm;
         const renderHeightMm = Math.min(naturalHeightMm, printableHeightMm);
         pdf.addImage(imgData, 'PNG', margin, margin, printableWidthMm, renderHeightMm, undefined, 'FAST');
       }
 
-      pdf.save(filename);
-      return;
+      const blob = pdf.output('blob');
+      const base64 = pdf.output('datauristring');
+      const file = new File([blob], filename, { type: 'application/pdf' });
+      const exportResult: PdfExportResult = {
+        pdf,
+        blob,
+        file,
+        dataUri: base64,
+        base64,
+        filename,
+        pageImages,
+      };
+
+      if (options.onGenerated) {
+        options.onGenerated(exportResult);
+      }
+
+      await deliverPdf(exportResult, options.action || 'auto');
+      return exportResult;
     }
 
     // =========================================================================
@@ -577,6 +710,7 @@ export async function exportElementToA4Pdf(
     // If content fits comfortably on a single page (with up to 15% smart auto-fit tolerance)
     if (canvasHeight <= pageHeightInCanvasPx * 1.15) {
       const imgData = canvas.toDataURL('image/png');
+      pageImages.push(imgData);
       // Proportional scale to preserve 100% exact aspect ratio (no vertical squishing)
       const scaleFactor = Math.min(1, pageHeightInCanvasPx / canvasHeight);
       const renderWidthMm = printableWidthMm * scaleFactor;
@@ -593,8 +727,26 @@ export async function exportElementToA4Pdf(
         undefined,
         'FAST'
       );
-      pdf.save(filename);
-      return;
+
+      const blob = pdf.output('blob');
+      const base64 = pdf.output('datauristring');
+      const file = new File([blob], filename, { type: 'application/pdf' });
+      const exportResult: PdfExportResult = {
+        pdf,
+        blob,
+        file,
+        dataUri: base64,
+        base64,
+        filename,
+        pageImages,
+      };
+
+      if (options.onGenerated) {
+        options.onGenerated(exportResult);
+      }
+
+      await deliverPdf(exportResult, options.action || 'auto');
+      return exportResult;
     }
 
     // Fallback populated if iframe bounds collection failed or elements were empty
@@ -750,6 +902,7 @@ export async function exportElementToA4Pdf(
       }
 
       const chunkImg = chunkCanvas.toDataURL('image/png');
+      pageImages.push(chunkImg);
       pdf.addImage(
         chunkImg,
         'PNG',
@@ -765,8 +918,25 @@ export async function exportElementToA4Pdf(
       pageIndex++;
     }
 
-    // Save the generated PDF
-    pdf.save(filename);
+    const blob = pdf.output('blob');
+    const base64 = pdf.output('datauristring');
+    const file = new File([blob], filename, { type: 'application/pdf' });
+    const exportResult: PdfExportResult = {
+      pdf,
+      blob,
+      file,
+      dataUri: base64,
+      base64,
+      filename,
+      pageImages,
+    };
+
+    if (options.onGenerated) {
+      options.onGenerated(exportResult);
+    }
+
+    await deliverPdf(exportResult, options.action || 'auto');
+    return exportResult;
   } finally {
     // Restore scroll wrapper height if modified
     if (scrollWrapper && originalWrapperHeight !== undefined) {
