@@ -103,10 +103,16 @@ export function injectPrintStyles(clonedDoc: Document, isLandscape: boolean = fa
       table-layout: auto !important;
     }
 
+    img, svg {
+      display: inline-block !important;
+      vertical-align: middle !important;
+    }
+
     /* Strict vertical and horizontal alignment to ensure text is centered and doesn't drop down into border */
     th, td {
       box-sizing: border-box !important;
       vertical-align: middle !important;
+      line-height: 1.25 !important;
     }
 
     th:not(.align-top):not([class*="align-top"]),
@@ -344,9 +350,18 @@ export async function exportElementToA4Pdf(
               allCells.forEach((cell) => {
                 const c = cell as HTMLElement;
                 c.style.boxSizing = 'border-box';
+                c.style.lineHeight = '1.25';
                 if (!c.classList.contains('align-top') && !c.getAttribute('class')?.includes('align-top')) {
                   c.style.verticalAlign = 'middle';
                 }
+              });
+
+              // Ensure images inside cloned page are displayed properly
+              const imgs = targetClonedPage.querySelectorAll('img');
+              imgs.forEach((img) => {
+                (img as HTMLElement).style.maxWidth = '100%';
+                (img as HTMLElement).style.display = 'inline-block';
+                (img as HTMLElement).style.verticalAlign = 'middle';
               });
             }
 
@@ -471,6 +486,7 @@ export async function exportElementToA4Pdf(
         allCells.forEach((cell) => {
           const c = cell as HTMLElement;
           c.style.boxSizing = 'border-box';
+          c.style.lineHeight = '1.25';
           if (!c.classList.contains('align-top') && !c.getAttribute('class')?.includes('align-top')) {
             c.style.verticalAlign = 'middle';
           }
@@ -480,6 +496,8 @@ export async function exportElementToA4Pdf(
         const imgs = clonedEl.querySelectorAll('img');
         imgs.forEach((img) => {
           (img as HTMLElement).style.maxWidth = '100%';
+          (img as HTMLElement).style.display = 'inline-block';
+          (img as HTMLElement).style.verticalAlign = 'middle';
         });
 
         if (clonedDoc.fonts && clonedDoc.fonts.ready) {

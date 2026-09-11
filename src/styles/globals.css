@@ -4,6 +4,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Fix html2canvas & Tailwind preflight downward text shift bug */
+img, svg {
+  display: inline-block !important;
+  vertical-align: middle !important;
+}
+
 /* Font Calibri Standar Laporan Resmi */
 .font-calibri {
   font-family: 'Calibri', 'Carlito', 'Candara', 'Segoe UI', Arial, sans-serif;
@@ -36,6 +42,7 @@
 #hand-hygiene-official-report th:not(.align-top):not([class*="align-top"]),
 #hand-hygiene-official-report td:not(.align-top):not([class*="align-top"]) {
   vertical-align: middle !important;
+  line-height: 1.25 !important;
   box-sizing: border-box !important;
 }
 

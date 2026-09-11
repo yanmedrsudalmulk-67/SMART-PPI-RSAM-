@@ -114,27 +114,27 @@ export default function OfficialReportSheet({
         />
       </div>
 
-      <div className="flex items-center gap-4 sm:gap-6 mb-6 border-b-4 border-slate-900 pb-4">
-          <div className="flex items-center gap-4 sm:gap-5 w-full">
-             <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white flex items-center justify-center relative shrink-0 pl-2 sm:pl-3">
-               {hospitalLogoUrl ? (
-                 <Image src={hospitalLogoUrl} alt="Logo RS" fill sizes="80px" className="object-contain" referrerPolicy="no-referrer" />
-               ) : (
-                 <ShieldCheck className="w-12 h-12 text-black" />
-               )}
-             </div>
-             <div className="text-center flex-1 pr-8 sm:pr-12">
-               <h1 className="text-lg sm:text-xl font-black tracking-tight leading-tight uppercase text-black">
-                 TIM PENCEGAHAN DAN PENGENDALIAN INFEKSI (PPI)
-               </h1>
-               <p className="text-xs sm:text-sm font-black uppercase text-black tracking-wider mt-0.5">
-                 UOBK RSUD AL-MULK KOTA SUKABUMI
-               </p>
-               <p className="text-[10px] sm:text-[11px] text-slate-600 italic mt-0.5">
-                 Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota Sukabumi, Jawa Barat 43168
-               </p>
-             </div>
+      <div className="mb-6 border-b-4 border-slate-900 pb-4">
+        <div className="flex items-center justify-center gap-4 sm:gap-5 max-w-2xl mx-auto">
+          <div className="w-14 h-14 bg-white flex items-center justify-center relative shrink-0">
+            {hospitalLogoUrl ? (
+              <Image src={hospitalLogoUrl} alt="Logo RS" fill sizes="56px" className="object-contain" referrerPolicy="no-referrer" />
+            ) : (
+              <ShieldCheck className="w-10 h-10 text-black" />
+            )}
           </div>
+          <div className="text-center">
+            <h1 className="text-lg sm:text-xl font-black tracking-tight leading-tight uppercase text-black">
+              TIM PENCEGAHAN DAN PENGENDALIAN INFEKSI (PPI)
+            </h1>
+            <p className="text-xs sm:text-sm font-black uppercase text-black tracking-wider mt-0.5">
+              UOBK RSUD AL-MULK KOTA SUKABUMI
+            </p>
+            <p className="text-[10px] sm:text-[11px] text-slate-600 italic mt-0.5">
+              Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota Sukabumi, Jawa Barat 43168
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="text-center mb-6">

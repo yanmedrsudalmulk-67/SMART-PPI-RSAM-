@@ -109,7 +109,7 @@ export default function PdfDownloadButton({
     try {
       await exportElementToA4Pdf(element, {
         filename: filename || `Laporan_Resmi_${Date.now()}.pdf`,
-        margin: 6,
+        margin: 4,
         scale: 2.5,
         orientation,
         paperSize,

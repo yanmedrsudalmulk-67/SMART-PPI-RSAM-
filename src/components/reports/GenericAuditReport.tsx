@@ -1000,33 +1000,35 @@ export default function GenericAuditReport({
 
         const renderKopSurat = () => (
           <div className="mb-2">
-            <div className="flex items-center gap-3 sm:gap-4 border-b-[2.5px] border-black pb-2 mb-1">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 flex items-center justify-center pl-1.5 sm:pl-2.5">
-                {hospitalLogoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={hospitalLogoUrl}
-                    alt="Logo RS"
-                    className="max-w-full max-h-full object-contain"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
-                    crossOrigin="anonymous"
-                  />
-                ) : (
-                  <ShieldCheck className="w-10 h-10 sm:w-12 sm:h-12 text-black" />
-                )}
-              </div>
-              <div className="text-center flex-1 pr-10 sm:pr-14">
-                <h1 className="text-[11pt] sm:text-[12pt] font-black uppercase tracking-wide leading-tight text-black">
-                  TIM PENCEGAHAN DAN PENGENDALIAN INFEKSI (PPI)
-                </h1>
-                <h2 className="text-[11pt] sm:text-[12pt] font-black uppercase tracking-wider leading-tight text-black mt-0.5">
-                  UOBK RSUD AL-MULK KOTA SUKABUMI
-                </h2>
-                <p className="text-[8pt] sm:text-[8.5pt] text-black italic mt-0.5 leading-tight">
-                  Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota Sukabumi, Jawa Barat 43168
-                </p>
+            <div className="border-b-[2.5px] border-black pb-2 mb-1">
+              <div className="flex items-center justify-center gap-4 sm:gap-5 max-w-4xl mx-auto">
+                <div className="w-14 h-14 shrink-0 flex items-center justify-center">
+                  {hospitalLogoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={hospitalLogoUrl}
+                      alt="Logo RS"
+                      className="max-w-full max-h-full object-contain"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                      crossOrigin="anonymous"
+                    />
+                  ) : (
+                    <ShieldCheck className="w-10 h-10 text-black" />
+                  )}
+                </div>
+                <div className="text-center">
+                  <h1 className="text-[11pt] sm:text-[12pt] font-black uppercase tracking-wide leading-tight text-black">
+                    TIM PENCEGAHAN DAN PENGENDALIAN INFEKSI (PPI)
+                  </h1>
+                  <h2 className="text-[11pt] sm:text-[12pt] font-black uppercase tracking-wider leading-tight text-black mt-0.5">
+                    UOBK RSUD AL-MULK KOTA SUKABUMI
+                  </h2>
+                  <p className="text-[8pt] sm:text-[8.5pt] text-black italic mt-0.5 leading-tight">
+                    Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota Sukabumi, Jawa Barat 43168
+                  </p>
+                </div>
               </div>
             </div>
             {/* Garis batas ganda kop surat standar dinas */}
