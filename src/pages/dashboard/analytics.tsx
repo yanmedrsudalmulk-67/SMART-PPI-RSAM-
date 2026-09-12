@@ -218,14 +218,16 @@ const HaisTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export default function AnalyticsPage() {
-  const [mounted, setMounted] = useState(false);
-  const [loading, setLoading] = useState(true);
+// Global in-memory cache for instant zero-delay navigation without loading flickers
+let cachedSessions: any[] = [];
+let cachedHH: any[] = [];
+let cachedApd: any[] = [];
 
-  // Raw Database States
-  const [rawSessions, setRawSessions] = useState<any[]>([]);
-  const [rawHH, setRawHH] = useState<any[]>([]);
-  const [rawApd, setRawApd] = useState<any[]>([]);
+export default function AnalyticsPage() {
+  // Raw Database States initialized from memory cache
+  const [rawSessions, setRawSessions] = useState<any[]>(cachedSessions);
+  const [rawHH, setRawHH] = useState<any[]>(cachedHH);
+  const [rawApd, setRawApd] = useState<any[]>(cachedApd);
 
   // Period Filters
   const currentYear = new Date().getFullYear();
@@ -247,13 +249,8 @@ export default function AnalyticsPage() {
   const [haisChartType, setHaisChartType] = useState<'line' | 'bar'>('line');
   const [haisRoomChartType, setHaisRoomChartType] = useState<'line' | 'bar'>('bar');
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Fetch Data from Supabase
+  // Fetch Data from Supabase in the background
   const fetchData = useCallback(async () => {
-    setLoading(true);
     try {
       const [sessionsRes, hhRes, apdRes] = await Promise.all([
         supabase.from('audit_sessions').select('*').order('tanggal_waktu', { ascending: true }),
@@ -261,13 +258,19 @@ export default function AnalyticsPage() {
         supabase.from('audit_apd').select('*').order('tanggal_waktu', { ascending: true })
       ]);
 
-      setRawSessions(sessionsRes.data || []);
-      setRawHH(hhRes.data || []);
-      setRawApd(apdRes.data || []);
+      const sData = sessionsRes.data || [];
+      const hData = hhRes.data || [];
+      const aData = apdRes.data || [];
+
+      cachedSessions = sData;
+      cachedHH = hData;
+      cachedApd = aData;
+
+      setRawSessions(sData);
+      setRawHH(hData);
+      setRawApd(aData);
     } catch (err) {
       console.error('Error fetching analytics data:', err);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -972,32 +975,21 @@ export default function AnalyticsPage() {
     }
   };
 
-  if (!mounted) {
-    return null;
-  }
-
   return (
-    <DashboardLayout>
-      <div className="space-y-8 max-w-7xl mx-auto pb-24 text-slate-100 animate-in fade-in duration-300">
-        
-        {/* HEADER PAGE - 3D Tactile Neumorphic Container */}
-        <div className="relative group bg-[#18193b] rounded-[28px] md:rounded-[32px] p-6 sm:p-7 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)]">
-          {/* Top Bevel Highlight */}
-          <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+    <div className="space-y-8 max-w-7xl mx-auto pb-24 text-slate-100 animate-in fade-in duration-300">
+      
+      {/* HEADER PAGE - 3D Tactile Neumorphic Container */}
+      <div className="relative group bg-[#18193b] rounded-[28px] md:rounded-[32px] p-6 sm:p-7 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)]">
+        {/* Top Bevel Highlight */}
+        <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
-          <div className="flex flex-col items-center text-center justify-between gap-6 relative z-10 landscape:lg:flex-row landscape:lg:items-center landscape:lg:text-left">
-            <div className="flex flex-col items-center text-center landscape:lg:items-start landscape:lg:text-left">
-              <div className="flex items-center justify-center landscape:lg:justify-start gap-2.5 flex-wrap">
-                <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase text-center landscape:lg:text-left">
-                  Grafik SMART PPI
-                </h1>
-                {loading && (
-                  <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#12132e] text-cyan-300 border border-cyan-500/30 flex items-center gap-1.5 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)] animate-pulse">
-                    <RefreshCw className="w-3 h-3 animate-spin text-cyan-400" />
-                    Memuat Data...
-                  </span>
-                )}
-              </div>
+        <div className="flex flex-col items-center text-center justify-between gap-6 relative z-10 landscape:lg:flex-row landscape:lg:items-center landscape:lg:text-left">
+          <div className="flex flex-col items-center text-center landscape:lg:items-start landscape:lg:text-left">
+            <div className="flex items-center justify-center landscape:lg:justify-start gap-2.5 flex-wrap">
+              <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase text-center landscape:lg:text-left">
+                Grafik SMART PPI
+              </h1>
+            </div>
               <p className="text-xs sm:text-sm text-slate-300 font-medium mt-1 text-center landscape:lg:text-left">
                 Pusat Visualisasi Realtime Capaian Indikator Mutu PPI Terintegrasi
               </p>
@@ -1653,6 +1645,9 @@ export default function AnalyticsPage() {
         </div>
 
       </div>
-    </DashboardLayout>
   );
 }
+
+AnalyticsPage.getLayout = function getLayout(page: ReactElement) {
+  return <DashboardLayout>{page}</DashboardLayout>;
+};
