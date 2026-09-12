@@ -235,10 +235,10 @@ export default function OfficialReportSheet({
       {images.length > 0 && (
          <div className="mb-8 space-y-4">
            <h4 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-4 border-b border-slate-300 pb-2">Dokumentasi Audit</h4>
-           <div className="grid grid-cols-4 gap-4">
+           <div className="grid grid-cols-2 gap-4 print:page-break-inside-avoid px-2">
              {images.map((url, i) => (
-               <div key={i} onClick={() => setZoomedImage(url)} className="relative aspect-video border border-slate-300 cursor-zoom-in">
-                 <Image src={url} alt="Dokumentasi" fill sizes="25vw" className="object-cover" referrerPolicy="no-referrer" />
+               <div key={i} onClick={() => setZoomedImage(url)} className="relative pt-[75%] border border-slate-300 p-1 cursor-zoom-in bg-white shadow-sm">
+                 <Image src={url} alt="Dokumentasi" fill sizes="50vw" className="absolute inset-0 w-full h-full object-cover p-1" referrerPolicy="no-referrer" />
                </div>
              ))}
            </div>
@@ -263,10 +263,10 @@ export default function OfficialReportSheet({
            {perbaikanImages.length > 0 && (
              <div className="pt-2">
                <p className="text-[10px] font-bold text-amber-900 mb-2 uppercase tracking-wider">Foto Bukti Upaya Perbaikan:</p>
-               <div className="grid grid-cols-4 gap-4">
+               <div className="grid grid-cols-2 gap-4 print:page-break-inside-avoid px-2">
                  {perbaikanImages.map((url, i) => (
-                   <div key={i} onClick={() => setZoomedImage(url)} className="relative aspect-video border-2 border-amber-500 bg-white cursor-zoom-in rounded-lg overflow-hidden shadow-sm">
-                     <Image src={url} alt="Foto Upaya Perbaikan" fill sizes="25vw" className="object-cover" referrerPolicy="no-referrer" />
+                   <div key={i} onClick={() => setZoomedImage(url)} className="relative pt-[75%] border-2 border-amber-500 bg-white p-1 cursor-zoom-in rounded-lg overflow-hidden shadow-sm">
+                     <Image src={url} alt="Foto Upaya Perbaikan" fill sizes="50vw" className="absolute inset-0 w-full h-full object-cover p-1" referrerPolicy="no-referrer" />
                    </div>
                  ))}
                </div>

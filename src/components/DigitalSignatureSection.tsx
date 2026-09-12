@@ -119,12 +119,14 @@ const DigitalSignatureSection = forwardRef<DigitalSignatureRef, DigitalSignature
       if (preloadedPjSignature && mounted) {
         loadPjSignature(preloadedPjSignature);
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [preloadedPjSignature, mounted]);
 
     useEffect(() => {
       if (preloadedIpcnSignature && mounted) {
         loadSupervisorSignature(preloadedIpcnSignature);
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [preloadedIpcnSignature, mounted]);
 
     useImperativeHandle(ref, () => ({

@@ -1297,26 +1297,23 @@ export default function GenericAuditReport({
                     <h4 className="text-[11pt] font-black uppercase tracking-wide text-black mb-2 flex items-center gap-2 border-b border-black pb-1">
                       <Camera className="w-4 h-4 text-black" /> FOTO DOKUMENTASI AUDIT
                     </h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 gap-4 print:page-break-inside-avoid px-2">
                       {photosList.map((url: string, i: number) => (
                         <div
                           key={i}
                           onClick={() => setZoomedImage(url)}
-                          className="aspect-video relative border border-slate-800 p-1 cursor-zoom-in bg-white shadow-sm"
+                          className="relative pt-[75%] border border-slate-800 p-1 cursor-zoom-in bg-white shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:translate-y-[2px] hover:shadow-none transition-all"
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={url}
-                            alt={`Dokumentasi ${i + 1}`}
-                            className="w-full h-full object-cover"
+                            alt="Dokumentasi"
+                            className="absolute inset-0 w-full h-full object-cover p-1"
                             onError={(e) => {
                               e.currentTarget.style.display = "none";
                             }}
                             crossOrigin="anonymous"
                           />
-                          <div className="absolute bottom-1 left-1 bg-black/80 text-white text-[8pt] px-1 font-mono font-bold">
-                            Foto #{i + 1}
-                          </div>
                         </div>
                       ))}
                     </div>
@@ -1352,26 +1349,23 @@ export default function GenericAuditReport({
                         <p className="text-[10pt] font-bold uppercase tracking-wider text-black mb-2 flex items-center gap-1.5">
                           <Camera className="w-3.5 h-3.5 text-black" /> Foto Bukti Upaya Perbaikan:
                         </p>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="grid grid-cols-2 gap-4 print:page-break-inside-avoid px-2">
                           {perbaikanPhotosList.map((url: string, i: number) => (
                             <div
                               key={i}
                               onClick={() => setZoomedImage(url)}
-                              className="aspect-video relative border-2 border-black bg-white p-1 cursor-zoom-in shadow-sm"
+                              className="relative pt-[75%] border-2 border-black bg-white p-1 cursor-zoom-in shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:translate-y-[2px] hover:shadow-none transition-all"
                             >
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={url}
-                                alt={`Foto Perbaikan ${i + 1}`}
-                                className="w-full h-full object-cover"
+                                alt="Foto Perbaikan"
+                                className="absolute inset-0 w-full h-full object-cover p-1"
                                 onError={(e) => {
                                   e.currentTarget.style.display = "none";
                                 }}
                                 crossOrigin="anonymous"
                               />
-                              <div className="absolute bottom-1 left-1 bg-black text-white text-[8pt] px-1 py-0.5 font-mono font-bold">
-                                Bukti #{i + 1}
-                              </div>
                             </div>
                           ))}
                         </div>

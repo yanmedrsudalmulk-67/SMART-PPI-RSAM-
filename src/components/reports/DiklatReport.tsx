@@ -649,17 +649,17 @@ export default function DiklatReport({
                 {selectedSession.images.length === 0 ? (
                   <p className="text-slate-400 italic text-xs py-4 pl-2">Tidak ada foto dokumentasi yang dilampirkan.</p>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 gap-4 print:page-break-inside-avoid">
                     {selectedSession.images.map((img, idx) => (
                       <div 
                         key={idx} 
                         onClick={() => setZoomedImage(img)}
-                        className="aspect-video bg-slate-50 border border-slate-100 rounded-xl overflow-hidden relative group cursor-pointer"
+                        className="relative pt-[75%] bg-slate-50 border border-slate-200 rounded-xl overflow-hidden group cursor-pointer p-1"
                       >
                         <img 
                           src={img} 
-                          alt={`Dokumentasi Pelatihan ${idx + 1}`}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          alt="Dokumentasi Pelatihan"
+                          className="absolute inset-0 w-full h-full object-cover p-1 group-hover:scale-105 transition-transform duration-300"
                           referrerPolicy="no-referrer"
                         />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all no-print">

@@ -364,7 +364,7 @@ export default function EtikaBatukReport({
                      <div key={idx} onClick={() => setZoomedImage(url)} className="relative pt-[75%] border border-slate-800 p-1 cursor-zoom-in bg-white shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:translate-y-[2px] hover:shadow-none transition-all" style={{ borderColor: "#000000" }}>
                        <img
                          src={url}
-                         alt={`Dokumentasi ${idx + 1}`}
+                         alt="Dokumentasi"
                          className="absolute inset-0 w-full h-full object-cover p-1"
                          onError={(e) => { e.currentTarget.style.display = "none"; }}
                        />

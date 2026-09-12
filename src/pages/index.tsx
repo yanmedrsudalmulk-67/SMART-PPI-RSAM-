@@ -86,38 +86,30 @@ export default function WelcomePage() {
               style={{ backgroundImage: `url(${activeBackground.url})` }}
             />
           ) : (
-            <div 
-              dangerouslySetInnerHTML={{ __html: `
-                <video
-                  autoplay
-                  muted
-                  playsinline
-                  loop
-                  preload="auto"
-                  oncontextmenu="return false;"
-                  class="absolute inset-0 w-full h-full object-cover opacity-[0.22] pointer-events-none z-0 mix-blend-screen"
-                >
-                  <source src="${activeBackground.url}" type="${activeBackground.type || 'video/mp4'}">
-                </video>
-              ` }}
-            />
+            <video
+              autoPlay
+              muted
+              playsInline
+              loop
+              preload="auto"
+              onContextMenu={(e) => e.preventDefault()}
+              className="absolute inset-0 w-full h-full object-cover opacity-[0.22] pointer-events-none z-0 mix-blend-screen"
+            >
+              <source src={activeBackground.url} type={activeBackground.type || 'video/mp4'} />
+            </video>
           )
         ) : (
-          <div 
-            dangerouslySetInnerHTML={{ __html: `
-              <video
-                autoplay
-                muted
-                playsinline
-                loop
-                preload="auto"
-                oncontextmenu="return false;"
-                class="absolute inset-0 w-full h-full object-cover opacity-[0.22] pointer-events-none z-0 mix-blend-screen"
-              >
-                <source src="https://assets.mixkit.co/videos/preview/mixkit-stethoscopes-on-a-table-in-a-medical-clinic-40097-large.mp4" type="video/mp4">
-              </video>
-            ` }}
-          />
+          <video
+            autoPlay
+            muted
+            playsInline
+            loop
+            preload="auto"
+            onContextMenu={(e) => e.preventDefault()}
+            className="absolute inset-0 w-full h-full object-cover opacity-[0.22] pointer-events-none z-0 mix-blend-screen"
+          >
+            <source src="https://assets.mixkit.co/videos/preview/mixkit-stethoscopes-on-a-table-in-a-medical-clinic-40097-large.mp4" type="video/mp4" />
+          </video>
         )}
         {/* Top / Bottom Black Shadow Gradients for Video */}
         <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-black/80 to-transparent pointer-events-none z-0" />

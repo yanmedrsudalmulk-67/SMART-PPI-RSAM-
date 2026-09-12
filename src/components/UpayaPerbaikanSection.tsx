@@ -241,9 +241,6 @@ export function UpayaPerbaikanSection({
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                  <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/70 rounded-md text-[9px] font-bold text-emerald-400">
-                    Foto #{idx + 1}
-                  </div>
                 </motion.div>
               );
             })}
