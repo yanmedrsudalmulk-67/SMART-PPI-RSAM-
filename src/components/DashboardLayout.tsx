@@ -159,6 +159,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           let newSlides: any[] = [];
           if (slidesRes.data && slidesRes.data.length > 0) {
             newSlides = slidesRes.data;
+            try {
+              localStorage.setItem('spp_slides', JSON.stringify(newSlides));
+            } catch (e) {}
             // Preload active slider images in parallel in the background
             newSlides.forEach((slide: any) => {
               if (slide.image_url && slide.active && typeof window !== "undefined") {

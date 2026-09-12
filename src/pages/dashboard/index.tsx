@@ -182,6 +182,20 @@ const getSlideStyles = (isActive: boolean, isPrev: boolean, isNext: boolean, win
   };
 };
 
+// Global in-memory cache for instant zero-delay slider on Dashboard
+let cachedDashboardSlides: Slide[] = DEFAULT_SLIDES;
+if (typeof window !== "undefined") {
+  try {
+    const stored = localStorage.getItem("spp_slides");
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        cachedDashboardSlides = parsed;
+      }
+    }
+  } catch (e) {}
+}
+
 const SliderImage = ({
   slide,
   setImageErrors,
@@ -189,37 +203,23 @@ const SliderImage = ({
   slide: any;
   setImageErrors: any;
 }) => {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const imgRef = useRef<HTMLImageElement>(null);
-
-  useEffect(() => {
-    if (imgRef.current && imgRef.current.complete) {
-      setIsLoaded(true);
-    }
-  }, []);
-
   return (
     <>
       <div
-        className="absolute inset-0 w-full h-full bg-cover bg-center blur-[40px] saturate-200 scale-125 transition-opacity duration-700 ease-out"
+        className="absolute inset-0 w-full h-full bg-cover bg-center blur-[32px] saturate-150 scale-110 opacity-30 pointer-events-none"
         style={{
           backgroundImage: `url(${slide.image_url})`,
-          opacity: isLoaded ? 0.4 : 0,
         }}
       />
       <div className="absolute inset-0 w-full h-full bg-slate-950/20" />
       <img
-        ref={imgRef}
         src={slide.image_url}
-        alt={slide.title}
-        className="absolute inset-0 w-full h-full object-cover drop-shadow-2xl scale-100 group-[.swiper-slide-active]:scale-105"
-        style={{
-          opacity: isLoaded ? 1 : 0,
-          transition: "opacity 700ms ease-out, transform 15000ms ease-out",
-        }}
+        alt={slide.title || "Slider"}
+        loading="eager"
+        decoding="async"
+        className="absolute inset-0 w-full h-full object-cover drop-shadow-2xl scale-100 group-[.swiper-slide-active]:scale-105 transition-transform duration-1000 ease-out"
         referrerPolicy="no-referrer"
-        onLoad={() => setIsLoaded(true)}
-        onError={(e) => {
+        onError={() => {
           console.error("Slider image error", slide.image_url);
           setImageErrors((prev: any) => ({ ...prev, [slide.id]: true }));
         }}
@@ -233,20 +233,14 @@ const HeroSlider = ({
   isLoading,
 }: {
   slides: Slide[];
-  isLoading: boolean;
+  isLoading?: boolean;
 }) => {
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
-  const [aspectRatios, setAspectRatios] = useState<Record<string, number>>({
-    s1: 1.777,
-    s2: 1.777,
-  });
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" ? window.innerWidth < 768 : false);
   const [windowWidth, setWindowWidth] = useState(() => typeof window !== "undefined" ? window.innerWidth : 1200);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
       setWindowWidth(window.innerWidth);
@@ -258,8 +252,8 @@ const HeroSlider = ({
 
   const visibleSlides = useMemo(() => {
     const active = slides.filter((s) => s.active);
-    return active.length > 0 ? active : (isLoading ? [] : DEFAULT_SLIDES);
-  }, [slides, isLoading]);
+    return active.length > 0 ? active : DEFAULT_SLIDES;
+  }, [slides]);
 
   const duplicatedSlides = useMemo(() => {
     if (visibleSlides.length === 0) return [];
@@ -273,71 +267,30 @@ const HeroSlider = ({
     return result;
   }, [visibleSlides]);
 
-  useEffect(() => {
-    visibleSlides.forEach((slide) => {
-      if (slide.image_url && !aspectRatios[slide.id]) {
-        const img = new window.Image();
-        img.src = slide.image_url;
-        img.referrerPolicy = "no-referrer";
-        img.onload = () => {
-          if (img.naturalWidth && img.naturalHeight) {
-            const ratio = img.naturalWidth / img.naturalHeight;
-            // Sane ratios (from 1.4 to 2.7)
-            const boundedRatio = Math.max(1.4, Math.min(2.7, ratio));
-            setAspectRatios((prev) => ({ ...prev, [slide.id]: boundedRatio }));
-          }
-        };
-      }
-    });
-  }, [visibleSlides, aspectRatios]);
-
-  const currentSlide = visibleSlides[activeIndex] || visibleSlides[0];
   const currentRatio = useMemo(() => {
-    if (!currentSlide) return 16 / 9;
-    const rawRatio = aspectRatios[currentSlide.id] || 16 / 9;
     if (isMobile) {
-      return Math.max(1.3, Math.min(1.8, rawRatio));
+      return 1.6;
     }
-    
-    // Mathematically perfect scale factor matching slidesPerView to keep the center card widescreen ratio
-    // without stretching, which keeps the total vertical height much shorter and polished
-    let multiplier = 1.35;
-    if (windowWidth >= 1280) multiplier = 1.45;
-    else if (windowWidth >= 1024) multiplier = 1.40;
-    else if (windowWidth >= 768) multiplier = 1.35;
-    
-    return rawRatio * multiplier;
-  }, [currentSlide, aspectRatios, isMobile, windowWidth]);
+    if (windowWidth >= 1280) return 2.5;
+    if (windowWidth >= 1024) return 2.45;
+    if (windowWidth >= 768) return 2.4;
+    return 1.777;
+  }, [isMobile, windowWidth]);
 
-  if (isLoading) {
-    return (
-      <div
-        className="w-full relative group rounded-[24px] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-slate-200/50 dark:border-white/10 dark:shadow-blue-900/20 mb-8 mt-4 bg-slate-950 flex flex-col justify-end p-8 md:p-14 animate-pulse"
-        style={{ aspectRatio: 1.777 }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-tr from-slate-950 via-slate-900 to-slate-950 opacity-90" />
-        <div className="relative z-10 max-w-2xl space-y-4">
-          <div className="h-6 w-28 bg-blue-500/10 rounded-full border border-blue-500/20 flex items-center justify-center text-[10px] text-blue-400 font-bold uppercase tracking-widest">
-            Memuat...
-          </div>
-          <div className="h-8 md:h-12 w-3/4 bg-slate-800/80 rounded-2xl" />
-          <div className="h-4 w-5/6 bg-slate-800/50 rounded-xl" />
-          <div className="h-4 w-2/3 bg-slate-800/50 rounded-xl" />
-        </div>
-      </div>
-    );
-  }
+  const swiperKey = useMemo(() => {
+    return visibleSlides.map((s) => s.id).join("-");
+  }, [visibleSlides]);
 
   return (
     <div
-      className="w-full md:max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto relative group overflow-hidden md:overflow-visible mb-6 mt-1 bg-transparent transition-all duration-300 ease-in-out transform-gpu will-change-[width,height]"
+      className="w-full md:max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto relative group overflow-hidden md:overflow-visible mb-6 mt-1 bg-transparent transform-gpu"
       style={{ 
         aspectRatio: currentRatio,
         perspective: "1200px"
       }}
     >
       <Swiper
-        key={duplicatedSlides.map((s, idx) => `${s.id}-${idx}`).join(",")}
+        key={swiperKey}
         modules={[Autoplay, Pagination]}
         centeredSlides={true}
         spaceBetween={16}
@@ -455,12 +408,22 @@ export default function DashboardPage() {
   const [chartMode, setChartMode] = useState<"bar" | "line">("bar");
   const [selectedUnit, setSelectedUnit] = useState<string>("all");
 
-  const slides =
-    isDashboardLoaded &&
-    dashboardData?.slides &&
-    dashboardData.slides.length > 0
-      ? dashboardData.slides
-      : (isDashboardLoaded ? DEFAULT_SLIDES : []);
+  const slides = useMemo(() => {
+    if (dashboardData?.slides && dashboardData.slides.length > 0) {
+      return dashboardData.slides;
+    }
+    return cachedDashboardSlides;
+  }, [dashboardData?.slides]);
+
+  useEffect(() => {
+    if (dashboardData?.slides && dashboardData.slides.length > 0) {
+      cachedDashboardSlides = dashboardData.slides;
+      try {
+        localStorage.setItem("spp_slides", JSON.stringify(dashboardData.slides));
+      } catch (e) {}
+    }
+  }, [dashboardData?.slides]);
+
   const standards =
     isDashboardLoaded && dashboardData?.standards
       ? dashboardData.standards
@@ -473,7 +436,6 @@ export default function DashboardPage() {
     [isDashboardLoaded, dashboardData?.rawData],
   );
   const isDataLoading = !isDashboardLoaded;
-  const isSlidesLoading = !isDashboardLoaded;
 
   const isDashboardLoadedRef = useRef(isDashboardLoaded);
   useEffect(() => {
@@ -518,6 +480,11 @@ export default function DashboardPage() {
           slidesRes.data && slidesRes.data.length > 0
             ? slidesRes.data
             : DEFAULT_SLIDES;
+
+        cachedDashboardSlides = newSlides;
+        try {
+          localStorage.setItem("spp_slides", JSON.stringify(newSlides));
+        } catch (e) {}
 
         // Preload active slider images in parallel
         newSlides.forEach((slide: any) => {
@@ -1265,7 +1232,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <HeroSlider slides={slides} isLoading={isSlidesLoading} />
+      <HeroSlider slides={slides} />
 
       {/* Global Period Filter - 3D Tactile Container with Top Bevel Highlight */}
       <section className="relative">
