@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  X, Download, Share2, Printer, ZoomIn, ZoomOut, 
+  X, Download, Share2, ZoomIn, ZoomOut, 
   RotateCcw, FileText, ChevronLeft, ChevronRight, CheckCircle2,
-  ExternalLink, Loader2
+  Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -100,10 +100,6 @@ export default function PdfViewerModal({
     }
   };
 
-  const handlePrintClick = () => {
-    window.print();
-  };
-
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md overflow-hidden animate-in fade-in duration-200">
@@ -130,55 +126,12 @@ export default function PdfViewerModal({
               </div>
             </div>
 
-            {/* Top Right Action Controls */}
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              {/* Native Open/Share for Mobile */}
-              <button
-                type="button"
-                onClick={handleShareClick}
-                disabled={isActionLoading !== null}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white rounded-xl text-xs font-bold transition-all border border-blue-500/30 active:scale-95 disabled:opacity-50"
-                title="Buka di PDF Viewer atau Bagikan"
-              >
-                {isActionLoading === 'share' ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Share2 className="w-3.5 h-3.5" />
-                )}
-                <span className="hidden sm:inline">Buka / Share</span>
-              </button>
-
-              {/* Direct Download Button */}
-              <button
-                type="button"
-                onClick={handleDownloadClick}
-                disabled={isActionLoading !== null}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 disabled:opacity-50"
-                title="Unduh File PDF"
-              >
-                {isActionLoading === 'download' ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Download className="w-3.5 h-3.5" />
-                )}
-                <span className="hidden sm:inline">Unduh PDF</span>
-              </button>
-
-              {/* Print Button */}
-              <button
-                type="button"
-                onClick={handlePrintClick}
-                className="p-2 text-slate-300 hover:text-white hover:bg-white/10 rounded-xl transition-all"
-                title="Cetak Dokumen"
-              >
-                <Printer className="w-4 h-4" />
-              </button>
-
-              {/* Close Button */}
+            {/* Top Right Controls - Only Close Button */}
+            <div className="flex items-center">
               <button
                 type="button"
                 onClick={onClose}
-                className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-all ml-1"
+                className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-all"
                 title="Tutup Pratinjau"
               >
                 <X className="w-5 h-5" />
@@ -293,18 +246,18 @@ export default function PdfViewerModal({
             )}
           </div>
 
-          {/* Mobile Bottom Floating Action Bar */}
-          <div className="sm:hidden px-4 py-3 bg-[#0f1124] border-t border-indigo-900/40 flex items-center justify-between gap-2">
+          {/* Bottom Action Bar: Buka di Viewer & Unduh PDF */}
+          <div className="px-4 py-3 bg-[#0f1124] border-t border-indigo-900/40 flex items-center justify-between sm:justify-end gap-2.5 sm:gap-4">
             <button
               type="button"
               onClick={handleShareClick}
               disabled={isActionLoading !== null}
-              className="flex-1 py-2.5 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-50 shadow-md"
+              className="flex-1 sm:flex-initial sm:min-w-[170px] py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 shadow-md transition-all cursor-pointer"
             >
               {isActionLoading === 'share' ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <Share2 className="w-3.5 h-3.5" />
+                <Share2 className="w-4 h-4" />
               )}
               <span>Buka di Viewer</span>
             </button>
@@ -313,12 +266,12 @@ export default function PdfViewerModal({
               type="button"
               onClick={handleDownloadClick}
               disabled={isActionLoading !== null}
-              className="flex-1 py-2.5 px-3 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-50 shadow-md"
+              className="flex-1 sm:flex-initial sm:min-w-[170px] py-2.5 px-4 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 shadow-md transition-all cursor-pointer"
             >
               {isActionLoading === 'download' ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <Download className="w-3.5 h-3.5" />
+                <Download className="w-4 h-4" />
               )}
               <span>Unduh PDF</span>
             </button>
