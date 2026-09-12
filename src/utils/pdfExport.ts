@@ -322,13 +322,19 @@ export async function exportElementToA4Pdf(
   const originalStageTransform = zoomStage?.style.transform;
   const originalStageWidth = zoomStage?.style.width;
   const originalStageMinWidth = zoomStage?.style.minWidth;
+  const originalStageMaxWidth = zoomStage?.style.maxWidth;
   const originalStageMargin = zoomStage?.style.margin;
+  const originalStagePosition = zoomStage?.style.position;
 
   const scrollWrapper = zoomStage?.parentElement as HTMLElement | null;
   const originalWrapperHeight = scrollWrapper?.style.height;
+  const originalWrapperWidth = scrollWrapper?.style.width;
+  const originalWrapperPosition = scrollWrapper?.style.position;
 
-  if (scrollWrapper && scrollWrapper.style.height && scrollWrapper.style.height !== 'auto') {
+  if (scrollWrapper) {
     scrollWrapper.style.height = 'auto';
+    scrollWrapper.style.width = 'auto';
+    scrollWrapper.style.position = 'static';
   }
 
   const isF4 = options.paperSize !== 'a4';
@@ -350,9 +356,11 @@ export async function exportElementToA4Pdf(
 
   if (zoomStage) {
     zoomStage.style.transform = 'none';
-    zoomStage.style.width = '100%';
+    zoomStage.style.width = `${targetWidthPx}px`;
     zoomStage.style.minWidth = `${targetWidthPx}px`;
+    zoomStage.style.maxWidth = `${targetWidthPx}px`;
     zoomStage.style.margin = '0 auto';
+    zoomStage.style.position = 'relative';
   }
 
   try {
@@ -656,7 +664,7 @@ export async function exportElementToA4Pdf(
         });
 
         // Collect boundaries of atomic elements for non-cutting calculations
-        const atomicSelector = 'tr, p, li, h1, h2, h3, h4, h5, h6, img, .signature-block, .break-inside-avoid, [class*="break-inside-avoid"], .aspect-video';
+        const atomicSelector = 'tr, p, li, h1, h2, h3, h4, h5, h6, img, .signature-block, [data-pdf-block], [data-pdf-signature], [data-pdf-photo], [data-pdf-findings], [data-pdf-perbaikan], [data-pdf-summary], .photo-documentation-block, .perbaikan-block, .findings-block, .summary-score-block, .break-inside-avoid, [class*="break-inside-avoid"], .aspect-video';
         const atomicEls = Array.from(clonedEl.querySelectorAll(atomicSelector));
         
         atomicEls.forEach((el) => {
@@ -666,11 +674,22 @@ export async function exportElementToA4Pdf(
           
           if (bottom > top) {
             const tagName = el.tagName.toLowerCase();
-            const className = el.className || '';
+            const className = typeof el.className === 'string' ? el.className : '';
+            const pdfBlock = el.getAttribute('data-pdf-block') || '';
             let selector = tagName;
             
-            if (className.includes('signature-block')) {
+            if (pdfBlock) {
+              selector = `block-${pdfBlock}`;
+            } else if (className.includes('signature-block') || el.hasAttribute('data-pdf-signature')) {
               selector = 'signature-block';
+            } else if (className.includes('photo-documentation-block') || el.hasAttribute('data-pdf-photo')) {
+              selector = 'photo-block';
+            } else if (className.includes('findings-block') || el.hasAttribute('data-pdf-findings')) {
+              selector = 'findings-block';
+            } else if (className.includes('perbaikan-block') || el.hasAttribute('data-pdf-perbaikan')) {
+              selector = 'perbaikan-block';
+            } else if (className.includes('summary-score-block') || el.hasAttribute('data-pdf-summary')) {
+              selector = 'summary-block';
             } else if (className.includes('break-inside-avoid')) {
               selector = 'break-inside-avoid';
             }
@@ -707,16 +726,14 @@ export async function exportElementToA4Pdf(
     const mmPerPx = printableWidthMm / canvasWidth;
     const pageHeightInCanvasPx = Math.floor(printableHeightMm / mmPerPx);
 
-    // If content fits comfortably on a single page (with up to 15% smart auto-fit tolerance)
-    if (canvasHeight <= pageHeightInCanvasPx * 1.15) {
+    // If content fits comfortably on a single page naturally
+    if (canvasHeight <= pageHeightInCanvasPx * 1.02) {
       const imgData = canvas.toDataURL('image/png');
       pageImages.push(imgData);
-      // Proportional scale to preserve 100% exact aspect ratio (no vertical squishing)
-      const scaleFactor = Math.min(1, pageHeightInCanvasPx / canvasHeight);
-      const renderWidthMm = printableWidthMm * scaleFactor;
-      const renderHeightMm = (canvasHeight * mmPerPx) * scaleFactor;
-      const posX = margin + (printableWidthMm - renderWidthMm) / 2;
-      const posY = margin + (printableHeightMm - renderHeightMm) / 2;
+      const renderWidthMm = printableWidthMm;
+      const renderHeightMm = canvasHeight * mmPerPx;
+      const posX = margin;
+      const posY = margin;
       pdf.addImage(
         imgData,
         'PNG',
@@ -749,10 +766,10 @@ export async function exportElementToA4Pdf(
       return exportResult;
     }
 
-    // Fallback populated if iframe bounds collection failed or elements were empty
+    // Fallback populated if cloned document bounds collection failed
     if (atomicBounds.length === 0) {
       const elementRect = targetElement.getBoundingClientRect();
-      const atomicSelector = 'tr, p, li, h1, h2, h3, h4, h5, h6, img, .signature-block, .break-inside-avoid, [class*="break-inside-avoid"], .aspect-video';
+      const atomicSelector = 'tr, p, li, h1, h2, h3, h4, h5, h6, img, .signature-block, [data-pdf-block], [data-pdf-signature], [data-pdf-photo], [data-pdf-findings], [data-pdf-perbaikan], [data-pdf-summary], .photo-documentation-block, .perbaikan-block, .findings-block, .summary-score-block, .break-inside-avoid, [class*="break-inside-avoid"], .aspect-video';
       const atomicEls = Array.from(targetElement.querySelectorAll(atomicSelector));
       
       atomicEls.forEach((el) => {
@@ -761,9 +778,15 @@ export async function exportElementToA4Pdf(
         const bottom = Math.round((rect.bottom - elementRect.top) * (canvasWidth / targetElement.offsetWidth));
         if (bottom > top) {
           const tagName = el.tagName.toLowerCase();
-          const className = el.className || '';
+          const className = typeof el.className === 'string' ? el.className : '';
+          const pdfBlock = el.getAttribute('data-pdf-block') || '';
           let selector = tagName;
-          if (className.includes('signature-block')) selector = 'signature-block';
+          if (pdfBlock) selector = `block-${pdfBlock}`;
+          else if (className.includes('signature-block') || el.hasAttribute('data-pdf-signature')) selector = 'signature-block';
+          else if (className.includes('photo-documentation-block') || el.hasAttribute('data-pdf-photo')) selector = 'photo-block';
+          else if (className.includes('findings-block') || el.hasAttribute('data-pdf-findings')) selector = 'findings-block';
+          else if (className.includes('perbaikan-block') || el.hasAttribute('data-pdf-perbaikan')) selector = 'perbaikan-block';
+          else if (className.includes('summary-score-block') || el.hasAttribute('data-pdf-summary')) selector = 'summary-block';
           else if (className.includes('break-inside-avoid')) selector = 'break-inside-avoid';
           atomicBounds.push({ selector, top, bottom });
         }
@@ -776,11 +799,16 @@ export async function exportElementToA4Pdf(
     let currentY = 0;
     let pageIndex = 0;
 
+    // Minimum content before we allow breaking (at least 20% of page height)
+    const minPageContentPx = Math.floor(pageHeightInCanvasPx * 0.20);
+    // Bottom safety buffer: any element starting within 18mm of the bottom line is "mepet/nanggung"
+    const bottomSafetyBufferPx = Math.round(18 / mmPerPx);
+
     while (currentY < canvasHeight) {
       const remainingHeight = canvasHeight - currentY;
 
-      if (remainingHeight <= pageHeightInCanvasPx * 1.05) {
-        // Last chunk fits on this page
+      if (remainingHeight <= pageHeightInCanvasPx * 1.02) {
+        // Last chunk fits naturally on this page without cutting
         const chunkCanvas = document.createElement('canvas');
         chunkCanvas.width = canvasWidth;
         chunkCanvas.height = remainingHeight;
@@ -800,6 +828,7 @@ export async function exportElementToA4Pdf(
         }
 
         const chunkImg = chunkCanvas.toDataURL('image/png');
+        pageImages.push(chunkImg);
         pdf.addImage(
           chunkImg,
           'PNG',
@@ -813,65 +842,95 @@ export async function exportElementToA4Pdf(
         break;
       }
 
-      // Determine ideal cut position for this page
+      // Ideal cutoff point for standard F4 printable area
       const idealCutY = currentY + pageHeightInCanvasPx;
       let chosenBreakY = idealCutY;
 
-      // 1. Check if there is an explicit page break point
-      const nextExplicitBreak = explicitBreaksPx.find((bp) => bp > currentY && bp <= idealCutY);
+      // 1. Check if there is an explicit page break point in this page range
+      const nextExplicitBreak = explicitBreaksPx.find((bp) => bp > currentY + minPageContentPx && bp <= idealCutY);
       if (nextExplicitBreak !== undefined) {
         chosenBreakY = nextExplicitBreak;
       } else {
-        // 2. Find any atomic element that crosses idealCutY
-        const crossingElements = atomicBounds.filter(
-          (b) => b.top < idealCutY && b.bottom > idealCutY && b.top > currentY
-        );
+        // 2. Identify elements that would be cut or are "nanggung / mepet" near the bottom
+        // A. Strict blocks: signature, photos, findings, perbaikan, summary score, headings, break-inside-avoid
+        // These blocks MUST NEVER be cut in half or crammed into the bottom margin.
+        const strictBlocks = atomicBounds.filter((el) => {
+          const isStrict =
+            el.selector === 'signature-block' ||
+            el.selector === 'block-signature' ||
+            el.selector === 'photo-block' ||
+            el.selector === 'block-photo' ||
+            el.selector === 'findings-block' ||
+            el.selector === 'block-findings' ||
+            el.selector === 'perbaikan-block' ||
+            el.selector === 'block-perbaikan' ||
+            el.selector === 'summary-block' ||
+            el.selector === 'block-summary' ||
+            el.selector === 'break-inside-avoid' ||
+            el.selector === 'img' ||
+            el.selector === 'h1' ||
+            el.selector === 'h2' ||
+            el.selector === 'h3' ||
+            el.selector === 'h4' ||
+            el.selector === 'h5' ||
+            el.selector === 'h6';
 
-        if (crossingElements.length > 0) {
-          // Identify if there are strict-avoid elements (like signature blocks, headings, images, or custom avoids)
-          const strictAvoid = crossingElements.filter(
-            (el) =>
-              el.selector === 'signature-block' ||
-              el.selector === 'h1' ||
-              el.selector === 'h2' ||
-              el.selector === 'h3' ||
-              el.selector === 'h4' ||
-              el.selector === 'h5' ||
-              el.selector === 'h6' ||
-              el.selector === 'break-inside-avoid' ||
-              el.selector === 'img'
+          if (!isStrict) return false;
+
+          // If the element starts after current page start:
+          if (el.top <= currentY) return false;
+
+          // Does it cross idealCutY?
+          const crosses = el.top < idealCutY && el.bottom > idealCutY;
+
+          // Or is its start mepet / nanggung near the bottom (cannot finish before the bottom buffer)?
+          const isMepet = el.top >= idealCutY - bottomSafetyBufferPx;
+          const overflowsBuffer = el.bottom > idealCutY - Math.round(8 / mmPerPx);
+
+          // Headings should never be orphaned at the bottom of the page
+          const isHeadingOrphan = (el.selector.startsWith('h') || el.selector === 'h1' || el.selector === 'h2' || el.selector === 'h3' || el.selector === 'h4') &&
+            el.top >= idealCutY - Math.round(35 / mmPerPx);
+
+          return crosses || isMepet || overflowsBuffer || isHeadingOrphan;
+        });
+
+        // B. Table rows ('tr') and list items ('li', 'p'):
+        // Any row that crosses idealCutY or starts within bottomSafetyBufferPx is mepet/cut!
+        const awkwardRows = atomicBounds.filter((el) => {
+          if (el.selector !== 'tr' && el.selector !== 'li' && el.selector !== 'p') return false;
+          if (el.top <= currentY) return false;
+
+          const crosses = el.top < idealCutY && el.bottom > idealCutY;
+          const isMepet = el.top >= idealCutY - bottomSafetyBufferPx;
+          const overflowsBuffer = el.bottom > idealCutY - Math.round(6 / mmPerPx);
+
+          return crosses || isMepet || overflowsBuffer;
+        });
+
+        // Combine all awkward / crossing elements
+        const awkwardElements = [...strictBlocks, ...awkwardRows];
+
+        // Filter those whose top starts after minPageContentPx on the current page
+        const candidateBreaks = awkwardElements
+          .filter((el) => el.top >= currentY + minPageContentPx && el.top < idealCutY)
+          .map((el) => el.top);
+
+        if (candidateBreaks.length > 0) {
+          // Push the earliest awkward element to the next page!
+          chosenBreakY = Math.min(...candidateBreaks);
+        } else {
+          // If no awkward elements found or pushing them leaves page too empty,
+          // look for the cleanest complete element boundary ending before the bottom buffer
+          const cleanFitting = atomicBounds.filter(
+            (b) =>
+              b.bottom <= idealCutY - bottomSafetyBufferPx &&
+              b.bottom >= currentY + minPageContentPx
           );
 
-          if (strictAvoid.length > 0) {
-            // Find the minimum top of strict-avoid elements to push them to the next page entirely
-            const strictMinTop = Math.min(...strictAvoid.map((el) => el.top));
-            if (strictMinTop > currentY) {
-              chosenBreakY = strictMinTop;
-            }
+          if (cleanFitting.length > 0) {
+            chosenBreakY = Math.max(...cleanFitting.map((b) => b.bottom));
           } else {
-            // For regular elements (tr, p, li), check if we can push them to the next page to avoid splitting.
-            // Only break at the element's top if it leaves the current page reasonably filled (>= 45% of page height)
-            const minPageFullnessY = currentY + Math.floor(pageHeightInCanvasPx * 0.45);
-            const acceptableBreaks = crossingElements.filter((el) => el.top >= minPageFullnessY);
-
-            if (acceptableBreaks.length > 0) {
-              chosenBreakY = Math.min(...acceptableBreaks.map((el) => el.top));
-            } else {
-              // If pushing the crossing elements would make the page too empty, look for any fitting row (tr),
-              // paragraph (p), or list item (li) that fits completely within the page and break at its bottom boundary.
-              const fittingElements = atomicBounds.filter(
-                (b) =>
-                  (b.selector === 'tr' || b.selector === 'p' || b.selector === 'li') &&
-                  b.bottom <= idealCutY &&
-                  b.bottom >= minPageFullnessY
-              );
-
-              if (fittingElements.length > 0) {
-                chosenBreakY = Math.max(...fittingElements.map((el) => el.bottom));
-              } else {
-                chosenBreakY = idealCutY;
-              }
-            }
+            chosenBreakY = idealCutY;
           }
         }
       }
@@ -938,9 +997,11 @@ export async function exportElementToA4Pdf(
     await deliverPdf(exportResult, options.action || 'auto');
     return exportResult;
   } finally {
-    // Restore scroll wrapper height if modified
-    if (scrollWrapper && originalWrapperHeight !== undefined) {
-      scrollWrapper.style.height = originalWrapperHeight;
+    // Restore scroll wrapper styling if modified
+    if (scrollWrapper) {
+      if (originalWrapperHeight !== undefined) scrollWrapper.style.height = originalWrapperHeight;
+      if (originalWrapperWidth !== undefined) scrollWrapper.style.width = originalWrapperWidth;
+      if (originalWrapperPosition !== undefined) scrollWrapper.style.position = originalWrapperPosition;
     }
 
     // Restore zoom stage styling
@@ -948,7 +1009,9 @@ export async function exportElementToA4Pdf(
       zoomStage.style.transform = originalStageTransform || '';
       zoomStage.style.width = originalStageWidth || '';
       zoomStage.style.minWidth = originalStageMinWidth || '';
+      if (originalStageMaxWidth !== undefined) zoomStage.style.maxWidth = originalStageMaxWidth;
       zoomStage.style.margin = originalStageMargin || '';
+      if (originalStagePosition !== undefined) zoomStage.style.position = originalStagePosition;
     }
     // Restore user's scroll position
     window.scrollTo(prevScrollX, prevScrollY);

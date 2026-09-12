@@ -1037,7 +1037,7 @@ export default function GenericAuditReport({
         );
 
         const renderMetadata = () => (
-          <table className="w-full border-collapse border border-black mb-3 text-[11pt]" style={{ backgroundColor: "#ffffff" }}>
+          <table className="metadata-block break-inside-avoid w-full border-collapse border border-black mb-3 text-[11pt]" data-pdf-block="metadata" style={{ backgroundColor: "#ffffff" }}>
             <tbody>
               <tr>
                 <td className="w-1/3 border border-black p-2 bg-slate-50 text-center" style={{ backgroundColor: "#f8fafc" }}>
@@ -1063,10 +1063,10 @@ export default function GenericAuditReport({
               <tr className="bg-slate-100 font-bold border-b border-black" style={{ backgroundColor: "#f1f5f9" }}>
                 <th className="border border-black px-2 py-1.5 text-center w-10 text-[11pt]">NO</th>
                 <th className="border border-black px-3 py-1.5 text-center text-[11pt]">INDIKATOR</th>
-                <th className="border border-black px-2 py-1.5 text-center w-12 text-[11pt]">YA</th>
+                <th className="border border-black px-2 py-1.5 text-center w-14 text-[11pt]">YA</th>
                 <th className="border border-black px-2 py-1.5 text-center w-14 text-[11pt]">TIDAK</th>
-                <th className="border border-black px-2 py-1.5 text-center w-12 text-[11pt]">N/A</th>
-                <th className="border border-black px-3 py-1.5 text-center w-36 text-[11pt]">KETERANGAN</th>
+                <th className="border border-black px-2 py-1.5 text-center w-14 text-[11pt]">N/A</th>
+                <th className="border border-black px-3 py-1.5 text-center w-40 text-[11pt]">KETERANGAN</th>
               </tr>
             </thead>
             <tbody>
@@ -1081,7 +1081,7 @@ export default function GenericAuditReport({
                 return (
                   <React.Fragment key={item.id}>
                     {showSectionHeader && (
-                      <tr className="bg-slate-100 font-bold border-y border-black text-black" style={{ backgroundColor: "#f1f5f9" }}>
+                      <tr className="bg-slate-100 font-bold border-y border-black text-black break-inside-avoid" style={{ backgroundColor: "#f1f5f9" }}>
                         <td
                           colSpan={6}
                           className="px-3 py-1 font-black uppercase text-[10pt] tracking-wide border border-black text-black"
@@ -1090,7 +1090,7 @@ export default function GenericAuditReport({
                         </td>
                       </tr>
                     )}
-                    <tr className="border-b border-black text-black bg-white" style={{ backgroundColor: "#ffffff" }}>
+                    <tr className="border-b border-black text-black bg-white break-inside-avoid checklist-row" style={{ backgroundColor: "#ffffff" }}>
                       <td className="px-2 py-1.5 text-center border border-black font-bold text-[11pt]">
                         {globalIdx + 1}
                       </td>
@@ -1126,7 +1126,7 @@ export default function GenericAuditReport({
         );
 
         const renderSummaryScore = () => (
-          <table className="w-full border-collapse border-2 border-black mb-3 text-black" style={{ backgroundColor: "#ffffff" }}>
+          <table className="summary-score-block break-inside-avoid w-full border-collapse border-2 border-black mb-3 text-black" data-pdf-block="summary" style={{ backgroundColor: "#ffffff" }}>
             <tbody>
               <tr>
                 <td className="w-1/4 border border-black p-2 bg-slate-50 text-center" style={{ backgroundColor: "#f8fafc" }}>
@@ -1156,7 +1156,7 @@ export default function GenericAuditReport({
         const renderFindingsAndRecommendations = () => {
           if (tableName === "perlindungan_petugas") return null;
           return (
-            <table className="w-full border-collapse border border-black mb-3 text-[11pt] text-black bg-white" style={{ backgroundColor: "#ffffff" }}>
+            <table className="findings-block break-inside-avoid w-full border-collapse border border-black mb-3 text-[11pt] text-black bg-white" data-pdf-block="findings" style={{ backgroundColor: "#ffffff" }}>
               <tbody>
                 <tr>
                   <td className="w-1/2 border border-black p-2.5 align-top bg-white" style={{ backgroundColor: "#ffffff" }}>
@@ -1182,7 +1182,7 @@ export default function GenericAuditReport({
         };
 
         const renderSignatures = () => (
-          <div className="mt-3 mb-2">
+          <div className="signature-block break-inside-avoid mt-4 mb-2" data-pdf-block="signature" data-pdf-signature="true">
             {tableName === "perlindungan_petugas" ? (
               <div className="flex justify-end pr-6">
                 <div className="text-center w-64">
@@ -1260,7 +1260,7 @@ export default function GenericAuditReport({
               <div
                 id="generic-official-report"
                 data-pdf-page="true"
-                className="official-report-paper official-pdf-page w-full min-w-[650px] sm:min-w-0 sm:w-full max-w-[215mm] mx-auto bg-force-white text-black p-4 sm:p-8 md:p-10 border border-slate-300 rounded-2xl shadow-xl print:shadow-none print:border-none print:p-0 my-2 sm:my-4"
+                className="official-report-paper official-pdf-page w-[813px] min-w-[813px] max-w-[813px] mx-auto bg-white text-black p-6 sm:p-8 md:p-10 border border-slate-300 rounded-xl shadow-xl print:shadow-none print:border-none print:p-0 my-2 sm:my-4"
                 style={{
                   fontFamily: "'Calibri', 'Carlito', 'Candara', 'Segoe UI', Arial, sans-serif",
                   fontSize: "11pt",
@@ -1293,7 +1293,7 @@ export default function GenericAuditReport({
 
                 {/* 7. Foto Dokumentasi Temuan Audit (Jika Ada) */}
                 {photosList.length > 0 && (
-                  <div className="mb-4 border border-black p-3 bg-white">
+                  <div className="photo-documentation-block break-inside-avoid mb-4 border border-black p-3 bg-white" data-pdf-block="photo">
                     <h4 className="text-[11pt] font-black uppercase tracking-wide text-black mb-2 flex items-center gap-2 border-b border-black pb-1">
                       <Camera className="w-4 h-4 text-black" /> FOTO DOKUMENTASI AUDIT
                     </h4>
@@ -1322,7 +1322,7 @@ export default function GenericAuditReport({
 
                 {/* 8. Tindak Lanjut & Upaya Perbaikan (Jika Ada) */}
                 {hasPerbaikanContent && (
-                  <div className="mb-4 border-2 border-black p-3 bg-slate-50">
+                  <div className="perbaikan-block break-inside-avoid mb-4 border-2 border-black p-3 bg-slate-50" data-pdf-block="perbaikan">
                     <h4 className="text-[11pt] font-black uppercase tracking-wide text-black mb-2 border-b border-black pb-1 flex items-center justify-between">
                       <span>🛠️ TINDAK LANJUT &amp; UPAYA PERBAIKAN</span>
                       <span className="text-[9pt] px-2 py-0.5 border border-black font-bold uppercase bg-white">

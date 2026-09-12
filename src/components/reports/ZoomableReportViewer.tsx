@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, ReactNode } from 'react';
-import { ZoomIn, ZoomOut, RotateCcw, Maximize, Smartphone, Monitor } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCcw, Smartphone, Monitor } from 'lucide-react';
 
 interface ZoomableReportViewerProps {
   children: ReactNode;
@@ -16,10 +16,36 @@ export default function ZoomableReportViewer({
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const [zoom, setZoom] = useState<number>(1);
+  // Content dimensions (defaults to standard F4 portrait 813x1150)
+  const [contentDimensions, setContentDimensions] = useState<{ width: number; height: number }>({ width: 813, height: 1150 });
+  const [containerWidth, setContainerWidth] = useState<number>(813);
   const [isPinching, setIsPinching] = useState(false);
-  const [contentDimensions, setContentDimensions] = useState<{ width: number; height: number }>({ width: 800, height: 1100 });
-  const [containerWidth, setContainerWidth] = useState<number>(800);
+  const hasUserInteractedRef = useRef(false);
+
+  // Compute fit zoom on mobile/narrow viewports
+  const calculateFitZoom = useCallback((cWidth: number, pWidth: number = 813) => {
+    if (cWidth < pWidth) {
+      // Leave slight 12-16px margin on mobile for neat, professional framing
+      const horizontalPadding = cWidth <= 480 ? 12 : 16;
+      const availableWidth = Math.max(cWidth - horizontalPadding, 240);
+      const fitZoom = Number((availableWidth / pWidth).toFixed(2));
+      return Math.min(Math.max(fitZoom, 0.25), 1.0);
+    }
+    return 1.0;
+  }, []);
+
+  // Initialize zoom so first render on mobile is ALREADY fitted!
+  const [zoom, setZoom] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const winWidth = window.innerWidth;
+      if (winWidth < 850) {
+        const horizontalPadding = winWidth <= 480 ? 12 : 16;
+        const fit = (winWidth - horizontalPadding) / 813;
+        return Math.min(Math.max(Number(fit.toFixed(2)), 0.25), 1.0);
+      }
+    }
+    return 1;
+  });
 
   // Touch tracking for pinch-to-zoom
   const touchStateRef = useRef<{
@@ -35,28 +61,40 @@ export default function ZoomableReportViewer({
   // Measure content & container dimensions
   const updateDimensions = useCallback(() => {
     if (containerRef.current) {
-      setContainerWidth(containerRef.current.clientWidth);
-    }
-    if (contentRef.current) {
-      // Find the first child or the paper container
-      const paper = (contentRef.current.querySelector('.official-report-paper') as HTMLElement) || contentRef.current;
-      if (paper) {
-        setContentDimensions({
-          width: paper.offsetWidth || 794,
-          height: paper.offsetHeight || 1123,
-        });
+      const cWidth = containerRef.current.clientWidth;
+      setContainerWidth(cWidth);
+
+      let pWidth = 813;
+      let pHeight = 1150;
+
+      if (contentRef.current) {
+        const paper = (contentRef.current.querySelector('.official-report-paper') as HTMLElement) || contentRef.current;
+        if (paper) {
+          pWidth = paper.offsetWidth || 813;
+          pHeight = paper.offsetHeight || 1150;
+          setContentDimensions({ width: pWidth, height: pHeight });
+        }
+      }
+
+      // Auto-fit on initial render or container resize if user hasn't manually customized zoom
+      if (!hasUserInteractedRef.current && cWidth > 0) {
+        const optimal = calculateFitZoom(cWidth, pWidth);
+        setZoom(optimal);
       }
     }
-  }, []);
+  }, [calculateFitZoom]);
 
   useEffect(() => {
     updateDimensions();
+    const timer = setTimeout(updateDimensions, 60);
+
     window.addEventListener('resize', updateDimensions);
     const ro = new ResizeObserver(() => updateDimensions());
     if (containerRef.current) ro.observe(containerRef.current);
     if (contentRef.current) ro.observe(contentRef.current);
 
     return () => {
+      clearTimeout(timer);
       window.removeEventListener('resize', updateDimensions);
       ro.disconnect();
     };
@@ -64,27 +102,29 @@ export default function ZoomableReportViewer({
 
   // Handle Zoom In (+)
   const handleZoomIn = () => {
+    hasUserInteractedRef.current = true;
     setZoom((prev) => Math.min(Number((prev + 0.15).toFixed(2)), 2.0));
   };
 
   // Handle Zoom Out (-)
   const handleZoomOut = () => {
-    setZoom((prev) => Math.max(Number((prev - 0.15).toFixed(2)), 0.35));
+    hasUserInteractedRef.current = true;
+    setZoom((prev) => Math.max(Number((prev - 0.15).toFixed(2)), 0.25));
   };
 
   // Handle Reset to 100%
   const handleResetZoom = () => {
+    hasUserInteractedRef.current = true;
     setZoom(1);
   };
 
   // Handle Fit to Screen Width (Pas Layar)
   const handleFitWidth = () => {
-    if (containerRef.current && contentRef.current) {
+    if (containerRef.current) {
       const cWidth = containerRef.current.clientWidth;
-      const targetWidth = Math.max(contentDimensions.width || 750, 680);
-      // Leave slight 12px margin
-      const optimalZoom = Number(((cWidth - 16) / targetWidth).toFixed(2));
-      setZoom(Math.min(Math.max(optimalZoom, 0.35), 1.0));
+      const targetWidth = contentDimensions.width || 813;
+      const optimal = calculateFitZoom(cWidth, targetWidth);
+      setZoom(optimal);
     }
   };
 
@@ -103,7 +143,8 @@ export default function ZoomableReportViewer({
       const timeSinceLastTap = now - touchStateRef.current.lastTap;
       if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
         // Double Tap detected: Toggle Fit <-> 100%
-        if (zoom < 0.9) {
+        hasUserInteractedRef.current = true;
+        if (zoom < 0.95) {
           setZoom(1);
         } else {
           handleFitWidth();
@@ -120,9 +161,10 @@ export default function ZoomableReportViewer({
         e.touches[0].clientY - e.touches[1].clientY
       );
       if (touchStateRef.current.initialDist > 0) {
+        hasUserInteractedRef.current = true;
         const factor = dist / touchStateRef.current.initialDist;
         const newZoom = Number((touchStateRef.current.initialZoom * factor).toFixed(2));
-        setZoom(Math.min(Math.max(newZoom, 0.35), 2.0));
+        setZoom(Math.min(Math.max(newZoom, 0.25), 2.0));
       }
     }
   };
@@ -133,11 +175,10 @@ export default function ZoomableReportViewer({
     }
   };
 
-  // Calculate scaled height to avoid empty gap at the bottom when scaled down
-  const scaledWrapperHeight =
-    zoom < 1 && contentDimensions.height > 0
-      ? contentDimensions.height * zoom + 20
-      : undefined;
+  const paperWidth = contentDimensions.width || 813;
+  const paperHeight = contentDimensions.height || 1150;
+  const scaledWidth = Math.round(paperWidth * zoom);
+  const scaledHeight = Math.round(paperHeight * zoom);
 
   return (
     <div className={`w-full flex flex-col items-center ${className}`}>
@@ -184,7 +225,7 @@ export default function ZoomableReportViewer({
           <button
             type="button"
             onClick={handleZoomOut}
-            disabled={zoom <= 0.35}
+            disabled={zoom <= 0.25}
             className="p-1.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition-all disabled:opacity-30 disabled:pointer-events-none active:scale-95"
             title="Perkecil Tampilan (Zoom Out)"
             aria-label="Zoom Out"
@@ -232,26 +273,40 @@ export default function ZoomableReportViewer({
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="w-full overflow-x-auto overflow-y-visible pb-4 custom-scrollbar transition-all"
+        className="w-full flex justify-center items-start overflow-x-auto overflow-y-visible pb-6 px-1 custom-scrollbar transition-all"
         style={{
-          height: scaledWrapperHeight ? `${scaledWrapperHeight}px` : 'auto',
           touchAction: 'pan-x pan-y pinch-zoom',
         }}
       >
-        {/* Scaled Inner Report Container */}
+        {/* Scaled Wrapper Sized Exactly to Visual Rendered Dimensions */}
         <div
-          ref={contentRef}
-          id={reportId}
-          className="report-zoom-stage origin-top transition-transform duration-100 ease-out"
           style={{
-            transform: `scale(${zoom})`,
-            transformOrigin: zoom < 1 && containerWidth < 680 ? 'top left' : 'top center',
-            width: zoom < 1 && containerWidth < 680 ? '100%' : 'fit-content',
-            minWidth: zoom < 1 && containerWidth < 680 ? undefined : '100%',
+            width: `${scaledWidth}px`,
+            height: `${scaledHeight}px`,
+            position: 'relative',
+            flexShrink: 0,
             margin: '0 auto',
+            transition: isPinching ? 'none' : 'width 0.15s ease-out, height 0.15s ease-out',
           }}
         >
-          {children}
+          <div
+            ref={contentRef}
+            id={reportId}
+            className="report-zoom-stage origin-top-left"
+            style={{
+              width: `${paperWidth}px`,
+              minWidth: `${paperWidth}px`,
+              maxWidth: `${paperWidth}px`,
+              transform: `scale(${zoom})`,
+              transformOrigin: 'top left',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              transition: isPinching ? 'none' : 'transform 0.15s ease-out',
+            }}
+          >
+            {children}
+          </div>
         </div>
       </div>
     </div>

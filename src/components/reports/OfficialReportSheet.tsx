@@ -97,7 +97,7 @@ export default function OfficialReportSheet({
         <div 
           id="official-report-sheet" 
           data-pdf-page="true"
-          className="official-report-paper official-pdf-page relative w-full min-w-[650px] sm:min-w-0 sm:w-full bg-force-white text-black border border-slate-300 print:border-none p-6 sm:p-10 rounded-2xl shadow-xl max-w-[215mm] mx-auto"
+          className="official-report-paper official-pdf-page relative w-[813px] min-w-[813px] max-w-[813px] bg-white text-black border border-slate-300 print:border-none p-6 sm:p-10 rounded-xl shadow-xl mx-auto"
           style={{
             backgroundColor: "#ffffff",
             color: "#000000",
@@ -247,7 +247,7 @@ export default function OfficialReportSheet({
 
       {/* Upaya Perbaikan & Bukti Perbaikan */}
       {(upayaText || waktuPerbaikan || perbaikanImages.length > 0) && (
-         <div className="mb-8 p-4 border-2 border-amber-600 bg-amber-50/40 rounded-xl space-y-3">
+         <div className="perbaikan-block break-inside-avoid mb-8 p-4 border-2 border-amber-600 bg-amber-50/40 rounded-xl space-y-3" data-pdf-block="perbaikan">
            <h4 className="text-xs font-black uppercase tracking-widest text-amber-900 border-b border-amber-400 pb-2 flex items-center justify-between">
              <span>🛠️ Upaya Perbaikan & Tindak Lanjut</span>
              <span className="text-[9px] px-2 py-0.5 bg-amber-200 text-amber-900 rounded font-bold">HASIL PERBAIKAN</span>
@@ -276,7 +276,7 @@ export default function OfficialReportSheet({
       )}
 
       {/* Tanda Tangan Pengesahan (Paling Bawah - Tunggal) */}
-      <div className="grid grid-cols-2 gap-12 mt-10 mb-6">
+      <div className="signature-block break-inside-avoid grid grid-cols-2 gap-12 mt-10 mb-6" data-pdf-block="signature" data-pdf-signature="true">
         <div className="text-center space-y-4">
           <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">Petugas / PJ Ruangan</p>
           <div className="h-20 relative w-full flex justify-center items-center">
