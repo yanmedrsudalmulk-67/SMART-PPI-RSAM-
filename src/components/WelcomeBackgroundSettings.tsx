@@ -117,6 +117,46 @@ export default function WelcomeBackgroundSettings() {
     }
   };
 
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  const executeDelete = async (bg: Background) => {
+    setIsLoading(true);
+    setMsg({ text: 'Menghapus background...', type: 'info' });
+    try {
+      // Extract storage path safely
+      let storagePath: string | null = null;
+      try {
+        const match = bg.public_url.match(/welcome-background\/[^?#]+/);
+        if (match) {
+          storagePath = match[0];
+        } else {
+          const url = new URL(bg.public_url);
+          const pathParts = url.pathname.split('/');
+          const fileName = pathParts[pathParts.length - 1];
+          if (fileName) storagePath = `welcome-background/${fileName}`;
+        }
+      } catch (e) {
+        // url parse fallback
+      }
+
+      if (storagePath) {
+        await supabase.storage.from('public').remove([storagePath]);
+      }
+      
+      const { error } = await supabase.from('welcome_backgrounds').delete().eq('id', bg.id);
+      
+      if (error) throw error;
+      setMsg({ text: 'Background berhasil dihapus', type: 'success' });
+      setConfirmDeleteId(null);
+      fetchBackgrounds();
+    } catch (err: any) {
+      console.error(err);
+      setMsg({ text: err.message || 'Gagal menghapus background', type: 'error' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const setAsActive = async (id: string) => {
     setIsLoading(true);
     setMsg({ text: 'Mengaktifkan background...', type: 'info' });
@@ -124,32 +164,12 @@ export default function WelcomeBackgroundSettings() {
       await supabase.from('welcome_backgrounds').update({ is_active: false }).neq('id', id);
       const { error } = await supabase.from('welcome_backgrounds').update({ is_active: true }).eq('id', id);
       if (error) throw error;
-      setMsg({ text: 'Background diaktifkan', type: 'success' });
+      setMsg({ text: 'Background berhasil diaktifkan', type: 'success' });
       fetchBackgrounds();
     } catch (err: any) {
       console.error(err);
       setMsg({ text: err.message || 'Gagal mengubah background', type: 'error' });
-      setIsLoading(false);
-    }
-  };
-
-  const handleDelete = async (bg: Background) => {
-    if (!confirm('Hapus background ini?')) return;
-    setIsLoading(true);
-    setMsg({ text: 'Menghapus background...', type: 'info' });
-    try {
-      const urlParts = bg.public_url.split('/');
-      const fileName = urlParts[urlParts.length - 1];
-
-      await supabase.storage.from('public').remove([`welcome-background/${fileName}`]);
-      const { error } = await supabase.from('welcome_backgrounds').delete().eq('id', bg.id);
-      
-      if (error) throw error;
-      setMsg({ text: 'Background dihapus', type: 'success' });
-      fetchBackgrounds();
-    } catch (err: any) {
-      console.error(err);
-      setMsg({ text: err.message || 'Gagal menghapus background', type: 'error' });
+    } finally {
       setIsLoading(false);
     }
   };
@@ -191,15 +211,21 @@ export default function WelcomeBackgroundSettings() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {backgrounds.map((bg) => (
-          <div key={bg.id} className={`group relative rounded-3xl overflow-hidden border-2 transition-all ${bg.is_active ? 'border-emerald-500' : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'}`}>
-            <div className="aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden">
+          <div key={bg.id} className={`group relative rounded-3xl overflow-hidden border-2 transition-all flex flex-col bg-slate-900/40 ${bg.is_active ? 'border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.2)]' : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'}`}>
+            {/* Visual media preview container */}
+            <div className="aspect-video bg-black/40 relative flex items-center justify-center overflow-hidden">
               {bg.file_type.startsWith('video/') ? (
                 <video
+                  key={bg.public_url}
                   autoPlay
                   muted
                   playsInline
                   loop
                   preload="auto"
+                  onLoadedMetadata={(e) => {
+                    e.currentTarget.muted = true;
+                    e.currentTarget.play().catch(() => {});
+                  }}
                   className="w-full h-full object-cover pointer-events-none"
                 >
                   <source src={bg.public_url} type={bg.file_type} />
@@ -207,47 +233,87 @@ export default function WelcomeBackgroundSettings() {
               ) : (
                 <img src={bg.public_url} alt={bg.file_name} className="w-full h-full object-cover" />
               )}
-            </div>
-            
-            <div className="absolute top-3 left-3 flex gap-2">
-              {bg.file_type.startsWith('video/') ? (
-                <span className="bg-black/60 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm">
-                  <Video className="w-3 h-3" /> Video
-                </span>
-              ) : (
-                <span className="bg-black/60 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm">
-                  <ImageIcon className="w-3 h-3" /> Image
-                </span>
-              )}
-              {bg.is_active && (
-                <span className="bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm">
-                  <CheckCircle2 className="w-3 h-3" /> Aktif
-                </span>
+
+              {/* Badges */}
+              <div className="absolute top-3 left-3 flex gap-2 z-10 pointer-events-none">
+                {bg.file_type.startsWith('video/') ? (
+                  <span className="bg-black/70 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm">
+                    <Video className="w-3 h-3 text-cyan-400" /> Video
+                  </span>
+                ) : (
+                  <span className="bg-black/70 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm">
+                    <ImageIcon className="w-3 h-3 text-emerald-400" /> Image
+                  </span>
+                )}
+                {bg.is_active && (
+                  <span className="bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm">
+                    <CheckCircle2 className="w-3 h-3" /> Aktif
+                  </span>
+                )}
+              </div>
+
+              {/* Inline Delete Confirmation Overlay */}
+              {confirmDeleteId === bg.id && (
+                <div className="absolute inset-0 bg-slate-950/95 z-30 flex flex-col items-center justify-center p-4 text-center backdrop-blur-md">
+                  <AlertCircle className="w-8 h-8 text-red-500 mb-2 animate-bounce" />
+                  <p className="text-white text-xs font-bold mb-1">Hapus background ini?</p>
+                  <p className="text-slate-400 text-[10px] mb-3 truncate max-w-[220px]">{bg.file_name}</p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => executeDelete(bg)}
+                      disabled={isLoading}
+                      className="px-3.5 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-md cursor-pointer disabled:opacity-50"
+                    >
+                      {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                      Ya, Hapus
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDeleteId(null)}
+                      disabled={isLoading}
+                      className="px-3.5 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer"
+                    >
+                      Batal
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
 
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-md">
-              {!bg.is_active && (
+            {/* Bottom Card Footer with Info and Direct Action Buttons */}
+            <div className="p-4 bg-slate-50 dark:bg-white/[0.03] border-t border-slate-100 dark:border-white/5 flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-slate-800 dark:text-white text-xs font-semibold truncate" title={bg.file_name}>
+                  {bg.file_name}
+                </p>
+                <p className="text-slate-400 dark:text-slate-400 text-[10px] tracking-wider mt-0.5">
+                  {(bg.file_size / (1024 * 1024)).toFixed(2)} MB • {new Date(bg.created_at).toLocaleDateString('id-ID')}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                {!bg.is_active && (
+                  <button
+                    type="button"
+                    onClick={() => setAsActive(bg.id)}
+                    disabled={isLoading}
+                    title="Jadikan Background Utama"
+                    className="px-3 py-2 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-600 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 border border-emerald-600/20 cursor-pointer disabled:opacity-50"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Aktifkan
+                  </button>
+                )}
                 <button
-                  onClick={() => setAsActive(bg.id)}
+                  type="button"
+                  onClick={() => setConfirmDeleteId(bg.id)}
                   disabled={isLoading}
-                  className="px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-emerald-500 transition-all flex items-center gap-2"
+                  title="Hapus background"
+                  className="p-2 bg-red-600/10 hover:bg-red-600 text-red-600 hover:text-white rounded-xl transition-all border border-red-600/20 flex items-center justify-center cursor-pointer disabled:opacity-50"
                 >
-                  <CheckCircle2 className="w-4 h-4" /> Aktifkan
+                  <Trash2 className="w-4 h-4" />
                 </button>
-              )}
-              <button
-                onClick={() => handleDelete(bg)}
-                disabled={isLoading}
-                className="px-4 py-2.5 bg-red-600/90 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-red-500 transition-all flex items-center gap-2"
-              >
-                <Trash2 className="w-4 h-4" /> Hapus
-              </button>
-            </div>
-            
-            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-4 pt-12">
-              <p className="text-white text-xs font-semibold truncate">{bg.file_name}</p>
-              <p className="text-white/60 text-[10px] tracking-wider mt-0.5">{(bg.file_size / (1024 * 1024)).toFixed(2)} MB • {new Date(bg.created_at).toLocaleDateString('id-ID')}</p>
+              </div>
             </div>
           </div>
         ))}

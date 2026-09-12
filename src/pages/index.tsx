@@ -1,30 +1,92 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { useSafeRouter as useRouter } from '@/hooks/useSafeRouter';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useAppContext } from '@/components/Providers';
 import { ShieldCheck, Activity, Clock, BarChart3, TrendingUp } from 'lucide-react';
-
 import { supabase } from '@/lib/supabase';
 
+const DEFAULT_VIDEO_URL = 'https://assets.mixkit.co/videos/preview/mixkit-stethoscopes-on-a-table-in-a-medical-clinic-40097-large.mp4';
+
+const WelcomeClock = memo(function WelcomeClock() {
+  const [timeStr, setTimeStr] = useState<string>('00:00:00');
+
+  useEffect(() => {
+    const update = () => {
+      setTimeStr(new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <span 
+      className="text-xs sm:text-sm font-bold font-mono tracking-widest leading-none mt-0.5 transition-colors duration-500 text-white"
+      suppressHydrationWarning
+    >
+      {timeStr}
+    </span>
+  );
+});
+
+const WelcomeBackgroundMedia = memo(function WelcomeBackgroundMedia({ activeBackground }: { activeBackground: { url: string; type: string } | null }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.defaultMuted = true;
+      videoRef.current.muted = true;
+      videoRef.current.play().catch(() => {
+        // Autoplay policy fallback
+      });
+    }
+  }, [activeBackground?.url]);
+
+  if (!activeBackground?.url) return null;
+
+  const isImage = activeBackground.type?.startsWith('image/');
+
+  if (isImage) {
+    return (
+      <div 
+        className="absolute inset-0 w-full h-full object-cover opacity-25 pointer-events-none z-0 bg-no-repeat bg-cover bg-center transition-opacity duration-1000"
+        style={{ backgroundImage: `url(${activeBackground.url})` }}
+      />
+    );
+  }
+
+  return (
+    <video
+      ref={videoRef}
+      key={activeBackground.url}
+      autoPlay
+      muted
+      playsInline
+      loop
+      preload="auto"
+      onContextMenu={(e) => e.preventDefault()}
+      className="absolute inset-0 w-full h-full object-cover opacity-[0.35] pointer-events-none z-0 transition-opacity duration-700"
+    >
+      <source src={activeBackground.url} type={activeBackground.type || 'video/mp4'} />
+    </video>
+  );
+});
+
 export default function WelcomePage() {
-  const router = useRouter();
   const { hospitalLogoUrl } = useAppContext();
-  const [time, setTime] = useState<Date | null>(null);
-  const [mounted, setMounted] = useState(false);
-  const isDark = true;
-  const [isMobile, setIsMobile] = useState(false);
   const [activeBackground, setActiveBackground] = useState<{ url: string; type: string } | null>({
-    url: 'https://assets.mixkit.co/videos/preview/mixkit-stethoscopes-on-a-table-in-a-medical-clinic-40097-large.mp4',
+    url: DEFAULT_VIDEO_URL,
     type: 'video/mp4'
   });
 
   useEffect(() => {
-    setMounted(true);
-    setIsMobile(window.innerWidth < 640);
-    
-    // Fetch active background
+    // Ensure dark theme is applied cleanly
+    document.documentElement.classList.remove('light');
+    document.documentElement.classList.add('dark');
+    localStorage.setItem('theme', 'dark');
+
+    // Fetch active background from Supabase
     const fetchBackground = async () => {
       try {
         const { data, error } = await supabase
@@ -41,32 +103,13 @@ export default function WelcomePage() {
       }
     };
     fetchBackground();
-    
-    localStorage.setItem('theme', 'dark');
-    setTime(new Date());
-
-    const handleResize = () => setIsMobile(window.innerWidth < 640);
-    window.addEventListener('resize', handleResize);
-
-    const interval = setInterval(() => setTime(new Date()), 1000);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('resize', handleResize);
-    };
   }, []);
-
-  // Sync theme changes with HTML root
-  useEffect(() => {
-    if (!mounted) return;
-    document.documentElement.classList.remove('light');
-    document.documentElement.classList.add('dark');
-    localStorage.setItem('theme', 'dark');
-  }, [mounted]);
 
   return (
     <div className="h-screen w-full transition-colors duration-700 ease-in-out relative flex flex-col items-center justify-center overflow-hidden font-sans bg-gradient-to-br from-[#060814] via-[#0b0e26] to-[#18092d] text-white">
       <Head>
-        <link rel="preload" as="video" href="https://assets.mixkit.co/videos/preview/mixkit-stethoscopes-on-a-table-in-a-medical-clinic-40097-large.mp4" type="video/mp4" />
+        <title>Smart PPI | Welcome</title>
+        <link rel="preload" as="video" href={DEFAULT_VIDEO_URL} type="video/mp4" />
       </Head>
 
       {/* Futuristic Ambient Glowing Orbs */}
@@ -78,43 +121,11 @@ export default function WelcomePage() {
       </div>
 
       {/* Background Media */}
-      <>
-        {activeBackground ? (
-          activeBackground.type && activeBackground.type.startsWith('image/') ? (
-            <div 
-              className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none z-0 bg-no-repeat bg-cover bg-center transition-opacity duration-1000 mix-blend-screen"
-              style={{ backgroundImage: `url(${activeBackground.url})` }}
-            />
-          ) : (
-            <video
-              autoPlay
-              muted
-              playsInline
-              loop
-              preload="auto"
-              onContextMenu={(e) => e.preventDefault()}
-              className="absolute inset-0 w-full h-full object-cover opacity-[0.22] pointer-events-none z-0 mix-blend-screen"
-            >
-              <source src={activeBackground.url} type={activeBackground.type || 'video/mp4'} />
-            </video>
-          )
-        ) : (
-          <video
-            autoPlay
-            muted
-            playsInline
-            loop
-            preload="auto"
-            onContextMenu={(e) => e.preventDefault()}
-            className="absolute inset-0 w-full h-full object-cover opacity-[0.22] pointer-events-none z-0 mix-blend-screen"
-          >
-            <source src="https://assets.mixkit.co/videos/preview/mixkit-stethoscopes-on-a-table-in-a-medical-clinic-40097-large.mp4" type="video/mp4" />
-          </video>
-        )}
-        {/* Top / Bottom Black Shadow Gradients for Video */}
-        <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-black/80 to-transparent pointer-events-none z-0" />
-        <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-black/90 to-transparent pointer-events-none z-0" />
-      </>
+      <WelcomeBackgroundMedia activeBackground={activeBackground} />
+
+      {/* Top / Bottom Black Shadow Gradients for Video */}
+      <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-black/80 to-transparent pointer-events-none z-0" />
+      <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-black/90 to-transparent pointer-events-none z-0" />
 
       {/* Decorative Floating Glass UI Widgets */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden max-w-[1440px] mx-auto w-full z-10">
@@ -134,18 +145,10 @@ export default function WelcomePage() {
               <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
             </div>
             <div className="flex flex-col min-w-[70px]">
-              <motion.span 
-                 initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.2 }}
-                 className="text-[8px] sm:text-[10px] uppercase tracking-wider font-bold transition-colors duration-500 text-slate-400"
-              >
+              <span className="text-[8px] sm:text-[10px] uppercase tracking-wider font-bold transition-colors duration-500 text-slate-400">
                 Waktu Sistem
-              </motion.span>
-              <motion.span 
-                 initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.3 }}
-                 className="text-xs sm:text-sm font-bold font-mono tracking-widest leading-none mt-0.5 transition-colors duration-500 text-white"
-              >
-                {time ? time.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '00:00:00'}
-              </motion.span>
+              </span>
+              <WelcomeClock />
             </div>
           </motion.div>
         </motion.div>
@@ -166,18 +169,12 @@ export default function WelcomePage() {
               <Activity className="w-4 h-4 sm:w-5 sm:h-5 transition-colors duration-500 text-emerald-400" />
             </div>
             <div className="flex flex-col">
-              <motion.span 
-                 initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.4 }}
-                 className="text-[8px] sm:text-[10px] uppercase tracking-wider font-bold text-right transition-colors duration-500 text-slate-400"
-              >
+              <span className="text-[8px] sm:text-[10px] uppercase tracking-wider font-bold text-right transition-colors duration-500 text-slate-400">
                 Standar PPI
-              </motion.span>
-              <motion.span 
-                 initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.5 }}
-                 className="text-xs sm:text-sm font-bold text-right leading-none mt-0.5 transition-colors duration-500 text-white"
-              >
+              </span>
+              <span className="text-xs sm:text-sm font-bold text-right leading-none mt-0.5 transition-colors duration-500 text-white">
                 Real-time
-              </motion.span>
+              </span>
             </div>
           </motion.div>
         </motion.div>
@@ -261,10 +258,6 @@ export default function WelcomePage() {
             </span>
           </div>
         </motion.div>
-
-        <div className="flex items-center gap-3 sm:gap-4">
-          {/* Theme toggles removed for consistent clean dark mode */}
-        </div>
       </header>
 
       {/* Main Hero Content */}
@@ -276,14 +269,14 @@ export default function WelcomePage() {
           className="text-center max-w-4xl w-full flex flex-col items-center"
         >
           <h1 className="text-6xl md:text-[100px] lg:text-[120px] font-black leading-[1.1] tracking-tighter relative mb-6 md:mb-10 lg:mb-8">
-              <motion.span 
-                initial={{ y: 20, opacity: 0 }} 
-                animate={{ y: 0, opacity: 1 }} 
-                transition={{ duration: 0.8, delay: 0.6 }}
-                className="block text-transparent bg-clip-text bg-gradient-to-r bg-[length:200%_auto] animate-gradient drop-shadow-[1.5px_1.5px_1.5px_rgba(0,0,0,0.9)] from-blue-400 via-purple-500 to-blue-400"
-              >
-                SMART PPI
-              </motion.span>
+            <motion.span 
+              initial={{ y: 20, opacity: 0 }} 
+              animate={{ y: 0, opacity: 1 }} 
+              transition={{ duration: 0.8, delay: 0.6 }}
+              className="block text-transparent bg-clip-text bg-gradient-to-r bg-[length:200%_auto] animate-gradient drop-shadow-[1.5px_1.5px_1.5px_rgba(0,0,0,0.9)] from-blue-400 via-purple-500 to-blue-400"
+            >
+              SMART PPI
+            </motion.span>
           </h1>
           
           <motion.div 

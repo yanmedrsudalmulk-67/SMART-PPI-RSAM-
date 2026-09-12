@@ -162,12 +162,14 @@ export default function HandHygieneReport({
   const { hospitalLogoUrl } = useAppContext();
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [chartType, setChartType] = useState<'line' | 'bar'>(() => {
-    if (typeof window !== 'undefined') {
-      return (localStorage.getItem('hh_report_chart_type') as 'line' | 'bar') || 'line';
+  const [chartType, setChartType] = useState<'line' | 'bar'>('line');
+
+  useEffect(() => {
+    const stored = localStorage.getItem('hh_report_chart_type');
+    if (stored === 'line' || stored === 'bar') {
+      setChartType(stored);
     }
-    return 'line';
-  });
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('hh_report_chart_type', chartType);

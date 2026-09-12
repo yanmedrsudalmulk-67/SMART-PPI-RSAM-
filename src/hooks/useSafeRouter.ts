@@ -1,4 +1,5 @@
 import { useRouter as useNextRouter } from 'next/router';
+import { useMemo } from 'react';
 
 function isAbortError(err: any) {
   if (!err) return false;
@@ -17,47 +18,44 @@ function isAbortError(err: any) {
 }
 
 export function useSafeRouter() {
-  try {
-    const router = useNextRouter();
-    if (router) {
-      return {
-        ...router,
-        push: async (...args: Parameters<typeof router.push>) => {
-          try {
-            return await router.push(...args);
-          } catch (err) {
-            if (isAbortError(err)) {
-              return false;
-            }
-            throw err;
+  const router = useNextRouter();
+
+  return useMemo(() => {
+    if (!router) return mockRouter();
+    return {
+      ...router,
+      push: async (...args: Parameters<typeof router.push>) => {
+        try {
+          return await router.push(...args);
+        } catch (err) {
+          if (isAbortError(err)) {
+            return false;
           }
-        },
-        replace: async (...args: Parameters<typeof router.replace>) => {
-          try {
-            return await router.replace(...args);
-          } catch (err) {
-            if (isAbortError(err)) {
-              return false;
-            }
-            throw err;
+          throw err;
+        }
+      },
+      replace: async (...args: Parameters<typeof router.replace>) => {
+        try {
+          return await router.replace(...args);
+        } catch (err) {
+          if (isAbortError(err)) {
+            return false;
           }
-        },
-        prefetch: async (...args: Parameters<typeof router.prefetch>) => {
-          try {
-            return await router.prefetch(...args);
-          } catch (err) {
-            if (isAbortError(err)) {
-              return undefined;
-            }
-            throw err;
+          throw err;
+        }
+      },
+      prefetch: async (...args: Parameters<typeof router.prefetch>) => {
+        try {
+          return await router.prefetch(...args);
+        } catch (err) {
+          if (isAbortError(err)) {
+            return undefined;
           }
-        },
-      };
-    }
-  } catch (e) {
-    // Fallback to mock router if called outside Next.js context
-  }
-  return mockRouter();
+          throw err;
+        }
+      },
+    };
+  }, [router]);
 }
 
 function mockRouter() {
