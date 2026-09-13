@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAppContext } from '@/components/Providers';
 import { AppLogo } from '@/components/AppLogo';
 import { ClockWidget } from '@/components/ClockWidget';
+import MobilePortraitNavBar from '@/components/MobilePortraitNavBar';
 import { useDashboardStore } from '@/hooks/useDashboardStore';
 import { supabase } from '@/lib/supabase';
 
@@ -469,71 +470,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </main>
       </div>
 
-      {/* Mobile & Tablet Portrait Bottom Navigation - Neumorphic Bar matching Kepatuhan Kebersihan Tangan Card */}
-      <div className="fixed bottom-4 inset-x-3 sm:inset-x-5 z-50 flex justify-center landscape:hidden portrait:flex pb-[env(safe-area-inset-bottom)]">
-        <nav className="w-full max-w-md flex justify-around items-center h-[76px] px-2.5 py-1.5 rounded-[30px] border border-[#2b2d56] bg-gradient-to-b from-[#1c1f40]/95 via-[#13162f]/95 to-[#0b0d1e]/95 backdrop-blur-2xl shadow-[-6px_-6px_18px_rgba(140,165,255,0.08),8px_8px_24px_rgba(0,0,0,0.8),inset_1px_1px_2px_rgba(255,255,255,0.15),inset_-1.5px_-1.5px_2px_rgba(0,0,0,0.6)]">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
-
-            return (
-              <Link 
-                key={item.name} 
-                href={item.href}
-                className="relative flex-1 h-[62px] flex flex-col items-center justify-center transition-all duration-200 outline-none px-0.5"
-              >
-                {/* Neumorphic Active Plate Indicator */}
-                {isActive && (
-                  <motion.div
-                    layoutId="mobileNavIndicatorNeumorphic"
-                    className="absolute inset-x-1 inset-y-1 rounded-[22px] bg-gradient-to-r from-[#272952] via-[#1e2044] to-[#141535] border border-indigo-400/40 shadow-[-2px_-2px_7px_rgba(140,165,255,0.15),4px_4px_12px_rgba(0,0,0,0.65),inset_1px_1px_1.5px_rgba(255,255,255,0.25)]"
-                    transition={{ type: "spring", stiffness: 420, damping: 32 }}
-                  />
-                )}
-                
-                <motion.div 
-                  animate={isActive ? { 
-                    y: [0, -6, 0, -3, 0],
-                    scale: [1, 1.08, 1, 1.04, 1],
-                  } : { 
-                    y: 0,
-                    scale: 1,
-                  }}
-                  transition={isActive ? { 
-                    duration: 0.8,
-                    repeat: Infinity,
-                    repeatDelay: 4.2,
-                    ease: "easeInOut"
-                  } : { duration: 0.2 }}
-                  className={`relative z-10 flex flex-col items-center justify-center transition-all duration-200 ${
-                    isActive ? 'scale-105' : 'opacity-75 hover:opacity-100 active:scale-95'
-                  }`}
-                >
-                  {/* Direct Icon without card/squircle box */}
-                  <div className="flex items-center justify-center w-7 h-7 relative z-10">
-                    <item.icon 
-                      className={`w-[22px] h-[22px] transition-all duration-300 relative z-10 ${
-                        isActive 
-                          ? 'text-cyan-400 drop-shadow-[2px_3px_4px_rgba(0,0,0,0.9)] drop-shadow-[0_0_10px_rgba(6,182,212,0.7)]' 
-                          : 'text-slate-300/85 group-hover:text-cyan-300 drop-shadow-[1.5px_2px_3px_rgba(0,0,0,0.85)]'
-                      }`} 
-                      strokeWidth={2.2} 
-                    />
-                  </div>
-
-                  {/* Label Text */}
-                  <span className={`text-[9.5px] tracking-tight mt-1 transition-colors duration-200 ${
-                    isActive 
-                      ? 'text-white font-black drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]' 
-                      : 'text-slate-400 font-semibold'
-                  }`}>
-                    {item.shortName || item.name}
-                  </span>
-                </motion.div>
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
+      {/* Mobile & Tablet Portrait Bottom Navigation - Design matching reference image */}
+      <MobilePortraitNavBar currentPath={pathname} />
     </div>
   );
 }
