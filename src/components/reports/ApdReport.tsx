@@ -15,6 +15,18 @@ import {
 import { format, parseISO } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
 import { useAppContext } from '@/components/Providers';
+import PdfDownloadButton from '@/components/reports/PdfDownloadButton';
+import ZoomableReportViewer from '@/components/reports/ZoomableReportViewer';
+
+const APD_COMPONENT_ITEMS = [
+  { id: 'masker', name: 'Masker', key: 'masker' },
+  { id: 'sarung_tangan', name: 'Sarung Tangan', key: 'sarung_tangan' },
+  { id: 'penutup_kepala', name: 'Penutup Kepala', key: 'penutup_kepala' },
+  { id: 'apron', name: 'Apron', key: 'apron' },
+  { id: 'goggle', name: 'Kaca Mata / Goggle', key: 'goggle' },
+  { id: 'sepatu_boot', name: 'Sepatu Boots', key: 'sepatu_boot' },
+  { id: 'gaun_pelindung', name: 'Gaun / Baju Pelindung', key: 'gaun_pelindung' },
+];
 
 export default function ApdReport({ 
   filters 
@@ -308,6 +320,53 @@ export default function ApdReport({
     return <span className="flex justify-center font-bold text-slate-400 uppercase">{val}</span>;
   };
 
+  const componentStats = useMemo(() => {
+    return APD_COMPONENT_ITEMS.map(comp => {
+      let patuh = 0;
+      let dinilai = 0;
+      filteredData.forEach(row => {
+        const val = String(row[comp.key] || '').toLowerCase();
+        if (val === 'ya' || val === 'sesuai') {
+          patuh++;
+          dinilai++;
+        } else if (val === 'tidak' || val === 'tidak sesuai') {
+          dinilai++;
+        }
+      });
+      const perc = dinilai > 0 ? Math.round((patuh / dinilai) * 100) : 0;
+      return {
+        id: comp.id,
+        name: comp.name,
+        patuh,
+        dinilai,
+        perc
+      };
+    });
+  }, [filteredData]);
+
+  const formatDateTimeSafe = (dateStr: string | null | undefined) => {
+    if (!dateStr) return '-';
+    try {
+      const parsed = parseISO(dateStr);
+      if (isNaN(parsed.getTime())) return dateStr;
+      return format(parsed, 'dd/MM/yyyy HH:mm');
+    } catch (_) {
+      return dateStr;
+    }
+  };
+
+  const formatApdOfficial = (val: string | null | undefined) => {
+    if (!val) return <span className="text-slate-400 font-bold">-</span>;
+    const lower = String(val).toLowerCase();
+    if (lower === 'ya' || lower === 'sesuai') {
+      return <span className="font-bold text-emerald-800">✓</span>;
+    }
+    if (lower === 'tidak' || lower === 'tidak sesuai') {
+      return <span className="font-bold text-rose-800">✗</span>;
+    }
+    return <span className="text-slate-400 font-bold">-</span>;
+  };
+
   if (loading && !data.length) return <ReportSkeleton />;
 
   return (
@@ -501,6 +560,335 @@ export default function ApdReport({
             </div>
           </div>
        </div>
+
+      {/* Lembar Cetak Laporan Resmi (Official Printable Document & Viewer) */}
+      <div className="pt-8 border-t border-indigo-900/30 space-y-4">
+        <div className="flex items-center justify-between gap-3 px-1">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
+            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+              Laporan Resmi
+            </h4>
+          </div>
+          <PdfDownloadButton
+            targetElementId="apd-official-report"
+            filename={`Laporan_Kepatuhan_Penggunaan_APD_RSUD_AL_MULK_${(filters.periode || 'Periode').replace(/[^a-zA-Z0-9]/g, '_')}_${format(new Date(), 'yyyyMMdd_HHmmss')}.pdf`}
+            title="Download PDF Laporan Kepatuhan Penggunaan APD (Landscape)"
+            size="md"
+            orientation="landscape"
+          />
+        </div>
+
+        <ZoomableReportViewer>
+          <div
+            id="apd-official-report"
+            data-pdf-page="true"
+            data-orientation="landscape"
+            className="official-report-paper official-pdf-page landscape bg-force-white text-black border border-slate-300 shadow-2xl p-6 sm:p-7 relative overflow-hidden print:shadow-none print:border-none print:p-0 print:m-0 w-[1248px] min-w-[1248px] max-w-[330mm] mx-auto"
+            style={{
+              width: "1248px",
+              minWidth: "1248px",
+              maxWidth: "1248px",
+              backgroundColor: "#ffffff",
+              color: "#000000",
+              fontFamily: "'Calibri', 'Carlito', 'Candara', 'Segoe UI', Arial, sans-serif",
+              fontSize: "9.5pt",
+            }}
+          >
+            {/* Inline CSS print isolation */}
+            <style dangerouslySetInnerHTML={{__html: `
+              @media print {
+                @page {
+                  size: 330mm 215mm;
+                  margin: 6mm;
+                }
+                body * {
+                  visibility: hidden !important;
+                }
+                #apd-official-report, #apd-official-report * {
+                  visibility: visible !important;
+                }
+                #apd-official-report {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 100% !important;
+                  margin: 0 !important;
+                  padding: 6mm !important;
+                  border: none !important;
+                  box-shadow: none !important;
+                  background: white !important;
+                }
+              }
+            `}} />
+
+            {/* Kop Surat Resmi RSUD AL-MULK (Standar Dinas) */}
+            <div className="mb-2">
+              <div className="border-b-[2.5px] border-black pb-2 mb-1">
+                <div className="flex items-center justify-center gap-4 sm:gap-5 max-w-4xl mx-auto">
+                  <div className="w-14 h-14 shrink-0 flex items-center justify-center">
+                    {hospitalLogoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={hospitalLogoUrl}
+                        alt="Logo RS"
+                        className="max-w-full max-h-full object-contain"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                        crossOrigin="anonymous"
+                      />
+                    ) : (
+                      <ShieldCheck className="w-10 h-10 text-black" />
+                    )}
+                  </div>
+                  <div className="text-center">
+                    <h1 className="text-[11pt] sm:text-[12pt] font-black uppercase tracking-wide leading-tight text-black">
+                      TIM PENCEGAHAN DAN PENGENDALIAN INFEKSI (PPI)
+                    </h1>
+                    <h2 className="text-[11pt] sm:text-[12pt] font-black uppercase tracking-wider leading-tight text-black mt-0.5">
+                      UOBK RSUD AL-MULK KOTA SUKABUMI
+                    </h2>
+                    <p className="text-[8pt] sm:text-[8.5pt] text-black italic mt-0.5 leading-tight">
+                      Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota Sukabumi, Jawa Barat 43168
+                    </p>
+                  </div>
+                </div>
+              </div>
+              {/* Garis batas ganda kop surat standar dinas */}
+              <div className="border-b border-black mb-3" />
+            </div>
+
+            {/* Judul & Metadata Laporan */}
+            <div className="text-center mb-4">
+              <h1 className="text-[13pt] font-black uppercase text-black underline tracking-tight">
+                LAPORAN KEPATUHAN PENGGUNAAN ALAT PELINDUNG DIRI (APD)
+              </h1>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[9pt] mt-3 p-2.5 bg-slate-50 border border-slate-300 rounded text-left">
+                <div>
+                  <span className="font-bold text-slate-600 block text-[8pt] uppercase">Periode:</span>
+                  <span className="font-black text-black">
+                    {filters.periode ? (
+                      (() => {
+                        try {
+                          const date = parseISO(filters.periode);
+                          const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+                          return `${months[date.getMonth()]} ${date.getFullYear()}`;
+                        } catch (_) {
+                          return filters.periode;
+                        }
+                      })()
+                    ) : 'Semua Periode'} {filters.type ? `(${filters.type})` : ''}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-bold text-slate-600 block text-[8pt] uppercase">Unit / Ruangan:</span>
+                  <span className="font-black text-black">{filters.unitFilter || 'Semua Unit'}</span>
+                </div>
+                <div>
+                  <span className="font-bold text-slate-600 block text-[8pt] uppercase">Target Standar Mutu:</span>
+                  <span className="font-black text-emerald-800">100% (Standar Nasional)</span>
+                </div>
+                <div>
+                  <span className="font-bold text-slate-600 block text-[8pt] uppercase">Tanggal Unduh:</span>
+                  <span className="font-black text-black">{format(new Date(), 'dd/MM/yyyy HH:mm')} WIB</span>
+                </div>
+              </div>
+            </div>
+
+            {/* TABEL KEPATUHAN PENGGUNAAN APD */}
+            <div className="mb-4">
+              <h4 className="text-[10pt] font-black uppercase tracking-wider text-slate-900 mb-1.5">
+                I. Tabel Data Audit Kepatuhan Penggunaan APD
+              </h4>
+              <table className="w-full text-center border-collapse border border-black text-[8.5pt] whitespace-nowrap">
+                <thead>
+                  <tr className="bg-slate-100 text-black font-black uppercase tracking-wider border-b border-black text-[8pt]">
+                    <th className="border border-black px-2 py-1.5 text-center w-8">NO</th>
+                    <th className="border border-black px-2.5 py-1.5 text-center whitespace-nowrap">WAKTU</th>
+                    <th className="border border-black px-2.5 py-1.5 text-left whitespace-nowrap">OBSERVER</th>
+                    <th className="border border-black px-2.5 py-1.5 text-left whitespace-nowrap">UNIT / RUANGAN</th>
+                    <th className="border border-black px-2.5 py-1.5 text-left whitespace-nowrap">PROFESI</th>
+                    <th className="border border-black px-2.5 py-1.5 text-left whitespace-nowrap">TINDAKAN</th>
+                    <th className="border border-black px-1.5 py-1.5 text-center w-12 whitespace-nowrap">MASKER</th>
+                    <th className="border border-black px-1.5 py-1.5 text-center w-14 whitespace-nowrap">SARUNG TANGAN</th>
+                    <th className="border border-black px-1.5 py-1.5 text-center w-14 whitespace-nowrap">PENUTUP KEPALA</th>
+                    <th className="border border-black px-1.5 py-1.5 text-center w-12 whitespace-nowrap">APRON</th>
+                    <th className="border border-black px-1.5 py-1.5 text-center w-14 whitespace-nowrap">GOGGLE</th>
+                    <th className="border border-black px-1.5 py-1.5 text-center w-14 whitespace-nowrap">BOOTS</th>
+                    <th className="border border-black px-1.5 py-1.5 text-center w-12 whitespace-nowrap">GAUN</th>
+                    <th className="border border-black px-2 py-1.5 text-center text-emerald-900 whitespace-nowrap">PATUH</th>
+                    <th className="border border-black px-2 py-1.5 text-center text-rose-900 whitespace-nowrap">TDK PATUH</th>
+                    <th className="border border-black px-2.5 py-1.5 text-center text-[8.5pt] font-black whitespace-nowrap">HASIL (%)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredData.map((row, index) => {
+                    const items = [row.masker, row.sarung_tangan, row.penutup_kepala, row.apron, row.goggle, row.sepatu_boot, row.gaun_pelindung];
+                    const patuh = items.filter(val => val && (val.toLowerCase() === 'ya' || val.toLowerCase() === 'sesuai')).length;
+                    const tidakPatuh = items.filter(val => val && (val.toLowerCase() === 'tidak' || val.toLowerCase() === 'tidak sesuai')).length;
+                    const dinilai = patuh + tidakPatuh;
+                    const persentase = dinilai > 0 ? Math.round((patuh / dinilai) * 100) : 0;
+
+                    return (
+                      <tr key={`print_apd_${row.id || index}`} className="even:bg-slate-50/50">
+                        <td className="border border-black px-2 py-1.5 text-center font-mono text-[8pt]">{index + 1}</td>
+                        <td className="border border-black px-2.5 py-1.5 text-center font-mono text-[8pt] whitespace-nowrap">
+                          {formatDateTimeSafe(row.tanggal_waktu)}
+                        </td>
+                        <td className="border border-black px-2.5 py-1.5 text-left text-slate-800 text-[8pt] whitespace-nowrap">{row.observer || '-'}</td>
+                        <td className="border border-black px-2.5 py-1.5 text-left font-bold text-[8pt] uppercase whitespace-nowrap">{row.unit || '-'}</td>
+                        <td className="border border-black px-2.5 py-1.5 text-left text-[8pt] uppercase whitespace-nowrap">{row.profesi || '-'}</td>
+                        <td className="border border-black px-2.5 py-1.5 text-left text-[8pt] uppercase whitespace-nowrap max-w-[140px] truncate" title={row.tindakan || '-'}>{row.tindakan || '-'}</td>
+                        <td className="border border-black px-1.5 py-1.5 text-center font-semibold text-[8.5pt]">{formatApdOfficial(row.masker)}</td>
+                        <td className="border border-black px-1.5 py-1.5 text-center font-semibold text-[8.5pt]">{formatApdOfficial(row.sarung_tangan)}</td>
+                        <td className="border border-black px-1.5 py-1.5 text-center font-semibold text-[8.5pt]">{formatApdOfficial(row.penutup_kepala)}</td>
+                        <td className="border border-black px-1.5 py-1.5 text-center font-semibold text-[8.5pt]">{formatApdOfficial(row.apron)}</td>
+                        <td className="border border-black px-1.5 py-1.5 text-center font-semibold text-[8.5pt]">{formatApdOfficial(row.goggle)}</td>
+                        <td className="border border-black px-1.5 py-1.5 text-center font-semibold text-[8.5pt]">{formatApdOfficial(row.sepatu_boot)}</td>
+                        <td className="border border-black px-1.5 py-1.5 text-center font-semibold text-[8.5pt]">{formatApdOfficial(row.gaun_pelindung)}</td>
+                        <td className="border border-black px-2 py-1.5 text-center font-mono font-bold text-emerald-800 text-[8.5pt]">{patuh}</td>
+                        <td className="border border-black px-2 py-1.5 text-center font-mono font-bold text-rose-800 text-[8.5pt]">{tidakPatuh}</td>
+                        <td className="border border-black px-2.5 py-1.5 text-center font-black text-[8.5pt]">
+                          <span className={persentase >= 85 ? 'text-emerald-800 font-bold' : persentase >= 70 ? 'text-amber-800 font-bold' : 'text-rose-800 font-bold'}>
+                            {persentase}%
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {filteredData.length === 0 && (
+                    <tr>
+                      <td colSpan={16} className="border border-black px-4 py-6 text-center text-slate-500 font-bold align-middle">
+                        Tidak ada data audit kepatuhan APD untuk periode ini
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+                <tfoot>
+                  <tr className="bg-slate-100 font-black border-t-2 border-black text-black">
+                    <td colSpan={13} className="border border-black px-3 py-2 text-right uppercase tracking-wider text-[8.5pt] whitespace-nowrap align-middle">
+                      TOTAL DAN RATA-RATA KESELURUHAN:
+                    </td>
+                    <td className="border border-black px-2 py-2 text-center font-mono text-[9.5pt] whitespace-nowrap align-middle text-emerald-900">
+                      {summaryStats.patuh}
+                    </td>
+                    <td className="border border-black px-2 py-2 text-center font-mono text-[9.5pt] whitespace-nowrap align-middle text-rose-900">
+                      {summaryStats.tidakPatuh}
+                    </td>
+                    <td className="border border-black px-2.5 py-2 text-center font-mono text-[10pt] whitespace-nowrap align-middle">
+                      <span className={summaryStats.avg >= 85 ? 'text-emerald-800 font-black' : 'text-rose-800 font-black'}>
+                        {summaryStats.avg}%
+                      </span>
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            {/* II. Ringkasan Evaluasi & Analisis Indikator Kepatuhan APD */}
+            <div className="space-y-3 mt-2 break-inside-avoid">
+              <h4 className="text-[10pt] font-black uppercase tracking-wider text-slate-900">
+                II. Ringkasan Evaluasi & Analisis Indikator Kepatuhan APD
+              </h4>
+
+              {/* 3 Overview Cards */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="p-3 bg-slate-50 border border-slate-300 rounded text-center">
+                  <span className="text-[7.5pt] font-black uppercase tracking-wider text-slate-600 block">Total Observasi</span>
+                  <span className="text-[16pt] font-black font-mono text-black leading-tight block mt-0.5">
+                    {summaryStats.count}
+                  </span>
+                  <span className="text-[7.5pt] text-slate-500 font-bold uppercase">Sesi Audit Terdata</span>
+                </div>
+                <div className="p-3 bg-slate-50 border border-slate-300 rounded text-center">
+                  <span className="text-[7.5pt] font-black uppercase tracking-wider text-slate-600 block">Kepatuhan Tindakan</span>
+                  <span className="text-[16pt] font-black font-mono text-emerald-800 leading-tight block mt-0.5">
+                    {summaryStats.patuh} / {summaryStats.dinilai}
+                  </span>
+                  <span className="text-[7.5pt] text-slate-500 font-bold uppercase">Item APD Patuh Digunakan</span>
+                </div>
+                <div className="p-3 bg-slate-50 border border-slate-300 rounded text-center">
+                  <span className="text-[7.5pt] font-black uppercase tracking-wider text-slate-600 block">Rata-rata Kepatuhan</span>
+                  <span className={`text-[16pt] font-black font-mono leading-tight block mt-0.5 ${summaryStats.avg >= 85 ? 'text-emerald-800' : 'text-rose-800'}`}>
+                    {summaryStats.avg}%
+                  </span>
+                  <span className={`text-[7.5pt] font-black uppercase inline-block px-1.5 py-0.5 rounded mt-0.5 ${summaryStats.avg === 100 ? 'bg-emerald-100 text-emerald-800' : summaryStats.avg >= 85 ? 'bg-blue-100 text-blue-800' : 'bg-rose-100 text-rose-800'}`}>
+                    {summaryStats.avg === 100 ? 'Sempurna (100%)' : summaryStats.avg >= 85 ? 'Sesuai Standar (≥85%)' : 'Di Bawah Standar'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Analisis Persentase Per Komponen APD (7 Komponen) */}
+              <div className="p-3 bg-slate-50 border border-slate-300 rounded">
+                <div className="flex items-center justify-between mb-2">
+                  <h5 className="font-black text-black uppercase text-[8.5pt]">
+                    Analisis Persentase Capaian Per Komponen APD
+                  </h5>
+                  <span className="text-[7.5pt] text-slate-600 font-bold">Target Mutu PPI: 100%</span>
+                </div>
+                <div className="grid grid-cols-7 gap-2">
+                  {componentStats.map((item) => {
+                    const isMet = item.perc >= 85;
+                    return (
+                      <div key={item.id} className="p-2 bg-white border border-slate-300 rounded text-center">
+                        <span className="text-[7.5pt] font-black text-black block truncate" title={item.name}>{item.name}</span>
+                        <span className={`text-[13pt] font-black font-mono leading-none block my-1 ${isMet ? 'text-emerald-800' : 'text-rose-800'}`}>
+                          {item.perc}%
+                        </span>
+                        <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden my-1">
+                          <div
+                            className={`h-full ${isMet ? 'bg-emerald-600' : 'bg-rose-600'}`}
+                            style={{ width: `${Math.min(item.perc, 100)}%` }}
+                          />
+                        </div>
+                        <span className="text-[6.5pt] font-bold text-slate-600 block leading-tight">
+                          {item.patuh}/{item.dinilai}
+                        </span>
+                        <span className={`text-[6.5pt] font-black uppercase mt-0.5 inline-block px-1 rounded ${isMet ? 'text-emerald-800 bg-emerald-50' : 'text-rose-800 bg-rose-50'}`}>
+                          {isMet ? 'Tercapai' : '< 85%'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Standar & Keterangan Tambahan */}
+              <div className="p-2.5 bg-slate-50 border border-slate-300 rounded flex items-center justify-between text-[8pt] text-slate-700">
+                <div>
+                  <strong className="text-black">Standar Akreditasi Kemenkes RI:</strong> Penggunaan Alat Pelindung Diri (APD) harus sesuai indikasi dan transmisi risiko penularan infeksi dengan target kepatuhan 100%.
+                </div>
+                <div className="text-[7.5pt] text-slate-500 font-bold shrink-0 ml-4">
+                  Keterangan: (✓) = Patuh/Sesuai | (✗) = Tidak Patuh | (-) = Tidak Dinilai/NA
+                </div>
+              </div>
+
+              {/* Lembar Tanda Tangan / Pengesahan */}
+              <div className="mt-4 pt-3 border-t border-slate-300 grid grid-cols-2 gap-8 text-[9pt] text-center signature-block break-inside-avoid" data-pdf-block="signature" data-pdf-signature="true">
+                <div>
+                  <p className="text-slate-700 font-bold mb-16">
+                    Mengetahui,<br />
+                    <span className="text-black font-black">Ketua PPI</span>
+                  </p>
+                  <p className="font-black text-black underline text-[9.5pt]">
+                    dr. Nurul Iman
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-700 font-bold mb-16">
+                    Sukabumi, {format(new Date(), 'd MMMM yyyy', { locale: idLocale })}<br />
+                    <span className="text-black font-black">IPCN</span>
+                  </p>
+                  <p className="font-black text-black underline text-[9.5pt]">
+                    Adi Tresa Purnama
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ZoomableReportViewer>
+      </div>
 
       {/* Modal Konfirmasi Hapus */}
       <AnimatePresence>
