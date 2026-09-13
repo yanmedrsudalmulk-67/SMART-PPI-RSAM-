@@ -1,6 +1,7 @@
 import { useRef, useImperativeHandle, forwardRef, useState, useEffect } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import { User, Eraser } from 'lucide-react';
+import { exportBlackSignatureCanvas } from '@/utils/signatureUtils';
 
 interface DigitalSignatureSectionProps {
   pjName?: string;
@@ -134,7 +135,7 @@ const DigitalSignatureSection = forwardRef<DigitalSignatureRef, DigitalSignature
         if (hidePj) return null;
         if (sigPadPJ.current && !sigPadPJ.current.isEmpty()) {
           try {
-            return sigPadPJ.current.getCanvas().toDataURL('image/png');
+            return exportBlackSignatureCanvas(sigPadPJ.current.getCanvas());
           } catch (e) {
             return pjSigData;
           }
@@ -144,7 +145,7 @@ const DigitalSignatureSection = forwardRef<DigitalSignatureRef, DigitalSignature
       getSupervisorSignature: () => {
         if (sigPadSupervisor.current && !sigPadSupervisor.current.isEmpty()) {
           try {
-            return sigPadSupervisor.current.getCanvas().toDataURL('image/png');
+            return exportBlackSignatureCanvas(sigPadSupervisor.current.getCanvas());
           } catch (e) {
             return supervisorSigData;
           }

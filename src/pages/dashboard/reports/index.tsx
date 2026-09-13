@@ -348,8 +348,6 @@ export default function ReportsPage() {
   const [haisStatsMap, setHaisStatsMap] = useState<Map<string, { count: number, num: number, den: number, rate: number, prevRate: number }>>(new Map());
   const [loading, setLoading] = useState(true);
 
-  const topRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     if (isReportsLoaded && reportsData && reportsData.statsMap && reportsData.haisStatsMap) {
       setStatsMap(reportsData.statsMap);
@@ -358,23 +356,15 @@ export default function ReportsPage() {
     }
   }, [isReportsLoaded, reportsData]);
 
-  // Automatically scroll main container to top when changing indicators, categories, or subcategories
+  const isInitialMount = useRef(true);
+
+  // Automatically scroll main container to top when changing indicators, categories, or subcategories (only on actual change, not initial mount jump)
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
     forceScrollToTop();
-    if (topRef.current) topRef.current.scrollIntoView({ behavior: 'instant', block: 'start' });
-    const interval = setInterval(() => {
-      forceScrollToTop();
-      if (topRef.current) topRef.current.scrollIntoView({ behavior: 'instant', block: 'start' });
-    }, 30);
-    const timer = setTimeout(() => {
-      clearInterval(interval);
-      forceScrollToTop();
-      if (topRef.current) topRef.current.scrollIntoView({ behavior: 'instant', block: 'start' });
-    }, 600);
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timer);
-    };
   }, [selectedIndicator, kategori, subKategori]);
 
   const startDateISO = useMemo(() => {
@@ -493,13 +483,11 @@ export default function ReportsPage() {
 
   const handleSelectIndicator = (id: string) => {
     forceScrollToTop();
-    if (topRef.current) topRef.current.scrollIntoView({ behavior: 'instant', block: 'start' });
     setSelectedIndicator(id);
   };
 
   const handleBack = () => {
     forceScrollToTop();
-    if (topRef.current) topRef.current.scrollIntoView({ behavior: 'instant', block: 'start' });
     setSelectedIndicator(null);
   };
 
@@ -507,7 +495,6 @@ export default function ReportsPage() {
 
   return (
     <div className="max-w-[1600px] mx-auto pb-32 relative space-y-4 sm:space-y-6">
-      <div ref={topRef} className="absolute top-0 left-0 w-full h-0 pointer-events-none" />
       
       {/* Top Page Header Banner - Identik dengan Layout Menu Dashboard */}
       <div className="flex flex-col items-center justify-between gap-4 mb-2 landscape:lg:flex-row landscape:lg:items-center">

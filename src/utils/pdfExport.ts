@@ -10,6 +10,8 @@
  * with page-by-page capture to guarantee zero text/row cutting.
  */
 
+import { ensureBlackSignature } from '@/utils/signatureUtils';
+
 export interface ExportPdfOptions {
   filename?: string;
   margin?: number; // margin in mm, default: 5
@@ -479,13 +481,35 @@ export async function exportElementToA4Pdf(
                 }
               });
 
-              // Ensure images inside cloned page are displayed properly
+              // Ensure images inside cloned page are displayed properly and signatures are pure black
               const imgs = targetClonedPage.querySelectorAll('img');
-              imgs.forEach((img) => {
-                (img as HTMLElement).style.maxWidth = '100%';
-                (img as HTMLElement).style.display = 'inline-block';
-                (img as HTMLElement).style.verticalAlign = 'middle';
-              });
+              for (const imgEl of Array.from(imgs)) {
+                const img = imgEl as HTMLImageElement;
+                img.style.maxWidth = '100%';
+                img.style.display = 'inline-block';
+                img.style.verticalAlign = 'middle';
+
+                const isSignature =
+                  img.closest('.signature-block, [data-pdf-signature], [data-pdf-block="signature"]') !== null ||
+                  img.hasAttribute('data-pdf-signature-img') ||
+                  (img.alt && (img.alt.includes('TTD') || img.alt.includes('Tanda Tangan'))) ||
+                  img.className.includes('brightness-0');
+
+                if (isSignature) {
+                  img.style.filter = 'none';
+                  img.removeAttribute('crossorigin');
+                  try {
+                    if (img.src) {
+                      const blackUrl = await ensureBlackSignature(img.src);
+                      if (blackUrl) {
+                        img.src = blackUrl;
+                      }
+                    }
+                  } catch (e) {
+                    console.warn('Error blackening Mode 1 signature:', e);
+                  }
+                }
+              }
             }
 
             if (clonedDoc.fonts && clonedDoc.fonts.ready) {
@@ -539,19 +563,35 @@ export async function exportElementToA4Pdf(
     // =========================================================================
     const targetElement = pageElements.length === 1 ? pageElements[0] : element;
 
-    // Find all images to ensure loaded
+    // Find all images to ensure loaded, and pre-process signatures to pure black ink
     const images = Array.from(targetElement.querySelectorAll('img'));
     await Promise.all(
       images.map(
-        (img) =>
-          new Promise<void>((resolve) => {
+        async (img) => {
+          const isSignature =
+            img.closest('.signature-block, [data-pdf-signature], [data-pdf-block="signature"]') !== null ||
+            img.hasAttribute('data-pdf-signature-img') ||
+            (img.alt && (img.alt.includes('TTD') || img.alt.includes('Tanda Tangan'))) ||
+            img.className.includes('brightness-0');
+
+          if (isSignature && img.src) {
+            try {
+              const blackUrl = await ensureBlackSignature(img.src);
+              if (blackUrl && blackUrl !== img.src) {
+                img.src = blackUrl;
+              }
+            } catch {}
+          }
+
+          return new Promise<void>((resolve) => {
             if (img.complete) {
               resolve();
             } else {
               img.onload = () => resolve();
               img.onerror = () => resolve();
             }
-          })
+          });
+        }
       )
     );
 
@@ -633,13 +673,35 @@ export async function exportElementToA4Pdf(
           }
         });
 
-        // Ensure images inside cloned element are displayed properly
+        // Ensure images inside cloned element are displayed properly and signatures are pure black
         const imgs = clonedEl.querySelectorAll('img');
-        imgs.forEach((img) => {
-          (img as HTMLElement).style.maxWidth = '100%';
-          (img as HTMLElement).style.display = 'inline-block';
-          (img as HTMLElement).style.verticalAlign = 'middle';
-        });
+        for (const imgEl of Array.from(imgs)) {
+          const img = imgEl as HTMLImageElement;
+          img.style.maxWidth = '100%';
+          img.style.display = 'inline-block';
+          img.style.verticalAlign = 'middle';
+
+          const isSignature =
+            img.closest('.signature-block, [data-pdf-signature], [data-pdf-block="signature"]') !== null ||
+            img.hasAttribute('data-pdf-signature-img') ||
+            (img.alt && (img.alt.includes('TTD') || img.alt.includes('Tanda Tangan'))) ||
+            img.className.includes('brightness-0');
+
+          if (isSignature) {
+            img.style.filter = 'none';
+            img.removeAttribute('crossorigin');
+            try {
+              if (img.src) {
+                const blackUrl = await ensureBlackSignature(img.src);
+                if (blackUrl) {
+                  img.src = blackUrl;
+                }
+              }
+            } catch (e) {
+              console.warn('Error blackening cloned signature in Mode 2:', e);
+            }
+          }
+        }
 
         if (clonedDoc.fonts && clonedDoc.fonts.ready) {
           try {

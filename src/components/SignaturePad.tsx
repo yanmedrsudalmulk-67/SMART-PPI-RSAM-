@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import { Eraser, Check } from 'lucide-react';
+import { exportBlackSignatureCanvas } from '@/utils/signatureUtils';
 
 interface SignaturePadProps {
   label: string;
@@ -79,9 +80,9 @@ export default function SignaturePad({ label, onSave, defaultValue }: SignatureP
       onSave(null);
     } else {
       setIsEmpty(false);
-      // Fallback to getCanvas() if getTrimmedCanvas() causes issues with trim-canvas dependency
+      // Ensure signature is exported with pure black ink for official reports and documents
       const canvas = sigCanvas.current?.getCanvas();
-      onSave(canvas ? canvas.toDataURL('image/png') : null);
+      onSave(canvas ? exportBlackSignatureCanvas(canvas) : null);
     }
   };
 

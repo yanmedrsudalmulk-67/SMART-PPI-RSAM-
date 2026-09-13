@@ -7,6 +7,7 @@ import { forceScrollToTop } from '@/utils/scrollHelper';
 import { useSafeRouter as useRouter } from '@/hooks/useSafeRouter';
 import PdfDownloadButton from "@/components/reports/PdfDownloadButton";
 import ZoomableReportViewer from "@/components/reports/ZoomableReportViewer";
+import { ensureBlackSignature } from "@/utils/signatureUtils";
 import {
   TrendingUp,
   Activity,
@@ -136,6 +137,41 @@ const INDICATOR_TO_FORM_PATH: Record<string, string> = {
   'bundle_plebitis': '/dashboard/input/bundles/plebitis',
 };
 
+const OfficialReportSignature = ({
+  src,
+  alt,
+  className = "max-h-16 object-contain",
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+}) => {
+  const [blackSrc, setBlackSrc] = useState<string>(src);
+
+  useEffect(() => {
+    let active = true;
+    if (!src) return;
+    ensureBlackSignature(src).then((res) => {
+      if (active && res) {
+        setBlackSrc(res);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [src]);
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={blackSrc || src}
+      className={className}
+      alt={alt}
+      data-pdf-signature-img="true"
+    />
+  );
+};
+
 export default function GenericAuditReport({
   tableName,
   indicatorItems,
@@ -203,10 +239,14 @@ export default function GenericAuditReport({
         item.ttd_pj ||
         item.tanda_tangan_1 ||
         item.tanda_tangan_pj ||
+        item.signature_pj ||
+        item.ttd_petugas ||
         jsonFallback.ttd_pj_ruangan ||
         jsonFallback.ttd_pj ||
         jsonFallback.tanda_tangan_pj ||
         jsonFallback.tanda_tangan_1 ||
+        jsonFallback.signature_pj ||
+        jsonFallback.ttd_petugas ||
         (Array.isArray(jsonFallback.tanda_tangan) ? jsonFallback.tanda_tangan[0] : null) ||
         (Array.isArray(item.tanda_tangan) ? item.tanda_tangan[0] : null) ||
         (typeof item.tanda_tangan_1 === 'string' ? item.tanda_tangan_1 : null) ||
@@ -217,10 +257,18 @@ export default function GenericAuditReport({
         item.tanda_tangan_2 ||
         item.tanda_tangan_ipcn ||
         item.tanda_tangan_spv ||
+        item.signature_ipcn ||
+        item.signature_supervisor ||
+        item.ttd_supervisor ||
+        item.ttd_observer ||
         jsonFallback.ttd_ipcn ||
         jsonFallback.tanda_tangan_ipcn ||
         jsonFallback.tanda_tangan_spv ||
         jsonFallback.tanda_tangan_2 ||
+        jsonFallback.signature_ipcn ||
+        jsonFallback.signature_supervisor ||
+        jsonFallback.ttd_supervisor ||
+        jsonFallback.ttd_observer ||
         (Array.isArray(jsonFallback.tanda_tangan) ? jsonFallback.tanda_tangan[1] : null) ||
         (Array.isArray(item.tanda_tangan) ? item.tanda_tangan[1] : null) ||
         (typeof item.tanda_tangan_2 === 'string' ? item.tanda_tangan_2 : null) ||
@@ -1189,12 +1237,9 @@ export default function GenericAuditReport({
                   <div className="font-bold text-black uppercase text-[11pt]">TIM PPI RS</div>
                   <div className="h-16 flex items-center justify-center my-1">
                     {(selectedRecord.tanda_tangan_2 || selectedRecord.tanda_tangan_1) ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <OfficialReportSignature
                         src={selectedRecord.tanda_tangan_2 || selectedRecord.tanda_tangan_1}
-                        className="max-h-16 object-contain filter brightness-0"
                         alt="TTD IPCN"
-                        crossOrigin="anonymous"
                       />
                     ) : (
                       <span className="text-[9pt] text-slate-400 italic">Tanpa Tanda Tangan</span>
@@ -1213,12 +1258,9 @@ export default function GenericAuditReport({
                       <div className="font-bold text-black uppercase text-[11pt]">Petugas / PJ Ruangan</div>
                       <div className="h-16 flex items-center justify-center my-1">
                         {selectedRecord.tanda_tangan_1 ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
+                          <OfficialReportSignature
                             src={selectedRecord.tanda_tangan_1}
-                            className="max-h-16 object-contain filter brightness-0"
                             alt="TTD PJ"
-                            crossOrigin="anonymous"
                           />
                         ) : (
                           <span className="text-[9pt] text-slate-400 italic">Tanpa Tanda Tangan</span>
@@ -1232,12 +1274,9 @@ export default function GenericAuditReport({
                       <div className="font-bold text-black uppercase text-[11pt]">Tim PPI</div>
                       <div className="h-16 flex items-center justify-center my-1">
                         {selectedRecord.tanda_tangan_2 ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
+                          <OfficialReportSignature
                             src={selectedRecord.tanda_tangan_2}
-                            className="max-h-16 object-contain filter brightness-0"
                             alt="TTD IPCN"
-                            crossOrigin="anonymous"
                           />
                         ) : (
                           <span className="text-[9pt] text-slate-400 italic">Tanpa Tanda Tangan</span>

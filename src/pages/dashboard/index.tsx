@@ -269,12 +269,12 @@ const HeroSlider = ({
 
   const currentRatio = useMemo(() => {
     if (isMobile) {
-      return 1.6;
+      return 1.32;
     }
-    if (windowWidth >= 1280) return 2.5;
-    if (windowWidth >= 1024) return 2.45;
-    if (windowWidth >= 768) return 2.4;
-    return 1.777;
+    if (windowWidth >= 1280) return 2.05;
+    if (windowWidth >= 1024) return 2.0;
+    if (windowWidth >= 768) return 1.95;
+    return 1.45;
   }, [isMobile, windowWidth]);
 
   const swiperKey = useMemo(() => {
