@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export interface MobileNavItem {
   id: string;
@@ -121,8 +121,6 @@ function SolidNavIcon({ id, className = "" }: { id: string; className?: string }
 
 /**
  * 3D Icon Presentation Component
- * - For active state: Matches reference image with pearl-white solid silhouette, 3D bottom drop shadow, and crisp highlight.
- * - For inactive state: Matches application's dark theme with metallic chiseled 3D depth and subtle ambient glow on hover.
  */
 function NavIcon3D({ 
   id, 
@@ -170,88 +168,49 @@ function NavIcon3D({
 }
 
 /**
- * Calculates the exact SVG path contour for the navigation bar based on the active index.
+ * Calculates a uniform SVG path contour for the navigation bar.
+ * Using an identical command topology for all indices ensures perfectly smooth, 
+ * tear-free, continuous interpolation without jitter or geometric warping.
  */
 function getNavContourPath(activeIndex: number): string {
   const cx = 100 + activeIndex * 200;
-  const R_ARCH = 95;
+  const R = 72;
+  const x_left = Math.max(30, cx - R);
+  const x_right = Math.min(970, cx + R);
 
-  let tl_start_y: number;
-  let tl_c1: string, tl_c2: string, tl_end: string;
-  let flat_left_end: string;
-  let arch_up_c1: string, arch_up_c2: string, arch_peak: string;
-  let arch_down_c1: string, arch_down_c2: string, arch_down_end: string;
-  let flat_right_end: string;
-  let tr_c1: string, tr_c2: string, tr_end_y: number;
-
-  if (activeIndex === 0) {
-    tl_start_y = 65;
-    tl_c1 = "0 30";
-    tl_c2 = "40 12";
-    tl_end = "100 12";
-    flat_left_end = "100 12";
-    arch_up_c1 = "100 12";
-    arch_up_c2 = "100 12";
-    arch_peak = "100 12";
-    arch_down_c1 = "155 12";
-    arch_down_c2 = "170 55";
-    arch_down_end = "195 55";
-    flat_right_end = "960 55";
-    tr_c1 = "985 55";
-    tr_c2 = "1000 70";
-    tr_end_y = 95;
-  } else if (activeIndex === 4) {
-    tl_start_y = 95;
-    tl_c1 = "0 70";
-    tl_c2 = "15 55";
-    tl_end = "40 55";
-    flat_left_end = "805 55";
-    arch_up_c1 = "830 55";
-    arch_up_c2 = "845 12";
-    arch_peak = "900 12";
-    arch_down_c1 = "900 12";
-    arch_down_c2 = "900 12";
-    arch_down_end = "900 12";
-    flat_right_end = "900 12";
-    tr_c1 = "960 12";
-    tr_c2 = "1000 30";
-    tr_end_y = 65;
-  } else {
-    const x_left = cx - R_ARCH;
-    const x_right = cx + R_ARCH;
-    tl_start_y = 95;
-    tl_c1 = "0 70";
-    tl_c2 = "15 55";
-    tl_end = "40 55";
-    flat_left_end = `${x_left} 55`;
-    arch_up_c1 = `${x_left + 45} 55`;
-    arch_up_c2 = `${cx - 45} 12`;
-    arch_peak = `${cx} 12`;
-    arch_down_c1 = `${cx + 45} 12`;
-    arch_down_c2 = `${x_right - 45} 55`;
-    arch_down_end = `${x_right} 55`;
-    flat_right_end = "960 55";
-    tr_c1 = "985 55";
-    tr_c2 = "1000 70";
-    tr_end_y = 95;
-  }
-
-  return `M 0 120 L 0 ${tl_start_y} C ${tl_c1}, ${tl_c2}, ${tl_end} L ${flat_left_end} C ${arch_up_c1}, ${arch_up_c2}, ${arch_peak} C ${arch_down_c1}, ${arch_down_c2}, ${arch_down_end} L ${flat_right_end} C ${tr_c1}, ${tr_c2}, 1000 ${tr_end_y} L 1000 120 C 1000 145, 980 165, 955 165 L 45 165 C 20 165, 0 145, 0 120 Z`;
+  return `M 0 120 L 0 95 C 0 75, 12 55, 28 55 L ${x_left} 55 C ${x_left + 35} 55, ${cx - 35} 14, ${cx} 14 C ${cx + 35} 14, ${x_right - 35} 55, ${x_right} 55 L 972 55 C 988 55, 1000 75, 1000 95 L 1000 120 C 1000 145, 980 165, 955 165 L 45 165 C 20 165, 0 145, 0 120 Z`;
 }
+
+// Fluid cubic-bezier transition: Apple-style deceleration curve that eliminates snappy rebounds/hentakan completely
+const NAV_TRANSITION = {
+  type: "tween" as const,
+  ease: [0.25, 1, 0.5, 1] as [number, number, number, number],
+  duration: 0.36,
+};
 
 interface MobilePortraitNavBarProps {
   currentPath: string;
 }
 
 export default function MobilePortraitNavBar({ currentPath }: MobilePortraitNavBarProps) {
-  // Determine active index safely
-  const activeIndex = useMemo(() => {
+  // Determine index from route
+  const routeIndex = useMemo(() => {
     if (currentPath === '/dashboard') return 0;
     if (currentPath.startsWith('/dashboard/input')) return 1;
     if (currentPath.startsWith('/dashboard/analytics')) return 2;
     if (currentPath.startsWith('/dashboard/reports')) return 3;
     if (currentPath.startsWith('/dashboard/settings')) return 4;
     return 0;
+  }, [currentPath]);
+
+  // Optimistic index for instantaneous response on tap, eliminating route transition lag
+  const [optimisticIndex, setOptimisticIndex] = useState<number | null>(null);
+
+  const activeIndex = optimisticIndex !== null ? optimisticIndex : routeIndex;
+
+  // Sync back with router when navigation finishes
+  useEffect(() => {
+    setOptimisticIndex(null);
   }, [currentPath]);
 
   const svgPath = useMemo(() => getNavContourPath(activeIndex), [activeIndex]);
@@ -262,7 +221,7 @@ export default function MobilePortraitNavBar({ currentPath }: MobilePortraitNavB
         aria-label="Mobile Navigation Bar"
         className="w-full max-w-md h-[86px] relative pointer-events-auto select-none"
       >
-        {/* SVG Container Background Shape with Smooth Curved Contour & Dark Theme */}
+        {/* SVG Background Contour: Fluidly morphs without snapping */}
         <svg 
           className="absolute inset-0 w-full h-full pointer-events-none drop-shadow-[0_16px_36px_rgba(0,0,0,0.85)] drop-shadow-[0_4px_14px_rgba(0,0,0,0.7)]" 
           viewBox="0 0 1000 170" 
@@ -289,11 +248,42 @@ export default function MobilePortraitNavBar({ currentPath }: MobilePortraitNavB
             fill="url(#mobileNavDarkGrad)" 
             stroke="url(#mobileNavBorderGrad)"
             strokeWidth="2.5"
-            transition={{ type: "spring", stiffness: 350, damping: 28 }}
+            transition={NAV_TRANSITION}
           />
         </svg>
 
-        {/* 5 Navigation Item Tabs */}
+        {/* 
+          Dedicated Gliding Squircle Floating Button:
+          - A single persistent container sliding horizontally with GPU-accelerated translateX
+          - Prevents unmounting/remounting layout shifts and eliminates violent snapping (hentakan)
+        */}
+        <div className="absolute inset-x-0 top-0 h-full pointer-events-none z-20 flex">
+          <motion.div 
+            className="w-1/5 h-full flex flex-col items-center"
+            animate={{ x: `${activeIndex * 100}%` }}
+            transition={NAV_TRANSITION}
+          >
+            <div className="absolute -top-3.5 sm:-top-4 w-[58px] h-[58px] rounded-[22px] p-[1.8px] bg-gradient-to-tr from-[#38bdf8] via-[#818cf8] to-[#d946ef] shadow-[0_10px_26px_rgba(112,68,229,0.45),0_18px_36px_rgba(0,0,0,0.9)] flex items-center justify-center">
+              {/* Inner Dark Violet/Indigo Glass Surface */}
+              <div className="w-full h-full rounded-[20px] bg-gradient-to-b from-[#251d56] via-[#1a1542] to-[#120e2f] shadow-[inset_0_1.5px_2px_rgba(255,255,255,0.25),inset_0_-2px_4px_rgba(0,0,0,0.6)] flex items-center justify-center overflow-hidden">
+                <AnimatePresence mode="popLayout" initial={false}>
+                  <motion.div
+                    key={MOBILE_NAV_ITEMS[activeIndex].id}
+                    initial={{ opacity: 0, scale: 0.65 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.65 }}
+                    transition={{ duration: 0.22, ease: "easeOut" }}
+                    className="flex items-center justify-center"
+                  >
+                    <NavIcon3D id={MOBILE_NAV_ITEMS[activeIndex].id} isActive={true} />
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* 5 Navigation Item Interactive Links with Stable Baselines */}
         <div className="relative z-10 w-full h-full flex items-center justify-around px-1 pt-1 pb-2">
           {MOBILE_NAV_ITEMS.map((item, idx) => {
             const isActive = activeIndex === idx;
@@ -302,44 +292,35 @@ export default function MobilePortraitNavBar({ currentPath }: MobilePortraitNavB
               <Link 
                 key={item.id} 
                 href={item.href}
-                className="relative flex-1 h-full flex flex-col items-center justify-end pb-3 pt-1 outline-none group"
+                onClick={() => setOptimisticIndex(idx)}
+                className="relative w-1/5 h-full flex flex-col items-center justify-end pb-3 pt-1 outline-none group select-none cursor-pointer"
               >
-                {isActive ? (
-                  <div className="relative w-full h-full flex flex-col items-center justify-between">
-                    {/* 
-                      Selected Button exactly matching the reference image:
-                      - Squircle / rounded rectangle with smooth continuous curvature
-                      - Dual-gradient border: glowing electric blue/cyan on the left, rich lilac/violet/magenta on the right
-                      - Dark purple-indigo interior gradient
-                      - Glowing ambient drop shadow
-                    */}
-                    <motion.div
-                      layoutId="mobileActiveSquircleButton"
-                      className="absolute -top-3.5 sm:-top-4 w-[58px] h-[58px] rounded-[22px] p-[1.8px] bg-gradient-to-tr from-[#38bdf8] via-[#818cf8] to-[#d946ef] shadow-[0_10px_26px_rgba(112,68,229,0.45),0_18px_36px_rgba(0,0,0,0.9)] flex items-center justify-center z-20 cursor-pointer active:scale-95 transition-transform"
-                      transition={{ type: "spring", stiffness: 440, damping: 30 }}
-                    >
-                      {/* Inner Dark Violet/Indigo Glass Surface */}
-                      <div className="w-full h-full rounded-[20px] bg-gradient-to-b from-[#251d56] via-[#1a1542] to-[#120e2f] shadow-[inset_0_1.5px_2px_rgba(255,255,255,0.25),inset_0_-2px_4px_rgba(0,0,0,0.6)] flex items-center justify-center">
-                        <NavIcon3D id={item.id} isActive={true} />
-                      </div>
-                    </motion.div>
-
-                    {/* Spacer to push label below the raised squircle button */}
-                    <div className="h-[44px]" />
-
-                    {/* Active Label in Soft Bright Lavender/White */}
-                    <span className="text-[11px] font-black text-violet-200 tracking-tight z-10 text-center leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
-                      {item.shortName}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="relative w-full h-full flex flex-col items-center justify-center pt-5">
+                {/* Inactive Icon: Smoothly fades out when active squircle glides over it */}
+                <div className="relative flex items-center justify-center mb-1.5 h-6">
+                  <motion.div
+                    animate={{ 
+                      opacity: isActive ? 0 : 1,
+                      scale: isActive ? 0.6 : 1,
+                    }}
+                    transition={{ duration: 0.22, ease: "easeOut" }}
+                  >
                     <NavIcon3D id={item.id} isActive={false} />
-                    <span className="text-[11px] font-semibold text-slate-400 group-hover:text-violet-200 tracking-tight mt-1 text-center leading-none transition-colors duration-200 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
-                      {item.shortName}
-                    </span>
-                  </div>
-                )}
+                  </motion.div>
+                </div>
+
+                {/* Tab Label: Remains strictly on fixed baseline without jumping */}
+                <motion.span 
+                  animate={{
+                    color: isActive ? '#ddd6fe' : '#94a3b8',
+                    scale: isActive ? 1.04 : 1,
+                  }}
+                  transition={{ duration: 0.25 }}
+                  className={`text-[11px] tracking-tight text-center leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] transition-colors duration-200 ${
+                    isActive ? 'font-black' : 'font-semibold group-hover:text-violet-200'
+                  }`}
+                >
+                  {item.shortName}
+                </motion.span>
               </Link>
             );
           })}
@@ -348,4 +329,5 @@ export default function MobilePortraitNavBar({ currentPath }: MobilePortraitNavB
     </div>
   );
 }
+
 
