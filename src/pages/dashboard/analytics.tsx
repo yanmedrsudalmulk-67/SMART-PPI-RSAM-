@@ -1,4 +1,5 @@
 import { ReactElement, useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import dynamic from 'next/dynamic';
 import { 
   BarChart2, TrendingUp, Filter, Download, Activity, Users, ClipboardCheck, 
@@ -251,7 +252,31 @@ export default function AnalyticsPage() {
   const [selectedUnit, setSelectedUnit] = useState<string>('Semua Unit');
   const [selectedProfesiGroups, setSelectedProfesiGroups] = useState<string[]>([]);
   const [isProfesiDropdownOpen, setIsProfesiDropdownOpen] = useState<boolean>(false);
+  const [mounted, setMounted] = useState<boolean>(false);
   const profesiDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Lock body scroll and listen for Escape key when popup is open
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isProfesiDropdownOpen) {
+        setIsProfesiDropdownOpen(false);
+      }
+    };
+    if (isProfesiDropdownOpen) {
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', handleKeyDown);
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isProfesiDropdownOpen]);
 
   // Toggle single profession selection
   const toggleProfesiGroup = (profName: string) => {
@@ -277,19 +302,6 @@ export default function AnalyticsPage() {
     if (selectedProfesiGroups.length === 0) return true;
     return selectedProfesiGroups.includes(profName);
   }, [selectedProfesiGroups]);
-
-  // Click outside to close multi-select dropdown
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (profesiDropdownRef.current && !profesiDropdownRef.current.contains(event.target as Node)) {
-        setIsProfesiDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
 
   // Chart Type Display States (Grafik Line vs Grafik Batang)
   const [hhChartType, setHhChartType] = useState<'line' | 'bar'>('line');
@@ -1214,156 +1226,163 @@ export default function AnalyticsPage() {
                     <ChevronDown className="w-4 h-4 text-slate-400 transition-transform duration-200" />
                   </div>
                 </button>
-
-                {/* POP-UP MODAL DENGAN EFEK BLUR MORPHISM */}
-                <AnimatePresence>
-                  {isProfesiDropdownOpen && (
-                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-                      {/* Backdrop Blur Morphism */}
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="fixed inset-0 bg-black/70 backdrop-blur-md cursor-pointer"
-                        onClick={() => setIsProfesiDropdownOpen(false)}
-                      />
-
-                      {/* Modal Pop-up Card */}
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.92, y: 16 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.92, y: 16 }}
-                        transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-                        className="relative w-full max-w-lg bg-[#18193b]/95 border border-[#3b3e6d] rounded-[28px] shadow-[0_25px_60px_rgba(0,0,0,0.9),inset_1px_1px_1.5px_rgba(255,255,255,0.18)] p-6 sm:p-7 z-10 backdrop-blur-2xl text-white space-y-5"
-                      >
-                        {/* Header Pop-up */}
-                        <div className="flex items-start justify-between border-b border-indigo-900/40 pb-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 flex items-center justify-center shadow-inner text-cyan-400">
-                              <Users className="w-5 h-5" />
-                            </div>
-                            <div>
-                              <h3 className="text-base sm:text-lg font-black text-white tracking-wide">
-                                Filter Kategori Profesi
-                              </h3>
-                              <p className="text-xs text-slate-400 font-medium">
-                                Pilih satu atau lebih profesi untuk memfilter data &amp; grafik
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setIsProfesiDropdownOpen(false)}
-                            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-                          >
-                            <X className="w-5 h-5" />
-                          </button>
-                        </div>
-
-                        {/* Quick Selection Buttons */}
-                        <div className="flex items-center justify-between gap-2 bg-[#12132e] p-2 rounded-2xl border border-indigo-900/40">
-                          <button
-                            type="button"
-                            onClick={() => setSelectedProfesiGroups([])}
-                            className={`flex-1 py-2 px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                              selectedProfesiGroups.length === 0
-                                ? 'bg-indigo-600 text-white shadow-md border border-indigo-400/40'
-                                : 'text-slate-400 hover:text-white hover:bg-white/5'
-                            }`}
-                          >
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>Semua Profesi ({PROFESI_OPTIONS.length})</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setSelectedProfesiGroups([...PROFESI_OPTIONS])}
-                            className="py-2 px-3 rounded-xl text-xs font-bold text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 transition-all cursor-pointer"
-                          >
-                            Pilih Semua
-                          </button>
-                        </div>
-
-                        {/* List of Professions */}
-                        <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
-                          {PROFESI_OPTIONS.map(prof => {
-                            const isSelected = selectedProfesiGroups.length === 0 || selectedProfesiGroups.includes(prof);
-                            const isExplicitlySelected = selectedProfesiGroups.includes(prof);
-                            const theme = getProfCardTheme(prof);
-
-                            return (
-                              <button
-                                key={prof}
-                                type="button"
-                                onClick={() => toggleProfesiGroup(prof)}
-                                className={`w-full flex items-center justify-between p-3 rounded-2xl border transition-all text-left cursor-pointer group ${
-                                  isExplicitlySelected
-                                    ? 'bg-gradient-to-r from-indigo-950/70 to-indigo-900/40 border-indigo-500/50 shadow-md'
-                                    : selectedProfesiGroups.length === 0
-                                    ? 'bg-white/[0.02] border-white/10 hover:border-indigo-500/30 hover:bg-white/5'
-                                    : 'bg-[#12132e]/60 border-transparent opacity-60 hover:opacity-100 hover:border-white/10'
-                                }`}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className={`w-3.5 h-3.5 rounded-full ring-4 ${
-                                    prof === 'Perawat / Bidan' ? 'bg-emerald-400 ring-emerald-500/20' :
-                                    prof === 'Dokter' ? 'bg-blue-400 ring-blue-500/20' :
-                                    prof === 'Radiografer' ? 'bg-purple-400 ring-purple-500/20' :
-                                    prof === 'Analis Laboratorium' ? 'bg-cyan-400 ring-cyan-500/20' :
-                                    'bg-amber-400 ring-amber-500/20'
-                                  }`} />
-                                  <div>
-                                    <span className={`text-sm font-bold block ${isSelected ? theme.text : 'text-slate-400'}`}>
-                                      {prof}
-                                    </span>
-                                    <span className="text-[10px] text-slate-500">
-                                      {prof === 'Perawat / Bidan' ? 'Perawat Rawat Inap, Bidan & Rawat Jalan' :
-                                       prof === 'Dokter' ? 'Dokter Umum & Dokter Spesialis' :
-                                       prof === 'Radiografer' ? 'Tenaga Radiologi & Imaging' :
-                                       prof === 'Analis Laboratorium' ? 'Petugas Analis Patologi & Laboratorium' :
-                                       'Pramusaji, Farmasi, Gizi & Nakes Lain'}
-                                    </span>
-                                  </div>
-                                </div>
-
-                                <div className={`w-6 h-6 rounded-xl border flex items-center justify-center transition-all ${
-                                  isExplicitlySelected || selectedProfesiGroups.length === 0
-                                    ? 'bg-indigo-600 border-indigo-400 text-white shadow-[0_0_10px_rgba(99,102,241,0.5)]'
-                                    : 'border-slate-700 bg-[#12132e] text-transparent'
-                                }`}>
-                                  <Check className="w-3.5 h-3.5 stroke-[3]" />
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        {/* Footer Pop-up */}
-                        <div className="pt-3 border-t border-indigo-900/40 flex items-center justify-between gap-3">
-                          <div className="text-xs text-slate-400">
-                            Status:{' '}
-                            <span className="font-bold text-cyan-400">
-                              {selectedProfesiGroups.length === 0
-                                ? 'Semua Profesi Aktif'
-                                : `${selectedProfesiGroups.length} dari ${PROFESI_OPTIONS.length} dipilih`}
-                            </span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setIsProfesiDropdownOpen(false)}
-                            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-[0_4px_14px_rgba(79,70,229,0.4)] cursor-pointer"
-                          >
-                            Terapkan Filter
-                          </button>
-                        </div>
-                      </motion.div>
-                    </div>
-                  )}
-                </AnimatePresence>
               </div>
             </div>
           </div>
         </div>
+
+        {/* POP-UP MODAL PORTAL DENGAN EFEK FULLSCREEN ZOOM-IN GLASSMORPHISM & BACKGROUND BLUR */}
+        {mounted && typeof document !== 'undefined' && createPortal(
+          <AnimatePresence>
+            {isProfesiDropdownOpen && (
+              <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4 sm:p-6 select-none">
+                {/* Full Backdrop Blur Morphism */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className="fixed inset-0 bg-black/75 backdrop-blur-xl cursor-pointer"
+                  onClick={() => setIsProfesiDropdownOpen(false)}
+                />
+
+                {/* Modal Pop-up Card with Zoom-In Glassmorphism */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.6, y: 30 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.6, y: 30 }}
+                  transition={{ type: 'spring', damping: 22, stiffness: 350 }}
+                  className="relative w-full max-w-lg bg-[#141635]/90 border border-white/20 rounded-[32px] shadow-[0_25px_80px_rgba(0,0,0,0.95),0_0_50px_rgba(99,102,241,0.3),inset_0_1px_2px_rgba(255,255,255,0.4)] p-6 sm:p-7 z-10 backdrop-blur-3xl text-white space-y-5 overflow-hidden"
+                >
+                  {/* Subtle top light sheen for glassmorphism */}
+                  <div className="absolute top-0 inset-x-8 h-[2px] bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent pointer-events-none" />
+
+                  {/* Header Pop-up */}
+                  <div className="flex items-start justify-between border-b border-indigo-900/50 pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500/25 to-cyan-500/25 border border-indigo-400/40 flex items-center justify-center shadow-[inset_1px_1px_2px_rgba(255,255,255,0.3)] text-cyan-400">
+                        <Users className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-base sm:text-lg font-black text-white tracking-wide">
+                          Filter Kategori Profesi
+                        </h3>
+                        <p className="text-xs text-slate-400 font-medium">
+                          Pilih satu atau lebih profesi untuk memfilter data &amp; grafik
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsProfesiDropdownOpen(false)}
+                      className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-all cursor-pointer border border-transparent hover:border-white/10"
+                      aria-label="Tutup Filter"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {/* Quick Selection Action Bar */}
+                  <div className="flex items-center justify-between gap-2 bg-[#0e0f24]/80 p-2 rounded-2xl border border-indigo-900/50">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedProfesiGroups([])}
+                      className={`flex-1 py-2 px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                        selectedProfesiGroups.length === 0
+                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md border border-indigo-400/50'
+                          : 'text-slate-400 hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Semua Profesi ({PROFESI_OPTIONS.length})</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedProfesiGroups([...PROFESI_OPTIONS])}
+                      className="py-2 px-3 rounded-xl text-xs font-bold text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 transition-all cursor-pointer"
+                    >
+                      Pilih Semua
+                    </button>
+                  </div>
+
+                  {/* List of Professions */}
+                  <div className="space-y-2 max-h-[340px] overflow-y-auto pr-1">
+                    {PROFESI_OPTIONS.map(prof => {
+                      const isSelected = selectedProfesiGroups.length === 0 || selectedProfesiGroups.includes(prof);
+                      const isExplicitlySelected = selectedProfesiGroups.includes(prof);
+                      const theme = getProfCardTheme(prof);
+
+                      return (
+                        <button
+                          key={prof}
+                          type="button"
+                          onClick={() => toggleProfesiGroup(prof)}
+                          className={`w-full flex items-center justify-between p-3.5 rounded-2xl border transition-all text-left cursor-pointer group ${
+                            isExplicitlySelected
+                              ? 'bg-gradient-to-r from-indigo-950/80 to-indigo-900/50 border-indigo-400/60 shadow-[0_4px_16px_rgba(79,70,229,0.2)]'
+                              : selectedProfesiGroups.length === 0
+                              ? 'bg-white/[0.03] border-white/10 hover:border-indigo-500/40 hover:bg-white/5'
+                              : 'bg-[#0f1026]/70 border-white/5 opacity-55 hover:opacity-100 hover:border-white/15'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3.5">
+                            <div className={`w-3.5 h-3.5 rounded-full ring-4 shrink-0 ${
+                              prof === 'Perawat / Bidan' ? 'bg-emerald-400 ring-emerald-500/25' :
+                              prof === 'Dokter' ? 'bg-blue-400 ring-blue-500/25' :
+                              prof === 'Radiografer' ? 'bg-purple-400 ring-purple-500/25' :
+                              prof === 'Analis Laboratorium' ? 'bg-cyan-400 ring-cyan-500/25' :
+                              'bg-amber-400 ring-amber-500/25'
+                            }`} />
+                            <div>
+                              <span className={`text-sm font-bold block leading-tight ${isSelected ? theme.text : 'text-slate-400'}`}>
+                                {prof}
+                              </span>
+                              <span className="text-[11px] text-slate-400">
+                                {prof === 'Perawat / Bidan' ? 'Perawat Rawat Inap, Bidan & Rawat Jalan' :
+                                 prof === 'Dokter' ? 'Dokter Umum & Dokter Spesialis' :
+                                 prof === 'Radiografer' ? 'Tenaga Radiologi & Imaging' :
+                                 prof === 'Analis Laboratorium' ? 'Petugas Analis Patologi & Laboratorium' :
+                                 'Pramusaji, Farmasi, Gizi & Nakes Lain'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className={`w-6 h-6 rounded-xl border flex items-center justify-center transition-all shrink-0 ml-3 ${
+                            isExplicitlySelected || selectedProfesiGroups.length === 0
+                              ? 'bg-gradient-to-br from-indigo-500 to-indigo-600 border-indigo-300 text-white shadow-[0_0_12px_rgba(99,102,241,0.6)]'
+                              : 'border-slate-700 bg-[#0e0f24] text-transparent'
+                          }`}>
+                            <Check className="w-3.5 h-3.5 stroke-[3]" />
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Footer Pop-up */}
+                  <div className="pt-3 border-t border-indigo-900/50 flex items-center justify-between gap-3">
+                    <div className="text-xs text-slate-400">
+                      Status:{' '}
+                      <span className="font-bold text-cyan-400">
+                        {selectedProfesiGroups.length === 0
+                          ? 'Semua Profesi Aktif'
+                          : `${selectedProfesiGroups.length} dari ${PROFESI_OPTIONS.length} dipilih`}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsProfesiDropdownOpen(false)}
+                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-[0_4px_16px_rgba(79,70,229,0.4)] cursor-pointer"
+                    >
+                      Terapkan Filter
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
 
         {/* SECTION 1: KEPATUHAN KEBERSIHAN TANGAN - 3D Tactile Neumorphic Container */}
         <div className="relative group bg-[#18193b] rounded-[28px] md:rounded-[32px] p-6 sm:p-8 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] space-y-6">
