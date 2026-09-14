@@ -573,6 +573,27 @@ export default function HandHygieneReport({
     };
   }, [filteredData, filters.type, filters.periode]);
 
+  const toTitleCase = (str?: string | null) => {
+    if (!str || str === '-') return '-';
+    const acronyms = new Set(['IGD', 'ICU', 'NICU', 'PICU', 'VK', 'OK', 'HD', 'CSSD', 'LAB', 'UTD', 'PPI', 'APD', 'WIB']);
+    return str
+      .trim()
+      .split(/\s+/)
+      .map(chunk => {
+        return chunk
+          .split(/([/\\-])/)
+          .map(part => {
+            if (part === '/' || part === '-' || part === '\\') return part;
+            const upper = part.toUpperCase();
+            if (acronyms.has(upper)) return upper;
+            if (part.length <= 1) return part.toUpperCase();
+            return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+          })
+          .join('');
+      })
+      .join(' ');
+  };
+
   const mapMomentAction = (val: string | null) => {
     if (val === 'hr') return <span className="flex justify-center"><CheckCircle2 className="w-4 h-4 text-emerald-500" /></span>;
     if (val === 'hw') return <span className="flex justify-center"><CheckCircle2 className="w-4 h-4 text-blue-500" /></span>;
@@ -728,8 +749,8 @@ export default function HandHygieneReport({
                       {formatDateTimeSafe(row.end_time)}
                     </td>
                     <td className="px-4 py-4 text-center font-normal italic text-slate-400">{row.observer || '-'}</td>
-                    <td className="px-4 py-4 text-center font-semibold text-white">{row.unit || '-'}</td>
-                    <td className="px-4 py-4 text-center uppercase text-slate-300 font-bold">{row.profesi || '-'}</td>
+                    <td className="px-4 py-4 text-center text-white">{toTitleCase(row.unit)}</td>
+                    <td className="px-4 py-4 text-center text-slate-300">{toTitleCase(row.profesi)}</td>
                     <td className="px-2 py-4 text-center">{mapMomentAction(row.m1)}</td>
                     <td className="px-2 py-4 text-center">{mapMomentAction(row.m2)}</td>
                     <td className="px-2 py-4 text-center">{mapMomentAction(row.m3)}</td>
@@ -1068,10 +1089,10 @@ export default function HandHygieneReport({
                   {filteredData.map((row, index) => {
                     const perc = row.persentase || 0;
                     const formatMoment = (val: string | null) => {
-                      if (val === 'hr') return <span className="font-bold text-emerald-800">HR</span>;
-                      if (val === 'hw') return <span className="font-bold text-blue-800">HW</span>;
-                      if (val === 'miss') return <span className="font-bold text-rose-800">Miss</span>;
-                      return <span className="text-slate-400 font-bold">-</span>;
+                      if (val === 'hr') return <span className="text-emerald-800">HR</span>;
+                      if (val === 'hw') return <span className="text-blue-800">HW</span>;
+                      if (val === 'miss') return <span className="text-rose-800">Miss</span>;
+                      return <span className="text-slate-400">-</span>;
                     };
 
                     return (
@@ -1085,25 +1106,25 @@ export default function HandHygieneReport({
                         <td className="border border-black px-3 py-2 text-center text-slate-800 whitespace-nowrap text-[8.5pt] align-middle">
                           {row.observer || '-'}
                         </td>
-                        <td className="border border-black px-3 py-2 text-center font-semibold whitespace-nowrap text-[8.5pt] align-middle">
-                          {row.unit || '-'}
+                        <td className="border border-black px-3 py-2 text-center whitespace-nowrap text-[8.5pt] align-middle">
+                          {toTitleCase(row.unit)}
                         </td>
-                        <td className="border border-black px-3 py-2 text-center uppercase font-bold text-[8.5pt] whitespace-nowrap align-middle">
-                          {row.profesi || '-'}
+                        <td className="border border-black px-3 py-2 text-center text-[8.5pt] whitespace-nowrap align-middle">
+                          {toTitleCase(row.profesi)}
                         </td>
-                        <td className="border border-black px-1.5 py-2 text-center font-semibold whitespace-nowrap align-middle">{formatMoment(row.m1)}</td>
-                        <td className="border border-black px-1.5 py-2 text-center font-semibold whitespace-nowrap align-middle">{formatMoment(row.m2)}</td>
-                        <td className="border border-black px-1.5 py-2 text-center font-semibold whitespace-nowrap align-middle">{formatMoment(row.m3)}</td>
-                        <td className="border border-black px-1.5 py-2 text-center font-semibold whitespace-nowrap align-middle">{formatMoment(row.m4)}</td>
-                        <td className="border border-black px-1.5 py-2 text-center font-semibold whitespace-nowrap align-middle">{formatMoment(row.m5)}</td>
-                        <td className="border border-black px-2.5 py-2 text-center font-bold font-mono text-[9pt] whitespace-nowrap align-middle">
+                        <td className="border border-black px-1.5 py-2 text-center whitespace-nowrap align-middle">{formatMoment(row.m1)}</td>
+                        <td className="border border-black px-1.5 py-2 text-center whitespace-nowrap align-middle">{formatMoment(row.m2)}</td>
+                        <td className="border border-black px-1.5 py-2 text-center whitespace-nowrap align-middle">{formatMoment(row.m3)}</td>
+                        <td className="border border-black px-1.5 py-2 text-center whitespace-nowrap align-middle">{formatMoment(row.m4)}</td>
+                        <td className="border border-black px-1.5 py-2 text-center whitespace-nowrap align-middle">{formatMoment(row.m5)}</td>
+                        <td className="border border-black px-2.5 py-2 text-center font-mono text-[9pt] whitespace-nowrap align-middle">
                           {row.peluang || 0}
                         </td>
-                        <td className="border border-black px-2.5 py-2 text-center font-bold font-mono text-[9pt] whitespace-nowrap align-middle">
+                        <td className="border border-black px-2.5 py-2 text-center font-mono text-[9pt] whitespace-nowrap align-middle">
                           {row.patuh || 0}
                         </td>
-                        <td className="border border-black px-2.5 py-2 text-center font-black text-[9pt] whitespace-nowrap align-middle">
-                          <span className={perc >= 85 ? 'text-emerald-800 font-bold' : perc >= 70 ? 'text-amber-800 font-bold' : 'text-rose-800 font-bold'}>
+                        <td className="border border-black px-2.5 py-2 text-center text-[9pt] whitespace-nowrap align-middle">
+                          <span className={perc >= 85 ? 'text-emerald-800' : perc >= 70 ? 'text-amber-800' : 'text-rose-800'}>
                             {perc}%
                           </span>
                         </td>
@@ -1214,31 +1235,35 @@ export default function HandHygieneReport({
                 </div>
                 <div className="grid grid-cols-5 gap-2">
                   {[
-                    { id: 'M1', label: 'Sebelum Kontak Pasien', perc: momentStats.m1 },
-                    { id: 'M2', label: 'Sebelum Tindakan Aseptik', perc: momentStats.m2 },
-                    { id: 'M3', label: 'Setelah Cairan Tubuh', perc: momentStats.m3 },
-                    { id: 'M4', label: 'Setelah Kontak Pasien', perc: momentStats.m4 },
-                    { id: 'M5', label: 'Setelah Lingkungan Pasien', perc: momentStats.m5 },
+                    { id: 'M1', label: 'Sebelum kontak dengan pasien', perc: momentStats.m1 },
+                    { id: 'M2', label: 'Sebelum tindakan aseptik', perc: momentStats.m2 },
+                    { id: 'M3', label: 'Setelah terkena cairan tubuh pasien', perc: momentStats.m3 },
+                    { id: 'M4', label: 'Setelah kontak dengan pasien', perc: momentStats.m4 },
+                    { id: 'M5', label: 'Setelah kontak dengan lingkungan pasien', perc: momentStats.m5 },
                   ].map((m) => {
                     const isMet = m.perc >= 85;
                     return (
-                      <div key={m.id} className="p-2 bg-white border border-slate-300 rounded text-center">
-                        <span className="text-[8pt] font-black text-black block">{m.id}</span>
-                        <span className={`text-[14pt] font-black font-mono leading-none block my-1 ${isMet ? 'text-emerald-800' : 'text-rose-800'}`}>
-                          {m.perc}%
-                        </span>
-                        <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden my-1">
-                          <div
-                            className={`h-full ${isMet ? 'bg-emerald-600' : 'bg-rose-600'}`}
-                            style={{ width: `${Math.min(m.perc, 100)}%` }}
-                          />
+                      <div key={m.id} className="p-2 bg-white border border-slate-300 rounded text-center flex flex-col justify-between">
+                        <div>
+                          <span className="text-[8pt] font-black text-black block">{m.id}</span>
+                          <span className={`text-[14pt] font-black font-mono leading-none block my-1 ${isMet ? 'text-emerald-800' : 'text-rose-800'}`}>
+                            {m.perc}%
+                          </span>
+                          <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden my-1">
+                            <div
+                              className={`h-full ${isMet ? 'bg-emerald-600' : 'bg-rose-600'}`}
+                              style={{ width: `${Math.min(m.perc, 100)}%` }}
+                            />
+                          </div>
+                          <span className="text-[6.5pt] font-bold text-slate-600 block leading-tight min-h-[22px] flex items-center justify-center">
+                            {m.label}
+                          </span>
                         </div>
-                        <span className="text-[6.5pt] font-bold text-slate-600 block leading-tight">
-                          {m.label}
-                        </span>
-                        <span className={`text-[6.5pt] font-black uppercase mt-0.5 inline-block px-1 rounded ${isMet ? 'text-emerald-800 bg-emerald-50' : 'text-rose-800 bg-rose-50'}`}>
-                          {isMet ? 'Tercapai' : '< 85%'}
-                        </span>
+                        <div>
+                          <span className={`text-[6.5pt] font-black uppercase mt-1 inline-block px-1 rounded ${isMet ? 'text-emerald-800 bg-emerald-50' : 'text-rose-800 bg-rose-50'}`}>
+                            {isMet ? 'Tercapai' : '< 85%'}
+                          </span>
+                        </div>
                       </div>
                     );
                   })}

@@ -193,6 +193,7 @@ export function injectPrintStyles(clonedDoc: Document, isLandscape: boolean = fa
     #etika-batuk-official-report,
     #diklat-official-report,
     #hand-hygiene-official-report,
+    #apd-official-report,
     .official-report-paper {
       width: ${targetWidth} !important;
       min-width: ${targetWidth} !important;
@@ -218,6 +219,11 @@ export function injectPrintStyles(clonedDoc: Document, isLandscape: boolean = fa
       table-layout: auto !important;
     }
 
+    table.table-fixed,
+    table[class*="table-fixed"] {
+      table-layout: fixed !important;
+    }
+
     img, svg {
       display: inline-block !important;
       vertical-align: middle !important;
@@ -241,6 +247,12 @@ export function injectPrintStyles(clonedDoc: Document, isLandscape: boolean = fa
 
     .text-center, th.text-center, td.text-center {
       text-align: center !important;
+    }
+
+    #apd-official-report table th,
+    #apd-official-report table td {
+      text-align: center !important;
+      vertical-align: middle !important;
     }
 
     .text-left, th.text-left, td.text-left {
@@ -345,7 +357,8 @@ export async function exportElementToA4Pdf(
     element.getAttribute('data-orientation') === 'landscape' ||
     element.classList.contains('landscape') ||
     element.id === 'hand-hygiene-official-report' ||
-    Boolean(element.querySelector?.('#hand-hygiene-official-report, [data-orientation="landscape"]'));
+    element.id === 'apd-official-report' ||
+    Boolean(element.querySelector?.('#hand-hygiene-official-report, #apd-official-report, [data-orientation="landscape"]'));
 
   const pdfOrientation: 'portrait' | 'landscape' = isLandscape ? 'landscape' : 'portrait';
   const pdfFormat: string | [number, number] = isF4

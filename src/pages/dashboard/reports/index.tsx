@@ -647,7 +647,7 @@ export default function ReportsPage() {
                       <div className="flex flex-col gap-1 pr-3">
                         <div className="flex items-center gap-2.5">
                           <span className="text-2xl filter drop-shadow">{detail.emoji}</span>
-                          <h3 className={`text-[24px] font-black tracking-tight leading-snug ${
+                          <h3 className={`text-[20px] font-black tracking-tight leading-snug ${
                             isActive ? 'text-cyan-300' : 'text-white'
                           }`}>
                             {detail.title}

@@ -4,7 +4,7 @@ import {
   BarChart2, TrendingUp, Filter, Download, Activity, Users, ClipboardCheck, 
   AlertTriangle, CheckCircle2, Clock, ShieldCheck, Shield, FileText, 
   FileSpreadsheet, ImageIcon, Calendar, Award, AlertCircle, UserCheck, 
-  RefreshCw, Building2, Layers, ChevronDown, Check, HelpCircle, Droplets
+  RefreshCw, Building2, Layers, ChevronDown, Check, HelpCircle, Droplets, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import DashboardLayout from '@/components/DashboardLayout';
@@ -81,6 +81,14 @@ const QUARTER_NAMES = [
 const SEMESTER_NAMES = [
   'Semester I (Jan - Jun)',
   'Semester II (Jul - Des)'
+];
+
+const PROFESI_OPTIONS = [
+  'Perawat / Bidan',
+  'Dokter',
+  'Radiografer',
+  'Analis Laboratorium',
+  'Nakes Lainnya'
 ];
 
 // Profession Group Classifier
@@ -241,7 +249,47 @@ export default function AnalyticsPage() {
 
   // Sub Filters
   const [selectedUnit, setSelectedUnit] = useState<string>('Semua Unit');
-  const [selectedProfesiGroup, setSelectedProfesiGroup] = useState<string>('Semua Profesi');
+  const [selectedProfesiGroups, setSelectedProfesiGroups] = useState<string[]>([]);
+  const [isProfesiDropdownOpen, setIsProfesiDropdownOpen] = useState<boolean>(false);
+  const profesiDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Toggle single profession selection
+  const toggleProfesiGroup = (profName: string) => {
+    setSelectedProfesiGroups(prev => {
+      if (prev.length === 0) {
+        return [profName];
+      }
+      if (prev.includes(profName)) {
+        const next = prev.filter(p => p !== profName);
+        return next;
+      } else {
+        const next = [...prev, profName];
+        if (next.length === PROFESI_OPTIONS.length) {
+          return [];
+        }
+        return next;
+      }
+    });
+  };
+
+  // Check if a profession is currently active
+  const isProfesiActive = useCallback((profName: string) => {
+    if (selectedProfesiGroups.length === 0) return true;
+    return selectedProfesiGroups.includes(profName);
+  }, [selectedProfesiGroups]);
+
+  // Click outside to close multi-select dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profesiDropdownRef.current && !profesiDropdownRef.current.contains(event.target as Node)) {
+        setIsProfesiDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Chart Type Display States (Grafik Line vs Grafik Batang)
   const [hhChartType, setHhChartType] = useState<'line' | 'bar'>('line');
@@ -348,7 +396,7 @@ export default function AnalyticsPage() {
       if (selectedUnit !== 'Semua Unit' && (s.unit || '').trim() !== selectedUnit) continue;
 
       const profGroup = getProfessionGroup(s.profesi);
-      if (selectedProfesiGroup !== 'Semua Profesi' && profGroup !== selectedProfesiGroup) continue;
+      if (selectedProfesiGroups.length > 0 && !selectedProfesiGroups.includes(profGroup)) continue;
 
       seenIds.add(s.id);
       const timeKey = s.tanggal_waktu ? new Date(s.tanggal_waktu).toISOString().substring(0, 16) : '';
@@ -383,7 +431,7 @@ export default function AnalyticsPage() {
       if (selectedUnit !== 'Semua Unit' && (item.unit || '').trim() !== selectedUnit) continue;
 
       const profGroup = getProfessionGroup(item.profesi);
-      if (selectedProfesiGroup !== 'Semua Profesi' && profGroup !== selectedProfesiGroup) continue;
+      if (selectedProfesiGroups.length > 0 && !selectedProfesiGroups.includes(profGroup)) continue;
 
       const timeKey = dt ? new Date(dt).toISOString().substring(0, 16) : '';
       const key = `${(item.observer || '').toLowerCase().trim()}_${(item.unit || '').toLowerCase().trim()}_${timeKey}`;
@@ -430,7 +478,7 @@ export default function AnalyticsPage() {
     }
 
     return records;
-  }, [rawSessions, rawHH, matchesPeriod, selectedUnit, selectedProfesiGroup]);
+  }, [rawSessions, rawHH, matchesPeriod, selectedUnit, selectedProfesiGroups]);
 
   // Normalize & Process APD Data
   const normalizedApd = useMemo(() => {
@@ -446,7 +494,7 @@ export default function AnalyticsPage() {
       if (selectedUnit !== 'Semua Unit' && (s.unit || '').trim() !== selectedUnit) continue;
 
       const profGroup = getProfessionGroup(s.profesi);
-      if (selectedProfesiGroup !== 'Semua Profesi' && profGroup !== selectedProfesiGroup) continue;
+      if (selectedProfesiGroups.length > 0 && !selectedProfesiGroups.includes(profGroup)) continue;
 
       seenIds.add(s.id);
       const timeKey = s.tanggal_waktu ? new Date(s.tanggal_waktu).toISOString().substring(0, 16) : '';
@@ -481,7 +529,7 @@ export default function AnalyticsPage() {
       if (selectedUnit !== 'Semua Unit' && (item.unit || '').trim() !== selectedUnit) continue;
 
       const profGroup = getProfessionGroup(item.profesi);
-      if (selectedProfesiGroup !== 'Semua Profesi' && profGroup !== selectedProfesiGroup) continue;
+      if (selectedProfesiGroups.length > 0 && !selectedProfesiGroups.includes(profGroup)) continue;
 
       const timeKey = dt ? new Date(dt).toISOString().substring(0, 16) : '';
       const key = `${(item.observer || '').toLowerCase().trim()}_${(item.unit || '').toLowerCase().trim()}_${timeKey}`;
@@ -530,7 +578,7 @@ export default function AnalyticsPage() {
     }
 
     return records;
-  }, [rawSessions, rawApd, matchesPeriod, selectedUnit, selectedProfesiGroup]);
+  }, [rawSessions, rawApd, matchesPeriod, selectedUnit, selectedProfesiGroups]);
 
   // Normalize & Process HAIs Data
   const normalizedHais = useMemo(() => {
@@ -668,11 +716,11 @@ export default function AnalyticsPage() {
       }
     ];
 
-    if (selectedProfesiGroup !== 'Semua Profesi') {
-      return all.filter(p => p.name === selectedProfesiGroup);
+    if (selectedProfesiGroups.length > 0) {
+      return all.filter(p => selectedProfesiGroups.includes(p.name));
     }
     return all;
-  }, [normalizedHH, selectedProfesiGroup]);
+  }, [normalizedHH, selectedProfesiGroups]);
 
   // --- TIME BUCKETS GENERATOR FOR TREND CHARTS ---
   const timeBuckets = useMemo(() => {
@@ -816,11 +864,11 @@ export default function AnalyticsPage() {
       }
     ];
 
-    if (selectedProfesiGroup !== 'Semua Profesi') {
-      return all.filter(p => p.name === selectedProfesiGroup);
+    if (selectedProfesiGroups.length > 0) {
+      return all.filter(p => selectedProfesiGroups.includes(p.name));
     }
     return all;
-  }, [normalizedApd, selectedProfesiGroup]);
+  }, [normalizedApd, selectedProfesiGroups]);
 
   // --- APD TREND DATA ---
   const apdTrendData = useMemo(() => {
@@ -934,7 +982,7 @@ export default function AnalyticsPage() {
         ['SMART-PPI - REKAPITULASI CAPAIAN GRAFIK INDIKATOR MUTU'],
         ['Periode Filter:', filterTitle],
         ['Unit / Ruangan:', selectedUnit],
-        ['Profesi Filter:', selectedProfesiGroup],
+        ['Profesi Filter:', selectedProfesiGroups.length === 0 ? 'Semua Profesi' : selectedProfesiGroups.join(', ')],
         [],
         ['INDIKATOR', 'NILAI CAPAIAN / HASIL'],
         ['Rata-rata Kebersihan Tangan', summaryStats.hhAvg !== null ? `${summaryStats.hhAvg}%` : 'Belum Ada Data'],
@@ -1137,23 +1185,181 @@ export default function AnalyticsPage() {
                 </select>
               </div>
 
-              {/* Sub Filter: Profesi */}
-              <div className="relative group/select">
-                <label className="absolute -top-2.5 left-3 px-2 bg-[#18193b] border border-indigo-500/20 text-[9px] font-black text-indigo-300 uppercase tracking-widest z-10 rounded-md shadow-sm">
-                  Kategori Profesi
+              {/* Sub Filter: Profesi (Multi-Select Pop-up Modal Trigger) */}
+              <div className="relative group/select" ref={profesiDropdownRef}>
+                <label className="absolute -top-2.5 left-3 px-2 bg-[#18193b] border border-indigo-500/20 text-[9px] font-black text-indigo-300 uppercase tracking-widest z-10 rounded-md shadow-sm flex items-center gap-1">
+                  <span>Kategori Profesi</span>
+                  {selectedProfesiGroups.length > 0 && (
+                    <span className="bg-cyan-500/20 text-cyan-300 px-1 rounded text-[8px] font-bold">
+                      {selectedProfesiGroups.length}
+                    </span>
+                  )}
                 </label>
-                <select
-                  value={selectedProfesiGroup}
-                  onChange={(e) => setSelectedProfesiGroup(e.target.value)}
-                  className="w-full bg-[#161735] border border-indigo-900/40 text-white text-xs font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.5),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                <button
+                  type="button"
+                  onClick={() => setIsProfesiDropdownOpen(true)}
+                  className="w-full bg-[#161735] border border-indigo-900/40 text-white text-xs font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all flex items-center justify-between hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.5),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] text-left cursor-pointer"
                 >
-                  <option value="Semua Profesi" className="bg-[#18193b] text-white">Semua Profesi</option>
-                  <option value="Perawat / Bidan" className="bg-[#18193b] text-white">Perawat / Bidan</option>
-                  <option value="Dokter" className="bg-[#18193b] text-white">Dokter</option>
-                  <option value="Radiografer" className="bg-[#18193b] text-white">Radiografer</option>
-                  <option value="Analis Laboratorium" className="bg-[#18193b] text-white">Analis Laboratorium</option>
-                  <option value="Nakes Lainnya" className="bg-[#18193b] text-white">Nakes Lainnya</option>
-                </select>
+                  <span className="truncate">
+                    {selectedProfesiGroups.length === 0
+                      ? 'Semua Profesi'
+                      : selectedProfesiGroups.length === 1
+                      ? selectedProfesiGroups[0]
+                      : `${selectedProfesiGroups.length} Profesi Terpilih`}
+                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                    <span className="text-[10px] text-cyan-400 font-bold bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20">
+                      Pilih
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-slate-400 transition-transform duration-200" />
+                  </div>
+                </button>
+
+                {/* POP-UP MODAL DENGAN EFEK BLUR MORPHISM */}
+                <AnimatePresence>
+                  {isProfesiDropdownOpen && (
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+                      {/* Backdrop Blur Morphism */}
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="fixed inset-0 bg-black/70 backdrop-blur-md cursor-pointer"
+                        onClick={() => setIsProfesiDropdownOpen(false)}
+                      />
+
+                      {/* Modal Pop-up Card */}
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.92, y: 16 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.92, y: 16 }}
+                        transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+                        className="relative w-full max-w-lg bg-[#18193b]/95 border border-[#3b3e6d] rounded-[28px] shadow-[0_25px_60px_rgba(0,0,0,0.9),inset_1px_1px_1.5px_rgba(255,255,255,0.18)] p-6 sm:p-7 z-10 backdrop-blur-2xl text-white space-y-5"
+                      >
+                        {/* Header Pop-up */}
+                        <div className="flex items-start justify-between border-b border-indigo-900/40 pb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 flex items-center justify-center shadow-inner text-cyan-400">
+                              <Users className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <h3 className="text-base sm:text-lg font-black text-white tracking-wide">
+                                Filter Kategori Profesi
+                              </h3>
+                              <p className="text-xs text-slate-400 font-medium">
+                                Pilih satu atau lebih profesi untuk memfilter data &amp; grafik
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setIsProfesiDropdownOpen(false)}
+                            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+
+                        {/* Quick Selection Buttons */}
+                        <div className="flex items-center justify-between gap-2 bg-[#12132e] p-2 rounded-2xl border border-indigo-900/40">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedProfesiGroups([])}
+                            className={`flex-1 py-2 px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                              selectedProfesiGroups.length === 0
+                                ? 'bg-indigo-600 text-white shadow-md border border-indigo-400/40'
+                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                            }`}
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Semua Profesi ({PROFESI_OPTIONS.length})</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedProfesiGroups([...PROFESI_OPTIONS])}
+                            className="py-2 px-3 rounded-xl text-xs font-bold text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 transition-all cursor-pointer"
+                          >
+                            Pilih Semua
+                          </button>
+                        </div>
+
+                        {/* List of Professions */}
+                        <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+                          {PROFESI_OPTIONS.map(prof => {
+                            const isSelected = selectedProfesiGroups.length === 0 || selectedProfesiGroups.includes(prof);
+                            const isExplicitlySelected = selectedProfesiGroups.includes(prof);
+                            const theme = getProfCardTheme(prof);
+
+                            return (
+                              <button
+                                key={prof}
+                                type="button"
+                                onClick={() => toggleProfesiGroup(prof)}
+                                className={`w-full flex items-center justify-between p-3 rounded-2xl border transition-all text-left cursor-pointer group ${
+                                  isExplicitlySelected
+                                    ? 'bg-gradient-to-r from-indigo-950/70 to-indigo-900/40 border-indigo-500/50 shadow-md'
+                                    : selectedProfesiGroups.length === 0
+                                    ? 'bg-white/[0.02] border-white/10 hover:border-indigo-500/30 hover:bg-white/5'
+                                    : 'bg-[#12132e]/60 border-transparent opacity-60 hover:opacity-100 hover:border-white/10'
+                                }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-3.5 h-3.5 rounded-full ring-4 ${
+                                    prof === 'Perawat / Bidan' ? 'bg-emerald-400 ring-emerald-500/20' :
+                                    prof === 'Dokter' ? 'bg-blue-400 ring-blue-500/20' :
+                                    prof === 'Radiografer' ? 'bg-purple-400 ring-purple-500/20' :
+                                    prof === 'Analis Laboratorium' ? 'bg-cyan-400 ring-cyan-500/20' :
+                                    'bg-amber-400 ring-amber-500/20'
+                                  }`} />
+                                  <div>
+                                    <span className={`text-sm font-bold block ${isSelected ? theme.text : 'text-slate-400'}`}>
+                                      {prof}
+                                    </span>
+                                    <span className="text-[10px] text-slate-500">
+                                      {prof === 'Perawat / Bidan' ? 'Perawat Rawat Inap, Bidan & Rawat Jalan' :
+                                       prof === 'Dokter' ? 'Dokter Umum & Dokter Spesialis' :
+                                       prof === 'Radiografer' ? 'Tenaga Radiologi & Imaging' :
+                                       prof === 'Analis Laboratorium' ? 'Petugas Analis Patologi & Laboratorium' :
+                                       'Pramusaji, Farmasi, Gizi & Nakes Lain'}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className={`w-6 h-6 rounded-xl border flex items-center justify-center transition-all ${
+                                  isExplicitlySelected || selectedProfesiGroups.length === 0
+                                    ? 'bg-indigo-600 border-indigo-400 text-white shadow-[0_0_10px_rgba(99,102,241,0.5)]'
+                                    : 'border-slate-700 bg-[#12132e] text-transparent'
+                                }`}>
+                                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Footer Pop-up */}
+                        <div className="pt-3 border-t border-indigo-900/40 flex items-center justify-between gap-3">
+                          <div className="text-xs text-slate-400">
+                            Status:{' '}
+                            <span className="font-bold text-cyan-400">
+                              {selectedProfesiGroups.length === 0
+                                ? 'Semua Profesi Aktif'
+                                : `${selectedProfesiGroups.length} dari ${PROFESI_OPTIONS.length} dipilih`}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setIsProfesiDropdownOpen(false)}
+                            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-[0_4px_14px_rgba(79,70,229,0.4)] cursor-pointer"
+                          >
+                            Terapkan Filter
+                          </button>
+                        </div>
+                      </motion.div>
+                    </div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </div>
@@ -1263,27 +1469,27 @@ export default function AnalyticsPage() {
                         <Tooltip content={<CustomTooltip />} />
                         <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
                         <ReferenceLine y={85} stroke="#34d399" strokeDasharray="5 5" strokeWidth={2} label={{ value: 'Standar Target: ≥85%', fill: '#34d399', fontSize: 11, position: 'top', fontWeight: 'bold' }} />
-                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Perawat / Bidan') && (
+                        {isProfesiActive('Perawat / Bidan') && (
                           <Line type="monotone" dataKey="Perawat / Bidan" stroke="#10b981" strokeWidth={3} dot={{ r: 5, fill: '#10b981' }} activeDot={{ r: 8 }}>
                             <LabelList dataKey="Perawat / Bidan" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#34d399" fontSize={10} fontWeight="bold" dy={-6} />
                           </Line>
                         )}
-                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Dokter') && (
+                        {isProfesiActive('Dokter') && (
                           <Line type="monotone" dataKey="Dokter" stroke="#3b82f6" strokeWidth={3} dot={{ r: 5, fill: '#3b82f6' }} activeDot={{ r: 8 }}>
                             <LabelList dataKey="Dokter" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#60a5fa" fontSize={10} fontWeight="bold" dy={-6} />
                           </Line>
                         )}
-                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Radiografer') && (
+                        {isProfesiActive('Radiografer') && (
                           <Line type="monotone" dataKey="Radiografer" stroke="#a855f7" strokeWidth={3} dot={{ r: 5, fill: '#a855f7' }} activeDot={{ r: 8 }}>
                             <LabelList dataKey="Radiografer" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#c084fc" fontSize={10} fontWeight="bold" dy={-6} />
                           </Line>
                         )}
-                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Analis Laboratorium') && (
+                        {isProfesiActive('Analis Laboratorium') && (
                           <Line type="monotone" dataKey="Analis Laboratorium" stroke="#06b6d4" strokeWidth={3} dot={{ r: 5, fill: '#06b6d4' }} activeDot={{ r: 8 }}>
                             <LabelList dataKey="Analis Laboratorium" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#22d3ee" fontSize={10} fontWeight="bold" dy={-6} />
                           </Line>
                         )}
-                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Nakes Lainnya') && (
+                        {isProfesiActive('Nakes Lainnya') && (
                           <Line type="monotone" dataKey="Nakes Lainnya" stroke="#f59e0b" strokeWidth={3} dot={{ r: 5, fill: '#f59e0b' }} activeDot={{ r: 8 }}>
                             <LabelList dataKey="Nakes Lainnya" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#fbbf24" fontSize={10} fontWeight="bold" dy={-6} />
                           </Line>
@@ -1297,27 +1503,27 @@ export default function AnalyticsPage() {
                         <Tooltip content={<CustomTooltip />} />
                         <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
                         <ReferenceLine y={85} stroke="#34d399" strokeDasharray="5 5" strokeWidth={2} label={{ value: 'Standar Target: ≥85%', fill: '#34d399', fontSize: 11, position: 'top', fontWeight: 'bold' }} />
-                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Perawat / Bidan') && (
+                        {isProfesiActive('Perawat / Bidan') && (
                           <Bar dataKey="Perawat / Bidan" fill="#10b981" radius={[4, 4, 0, 0]}>
                             <LabelList dataKey="Perawat / Bidan" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#34d399" fontSize={10} fontWeight="bold" />
                           </Bar>
                         )}
-                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Dokter') && (
+                        {isProfesiActive('Dokter') && (
                           <Bar dataKey="Dokter" fill="#3b82f6" radius={[4, 4, 0, 0]}>
                             <LabelList dataKey="Dokter" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#60a5fa" fontSize={10} fontWeight="bold" />
                           </Bar>
                         )}
-                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Radiografer') && (
+                        {isProfesiActive('Radiografer') && (
                           <Bar dataKey="Radiografer" fill="#a855f7" radius={[4, 4, 0, 0]}>
                             <LabelList dataKey="Radiografer" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#c084fc" fontSize={10} fontWeight="bold" />
                           </Bar>
                         )}
-                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Analis Laboratorium') && (
+                        {isProfesiActive('Analis Laboratorium') && (
                           <Bar dataKey="Analis Laboratorium" fill="#06b6d4" radius={[4, 4, 0, 0]}>
                             <LabelList dataKey="Analis Laboratorium" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#22d3ee" fontSize={10} fontWeight="bold" />
                           </Bar>
                         )}
-                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Nakes Lainnya') && (
+                        {isProfesiActive('Nakes Lainnya') && (
                           <Bar dataKey="Nakes Lainnya" fill="#f59e0b" radius={[4, 4, 0, 0]}>
                             <LabelList dataKey="Nakes Lainnya" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#fbbf24" fontSize={10} fontWeight="bold" />
                           </Bar>
@@ -1435,27 +1641,27 @@ export default function AnalyticsPage() {
                         <Tooltip content={<CustomTooltip />} />
                         <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
                         <ReferenceLine y={100} label={{ value: 'Standar Target: 100%', fill: '#f59e0b', fontSize: 11, position: 'top', fontWeight: 'bold' }} stroke="#f59e0b" strokeDasharray="5 5" strokeWidth={2} />
-                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Perawat / Bidan') && (
+                        {isProfesiActive('Perawat / Bidan') && (
                           <Line type="monotone" dataKey="Perawat / Bidan" stroke="#0284c7" strokeWidth={3} dot={{ r: 5, fill: '#0284c7' }} activeDot={{ r: 8 }}>
                             <LabelList dataKey="Perawat / Bidan" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#38bdf8" fontSize={10} fontWeight="bold" dy={-6} />
                           </Line>
                         )}
-                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Dokter') && (
+                        {isProfesiActive('Dokter') && (
                           <Line type="monotone" dataKey="Dokter" stroke="#6366f1" strokeWidth={3} dot={{ r: 5, fill: '#6366f1' }} activeDot={{ r: 8 }}>
                             <LabelList dataKey="Dokter" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#818cf8" fontSize={10} fontWeight="bold" dy={-6} />
                           </Line>
                         )}
-                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Radiografer') && (
+                        {isProfesiActive('Radiografer') && (
                           <Line type="monotone" dataKey="Radiografer" stroke="#a855f7" strokeWidth={3} dot={{ r: 5, fill: '#a855f7' }} activeDot={{ r: 8 }}>
                             <LabelList dataKey="Radiografer" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#c084fc" fontSize={10} fontWeight="bold" dy={-6} />
                           </Line>
                         )}
-                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Analis Laboratorium') && (
+                        {isProfesiActive('Analis Laboratorium') && (
                           <Line type="monotone" dataKey="Analis Laboratorium" stroke="#06b6d4" strokeWidth={3} dot={{ r: 5, fill: '#06b6d4' }} activeDot={{ r: 8 }}>
                             <LabelList dataKey="Analis Laboratorium" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#22d3ee" fontSize={10} fontWeight="bold" dy={-6} />
                           </Line>
                         )}
-                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Nakes Lainnya') && (
+                        {isProfesiActive('Nakes Lainnya') && (
                           <Line type="monotone" dataKey="Nakes Lainnya" stroke="#ec4899" strokeWidth={3} dot={{ r: 5, fill: '#ec4899' }} activeDot={{ r: 8 }}>
                             <LabelList dataKey="Nakes Lainnya" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#f472b6" fontSize={10} fontWeight="bold" dy={-6} />
                           </Line>
@@ -1469,27 +1675,27 @@ export default function AnalyticsPage() {
                         <Tooltip content={<CustomTooltip />} />
                         <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
                         <ReferenceLine y={100} label={{ value: 'Standar Target: 100%', fill: '#f59e0b', fontSize: 11, position: 'top', fontWeight: 'bold' }} stroke="#f59e0b" strokeDasharray="5 5" strokeWidth={2} />
-                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Perawat / Bidan') && (
+                        {isProfesiActive('Perawat / Bidan') && (
                           <Bar dataKey="Perawat / Bidan" fill="#0284c7" radius={[4, 4, 0, 0]}>
                             <LabelList dataKey="Perawat / Bidan" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#38bdf8" fontSize={10} fontWeight="bold" />
                           </Bar>
                         )}
-                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Dokter') && (
+                        {isProfesiActive('Dokter') && (
                           <Bar dataKey="Dokter" fill="#6366f1" radius={[4, 4, 0, 0]}>
                             <LabelList dataKey="Dokter" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#818cf8" fontSize={10} fontWeight="bold" />
                           </Bar>
                         )}
-                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Radiografer') && (
+                        {isProfesiActive('Radiografer') && (
                           <Bar dataKey="Radiografer" fill="#a855f7" radius={[4, 4, 0, 0]}>
                             <LabelList dataKey="Radiografer" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#c084fc" fontSize={10} fontWeight="bold" />
                           </Bar>
                         )}
-                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Analis Laboratorium') && (
+                        {isProfesiActive('Analis Laboratorium') && (
                           <Bar dataKey="Analis Laboratorium" fill="#06b6d4" radius={[4, 4, 0, 0]}>
                             <LabelList dataKey="Analis Laboratorium" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#22d3ee" fontSize={10} fontWeight="bold" />
                           </Bar>
                         )}
-                        {(selectedProfesiGroup === 'Semua Profesi' || selectedProfesiGroup === 'Nakes Lainnya') && (
+                        {isProfesiActive('Nakes Lainnya') && (
                           <Bar dataKey="Nakes Lainnya" fill="#ec4899" radius={[4, 4, 0, 0]}>
                             <LabelList dataKey="Nakes Lainnya" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#f472b6" fontSize={10} fontWeight="bold" />
                           </Bar>

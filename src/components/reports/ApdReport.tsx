@@ -344,6 +344,27 @@ export default function ApdReport({
     });
   }, [filteredData]);
 
+  const toTitleCase = (str?: string | null) => {
+    if (!str || str === '-') return '-';
+    const acronyms = new Set(['IGD', 'ICU', 'NICU', 'PICU', 'VK', 'OK', 'HD', 'CSSD', 'LAB', 'UTD', 'PPI', 'APD', 'WIB']);
+    return str
+      .trim()
+      .split(/\s+/)
+      .map(chunk => {
+        return chunk
+          .split(/([/\\-])/)
+          .map(part => {
+            if (part === '/' || part === '-' || part === '\\') return part;
+            const upper = part.toUpperCase();
+            if (acronyms.has(upper)) return upper;
+            if (part.length <= 1) return part.toUpperCase();
+            return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+          })
+          .join('');
+      })
+      .join(' ');
+  };
+
   const formatDateTimeSafe = (dateStr: string | null | undefined) => {
     if (!dateStr) return '-';
     try {
@@ -423,21 +444,22 @@ export default function ApdReport({
           <table className="w-full text-center border-collapse whitespace-nowrap">
             <thead className="sticky top-0 z-20 print:static">
               <tr className="bg-[#12132e] text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 border-b border-indigo-900/30 shadow-sm print:shadow-none">
-                <th className="px-4 py-3.5 bg-[#12132e]">NO</th>
-                <th className="px-4 py-3.5 bg-[#12132e]">WAKTU</th>
-                <th className="px-4 py-3.5 bg-[#12132e] text-left">OBSERVER</th>
-                <th className="px-4 py-3.5 bg-[#12132e] text-left">UNIT / RUANGAN</th>
-                <th className="px-4 py-3.5 bg-[#12132e] text-left">TINDAKAN</th>
-                <th className="px-2 py-3.5 bg-[#12132e] leading-tight min-w-[70px] whitespace-normal">MASKER</th>
-                <th className="px-2 py-3.5 bg-[#12132e] leading-tight min-w-[80px] whitespace-normal">SARUNG TANGAN</th>
-                <th className="px-2 py-3.5 bg-[#12132e] leading-tight min-w-[80px] whitespace-normal">PENUTUP KEPALA</th>
-                <th className="px-2 py-3.5 bg-[#12132e] leading-tight min-w-[70px] whitespace-normal">APRON</th>
-                <th className="px-2 py-3.5 bg-[#12132e] leading-tight min-w-[90px] whitespace-normal">KACA MATA / GOGGLE</th>
-                <th className="px-2 py-3.5 bg-[#12132e] leading-tight min-w-[80px] whitespace-normal">SEPATU BOOTS</th>
-                <th className="px-2 py-3.5 bg-[#12132e] leading-tight min-w-[90px] whitespace-normal">GAUN / BAJU PELINDUNG</th>
-                <th className="px-4 py-3.5 bg-[#12132e] text-emerald-400 border-l border-white/5">PATUH</th>
-                <th className="px-4 py-3.5 bg-[#12132e] text-rose-400 whitespace-nowrap min-w-[100px]">TIDAK PATUH</th>
-                <th className="px-4 py-3.5 bg-[#12132e] text-cyan-400 whitespace-nowrap">HASIL (%)</th>
+                <th className="px-4 py-3.5 bg-[#12132e] text-center">NO</th>
+                <th className="px-4 py-3.5 bg-[#12132e] text-center">WAKTU</th>
+                <th className="px-4 py-3.5 bg-[#12132e] text-center">OBSERVER</th>
+                <th className="px-4 py-3.5 bg-[#12132e] text-center">UNIT / RUANGAN</th>
+                <th className="px-4 py-3.5 bg-[#12132e] text-center">PROFESI</th>
+                <th className="px-4 py-3.5 bg-[#12132e] text-center">TINDAKAN</th>
+                <th className="px-2 py-3.5 bg-[#12132e] leading-tight min-w-[70px] whitespace-normal text-center">MASKER</th>
+                <th className="px-2 py-3.5 bg-[#12132e] leading-tight min-w-[80px] whitespace-normal text-center">SARUNG TANGAN</th>
+                <th className="px-2 py-3.5 bg-[#12132e] leading-tight min-w-[80px] whitespace-normal text-center">PENUTUP KEPALA</th>
+                <th className="px-2 py-3.5 bg-[#12132e] leading-tight min-w-[70px] whitespace-normal text-center">APRON</th>
+                <th className="px-2 py-3.5 bg-[#12132e] leading-tight min-w-[90px] whitespace-normal text-center">KACA MATA / GOGGLE</th>
+                <th className="px-2 py-3.5 bg-[#12132e] leading-tight min-w-[80px] whitespace-normal text-center">SEPATU BOOTS</th>
+                <th className="px-2 py-3.5 bg-[#12132e] leading-tight min-w-[90px] whitespace-normal text-center">GAUN / BAJU PELINDUNG</th>
+                <th className="px-4 py-3.5 bg-[#12132e] text-emerald-400 border-l border-white/5 text-center">PATUH</th>
+                <th className="px-4 py-3.5 bg-[#12132e] text-rose-400 whitespace-nowrap min-w-[100px] text-center">TIDAK PATUH</th>
+                <th className="px-4 py-3.5 bg-[#12132e] text-cyan-400 whitespace-nowrap text-center">HASIL (%)</th>
                 <th className="px-4 py-3.5 bg-[#12132e] text-center">AKSI</th>
               </tr>
             </thead>
@@ -451,29 +473,32 @@ export default function ApdReport({
 
                 return (
                   <tr key={row.id} className="hover:bg-white/[0.03] transition-colors group">
-                    <td className="px-4 py-4 font-mono font-bold text-slate-400">
+                    <td className="px-4 py-4 font-mono font-bold text-slate-400 text-center">
                       {index + 1}
                     </td>
-                    <td className="px-4 py-4 text-slate-300 font-mono">
+                    <td className="px-4 py-4 text-slate-300 font-mono text-center whitespace-nowrap">
                       {row.tanggal_waktu ? format(parseISO(row.tanggal_waktu), 'dd/MM/yyyy HH:mm') : '-'}
                     </td>
-                    <td className="px-4 py-4 text-left text-slate-400 italic">
+                    <td className="px-4 py-4 text-center text-slate-400 italic">
                       {row.observer || '-'}
                     </td>
-                    <td className="px-4 py-4 text-left text-[11px] font-bold text-white uppercase">
-                      {row.unit || '-'}
+                    <td className="px-4 py-4 text-center text-[11px] text-white">
+                      {toTitleCase(row.unit)}
                     </td>
-                    <td className="px-4 py-4 text-left uppercase text-[10px] font-bold text-slate-300 leading-relaxed max-w-[150px] whitespace-pre-wrap">{row.tindakan || '-'}</td>
-                    <td className="px-2 py-4">{mapApdAction(row.masker)}</td>
-                    <td className="px-2 py-4">{mapApdAction(row.sarung_tangan)}</td>
-                    <td className="px-2 py-4">{mapApdAction(row.penutup_kepala)}</td>
-                    <td className="px-2 py-4">{mapApdAction(row.apron)}</td>
-                    <td className="px-2 py-4">{mapApdAction(row.goggle)}</td>
-                    <td className="px-2 py-4">{mapApdAction(row.sepatu_boot)}</td>
-                    <td className="px-2 py-4">{mapApdAction(row.gaun_pelindung)}</td>
-                    <td className="px-4 py-4 border-l border-white/5 text-emerald-400 text-sm font-black font-mono">{patuh}</td>
-                    <td className="px-4 py-4 text-rose-400 text-sm font-black font-mono">{tidakPatuh}</td>
-                    <td className="px-4 py-4 font-black">
+                    <td className="px-4 py-4 text-center text-[11px] text-slate-300">
+                      {toTitleCase(row.profesi)}
+                    </td>
+                    <td className="px-4 py-4 text-center text-[10px] font-bold text-slate-300 leading-relaxed max-w-[150px] whitespace-pre-wrap">{toTitleCase(row.tindakan)}</td>
+                    <td className="px-2 py-4 text-center">{mapApdAction(row.masker)}</td>
+                    <td className="px-2 py-4 text-center">{mapApdAction(row.sarung_tangan)}</td>
+                    <td className="px-2 py-4 text-center">{mapApdAction(row.penutup_kepala)}</td>
+                    <td className="px-2 py-4 text-center">{mapApdAction(row.apron)}</td>
+                    <td className="px-2 py-4 text-center">{mapApdAction(row.goggle)}</td>
+                    <td className="px-2 py-4 text-center">{mapApdAction(row.sepatu_boot)}</td>
+                    <td className="px-2 py-4 text-center">{mapApdAction(row.gaun_pelindung)}</td>
+                    <td className="px-4 py-4 border-l border-white/5 text-emerald-400 text-sm font-black font-mono text-center">{patuh}</td>
+                    <td className="px-4 py-4 text-rose-400 text-sm font-black font-mono text-center">{tidakPatuh}</td>
+                    <td className="px-4 py-4 font-black text-center">
                       <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase border shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)] ${
                         persentase >= 85 ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40' :
                         persentase >= 70 ? 'bg-amber-950/80 text-amber-300 border-amber-500/40' :
@@ -507,7 +532,7 @@ export default function ApdReport({
               })}
               {filteredData.length === 0 && (
                 <tr>
-                  <td colSpan={16} className="px-4 py-12 text-center text-slate-400 font-bold uppercase tracking-wider">Belum ada data untuk periode ini</td>
+                  <td colSpan={17} className="px-4 py-12 text-center text-slate-400 font-bold uppercase tracking-wider">Belum ada data untuk periode ini</td>
                 </tr>
               )}
             </tbody>
@@ -573,9 +598,10 @@ export default function ApdReport({
           <PdfDownloadButton
             targetElementId="apd-official-report"
             filename={`Laporan_Kepatuhan_Penggunaan_APD_RSUD_AL_MULK_${(filters.periode || 'Periode').replace(/[^a-zA-Z0-9]/g, '_')}_${format(new Date(), 'yyyyMMdd_HHmmss')}.pdf`}
-            title="Download PDF Laporan Kepatuhan Penggunaan APD (Landscape)"
+            title="Download PDF Laporan Kepatuhan Penggunaan APD (Landscape F4)"
             size="md"
             orientation="landscape"
+            paperSize="f4"
           />
         </div>
 
@@ -701,25 +727,83 @@ export default function ApdReport({
               <h4 className="text-[10pt] font-black uppercase tracking-wider text-slate-900 mb-1.5">
                 I. Tabel Data Audit Kepatuhan Penggunaan APD
               </h4>
-              <table className="w-full text-center border-collapse border border-black text-[8.5pt] whitespace-nowrap">
+              <table className="w-full text-center border-collapse border border-black text-[8pt] table-fixed">
+                <colgroup>
+                  <col style={{ width: '3%' }} />
+                  <col style={{ width: '11%' }} />
+                  <col style={{ width: '8.5%' }} />
+                  <col style={{ width: '9%' }} />
+                  <col style={{ width: '9%' }} />
+                  <col style={{ width: '11.5%' }} />
+                  <col style={{ width: '4.5%' }} />
+                  <col style={{ width: '5%' }} />
+                  <col style={{ width: '5%' }} />
+                  <col style={{ width: '4.5%' }} />
+                  <col style={{ width: '6%' }} />
+                  <col style={{ width: '5%' }} />
+                  <col style={{ width: '6%' }} />
+                  <col style={{ width: '4%' }} />
+                  <col style={{ width: '4%' }} />
+                  <col style={{ width: '4.5%' }} />
+                </colgroup>
                 <thead>
-                  <tr className="bg-slate-100 text-black font-black uppercase tracking-wider border-b border-black text-[8pt]">
-                    <th className="border border-black px-2 py-1.5 text-center w-8">NO</th>
-                    <th className="border border-black px-2.5 py-1.5 text-center whitespace-nowrap">WAKTU</th>
-                    <th className="border border-black px-2.5 py-1.5 text-left whitespace-nowrap">OBSERVER</th>
-                    <th className="border border-black px-2.5 py-1.5 text-left whitespace-nowrap">UNIT / RUANGAN</th>
-                    <th className="border border-black px-2.5 py-1.5 text-left whitespace-nowrap">PROFESI</th>
-                    <th className="border border-black px-2.5 py-1.5 text-left whitespace-nowrap">TINDAKAN</th>
-                    <th className="border border-black px-1.5 py-1.5 text-center w-12 whitespace-nowrap">MASKER</th>
-                    <th className="border border-black px-1.5 py-1.5 text-center w-14 whitespace-nowrap">SARUNG TANGAN</th>
-                    <th className="border border-black px-1.5 py-1.5 text-center w-14 whitespace-nowrap">PENUTUP KEPALA</th>
-                    <th className="border border-black px-1.5 py-1.5 text-center w-12 whitespace-nowrap">APRON</th>
-                    <th className="border border-black px-1.5 py-1.5 text-center w-14 whitespace-nowrap">GOGGLE</th>
-                    <th className="border border-black px-1.5 py-1.5 text-center w-14 whitespace-nowrap">BOOTS</th>
-                    <th className="border border-black px-1.5 py-1.5 text-center w-12 whitespace-nowrap">GAUN</th>
-                    <th className="border border-black px-2 py-1.5 text-center text-emerald-900 whitespace-nowrap">PATUH</th>
-                    <th className="border border-black px-2 py-1.5 text-center text-rose-900 whitespace-nowrap">TDK PATUH</th>
-                    <th className="border border-black px-2.5 py-1.5 text-center text-[8.5pt] font-black whitespace-nowrap">HASIL (%)</th>
+                  <tr className="bg-slate-100 text-black font-black uppercase tracking-wider border-b border-black text-[7.5pt]">
+                    <th className="border border-black px-1 py-1.5 text-center align-middle">
+                      NO
+                    </th>
+                    <th className="border border-black px-1 py-1.5 text-center align-middle whitespace-nowrap">
+                      WAKTU
+                    </th>
+                    <th className="border border-black px-1 py-1.5 text-center align-middle">
+                      OBSERVER
+                    </th>
+                    <th className="border border-black px-1 py-1.5 text-center align-middle leading-tight">
+                      <div>UNIT /</div>
+                      <div>RUANGAN</div>
+                    </th>
+                    <th className="border border-black px-1 py-1.5 text-center align-middle">
+                      PROFESI
+                    </th>
+                    <th className="border border-black px-1 py-1.5 text-center align-middle">
+                      TINDAKAN
+                    </th>
+                    <th className="border border-black px-0.5 py-1.5 text-center align-middle">
+                      MASKER
+                    </th>
+                    <th className="border border-black px-0.5 py-1.5 text-center align-middle leading-tight">
+                      <div>SARUNG</div>
+                      <div>TANGAN</div>
+                    </th>
+                    <th className="border border-black px-0.5 py-1.5 text-center align-middle leading-tight">
+                      <div>PENUTUP</div>
+                      <div>KEPALA</div>
+                    </th>
+                    <th className="border border-black px-0.5 py-1.5 text-center align-middle">
+                      APRON
+                    </th>
+                    <th className="border border-black px-0.5 py-1.5 text-center align-middle leading-tight">
+                      <div>KACA MATA /</div>
+                      <div>GOGGLE</div>
+                    </th>
+                    <th className="border border-black px-0.5 py-1.5 text-center align-middle leading-tight">
+                      <div>SEPATU</div>
+                      <div>BOOTS</div>
+                    </th>
+                    <th className="border border-black px-0.5 py-1.5 text-center align-middle leading-tight">
+                      <div>GAUN / BAJU</div>
+                      <div>PELINDUNG</div>
+                    </th>
+                    <th className="border border-black px-1 py-1.5 text-center align-middle text-emerald-900">
+                      PATUH
+                    </th>
+                    <th className="border border-black px-0.5 py-1.5 text-center align-middle leading-tight text-rose-900">
+                      <div>TIDAK</div>
+                      <div>PATUH</div>
+                    </th>
+                    <th className="border border-black px-0.5 py-1.5 text-center align-middle leading-tight">
+                      <div>HASIL</div>
+                      <div>(%)</div>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -732,25 +816,25 @@ export default function ApdReport({
 
                     return (
                       <tr key={`print_apd_${row.id || index}`} className="even:bg-slate-50/50">
-                        <td className="border border-black px-2 py-1.5 text-center font-mono text-[8pt]">{index + 1}</td>
-                        <td className="border border-black px-2.5 py-1.5 text-center font-mono text-[8pt] whitespace-nowrap">
+                        <td className="border border-black px-1 py-1 text-center font-mono text-[7.5pt] align-middle">{index + 1}</td>
+                        <td className="border border-black px-1 py-1 text-center font-mono text-[7.5pt] whitespace-nowrap align-middle">
                           {formatDateTimeSafe(row.tanggal_waktu)}
                         </td>
-                        <td className="border border-black px-2.5 py-1.5 text-left text-slate-800 text-[8pt] whitespace-nowrap">{row.observer || '-'}</td>
-                        <td className="border border-black px-2.5 py-1.5 text-left font-bold text-[8pt] uppercase whitespace-nowrap">{row.unit || '-'}</td>
-                        <td className="border border-black px-2.5 py-1.5 text-left text-[8pt] uppercase whitespace-nowrap">{row.profesi || '-'}</td>
-                        <td className="border border-black px-2.5 py-1.5 text-left text-[8pt] uppercase whitespace-nowrap max-w-[140px] truncate" title={row.tindakan || '-'}>{row.tindakan || '-'}</td>
-                        <td className="border border-black px-1.5 py-1.5 text-center font-semibold text-[8.5pt]">{formatApdOfficial(row.masker)}</td>
-                        <td className="border border-black px-1.5 py-1.5 text-center font-semibold text-[8.5pt]">{formatApdOfficial(row.sarung_tangan)}</td>
-                        <td className="border border-black px-1.5 py-1.5 text-center font-semibold text-[8.5pt]">{formatApdOfficial(row.penutup_kepala)}</td>
-                        <td className="border border-black px-1.5 py-1.5 text-center font-semibold text-[8.5pt]">{formatApdOfficial(row.apron)}</td>
-                        <td className="border border-black px-1.5 py-1.5 text-center font-semibold text-[8.5pt]">{formatApdOfficial(row.goggle)}</td>
-                        <td className="border border-black px-1.5 py-1.5 text-center font-semibold text-[8.5pt]">{formatApdOfficial(row.sepatu_boot)}</td>
-                        <td className="border border-black px-1.5 py-1.5 text-center font-semibold text-[8.5pt]">{formatApdOfficial(row.gaun_pelindung)}</td>
-                        <td className="border border-black px-2 py-1.5 text-center font-mono font-bold text-emerald-800 text-[8.5pt]">{patuh}</td>
-                        <td className="border border-black px-2 py-1.5 text-center font-mono font-bold text-rose-800 text-[8.5pt]">{tidakPatuh}</td>
-                        <td className="border border-black px-2.5 py-1.5 text-center font-black text-[8.5pt]">
-                          <span className={persentase >= 85 ? 'text-emerald-800 font-bold' : persentase >= 70 ? 'text-amber-800 font-bold' : 'text-rose-800 font-bold'}>
+                        <td className="border border-black px-1 py-1 text-center text-slate-800 text-[7.5pt] leading-tight break-words align-middle" title={row.observer || '-'}>{row.observer || '-'}</td>
+                        <td className="border border-black px-1 py-1 text-center text-[7.5pt] leading-tight break-words align-middle" title={row.unit || '-'}>{toTitleCase(row.unit)}</td>
+                        <td className="border border-black px-1 py-1 text-center text-[7.5pt] leading-tight break-words align-middle" title={row.profesi || '-'}>{toTitleCase(row.profesi)}</td>
+                        <td className="border border-black px-1 py-1 text-center text-[7.5pt] leading-tight break-words align-middle" title={row.tindakan || '-'}>{toTitleCase(row.tindakan)}</td>
+                        <td className="border border-black px-0.5 py-1 text-center text-[8pt] align-middle">{formatApdOfficial(row.masker)}</td>
+                        <td className="border border-black px-0.5 py-1 text-center text-[8pt] align-middle">{formatApdOfficial(row.sarung_tangan)}</td>
+                        <td className="border border-black px-0.5 py-1 text-center text-[8pt] align-middle">{formatApdOfficial(row.penutup_kepala)}</td>
+                        <td className="border border-black px-0.5 py-1 text-center text-[8pt] align-middle">{formatApdOfficial(row.apron)}</td>
+                        <td className="border border-black px-0.5 py-1 text-center text-[8pt] align-middle">{formatApdOfficial(row.goggle)}</td>
+                        <td className="border border-black px-0.5 py-1 text-center text-[8pt] align-middle">{formatApdOfficial(row.sepatu_boot)}</td>
+                        <td className="border border-black px-0.5 py-1 text-center text-[8pt] align-middle">{formatApdOfficial(row.gaun_pelindung)}</td>
+                        <td className="border border-black px-1 py-1 text-center font-mono text-emerald-800 text-[8pt] align-middle">{patuh}</td>
+                        <td className="border border-black px-1 py-1 text-center font-mono text-rose-800 text-[8pt] align-middle">{tidakPatuh}</td>
+                        <td className="border border-black px-1 py-1 text-center text-[8pt] align-middle">
+                          <span className={persentase >= 85 ? 'text-emerald-800' : persentase >= 70 ? 'text-amber-800' : 'text-rose-800'}>
                             {persentase}%
                           </span>
                         </td>
@@ -767,16 +851,16 @@ export default function ApdReport({
                 </tbody>
                 <tfoot>
                   <tr className="bg-slate-100 font-black border-t-2 border-black text-black">
-                    <td colSpan={13} className="border border-black px-3 py-2 text-right uppercase tracking-wider text-[8.5pt] whitespace-nowrap align-middle">
+                    <td colSpan={13} className="border border-black px-3 py-1.5 text-center uppercase tracking-wider text-[7.5pt] align-middle">
                       TOTAL DAN RATA-RATA KESELURUHAN:
                     </td>
-                    <td className="border border-black px-2 py-2 text-center font-mono text-[9.5pt] whitespace-nowrap align-middle text-emerald-900">
+                    <td className="border border-black px-1 py-1.5 text-center font-mono text-[8.5pt] align-middle text-emerald-900">
                       {summaryStats.patuh}
                     </td>
-                    <td className="border border-black px-2 py-2 text-center font-mono text-[9.5pt] whitespace-nowrap align-middle text-rose-900">
+                    <td className="border border-black px-1 py-1.5 text-center font-mono text-[8.5pt] align-middle text-rose-900">
                       {summaryStats.tidakPatuh}
                     </td>
-                    <td className="border border-black px-2.5 py-2 text-center font-mono text-[10pt] whitespace-nowrap align-middle">
+                    <td className="border border-black px-1 py-1.5 text-center font-mono text-[8.5pt] align-middle">
                       <span className={summaryStats.avg >= 85 ? 'text-emerald-800 font-black' : 'text-rose-800 font-black'}>
                         {summaryStats.avg}%
                       </span>
