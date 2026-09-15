@@ -26,6 +26,8 @@ interface PdfDownloadButtonProps {
   paperSize?: 'f4' | 'a4';
   /** Always open in-app preview modal upon generation */
   openPreviewOnGenerate?: boolean;
+  /** Margin in mm (default: 25mm / 2.5cm for official reports) */
+  margin?: number;
 }
 
 /**
@@ -88,6 +90,7 @@ export default function PdfDownloadButton({
   orientation,
   paperSize = 'f4',
   openPreviewOnGenerate = false,
+  margin = 25,
 }: PdfDownloadButtonProps) {
   const [downloading, setDownloading] = useState(false);
   const [viewerData, setViewerData] = useState<PdfViewerData | null>(null);
@@ -120,11 +123,11 @@ export default function PdfDownloadButton({
 
       const result = await exportElementToA4Pdf(element, {
         filename: filename || `Laporan_Resmi_${Date.now()}.pdf`,
-        margin: 4,
-        scale: 2.5,
+        margin: margin ?? 25, // Standard official report margin 2.5 cm (25mm)
+        scale: 2.0,
         orientation,
         paperSize,
-        action: isMobile ? 'auto' : 'download',
+        action: isMobile ? 'preview' : 'download',
       });
 
       if (result) {
@@ -138,15 +141,13 @@ export default function PdfDownloadButton({
         });
 
         // On mobile devices or when explicitly requested, open the in-app viewer modal
-        // so users can view the PDF and tap "Buka di Viewer" or "Unduh PDF" with 0 errors!
+        // so users can inspect each page and tap "Unduh PDF" or "Buka / Bagikan File"
         if (isMobile || openPreviewOnGenerate) {
           setIsViewerOpen(true);
         }
       }
     } catch (err) {
       console.error('Failed to download PDF:', err);
-      // Fallback to window.print if critical error
-      window.print();
     } finally {
       setDownloading(false);
     }

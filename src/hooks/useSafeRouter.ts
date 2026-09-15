@@ -18,7 +18,13 @@ function isAbortError(err: any) {
 }
 
 export function useSafeRouter() {
-  const router = useNextRouter();
+  let router: ReturnType<typeof useNextRouter> | null = null;
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    router = useNextRouter();
+  } catch {
+    router = null;
+  }
 
   return useMemo(() => {
     if (!router) return mockRouter();

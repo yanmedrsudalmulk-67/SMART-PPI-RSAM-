@@ -247,7 +247,7 @@ export default function EtikaBatukReport({
             <div 
               id="etika-batuk-official-report"
               data-pdf-page="true"
-              className="official-report-paper official-pdf-page p-6 sm:p-10 shadow-xl print:shadow-none print:w-full print:p-8 min-h-[330mm] mx-auto min-w-[650px] sm:min-w-0 sm:w-full max-w-[215mm] border border-slate-300 bg-force-white text-black relative flex flex-col justify-between"
+              className="official-report-paper official-pdf-page p-6 sm:p-10 shadow-xl print:shadow-none print:w-full print:p-0 min-h-[330mm] mx-auto min-w-[650px] sm:min-w-0 sm:w-full max-w-[215mm] border border-slate-300 bg-force-white text-black relative flex flex-col justify-between"
               style={{
                 backgroundColor: "#ffffff",
                 color: "#000000",
@@ -256,6 +256,14 @@ export default function EtikaBatukReport({
                 pageBreakAfter: "always",
               }}
             >
+            <style dangerouslySetInnerHTML={{__html: `
+              @media print {
+                @page {
+                  size: 215mm 330mm;
+                  margin: 2.5cm !important;
+                }
+              }
+            `}} />
           {/* Header Kop Surat */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b-[2.5px] border-black pb-2 mb-1" id="kop-surat">
             <div className="flex items-center gap-4 w-full justify-center text-center max-w-full">

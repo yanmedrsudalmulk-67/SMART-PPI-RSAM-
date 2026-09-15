@@ -88,8 +88,38 @@ export default function PdfViewerModal({
     try {
       if (onDownload) {
         await onDownload();
+      } else if (data.file) {
+        const url = URL.createObjectURL(data.file);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = data.filename || 'Laporan_Resmi.pdf';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          if (link.parentNode) link.parentNode.removeChild(link);
+          URL.revokeObjectURL(url);
+        }, 60000);
       } else if (data.downloadUrl) {
-        window.location.href = data.downloadUrl;
+        const link = document.createElement('a');
+        link.href = data.downloadUrl;
+        link.download = data.filename || 'Laporan_Resmi.pdf';
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          if (link.parentNode) link.parentNode.removeChild(link);
+        }, 2000);
+      } else if (data.pdfBase64) {
+        const link = document.createElement('a');
+        link.href = data.pdfBase64.startsWith('data:') ? data.pdfBase64 : `data:application/pdf;base64,${data.pdfBase64}`;
+        link.download = data.filename || 'Laporan_Resmi.pdf';
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          if (link.parentNode) link.parentNode.removeChild(link);
+        }, 2000);
       }
       setActionSuccess('Unduhan diproses');
       setTimeout(() => setActionSuccess(null), 3000);

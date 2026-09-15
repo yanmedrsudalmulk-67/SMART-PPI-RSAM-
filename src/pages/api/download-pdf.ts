@@ -23,17 +23,17 @@ function cleanupExpired() {
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '30mb',
+      sizeLimit: '50mb',
     },
-    responseLimit: '30mb',
+    responseLimit: '50mb',
   },
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   cleanupExpired();
 
-  // 1. GET Request: Download by Token
-  if (req.method === 'GET') {
+  // 1. HEAD & GET Request: Download by Token
+  if (req.method === 'GET' || req.method === 'HEAD') {
     const { token, download } = req.query;
 
     if (!token || typeof token !== 'string') {
@@ -55,6 +55,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
+
+    if (req.method === 'HEAD') {
+      return res.status(200).end();
+    }
 
     return res.status(200).send(cached.buffer);
   }
@@ -100,12 +104,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(200).send(buffer);
       }
 
-      // Create token for safe HTTPS download (valid for 3 minutes)
+      // Create token for safe HTTPS download (valid for 5 minutes)
       const token = randomUUID();
       pdfCache.set(token, {
         buffer,
         filename,
-        expires: Date.now() + 3 * 60 * 1000,
+        expires: Date.now() + 5 * 60 * 1000,
       });
 
       const downloadUrl = `/api/download-pdf?token=${token}`;
@@ -121,6 +125,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  res.setHeader('Allow', ['GET', 'POST']);
+  res.setHeader('Allow', ['GET', 'HEAD', 'POST']);
   return res.status(405).end(`Metode ${req.method} tidak didukung`);
 }

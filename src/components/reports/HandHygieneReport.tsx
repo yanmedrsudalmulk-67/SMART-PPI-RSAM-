@@ -960,7 +960,10 @@ export default function HandHygieneReport({
               @media print {
                 @page {
                   size: 330mm 215mm;
-                  margin: 6mm;
+                  margin: 2.5cm !important;
+                }
+                body {
+                  background-color: #ffffff !important;
                 }
                 body * {
                   visibility: hidden !important;
@@ -969,12 +972,13 @@ export default function HandHygieneReport({
                   visibility: visible !important;
                 }
                 #hand-hygiene-official-report {
-                  position: absolute !important;
-                  left: 0 !important;
-                  top: 0 !important;
+                  position: relative !important;
+                  left: auto !important;
+                  top: auto !important;
                   width: 100% !important;
-                  margin: 0 !important;
-                  padding: 6mm !important;
+                  max-width: 100% !important;
+                  margin: 0 auto !important;
+                  padding: 0 !important;
                   border: none !important;
                   box-shadow: none !important;
                   background: white !important;

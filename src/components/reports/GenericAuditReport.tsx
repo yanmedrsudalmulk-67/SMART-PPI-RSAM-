@@ -1561,6 +1561,13 @@ export default function GenericAuditReport({
 
       <style jsx global>{`
         @media print {
+          @page {
+            size: 215mm 330mm;
+            margin: 2.5cm !important;
+          }
+          body {
+            background-color: #ffffff !important;
+          }
           body * {
             visibility: hidden;
           }
@@ -1569,10 +1576,15 @@ export default function GenericAuditReport({
             visibility: visible;
           }
           .print\\:m-0 {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
+            position: relative !important;
+            left: auto !important;
+            top: auto !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
           }
           .print\\:hidden {
             display: none !important;

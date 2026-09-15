@@ -14,7 +14,7 @@ import { ensureBlackSignature } from '@/utils/signatureUtils';
 
 export interface ExportPdfOptions {
   filename?: string;
-  margin?: number; // margin in mm, default: 5
+  margin?: number; // margin in mm, default: 25 (2.5 cm standard official margin)
   scale?: number; // canvas scale, default: 2 (crisp retina)
   title?: string;
   orientation?: 'portrait' | 'landscape';
@@ -46,16 +46,15 @@ export async function deliverPdf(
   const isMobile =
     typeof navigator !== 'undefined' &&
     /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
 
   // If explicit action is preview, do not trigger external download
   if (action === 'preview') {
     return;
   }
 
-  // 1. If action is 'open' or on Android/mobile when user wants to open/share:
+  // 1. Explicit 'open' / Share action (when user specifically requested sharing/viewing)
   if (
-    (action === 'open' || (isMobile && action === 'auto')) &&
+    action === 'open' &&
     typeof navigator !== 'undefined' &&
     navigator.canShare &&
     navigator.canShare({ files: [file] })
@@ -69,69 +68,224 @@ export async function deliverPdf(
       return;
     } catch (err: any) {
       if (err.name === 'AbortError') {
-        // User dismissed share sheet, do not crash or force duplicate download
+        // User dismissed share sheet, do not force duplicate download
         return;
       }
-      console.warn('Navigator share error, falling back to download:', err);
+      console.warn('Navigator share error, falling back to direct download:', err);
     }
   }
 
-  // 2. Safe Download via HTTPS API route (/api/download-pdf):
-  // Android's DownloadManager natively downloads HTTPS URLs with zero blob URI issues!
-  try {
-    const res = await fetch('/api/download-pdf', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        pdfBase64: base64,
-        filename,
-      }),
-    });
+  // 2. Direct client-side download via jsPDF built-in save (cross-browser standard):
+  if (result.pdf && typeof result.pdf.save === 'function') {
+    try {
+      result.pdf.save(filename);
+      return;
+    } catch (saveErr) {
+      console.warn('pdf.save error, trying blob url fallback:', saveErr);
+    }
+  }
 
-    if (res.ok) {
-      const data = await res.json();
-      if (data?.downloadUrl) {
-        result.downloadUrl = data.downloadUrl;
-        const link = document.createElement('a');
-        link.href = data.downloadUrl;
-        link.download = filename;
-        link.target = '_self';
-        document.body.appendChild(link);
-        link.click();
-        setTimeout(() => {
+  // 3. Direct client-side Blob URL download
+  if (blob && typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
+    try {
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      link.rel = 'noopener noreferrer';
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        try {
           if (link.parentNode) link.parentNode.removeChild(link);
-        }, 500);
-        return;
-      }
+          URL.revokeObjectURL(blobUrl);
+        } catch {}
+      }, 60000); // 60s keeps it active so the browser completes the download stream safely
+      return;
+    } catch (blobErr) {
+      console.warn('Blob URL download error, trying API fallback:', blobErr);
     }
-  } catch (apiErr) {
-    console.warn('API download route failed, using client fallback:', apiErr);
   }
 
-  // 3. Fallback: Client-side Download
-  if (isAndroid || isMobile) {
-    // Mobile fallback: use Data URI which avoids blob: protocol errors on many mobile webviews
-    const link = document.createElement('a');
-    link.href = base64.startsWith('data:') ? base64 : `data:application/pdf;base64,${base64}`;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    setTimeout(() => {
-      if (link.parentNode) link.parentNode.removeChild(link);
-    }, 1000);
-  } else {
-    // Desktop: safe blob URL with immediate revoke
-    const blobUrl = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = blobUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    setTimeout(() => {
-      if (link.parentNode) link.parentNode.removeChild(link);
-      URL.revokeObjectURL(blobUrl);
-    }, 2000);
+  // 4. API fallback via /api/download-pdf (for environments blocking blob: downloads)
+  if (base64) {
+    try {
+      const res = await fetch('/api/download-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pdfBase64: base64,
+          filename,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.downloadUrl) {
+          result.downloadUrl = data.downloadUrl;
+          const link = document.createElement('a');
+          link.href = data.downloadUrl;
+          link.download = filename;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.style.display = 'none';
+          document.body.appendChild(link);
+          link.click();
+          setTimeout(() => {
+            if (link.parentNode) link.parentNode.removeChild(link);
+          }, 3000);
+          return;
+        }
+      }
+    } catch (apiErr) {
+      console.warn('API download route failed:', apiErr);
+    }
   }
+
+  // 5. Final fallback: Data URI
+  if (base64) {
+    try {
+      const link = document.createElement('a');
+      link.href = base64.startsWith('data:') ? base64 : `data:application/pdf;base64,${base64}`;
+      link.download = filename;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        if (link.parentNode) link.parentNode.removeChild(link);
+      }, 3000);
+    } catch (dataUriErr) {
+      console.error('Data URI download failed:', dataUriErr);
+    }
+  }
+}
+
+/**
+ * Renders the official running header (Kop Surat Lanjutan PPI RSUD AL-MULK) on page 2 and subsequent pages.
+ * Strictly adheres to 2.5 cm (25 mm) top margin while giving official hospital identity and
+ * ample visual breathing room so content is never "mepet ke atas".
+ */
+export function drawHospitalRunningHeader(
+  pdf: any,
+  pageNumber: number,
+  pageWidthMm: number,
+  marginLeftMm: number,
+  marginRightMm: number,
+  marginTopMm: number,
+  isLandscape: boolean = false
+): number {
+  // Official Kop Surat Lanjutan PPI RSUD AL-MULK
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(isLandscape ? 9 : 8.5);
+  pdf.setTextColor(15, 23, 42); // slate-900
+  pdf.text('TIM PENCEGAHAN DAN PENGENDALIAN INFEKSI (PPI)', marginLeftMm, marginTopMm + 3.5);
+
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(isLandscape ? 8 : 7.5);
+  pdf.setTextColor(51, 65, 85); // slate-700
+  pdf.text('UOBK RSUD AL-MULK KOTA SUKABUMI', marginLeftMm, marginTopMm + 7.2);
+
+  pdf.setFont('helvetica', 'italic');
+  pdf.setFontSize(isLandscape ? 7.5 : 7);
+  pdf.setTextColor(100, 116, 139); // slate-500
+  pdf.text('Lembar Laporan Audit Resmi (Lanjutan)', marginLeftMm, marginTopMm + 10.8);
+
+  // Right-aligned page indicator
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(isLandscape ? 8 : 7.5);
+  pdf.setTextColor(15, 23, 42);
+  pdf.text(`Halaman ${pageNumber}`, pageWidthMm - marginRightMm, marginTopMm + 7.2, { align: 'right' });
+
+  // Official Double rule divider (garis ganda kop surat resmi)
+  const dividerY = marginTopMm + 13;
+  pdf.setDrawColor(15, 23, 42);
+  pdf.setLineWidth(0.4);
+  pdf.line(marginLeftMm, dividerY, pageWidthMm - marginRightMm, dividerY);
+  pdf.setLineWidth(0.15);
+  pdf.line(marginLeftMm, dividerY + 0.6, pageWidthMm - marginRightMm, dividerY + 0.6);
+
+  // Total running header clearance: 13.6mm divider + 4.4mm breathing room = 18mm
+  return 18;
+}
+
+/**
+ * Creates an exact high-res preview canvas representing the full physical sheet with 2.5 cm margins
+ * on all 4 sides and the official running header on subsequent pages for the in-app viewer modal.
+ */
+export function createFullPagePreviewCanvas(
+  chunkCanvas: HTMLCanvasElement,
+  pageIndex: number,
+  pageWidthMm: number,
+  pageHeightMm: number,
+  marginLeftMm: number,
+  marginRightMm: number,
+  marginTopMm: number,
+  runningHeaderHeightMm: number
+): string {
+  const printableWidthMm = pageWidthMm - marginLeftMm - marginRightMm;
+  const pxPerMm = chunkCanvas.width / printableWidthMm;
+  const fullWidthPx = Math.round(pageWidthMm * pxPerMm);
+  const fullHeightPx = Math.round(pageHeightMm * pxPerMm);
+  const marginLeftPx = Math.round(marginLeftMm * pxPerMm);
+  const marginRightPx = Math.round(marginRightMm * pxPerMm);
+  const marginTopPx = Math.round(marginTopMm * pxPerMm);
+
+  const previewCanvas = document.createElement('canvas');
+  previewCanvas.width = fullWidthPx;
+  previewCanvas.height = fullHeightPx;
+  const ctx = previewCanvas.getContext('2d');
+  if (!ctx) return chunkCanvas.toDataURL('image/png');
+
+  // Background: pure white paper sheet
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, fullWidthPx, fullHeightPx);
+
+  if (pageIndex > 0 && runningHeaderHeightMm > 0) {
+    // Draw Running Header text in canvas for preview
+    ctx.fillStyle = '#0f172a';
+    ctx.font = `bold ${Math.round(8.5 * pxPerMm * 0.35)}px Calibri, Carlito, Arial, sans-serif`;
+    ctx.fillText('TIM PENCEGAHAN DAN PENGENDALIAN INFEKSI (PPI)', marginLeftPx, marginTopPx + Math.round(3.5 * pxPerMm));
+
+    ctx.fillStyle = '#334155';
+    ctx.font = `bold ${Math.round(7.5 * pxPerMm * 0.35)}px Calibri, Carlito, Arial, sans-serif`;
+    ctx.fillText('UOBK RSUD AL-MULK KOTA SUKABUMI', marginLeftPx, marginTopPx + Math.round(7.2 * pxPerMm));
+
+    ctx.fillStyle = '#64748b';
+    ctx.font = `italic ${Math.round(7 * pxPerMm * 0.35)}px Calibri, Carlito, Arial, sans-serif`;
+    ctx.fillText('Lembar Laporan Audit Resmi (Lanjutan)', marginLeftPx, marginTopPx + Math.round(10.8 * pxPerMm));
+
+    // Page indicator
+    ctx.fillStyle = '#0f172a';
+    ctx.font = `bold ${Math.round(7.5 * pxPerMm * 0.35)}px Calibri, Carlito, Arial, sans-serif`;
+    ctx.textAlign = 'right';
+    ctx.fillText(`Halaman ${pageIndex + 1}`, fullWidthPx - marginRightPx, marginTopPx + Math.round(7.2 * pxPerMm));
+    ctx.textAlign = 'left';
+
+    // Double rule
+    const divY = marginTopPx + Math.round(13 * pxPerMm);
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = Math.max(1, Math.round(0.4 * pxPerMm));
+    ctx.beginPath();
+    ctx.moveTo(marginLeftPx, divY);
+    ctx.lineTo(fullWidthPx - marginRightPx, divY);
+    ctx.stroke();
+
+    ctx.lineWidth = Math.max(1, Math.round(0.15 * pxPerMm));
+    ctx.beginPath();
+    ctx.moveTo(marginLeftPx, divY + Math.round(0.6 * pxPerMm));
+    ctx.lineTo(fullWidthPx - marginRightPx, divY + Math.round(0.6 * pxPerMm));
+    ctx.stroke();
+
+    // Draw content chunk below running header
+    const contentPosYPx = marginTopPx + Math.round(runningHeaderHeightMm * pxPerMm);
+    ctx.drawImage(chunkCanvas, marginLeftPx, contentPosYPx);
+  } else {
+    // Page 1: draw chunkCanvas at (marginLeftPx, marginTopPx)
+    ctx.drawImage(chunkCanvas, marginLeftPx, marginTopPx);
+  }
+
+  return previewCanvas.toDataURL('image/png');
 }
 
 /**
@@ -170,7 +324,7 @@ export function injectPrintStyles(clonedDoc: Document, isLandscape: boolean = fa
 
     @page {
       size: ${pageSizeRule};
-      margin: 5mm;
+      margin: 2.5cm !important;
     }
 
     /* Enforce high-fidelity layout for PDF generation */
@@ -200,6 +354,7 @@ export function injectPrintStyles(clonedDoc: Document, isLandscape: boolean = fa
       max-width: ${targetWidth} !important;
       box-sizing: border-box !important;
       margin: 0 !important;
+      padding: 0 !important;
       background-color: #ffffff !important;
       color: #000000 !important;
       box-shadow: none !important;
@@ -294,9 +449,14 @@ export async function exportElementToA4Pdf(
 
   const {
     filename = `Laporan_Resmi_PPI_${new Date().toISOString().slice(0, 10)}.pdf`,
-    margin = 5, // 5mm balanced clean margin
-    scale = 2.5, // 2.5 for razor-sharp typography matching screen
+    margin = 25, // 25mm = 2.5cm standard official margin (atas, bawah, kiri, kanan)
+    scale = 2.0, // 2.0 for razor-sharp typography matching screen without memory issues
   } = options;
+
+  const isMobileDevice =
+    typeof navigator !== 'undefined' &&
+    /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const safeScale = isMobileDevice ? 1.5 : Math.min(scale || 2.0, 2.0);
 
   const pageImages: string[] = [];
 
@@ -309,21 +469,25 @@ export async function exportElementToA4Pdf(
   // Pre-load and guarantee Carlito / Calibri fonts are ready in the browser
   if (typeof document !== 'undefined' && 'fonts' in document) {
     try {
-      await Promise.all([
-        document.fonts.load('400 11pt Carlito'),
-        document.fonts.load('700 11pt Carlito'),
-        document.fonts.load('bold 11pt Carlito'),
-        document.fonts.load('italic 10.5pt Carlito'),
-        document.fonts.load('400 12pt Carlito'),
-        document.fonts.load('700 12pt Carlito'),
-        document.fonts.load('400 10pt Carlito'),
-        document.fonts.load('700 10pt Carlito'),
-        document.fonts.load('400 9pt Carlito'),
-        document.fonts.load('700 9pt Carlito'),
-        document.fonts.ready,
+      const fontTimeout = new Promise((resolve) => setTimeout(resolve, 1200));
+      await Promise.race([
+        Promise.all([
+          document.fonts.load('400 11pt Carlito'),
+          document.fonts.load('700 11pt Carlito'),
+          document.fonts.load('bold 11pt Carlito'),
+          document.fonts.load('italic 10.5pt Carlito'),
+          document.fonts.load('400 12pt Carlito'),
+          document.fonts.load('700 12pt Carlito'),
+          document.fonts.load('400 10pt Carlito'),
+          document.fonts.load('700 10pt Carlito'),
+          document.fonts.load('400 9pt Carlito'),
+          document.fonts.load('700 9pt Carlito'),
+          document.fonts.ready,
+        ]),
+        fontTimeout,
       ]);
     } catch {
-      await document.fonts.ready;
+      // safe fallback
     }
   }
 
@@ -416,40 +580,47 @@ export async function exportElementToA4Pdf(
 
       const pageWidthMm = pdf.internal.pageSize.getWidth();
       const pageHeightMm = pdf.internal.pageSize.getHeight();
-      const printableWidthMm = pageWidthMm - margin * 2;
-      const printableHeightMm = pageHeightMm - margin * 2;
+
+      // Strict 2.5 cm (25 mm) margins on all 4 sides (atas, bawah, kiri, kanan)
+      const marginTopMm = margin ?? 25;
+      const marginBottomMm = margin ?? 25;
+      const marginLeftMm = margin ?? 25;
+      const marginRightMm = margin ?? 25;
+
+      const printableWidthMm = pageWidthMm - marginLeftMm - marginRightMm;
+      const runningHeaderHeightMm = 18;
 
       for (let i = 0; i < pageElements.length; i++) {
         const pageEl = pageElements[i];
 
-        // Ensure all images in this page are fully loaded
+        // Ensure all images in this page are loaded (with safety timeout so PDF never hangs)
         const pageImagesInElement = Array.from(pageEl.querySelectorAll('img'));
-        await Promise.all(
-          pageImagesInElement.map(
-            (img) =>
-              new Promise<void>((resolve) => {
-                if (img.complete) {
-                  resolve();
-                } else {
-                  img.onload = () => resolve();
-                  img.onerror = () => resolve();
-                }
-              })
-          )
-        );
+        await Promise.race([
+          Promise.all(
+            pageImagesInElement.map(
+              (img) =>
+                new Promise<void>((resolve) => {
+                  if (img.complete) {
+                    resolve();
+                  } else {
+                    img.onload = () => resolve();
+                    img.onerror = () => resolve();
+                  }
+                })
+            )
+          ),
+          new Promise((resolve) => setTimeout(resolve, 1500)),
+        ]);
 
         // Render page with exact coordinates
         const canvas = await html2canvas(pageEl, {
-          scale,
+          scale: safeScale,
           useCORS: true,
           allowTaint: true,
           logging: false,
           backgroundColor: '#ffffff',
           scrollX: 0,
           scrollY: 0,
-          x: 0,
-          y: 0,
-          width: targetWidthPx,
           windowWidth: targetWidthPx,
           onclone: async (clonedDoc) => {
             injectPrintStyles(clonedDoc, isLandscape, isF4 ? 'f4' : 'a4');
@@ -462,26 +633,18 @@ export async function exportElementToA4Pdf(
             }
 
             if (targetClonedPage) {
-              clonedDoc.documentElement.style.width = `${targetWidthPx}px`;
-              clonedDoc.documentElement.style.margin = '0';
-              clonedDoc.documentElement.style.padding = '0';
-              clonedDoc.body.innerHTML = '';
-              clonedDoc.body.style.width = `${targetWidthPx}px`;
-              clonedDoc.body.style.margin = '0';
-              clonedDoc.body.style.padding = '0';
-              clonedDoc.body.style.backgroundColor = '#ffffff';
-              clonedDoc.body.style.fontFamily = "'Calibri', 'Carlito', 'Candara', 'Segoe UI', Arial, sans-serif";
-              clonedDoc.body.appendChild(targetClonedPage);
-
               targetClonedPage.style.width = `${targetWidthPx}px`;
               targetClonedPage.style.minWidth = `${targetWidthPx}px`;
               targetClonedPage.style.maxWidth = `${targetWidthPx}px`;
-              targetClonedPage.style.margin = '0';
+              targetClonedPage.style.margin = '0 auto';
               targetClonedPage.style.position = 'relative';
-              targetClonedPage.style.top = '0';
-              targetClonedPage.style.left = '0';
-              targetClonedPage.style.marginTop = '0';
               targetClonedPage.style.transform = 'none';
+              targetClonedPage.style.boxShadow = 'none';
+              targetClonedPage.style.borderRadius = '0';
+              targetClonedPage.style.border = 'none';
+              targetClonedPage.style.backgroundColor = '#ffffff';
+              targetClonedPage.style.color = '#000000';
+              targetClonedPage.style.overflow = 'visible';
 
               // Ensure cells vertical-alignment in table
               const allCells = targetClonedPage.querySelectorAll('th, td');
@@ -538,15 +701,41 @@ export async function exportElementToA4Pdf(
           },
         });
 
+        const hasKopSurat = i === 0 || pageEl.querySelector('#kop-surat, .kop-surat, [data-kop-surat]') !== null;
         if (i > 0) {
           pdf.addPage();
+          if (!hasKopSurat) {
+            drawHospitalRunningHeader(
+              pdf,
+              i + 1,
+              pageWidthMm,
+              marginLeftMm,
+              marginRightMm,
+              marginTopMm,
+              isLandscape
+            );
+          }
         }
 
         const imgData = canvas.toDataURL('image/png');
-        pageImages.push(imgData);
+        const runningHeaderOffsetMm = hasKopSurat ? 0 : runningHeaderHeightMm;
+        const posY = marginTopMm + runningHeaderOffsetMm;
+        const availableHeightMm = pageHeightMm - marginBottomMm - posY;
         const naturalHeightMm = (canvas.height / canvas.width) * printableWidthMm;
-        const renderHeightMm = Math.min(naturalHeightMm, printableHeightMm);
-        pdf.addImage(imgData, 'PNG', margin, margin, printableWidthMm, renderHeightMm, undefined, 'FAST');
+        const renderHeightMm = Math.min(naturalHeightMm, availableHeightMm);
+        pdf.addImage(imgData, 'PNG', marginLeftMm, posY, printableWidthMm, renderHeightMm, undefined, 'FAST');
+
+        const previewImg = createFullPagePreviewCanvas(
+          canvas,
+          hasKopSurat ? 0 : i,
+          pageWidthMm,
+          pageHeightMm,
+          marginLeftMm,
+          marginRightMm,
+          marginTopMm,
+          runningHeaderOffsetMm
+        );
+        pageImages.push(previewImg);
       }
 
       const blob = pdf.output('blob');
@@ -576,37 +765,40 @@ export async function exportElementToA4Pdf(
     // =========================================================================
     const targetElement = pageElements.length === 1 ? pageElements[0] : element;
 
-    // Find all images to ensure loaded, and pre-process signatures to pure black ink
+    // Find all images to ensure loaded, and pre-process signatures to pure black ink (with timeout protection)
     const images = Array.from(targetElement.querySelectorAll('img'));
-    await Promise.all(
-      images.map(
-        async (img) => {
-          const isSignature =
-            img.closest('.signature-block, [data-pdf-signature], [data-pdf-block="signature"]') !== null ||
-            img.hasAttribute('data-pdf-signature-img') ||
-            (img.alt && (img.alt.includes('TTD') || img.alt.includes('Tanda Tangan'))) ||
-            img.className.includes('brightness-0');
+    await Promise.race([
+      Promise.all(
+        images.map(
+          async (img) => {
+            const isSignature =
+              img.closest('.signature-block, [data-pdf-signature], [data-pdf-block="signature"]') !== null ||
+              img.hasAttribute('data-pdf-signature-img') ||
+              (img.alt && (img.alt.includes('TTD') || img.alt.includes('Tanda Tangan'))) ||
+              img.className.includes('brightness-0');
 
-          if (isSignature && img.src) {
-            try {
-              const blackUrl = await ensureBlackSignature(img.src);
-              if (blackUrl && blackUrl !== img.src) {
-                img.src = blackUrl;
-              }
-            } catch {}
-          }
-
-          return new Promise<void>((resolve) => {
-            if (img.complete) {
-              resolve();
-            } else {
-              img.onload = () => resolve();
-              img.onerror = () => resolve();
+            if (isSignature && img.src) {
+              try {
+                const blackUrl = await ensureBlackSignature(img.src);
+                if (blackUrl && blackUrl !== img.src) {
+                  img.src = blackUrl;
+                }
+              } catch {}
             }
-          });
-        }
-      )
-    );
+
+            return new Promise<void>((resolve) => {
+              if (img.complete) {
+                resolve();
+              } else {
+                img.onload = () => resolve();
+                img.onerror = () => resolve();
+              }
+            });
+          }
+        )
+      ),
+      new Promise((resolve) => setTimeout(resolve, 1500)),
+    ]);
 
     // Bounds of atomic elements (e.g. table rows, paragraphs, headings, list items, signature blocks)
     interface AtomicElementBounds {
@@ -620,52 +812,33 @@ export async function exportElementToA4Pdf(
 
     // Capture element to canvas at crisp resolution with guaranteed A4 layout
     const canvas = await html2canvas(targetElement, {
-      scale,
+      scale: safeScale,
       useCORS: true,
       allowTaint: true,
       logging: false,
       backgroundColor: '#ffffff',
       scrollX: 0,
       scrollY: 0,
-      x: 0,
-      y: 0,
-      width: targetWidthPx,
       windowWidth: targetWidthPx,
       onclone: async (clonedDoc, clonedEl) => {
-        // Isolate clonedEl as the top-level element in clonedDoc.body to guarantee y=0 alignment
-        clonedDoc.documentElement.style.width = `${targetWidthPx}px`;
-        clonedDoc.documentElement.style.margin = '0';
-        clonedDoc.documentElement.style.padding = '0';
-        clonedDoc.body.innerHTML = '';
-        clonedDoc.body.style.width = `${targetWidthPx}px`;
-        clonedDoc.body.style.margin = '0';
-        clonedDoc.body.style.padding = '0';
-        clonedDoc.body.style.backgroundColor = '#ffffff';
-        clonedDoc.body.style.fontFamily = "'Calibri', 'Carlito', 'Candara', 'Segoe UI', Arial, sans-serif";
-        clonedDoc.body.style.overflow = 'visible';
-        clonedDoc.body.appendChild(clonedEl);
-
-        // Enforce exact desktop A4 container dimensions on target
-        clonedEl.style.width = `${targetWidthPx}px`;
-        clonedEl.style.minWidth = `${targetWidthPx}px`;
-        clonedEl.style.maxWidth = `${targetWidthPx}px`;
-        clonedEl.style.boxSizing = 'border-box';
-        clonedEl.style.margin = '0';
-        clonedEl.style.marginTop = '0';
-        clonedEl.style.marginBottom = '0';
-        clonedEl.style.position = 'relative';
-        clonedEl.style.top = '0';
-        clonedEl.style.left = '0';
-        clonedEl.style.transform = 'none';
-        clonedEl.style.boxShadow = 'none';
-        clonedEl.style.borderRadius = '0';
-        clonedEl.style.border = 'none';
-        clonedEl.style.backgroundColor = '#ffffff';
-        clonedEl.style.color = '#000000';
-        clonedEl.style.overflow = 'visible';
-
         // Inject high-fidelity F4/A4 global stylesheet overrides to the cloned document
         injectPrintStyles(clonedDoc, isLandscape, isF4 ? 'f4' : 'a4');
+
+        if (clonedEl) {
+          clonedEl.style.width = `${targetWidthPx}px`;
+          clonedEl.style.minWidth = `${targetWidthPx}px`;
+          clonedEl.style.maxWidth = `${targetWidthPx}px`;
+          clonedEl.style.boxSizing = 'border-box';
+          clonedEl.style.margin = '0 auto';
+          clonedEl.style.position = 'relative';
+          clonedEl.style.transform = 'none';
+          clonedEl.style.boxShadow = 'none';
+          clonedEl.style.borderRadius = '0';
+          clonedEl.style.border = 'none';
+          clonedEl.style.backgroundColor = '#ffffff';
+          clonedEl.style.color = '#000000';
+          clonedEl.style.overflow = 'visible';
+        }
 
         // Ensure all tables inside the cloned document maintain crisp borders and alignments
         const tables = clonedEl.querySelectorAll('table');
@@ -724,7 +897,7 @@ export async function exportElementToA4Pdf(
           }
         }
 
-        const targetRect = clonedEl.getBoundingClientRect();
+        const targetRect = clonedEl ? clonedEl.getBoundingClientRect() : clonedDoc.body.getBoundingClientRect();
 
         // Collect explicit breaks (.break-before-page)
         const explicitBreakEls = Array.from(
@@ -732,7 +905,7 @@ export async function exportElementToA4Pdf(
         );
         explicitBreakEls.forEach((el) => {
           const rect = el.getBoundingClientRect();
-          const topCanvasPx = Math.round((rect.top - targetRect.top) * scale);
+          const topCanvasPx = Math.round((rect.top - targetRect.top) * safeScale);
           if (topCanvasPx > 0) {
             explicitBreaksPx.push(topCanvasPx);
           }
@@ -744,8 +917,8 @@ export async function exportElementToA4Pdf(
         
         atomicEls.forEach((el) => {
           const rect = el.getBoundingClientRect();
-          const top = Math.round((rect.top - targetRect.top) * scale);
-          const bottom = Math.round((rect.bottom - targetRect.top) * scale);
+          const top = Math.round((rect.top - targetRect.top) * safeScale);
+          const bottom = Math.round((rect.bottom - targetRect.top) * safeScale);
           
           if (bottom > top) {
             const tagName = el.tagName.toLowerCase();
@@ -795,22 +968,32 @@ export async function exportElementToA4Pdf(
 
     const pageWidthMm = pdf.internal.pageSize.getWidth();
     const pageHeightMm = pdf.internal.pageSize.getHeight();
-    const printableWidthMm = pageWidthMm - margin * 2;
-    const printableHeightMm = pageHeightMm - margin * 2;
+
+    // Strict 2.5 cm (25 mm) margins on all 4 sides as explicitly required
+    const marginTopMm = margin ?? 25;
+    const marginBottomMm = margin ?? 25;
+    const marginLeftMm = margin ?? 25;
+    const marginRightMm = margin ?? 25;
+
+    const printableWidthMm = pageWidthMm - marginLeftMm - marginRightMm;
+    const page1PrintableHeightMm = pageHeightMm - marginTopMm - marginBottomMm;
+
+    // Running header height + clean breathing room on page 2 and subsequent pages
+    const runningHeaderHeightMm = 18;
+    const nextPagesPrintableHeightMm = pageHeightMm - marginTopMm - marginBottomMm - runningHeaderHeightMm;
 
     const mmPerPx = printableWidthMm / canvasWidth;
-    const pageHeightInCanvasPx = Math.floor(printableHeightMm / mmPerPx);
+    const page1HeightInCanvasPx = Math.floor(page1PrintableHeightMm / mmPerPx);
+    const nextPagesHeightInCanvasPx = Math.floor(nextPagesPrintableHeightMm / mmPerPx);
 
     // If content fits comfortably on a single page naturally
-    if (canvasHeight <= pageHeightInCanvasPx * 1.02) {
-      const imgData = canvas.toDataURL('image/png');
-      pageImages.push(imgData);
+    if (canvasHeight <= page1HeightInCanvasPx * 1.02) {
       const renderWidthMm = printableWidthMm;
       const renderHeightMm = canvasHeight * mmPerPx;
-      const posX = margin;
-      const posY = margin;
+      const posX = marginLeftMm;
+      const posY = marginTopMm;
       pdf.addImage(
-        imgData,
+        canvas.toDataURL('image/png'),
         'PNG',
         posX,
         posY,
@@ -819,6 +1002,18 @@ export async function exportElementToA4Pdf(
         undefined,
         'FAST'
       );
+
+      const previewImg = createFullPagePreviewCanvas(
+        canvas,
+        0,
+        pageWidthMm,
+        pageHeightMm,
+        marginLeftMm,
+        marginRightMm,
+        marginTopMm,
+        0
+      );
+      pageImages.push(previewImg);
 
       const blob = pdf.output('blob');
       const base64 = pdf.output('datauristring');
@@ -875,14 +1070,17 @@ export async function exportElementToA4Pdf(
     let pageIndex = 0;
 
     // Minimum content before we allow breaking (at least 20% of page height)
-    const minPageContentPx = Math.floor(pageHeightInCanvasPx * 0.20);
+    const minPageContentPx = Math.floor(page1HeightInCanvasPx * 0.20);
     // Bottom safety buffer: any element starting within 18mm of the bottom line is "mepet/nanggung"
     const bottomSafetyBufferPx = Math.round(18 / mmPerPx);
 
     while (currentY < canvasHeight) {
+      const isFirstPage = pageIndex === 0;
+      const availablePageHeightMm = isFirstPage ? page1PrintableHeightMm : nextPagesPrintableHeightMm;
+      const availablePageHeightPx = Math.floor(availablePageHeightMm / mmPerPx);
       const remainingHeight = canvasHeight - currentY;
 
-      if (remainingHeight <= pageHeightInCanvasPx * 1.02) {
+      if (remainingHeight <= availablePageHeightPx * 1.02) {
         // Last chunk fits naturally on this page without cutting
         const chunkCanvas = document.createElement('canvas');
         chunkCanvas.width = canvasWidth;
@@ -900,25 +1098,46 @@ export async function exportElementToA4Pdf(
 
         if (pageIndex > 0) {
           pdf.addPage();
+          drawHospitalRunningHeader(
+            pdf,
+            pageIndex + 1,
+            pageWidthMm,
+            marginLeftMm,
+            marginRightMm,
+            marginTopMm,
+            isLandscape
+          );
         }
 
         const chunkImg = chunkCanvas.toDataURL('image/png');
-        pageImages.push(chunkImg);
+        const contentPosY = isFirstPage ? marginTopMm : marginTopMm + runningHeaderHeightMm;
         pdf.addImage(
           chunkImg,
           'PNG',
-          margin,
-          margin,
+          marginLeftMm,
+          contentPosY,
           printableWidthMm,
           remainingHeight * mmPerPx,
           undefined,
           'FAST'
         );
+
+        const previewImg = createFullPagePreviewCanvas(
+          chunkCanvas,
+          pageIndex,
+          pageWidthMm,
+          pageHeightMm,
+          marginLeftMm,
+          marginRightMm,
+          marginTopMm,
+          runningHeaderHeightMm
+        );
+        pageImages.push(previewImg);
         break;
       }
 
       // Ideal cutoff point for standard F4 printable area
-      const idealCutY = currentY + pageHeightInCanvasPx;
+      const idealCutY = currentY + availablePageHeightPx;
       let chosenBreakY = idealCutY;
 
       // 1. Check if there is an explicit page break point in this page range
@@ -1033,20 +1252,41 @@ export async function exportElementToA4Pdf(
 
       if (pageIndex > 0) {
         pdf.addPage();
+        drawHospitalRunningHeader(
+          pdf,
+          pageIndex + 1,
+          pageWidthMm,
+          marginLeftMm,
+          marginRightMm,
+          marginTopMm,
+          isLandscape
+        );
       }
 
       const chunkImg = chunkCanvas.toDataURL('image/png');
-      pageImages.push(chunkImg);
+      const contentPosY = isFirstPage ? marginTopMm : marginTopMm + runningHeaderHeightMm;
       pdf.addImage(
         chunkImg,
         'PNG',
-        margin,
-        margin,
+        marginLeftMm,
+        contentPosY,
         printableWidthMm,
         chunkHeight * mmPerPx,
         undefined,
         'FAST'
       );
+
+      const previewImg = createFullPagePreviewCanvas(
+        chunkCanvas,
+        pageIndex,
+        pageWidthMm,
+        pageHeightMm,
+        marginLeftMm,
+        marginRightMm,
+        marginTopMm,
+        runningHeaderHeightMm
+      );
+      pageImages.push(previewImg);
 
       currentY = chosenBreakY;
       pageIndex++;

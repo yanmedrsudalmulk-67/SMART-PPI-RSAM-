@@ -459,6 +459,13 @@ export default function DiklatReport({
           {/* STYLING MEDIA PRINT INLINE */}
           <style dangerouslySetInnerHTML={{__html: `
             @media print {
+              @page {
+                size: 215mm 330mm;
+                margin: 2.5cm !important;
+              }
+              body {
+                background-color: #ffffff !important;
+              }
               body * {
                 visibility: hidden;
               }
@@ -466,14 +473,15 @@ export default function DiklatReport({
                 visibility: visible;
               }
               #diklat-official-report {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
+                position: relative !important;
+                left: auto !important;
+                top: auto !important;
+                width: 100% !important;
+                max-width: 100% !important;
                 color: #000 !important;
                 background: #fff !important;
                 padding: 0 !important;
-                margin: 0 !important;
+                margin: 0 auto !important;
               }
               .no-print {
                 display: none !important;

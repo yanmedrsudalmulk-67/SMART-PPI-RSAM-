@@ -108,6 +108,39 @@ img, svg {
 }
 
 @media print {
+  @page {
+    margin: 2.5cm !important;
+  }
+
+  body {
+    background-color: #ffffff !important;
+  }
+
+  .official-report-sheet,
+  #official-report-sheet,
+  .official-report-paper,
+  .official-pdf-page,
+  [data-pdf-page="true"] {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
   .official-report-sheet table,
   #official-report-sheet table,
   .official-report-paper table,

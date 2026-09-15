@@ -97,7 +97,7 @@ export default function OfficialReportSheet({
         <div 
           id="official-report-sheet" 
           data-pdf-page="true"
-          className="official-report-paper official-pdf-page relative w-[813px] min-w-[813px] max-w-[813px] bg-white text-black border border-slate-300 print:border-none p-6 sm:p-10 rounded-xl shadow-xl mx-auto"
+          className="official-report-paper official-pdf-page relative w-[813px] min-w-[813px] max-w-[813px] bg-white text-black border border-slate-300 print:border-none print:p-0 print:m-0 p-6 sm:p-10 rounded-xl shadow-xl mx-auto"
           style={{
             backgroundColor: "#ffffff",
             color: "#000000",
@@ -105,6 +105,14 @@ export default function OfficialReportSheet({
             fontSize: "11pt",
           }}
         >
+          <style dangerouslySetInnerHTML={{__html: `
+            @media print {
+              @page {
+                size: 215mm 330mm;
+                margin: 2.5cm !important;
+              }
+            }
+          `}} />
       {/* PDF Download Button - Hidden when printing / exporting */}
       <div className="absolute top-6 right-6 z-20 no-print" data-html2canvas-ignore="true">
         <PdfDownloadButton
