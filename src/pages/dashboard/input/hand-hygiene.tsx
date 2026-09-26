@@ -24,7 +24,6 @@ import { supabase, broadcastChannelMessage } from "@/lib/supabase";
 import DashboardLayout from "@/components/DashboardLayout";
 import { LiveStatisticsCard } from "@/components/LiveStatisticsCard";
 
-import { UpayaPerbaikanSection } from "@/components/UpayaPerbaikanSection";
 import { DocImage } from "@/components/DocumentationUploader";
 
 type Observer = { id: string; nama: string };
@@ -714,17 +713,6 @@ export default function HandHygieneAuditPage() {
             persentase={stats.persentase}
             statusText={stats.statusText}
           />
-
-          {isEditMode && (
-            <UpayaPerbaikanSection
-              upayaPerbaikan={upayaPerbaikan}
-              setUpayaPerbaikan={setUpayaPerbaikan}
-              perbaikanImages={perbaikanImages}
-              setPerbaikanImages={setPerbaikanImages}
-              waktuPerbaikan={waktuPerbaikan}
-              setWaktuPerbaikan={setWaktuPerbaikan}
-            />
-          )}
 
           <button
             onClick={handleSubmit}

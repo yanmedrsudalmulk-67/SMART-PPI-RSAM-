@@ -28,10 +28,17 @@ export async function broadcastChannelMessage(
   try {
     const ch: any = supabase.channel(channelName);
     if (typeof ch.httpSend === 'function') {
-      await ch.httpSend(event, payload);
+      try {
+        await ch.httpSend(event, payload);
+      } finally {
+        supabase.removeChannel(ch);
+      }
     } else {
       await new Promise<void>((resolve) => {
-        const timer = setTimeout(() => resolve(), 3000);
+        const timer = setTimeout(() => {
+          supabase.removeChannel(ch);
+          resolve();
+        }, 3000);
         ch.subscribe((status: string) => {
           if (status === 'SUBSCRIBED') {
             ch.send({
@@ -45,12 +52,13 @@ export async function broadcastChannelMessage(
             });
           } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
             clearTimeout(timer);
+            supabase.removeChannel(ch);
             resolve();
           }
         });
       });
     }
   } catch (err) {
-    console.warn('broadcastChannelMessage notice:', err);
+    // silently catch broadcast notices
   }
 }

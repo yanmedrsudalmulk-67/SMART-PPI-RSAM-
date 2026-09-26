@@ -21,10 +21,9 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useAppContext } from "@/components/Providers";
-import { supabase } from "@/lib/supabase";
+import { supabase, broadcastChannelMessage } from "@/lib/supabase";
 import DashboardLayout from "@/components/DashboardLayout";
 import { LiveStatisticsCard } from "@/components/LiveStatisticsCard";
-import { UpayaPerbaikanSection } from "@/components/UpayaPerbaikanSection";
 import { DocImage } from "@/components/DocumentationUploader";
 
 type Observer = { id: string; nama: string };
@@ -158,60 +157,98 @@ export default function InputApdPage() {
         setIsEditMode(true);
         setEditId(id);
         const loadEditData = async () => {
-          let { data: ed } = await supabase
+          // 1. Ambil data sesi audit
+          const { data: sessionData } = await supabase
             .from("audit_sessions")
             .select("*")
             .eq("id", id)
             .maybeSingle();
 
-          if (!ed) {
-            const { data: nativeEd } = await supabase
-              .from("audit_apd")
+          // 2. Ambil data spesifik audit_apd jika ada
+          const { data: apdDataRes } = await supabase
+            .from("audit_apd")
+            .select("*")
+            .eq("id", id)
+            .maybeSingle();
+
+          // 3. Ambil data audit_hand_hygiene jika sesi berasal dari HH
+          let hhDataRes: any = null;
+          if (!sessionData && !apdDataRes) {
+            const { data: hhNative } = await supabase
+              .from("audit_hand_hygiene")
               .select("*")
               .eq("id", id)
               .maybeSingle();
-            if (nativeEd) ed = nativeEd;
+            hhDataRes = hhNative;
           }
 
-          if (ed) {
-            if (ed.tanggal_waktu) setStartTime(new Date(ed.tanggal_waktu));
-            if (ed.observer) setObserver(ed.observer);
-            if (ed.unit) setUnit(ed.unit);
-            if (ed.profesi) setProfesi(ed.profesi);
-            const tindakanVal = ed.jenis_tindakan || ed.tindakan;
-            if (tindakanVal) {
-              setTindakan(tindakanVal);
-              if (listTindakanOptions.includes(tindakanVal)) {
-                setTindakanOption(tindakanVal);
-                setCustomTindakan("");
-              } else {
-                setTindakanOption("Lainnya");
-                setCustomTindakan(tindakanVal);
-              }
+          // 4. Cari juga jika ada sesi APD terhubung dengan hh_id
+          let apdSessionData: any = null;
+          if (sessionData?.indikator_id === "audit_hand_hygiene") {
+            const { data: linkedApdSession } = await supabase
+              .from("audit_sessions")
+              .select("*")
+              .eq("indikator_id", "audit_apd")
+              .filter("data_indikator->>hh_id", "eq", id)
+              .maybeSingle();
+            apdSessionData = linkedApdSession;
+          }
+
+          const rawJson = apdDataRes?.data_indikator || apdSessionData?.data_indikator || sessionData?.data_indikator || sessionData?.checklist_json || {};
+          const indicatorsData = typeof rawJson === "string" ? (() => { try { return JSON.parse(rawJson); } catch { return {}; } })() : rawJson;
+
+          // Observer, Unit, Profesi (Otomatis muncul dari Kepatuhan Kebersihan Tangan atau APD)
+          const loadedObserver = apdDataRes?.observer || apdSessionData?.observer || sessionData?.observer || hhDataRes?.observer || "";
+          const loadedUnit = apdDataRes?.unit || apdSessionData?.unit || sessionData?.unit || hhDataRes?.unit || "";
+          const loadedProfesi = apdDataRes?.profesi || apdSessionData?.profesi || sessionData?.profesi || hhDataRes?.profesi || "";
+
+          if (loadedObserver) setObserver(loadedObserver);
+          if (loadedUnit) setUnit(loadedUnit);
+          if (loadedProfesi) setProfesi(loadedProfesi);
+
+          // Waktu: otomatis dimunculkan waktu selesai dari Kepatuhan Kebersihan Tangan
+          const waktuSelesaiStr = apdDataRes?.tanggal_waktu || apdSessionData?.tanggal_waktu || indicatorsData.waktu_selesai || indicatorsData.end_time || hhDataRes?.end_time || sessionData?.tanggal_waktu || hhDataRes?.start_time;
+          if (waktuSelesaiStr) {
+            try {
+              const parsed = new Date(waktuSelesaiStr);
+              if (!isNaN(parsed.getTime())) setStartTime(parsed);
+            } catch (_) {}
+          }
+
+          // Tindakan: jika sudah pernah diisi, otomatis muncul
+          const tindakanVal = apdDataRes?.tindakan || apdSessionData?.jenis_tindakan || sessionData?.jenis_tindakan || indicatorsData.tindakan || "";
+          if (tindakanVal) {
+            setTindakan(tindakanVal);
+            if (listTindakanOptions.includes(tindakanVal)) {
+              setTindakanOption(tindakanVal);
+              setCustomTindakan("");
+            } else {
+              setTindakanOption("Lainnya");
+              setCustomTindakan(tindakanVal);
             }
-            
-            const indicatorsData = ed.data_indikator || ed.checklist_json || {};
-            setApdData({
-              masker: indicatorsData.masker || ed.masker || null,
-              sarung_tangan: indicatorsData.sarung_tangan || ed.sarung_tangan || null,
-              penutup_kepala: indicatorsData.penutup_kepala || ed.penutup_kepala || null,
-              apron: indicatorsData.apron || ed.apron || null,
-              goggle: indicatorsData.goggle || ed.goggle || null,
-              sepatu_boot: indicatorsData.sepatu_boot || ed.sepatu_boot || null,
-              gaun_pelindung: indicatorsData.gaun_pelindung || ed.gaun_pelindung || null,
-            });
+          }
 
-            const upaya = indicatorsData.upaya_perbaikan || indicatorsData.upayaPerbaikan || ed.upaya_perbaikan || "";
-            if (upaya) setUpayaPerbaikan(upaya);
+          // APD yang digunakan
+          setApdData({
+            masker: apdDataRes?.masker || apdSessionData?.masker || indicatorsData.masker || null,
+            sarung_tangan: apdDataRes?.sarung_tangan || apdSessionData?.sarung_tangan || indicatorsData.sarung_tangan || null,
+            penutup_kepala: apdDataRes?.penutup_kepala || apdSessionData?.penutup_kepala || indicatorsData.penutup_kepala || null,
+            apron: apdDataRes?.apron || apdSessionData?.apron || indicatorsData.apron || null,
+            goggle: apdDataRes?.goggle || apdSessionData?.goggle || indicatorsData.goggle || null,
+            sepatu_boot: apdDataRes?.sepatu_boot || apdSessionData?.sepatu_boot || indicatorsData.sepatu_boot || null,
+            gaun_pelindung: apdDataRes?.gaun_pelindung || apdSessionData?.gaun_pelindung || indicatorsData.gaun_pelindung || null,
+          });
 
-            const waktuPerb = indicatorsData.waktu_perbaikan || indicatorsData.tanggal_perbaikan || ed.waktu_perbaikan || ed.tanggal_perbaikan || "";
-            if (waktuPerb) setWaktuPerbaikan(waktuPerb);
+          const upaya = indicatorsData.upaya_perbaikan || indicatorsData.upayaPerbaikan || apdDataRes?.upaya_perbaikan || "";
+          if (upaya) setUpayaPerbaikan(upaya);
 
-            const perbaikanDocs = indicatorsData.foto_perbaikan || indicatorsData.dokumentasi_perbaikan || ed.foto_perbaikan;
-            if (perbaikanDocs) {
-              const pArr = Array.isArray(perbaikanDocs) ? perbaikanDocs : [perbaikanDocs];
-              setPerbaikanImages(pArr.map((url: string) => (typeof url === 'string' ? { url } : url)));
-            }
+          const waktuPerb = indicatorsData.waktu_perbaikan || indicatorsData.tanggal_perbaikan || apdDataRes?.waktu_perbaikan || "";
+          if (waktuPerb) setWaktuPerbaikan(waktuPerb);
+
+          const perbaikanDocs = indicatorsData.foto_perbaikan || indicatorsData.dokumentasi_perbaikan || apdDataRes?.foto_perbaikan;
+          if (perbaikanDocs) {
+            const pArr = Array.isArray(perbaikanDocs) ? perbaikanDocs : [perbaikanDocs];
+            setPerbaikanImages(pArr.map((url: string) => (typeof url === 'string' ? { url } : url)));
           }
         };
         loadEditData();
@@ -450,11 +487,83 @@ export default function InputApdPage() {
 
       let createdSessionId = editId;
       if (isEditMode && editId) {
-        const { error: sessionError } = await supabase
+        // Cek apakah sesi ini adalah sesi audit_hand_hygiene
+        const { data: existingSession } = await supabase
           .from("audit_sessions")
-          .update(sessionPayload)
-          .eq("id", editId);
-        if (sessionError) throw sessionError;
+          .select("id, indikator_id, data_indikator")
+          .eq("id", editId)
+          .maybeSingle();
+
+        if (existingSession && existingSession.indikator_id === "audit_hand_hygiene") {
+          // JAGA AGAR DATA KEPATUHAN KEBERSIHAN TANGAN TIDAK HILANG / BERUBAH INDIKATORNYA!
+          // Simpan jenis tindakan ke sesi tersebut dan perbarui data_indikator
+          const currJson = existingSession.data_indikator || {};
+          await supabase
+            .from("audit_sessions")
+            .update({
+              jenis_tindakan: finalTindakan,
+              data_indikator: {
+                ...currJson,
+                tindakan: finalTindakan,
+                apd: payload,
+              }
+            })
+            .eq("id", editId);
+
+          // Cek apakah sudah ada sesi indikator_id = audit_apd yang mereferensikan hh_id ini
+          const { data: linkedApdSession } = await supabase
+            .from("audit_sessions")
+            .select("id")
+            .eq("indikator_id", "audit_apd")
+            .filter("data_indikator->>hh_id", "eq", editId)
+            .maybeSingle();
+
+          if (linkedApdSession) {
+            await supabase
+              .from("audit_sessions")
+              .update({
+                ...sessionPayload,
+                data_indikator: {
+                  ...sessionPayload.data_indikator,
+                  hh_id: editId,
+                }
+              })
+              .eq("id", linkedApdSession.id);
+          } else {
+            await supabase
+              .from("audit_sessions")
+              .insert([{
+                ...sessionPayload,
+                data_indikator: {
+                  ...sessionPayload.data_indikator,
+                  hh_id: editId,
+                }
+              }]);
+          }
+        } else if (existingSession && existingSession.indikator_id === "audit_apd") {
+          await supabase
+            .from("audit_sessions")
+            .update(sessionPayload)
+            .eq("id", editId);
+        } else {
+          // Jika belum ada di audit_sessions, buat sesi baru
+          await supabase
+            .from("audit_sessions")
+            .upsert([{ ...sessionPayload, id: editId }]);
+        }
+
+        // Upsert ke audit_apd dengan id sesi tersebut
+        const { data: existingApd } = await supabase
+          .from("audit_apd")
+          .select("id")
+          .eq("id", editId)
+          .maybeSingle();
+
+        if (existingApd) {
+          await supabase.from("audit_apd").update(payload).eq("id", editId);
+        } else {
+          await supabase.from("audit_apd").insert([{ ...payload, id: editId }]);
+        }
       } else {
         const { data: sessionData, error: sessionError } = await supabase
           .from("audit_sessions")
@@ -465,25 +574,26 @@ export default function InputApdPage() {
         if (sessionData && sessionData.id) {
           createdSessionId = sessionData.id;
         }
+
+        const nativePayload = createdSessionId ? { ...payload, id: createdSessionId } : payload;
+        await supabase.from("audit_apd").insert([nativePayload]);
       }
 
-      // Fallback old table
+      // Siarkan pembaruan realtime secara eksplisit via REST/httpSend agar tabel laporan langsung sinkron tanpa peringatan deprecation
       try {
-        if (isEditMode && editId) {
-          await supabase.from("audit_apd").update([payload]).eq("id", editId);
-        } else {
-          const nativePayload = createdSessionId ? { ...payload, id: createdSessionId } : payload;
-          await supabase.from("audit_apd").insert([nativePayload]);
-        }
-      } catch (err) {
-        console.warn("Failed to insert/update native apd table", err);
-      }
+        await broadcastChannelMessage('audit_apd_realtime_all', 'audit_submitted', {
+          indikator_id: 'audit_apd',
+          id: editId || createdSessionId
+        });
+      } catch (_) {}
 
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
-        router.push("/dashboard/input/isolasi");
-      }, 2000);
+        const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+        const returnUrl = params?.get("returnUrl") || (isEditMode ? "/dashboard/reports" : "/dashboard/input/isolasi");
+        router.push(returnUrl);
+      }, 1500);
     } catch (err: any) {
       handleError(err);
     } finally {
@@ -502,24 +612,33 @@ export default function InputApdPage() {
             className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-blue-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 font-bold uppercase tracking-widest text-xs border border-blue-400/30"
           >
             <CheckCircle2 className="w-5 h-5" />
-            Data Audit APD Tersimpan!
+            Data Audit APD Berhasil Disimpan & Disinkronkan!
           </motion.div>
         )}
       </AnimatePresence>
 
       <div className="flex items-center gap-6 mb-8 py-6 border-b border-white/5">
         <Link
-          href="/dashboard/input/isolasi"
+          href={typeof window !== 'undefined' && new URLSearchParams(window.location.search).get("returnUrl") || (isEditMode ? "/dashboard/reports" : "/dashboard/input/isolasi")}
           className="p-3 bg-white/5 rounded-2xl border border-white/10 text-slate-400 hover:text-white transition-all"
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <div>
-          <h1 className="text-xs min-[360px]:text-sm min-[410px]:text-base sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 via-blue-500 to-emerald-500 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all drop-shadow-sm dark:drop-shadow-[0_0_10px_rgba(59,130,246,0.4)] uppercase whitespace-nowrap">
-            Audit Kepatuhan Penggunaan APD
-          </h1>
-          <p className="text-[8px] min-[360px]:text-[9px] min-[410px]:text-[10px] sm:text-xs font-bold uppercase tracking-[0.05em] sm:tracking-[0.1em] text-emerald-600 dark:text-blue-400 mt-1 whitespace-nowrap">
-            Observasi penggunaan Alat Pelindung Diri petugas
+        <div className="flex-1">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-xs min-[360px]:text-sm min-[410px]:text-base sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 via-blue-500 to-emerald-500 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all drop-shadow-sm dark:drop-shadow-[0_0_10px_rgba(59,130,246,0.4)] uppercase whitespace-nowrap">
+              Audit Kepatuhan Penggunaan APD
+            </h1>
+            {isEditMode && (
+              <span className="px-3 py-1 bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 rounded-full text-[10px] font-black uppercase tracking-wider">
+                Sinkronisasi Kepatuhan Kebersihan Tangan
+              </span>
+            )}
+          </div>
+          <p className="text-[8px] min-[360px]:text-[9px] min-[410px]:text-[10px] sm:text-xs font-bold uppercase tracking-[0.05em] sm:tracking-[0.1em] text-emerald-600 dark:text-blue-400 mt-1">
+            {isEditMode 
+              ? "Data Observer, Unit, Profesi, dan Waktu Selesai otomatis tersinkron dari Kepatuhan Kebersihan Tangan. Silakan pilih Tindakan dan APD yang digunakan."
+              : "Observasi penggunaan Alat Pelindung Diri petugas"}
           </p>
         </div>
       </div>
@@ -714,17 +833,6 @@ export default function InputApdPage() {
           statusText={stats.statusText}
           title="KEPATUHAN PENGGUNAAN APD"
         />
-
-        {isEditMode && (
-          <UpayaPerbaikanSection
-            upayaPerbaikan={upayaPerbaikan}
-            setUpayaPerbaikan={setUpayaPerbaikan}
-            perbaikanImages={perbaikanImages}
-            setPerbaikanImages={setPerbaikanImages}
-            waktuPerbaikan={waktuPerbaikan}
-            setWaktuPerbaikan={setWaktuPerbaikan}
-          />
-        )}
 
         <button
           onClick={handleSubmit}

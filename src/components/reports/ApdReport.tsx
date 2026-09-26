@@ -54,6 +54,7 @@ export default function ApdReport({
     return {
       ...item,
       id: item.id,
+      hh_id: item.hh_id || json.hh_id || item.data_indikator?.hh_id,
       tanggal_waktu: item.tanggal_waktu || item.waktu || item.created_at,
       observer: item.observer || item.supervisor || '',
       unit: item.unit || item.ruangan || '',
@@ -77,15 +78,32 @@ export default function ApdReport({
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleEditClick = (recordId: string) => {
-    router.push(`/dashboard/input/apd?id=${recordId}&mode=edit`);
+    router.push(`/dashboard/input/apd?id=${recordId}&mode=edit&returnUrl=/dashboard/reports`);
   };
 
   const handleConfirmDelete = async () => {
     if (!deleteConfirmId) return;
     setIsDeleting(true);
     try {
-      await supabase.from("audit_apd").delete().eq("id", deleteConfirmId);
-      await supabase.from("audit_sessions").delete().eq("id", deleteConfirmId);
+      const targetItem = data.find(d => d.id === deleteConfirmId);
+      if (targetItem?.isFromHh) {
+        // Hapus evaluasi APD terkait saja, jaga agar data Kepatuhan Kebersihan Tangan tetap utuh
+        await supabase.from("audit_apd").delete().eq("id", deleteConfirmId);
+        await supabase.from("audit_sessions").delete().eq("indikator_id", "audit_apd").or(`id.eq.${deleteConfirmId},data_indikator->>hh_id.eq.${deleteConfirmId}`);
+        const { data: hhSess } = await supabase.from("audit_sessions").select("id, data_indikator").eq("id", deleteConfirmId).maybeSingle();
+        if (hhSess) {
+          const sJson = hhSess.data_indikator || {};
+          delete sJson.apd;
+          delete sJson.tindakan;
+          await supabase.from("audit_sessions").update({
+            jenis_tindakan: null,
+            data_indikator: sJson
+          }).eq("id", deleteConfirmId);
+        }
+      } else {
+        await supabase.from("audit_apd").delete().eq("id", deleteConfirmId);
+        await supabase.from("audit_sessions").delete().eq("id", deleteConfirmId);
+      }
       await fetchData();
     } catch (err: any) {
       console.error("Gagal menghapus data:", err);
@@ -99,41 +117,247 @@ export default function ApdReport({
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [apdRes, sessionsRes] = await Promise.all([
+      const [hhRes, hhSessionsRes, apdRes, apdSessionsRes] = await Promise.all([
+        supabase.from('audit_hand_hygiene').select('*').order('start_time', { ascending: true }),
+        supabase.from('audit_sessions').select('*').eq('indikator_id', 'audit_hand_hygiene').order('tanggal_waktu', { ascending: true }),
         supabase.from('audit_apd').select('*').order('tanggal_waktu', { ascending: true }),
         supabase.from('audit_sessions').select('*').eq('indikator_id', 'audit_apd').order('tanggal_waktu', { ascending: true })
       ]);
 
-      const sessions = (sessionsRes.data || []).map(normalizeApd);
-      const apd = (apdRes.data || []).map(normalizeApd);
+      const rawHhSessions = hhSessionsRes.data || [];
+      const rawHH = hhRes.data || [];
+      const rawApdSessions = (apdSessionsRes.data || []).map(normalizeApd);
+      const rawApd = (apdRes.data || []).map(normalizeApd);
 
-      const seenIds = new Set<string>();
-      const seenKeys = new Set<string>();
-      const combined: any[] = [];
-
-      for (const item of sessions) {
-        if (!item.id || seenIds.has(item.id)) continue;
-        seenIds.add(item.id);
-        const obs = (item.observer || '').toLowerCase().trim();
-        const unt = (item.unit || '').toLowerCase().trim();
-        const timeKey = item.tanggal_waktu ? new Date(item.tanggal_waktu).toISOString().substring(0, 16) : '';
-        if (obs && unt && timeKey) {
-          seenKeys.add(`${obs}_${unt}_${timeKey}`);
-        }
-        combined.push(item);
+      // 1. Unified Hand Hygiene observations (sesuai persis dengan Kepatuhan Kebersihan Tangan)
+      const rawHHById = new Map<string, any>();
+      for (const h of rawHH) {
+        if (h.id) rawHHById.set(h.id, h);
       }
 
-      for (const item of apd) {
-        if (!item.id || seenIds.has(item.id)) continue;
-        const obs = (item.observer || '').toLowerCase().trim();
-        const unt = (item.unit || '').toLowerCase().trim();
-        const timeKey = item.tanggal_waktu ? new Date(item.tanggal_waktu).toISOString().substring(0, 16) : '';
-        const key = `${obs}_${unt}_${timeKey}`;
-        if (obs && unt && timeKey && seenKeys.has(key)) continue;
+      const usedHhIds = new Set<string>();
+      const seenHhIds = new Set<string>();
+      const hhObservations: any[] = [];
 
-        seenIds.add(item.id);
-        if (obs && unt && timeKey) seenKeys.add(key);
-        combined.push(item);
+      for (const s of rawHhSessions) {
+        if (!s.id || seenHhIds.has(s.id)) continue;
+
+        let match: any = null;
+        if (rawHHById.has(s.id) && !usedHhIds.has(s.id)) {
+          match = rawHHById.get(s.id);
+          usedHhIds.add(s.id);
+        } else {
+          const sStart = s.tanggal_waktu || s.start_time || s.created_at;
+          const sTime = sStart ? new Date(sStart).getTime() : 0;
+          match = rawHH.find((h: any) => {
+            if (usedHhIds.has(h.id)) return false;
+            const hTime = h.start_time ? new Date(h.start_time).getTime() : 0;
+            return (
+              (h.observer || '').trim().toLowerCase() === (s.observer || '').trim().toLowerCase() &&
+              (h.unit || '').trim().toLowerCase() === (s.unit || '').trim().toLowerCase() &&
+              Math.abs(hTime - sTime) < 120000
+            );
+          });
+          if (match) {
+            usedHhIds.add(match.id);
+          }
+        }
+
+        const rawSJson = s.data_indikator || s.checklist_json || {};
+        const sJson = typeof rawSJson === 'string'
+          ? (() => { try { return JSON.parse(rawSJson); } catch { return {}; } })()
+          : rawSJson;
+
+        const startTime = sJson.waktu_mulai || sJson.start_time || match?.start_time || s.tanggal_waktu || s.start_time || s.created_at;
+        const endTime = sJson.waktu_selesai || sJson.end_time || match?.end_time || s.end_time || (startTime ? new Date(new Date(startTime).getTime() + 15 * 60000).toISOString() : null);
+
+        seenHhIds.add(s.id);
+        if (match?.id) {
+          seenHhIds.add(match.id);
+          usedHhIds.add(match.id);
+        }
+
+        hhObservations.push({
+          id: s.id,
+          observer: s.observer || match?.observer || '',
+          unit: s.unit || match?.unit || '',
+          profesi: s.profesi || match?.profesi || sJson.profesi || 'LAINNYA',
+          start_time: startTime,
+          end_time: endTime,
+          // Waktu di tabel APD otomatis muncul waktu selesai dari Kepatuhan Kebersihan Tangan
+          tanggal_waktu: endTime || startTime,
+          jenis_tindakan: s.jenis_tindakan || sJson.tindakan || sJson.jenis_tindakan || '',
+          rawSJson: sJson,
+        });
+      }
+
+      // Sesi Hand Hygiene yang belum tercakup dari audit_hand_hygiene
+      for (const h of rawHH) {
+        if (!h.id || usedHhIds.has(h.id) || seenHhIds.has(h.id)) continue;
+        seenHhIds.add(h.id);
+        usedHhIds.add(h.id);
+
+        const startTime = h.start_time || h.created_at;
+        const endTime = h.end_time || (startTime ? new Date(new Date(startTime).getTime() + 15 * 60000).toISOString() : null);
+
+        hhObservations.push({
+          id: h.id,
+          observer: h.observer || '',
+          unit: h.unit || '',
+          profesi: h.profesi || 'LAINNYA',
+          start_time: startTime,
+          end_time: endTime,
+          tanggal_waktu: endTime || startTime,
+          jenis_tindakan: '',
+          rawSJson: {},
+        });
+      }
+
+      // 2. Kumpulkan seluruh record APD yang sudah terisi
+      const allApdRecords: any[] = [];
+      const seenApdIds = new Set<string>();
+
+      for (const item of rawApdSessions) {
+        if (!item.id || seenApdIds.has(item.id)) continue;
+        seenApdIds.add(item.id);
+        allApdRecords.push(item);
+      }
+      for (const item of rawApd) {
+        if (!item.id || seenApdIds.has(item.id)) continue;
+        seenApdIds.add(item.id);
+        allApdRecords.push(item);
+      }
+
+      // 3. Sinkronkan data APD dengan data Kepatuhan Kebersihan Tangan
+      const usedApdIds = new Set<string>();
+      const seenFinalIds = new Set<string>();
+      const combined: any[] = [];
+
+      for (const hh of hhObservations) {
+        if (!hh.id || seenFinalIds.has(hh.id)) continue;
+        seenFinalIds.add(hh.id);
+
+        // Cari kesesuaian APD berdasarkan ID atau referensi hh_id
+        let apdMatch = allApdRecords.find(a => 
+          !usedApdIds.has(a.id) && (
+            a.id === hh.id || 
+            a.hh_id === hh.id || 
+            a.data_indikator?.hh_id === hh.id ||
+            a.checklist_json?.hh_id === hh.id
+          )
+        );
+
+        // Jika belum cocok, cari berdasarkan observer, unit, dan profesi yang sama serta rentang waktu yang sesuai (15 menit)
+        if (!apdMatch) {
+          const hhTime = hh.tanggal_waktu ? new Date(hh.tanggal_waktu).getTime() : 0;
+          const hhStartTime = hh.start_time ? new Date(hh.start_time).getTime() : 0;
+          apdMatch = allApdRecords.find(a => {
+            if (usedApdIds.has(a.id)) return false;
+            const sameObs = (a.observer || '').trim().toLowerCase() === (hh.observer || '').trim().toLowerCase();
+            const sameUnit = (a.unit || '').trim().toLowerCase() === (hh.unit || '').trim().toLowerCase();
+            const sameProf = (a.profesi || '').trim().toLowerCase() === (hh.profesi || '').trim().toLowerCase();
+            if (!sameObs || !sameUnit || !sameProf) return false;
+            const aTime = a.tanggal_waktu ? new Date(a.tanggal_waktu).getTime() : 0;
+            const diffEnd = Math.abs(aTime - hhTime);
+            const diffStart = Math.abs(aTime - hhStartTime);
+            return diffEnd < 15 * 60 * 1000 || diffStart < 15 * 60 * 1000;
+          });
+        }
+
+        const embeddedApd = hh.rawSJson?.apd;
+
+        if (apdMatch) {
+          usedApdIds.add(apdMatch.id);
+          if (apdMatch.hh_id) usedApdIds.add(apdMatch.hh_id);
+          combined.push({
+            id: hh.id,
+            hh_id: hh.id,
+            apd_id: apdMatch.id,
+            tanggal_waktu: hh.tanggal_waktu, // Waktu selesai Kepatuhan Kebersihan Tangan
+            start_time: hh.start_time,
+            end_time: hh.end_time,
+            observer: hh.observer || apdMatch.observer,
+            unit: hh.unit || apdMatch.unit,
+            profesi: hh.profesi || apdMatch.profesi,
+            tindakan: apdMatch.tindakan || apdMatch.jenis_tindakan || hh.jenis_tindakan || '',
+            masker: apdMatch.masker,
+            sarung_tangan: apdMatch.sarung_tangan,
+            penutup_kepala: apdMatch.penutup_kepala,
+            apron: apdMatch.apron,
+            goggle: apdMatch.goggle,
+            sepatu_boot: apdMatch.sepatu_boot,
+            gaun_pelindung: apdMatch.gaun_pelindung,
+            jumlah_dinilai: apdMatch.jumlah_dinilai || 0,
+            jumlah_patuh: apdMatch.jumlah_patuh || 0,
+            persentase: apdMatch.persentase || 0,
+            isFilled: true,
+            isFromHh: true,
+          });
+        } else if (embeddedApd) {
+          combined.push({
+            id: hh.id,
+            hh_id: hh.id,
+            apd_id: hh.id,
+            tanggal_waktu: hh.tanggal_waktu,
+            start_time: hh.start_time,
+            end_time: hh.end_time,
+            observer: hh.observer,
+            unit: hh.unit,
+            profesi: hh.profesi,
+            tindakan: hh.jenis_tindakan || embeddedApd.tindakan || '',
+            masker: embeddedApd.masker,
+            sarung_tangan: embeddedApd.sarung_tangan,
+            penutup_kepala: embeddedApd.penutup_kepala,
+            apron: embeddedApd.apron,
+            goggle: embeddedApd.goggle,
+            sepatu_boot: embeddedApd.sepatu_boot,
+            gaun_pelindung: embeddedApd.gaun_pelindung,
+            jumlah_dinilai: embeddedApd.jumlah_dinilai || 0,
+            jumlah_patuh: embeddedApd.jumlah_patuh || 0,
+            persentase: embeddedApd.persentase || 0,
+            isFilled: true,
+            isFromHh: true,
+          });
+        } else {
+          // Otomatis dimunculkan dari Kepatuhan Kebersihan Tangan, menunggu input Tindakan & APD
+          combined.push({
+            id: hh.id,
+            hh_id: hh.id,
+            apd_id: null,
+            tanggal_waktu: hh.tanggal_waktu, // Waktu selesai Kepatuhan Kebersihan Tangan
+            start_time: hh.start_time,
+            end_time: hh.end_time,
+            observer: hh.observer,
+            unit: hh.unit,
+            profesi: hh.profesi,
+            tindakan: hh.jenis_tindakan || '',
+            masker: null,
+            sarung_tangan: null,
+            penutup_kepala: null,
+            apron: null,
+            goggle: null,
+            sepatu_boot: null,
+            gaun_pelindung: null,
+            jumlah_dinilai: 0,
+            jumlah_patuh: 0,
+            persentase: 0,
+            isFilled: false,
+            isFromHh: true,
+          });
+        }
+      }
+
+      // Masukkan data APD mandiri (jika ada data historis yang dibuat terpisah)
+      for (const a of allApdRecords) {
+        if (!a.id || usedApdIds.has(a.id) || seenFinalIds.has(a.id)) continue;
+        usedApdIds.add(a.id);
+        seenFinalIds.add(a.id);
+        combined.push({
+          ...a,
+          id: a.id,
+          isFilled: true,
+          isFromHh: false,
+        });
       }
 
       combined.sort((a, b) => new Date(a.tanggal_waktu || 0).getTime() - new Date(b.tanggal_waktu || 0).getTime());
@@ -151,13 +375,14 @@ export default function ApdReport({
       .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_apd' }, () => {
          fetchData();
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_sessions', filter: 'indikator_id=eq.audit_apd' }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_sessions' }, () => {
          fetchData();
       })
-      .on('broadcast', { event: 'audit_submitted' }, (payload) => {
-        if (payload?.payload?.indikator_id === 'audit_apd') {
-          fetchData();
-        }
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_hand_hygiene' }, () => {
+         fetchData();
+      })
+      .on('broadcast', { event: 'audit_submitted' }, () => {
+        fetchData();
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
@@ -470,14 +695,15 @@ export default function ApdReport({
                 const tidakPatuh = items.filter(val => val && (val.toLowerCase() === 'tidak' || val.toLowerCase() === 'tidak sesuai')).length;
                 const dinilai = patuh + tidakPatuh;
                 const persentase = dinilai > 0 ? Math.round((patuh / dinilai) * 100) : 0;
+                const isEvaluated = !!row.isFilled && dinilai > 0;
 
                 return (
-                  <tr key={row.id} className="hover:bg-white/[0.03] transition-colors group">
+                  <tr key={`apd_row_${row.id || 'row'}_${index}`} className="hover:bg-white/[0.03] transition-colors group">
                     <td className="px-4 py-4 font-mono font-bold text-slate-400 text-center">
                       {index + 1}
                     </td>
                     <td className="px-4 py-4 text-slate-300 font-mono text-center whitespace-nowrap">
-                      {row.tanggal_waktu ? format(parseISO(row.tanggal_waktu), 'dd/MM/yyyy HH:mm') : '-'}
+                      {formatDateTimeSafe(row.tanggal_waktu)}
                     </td>
                     <td className="px-4 py-4 text-center text-slate-400 italic">
                       {row.observer || '-'}
@@ -488,43 +714,64 @@ export default function ApdReport({
                     <td className="px-4 py-4 text-center text-[11px] text-slate-300">
                       {toTitleCase(row.profesi)}
                     </td>
-                    <td className="px-4 py-4 text-center text-[10px] font-bold text-slate-300 leading-relaxed max-w-[150px] whitespace-pre-wrap">{toTitleCase(row.tindakan)}</td>
-                    <td className="px-2 py-4 text-center">{mapApdAction(row.masker)}</td>
-                    <td className="px-2 py-4 text-center">{mapApdAction(row.sarung_tangan)}</td>
-                    <td className="px-2 py-4 text-center">{mapApdAction(row.penutup_kepala)}</td>
-                    <td className="px-2 py-4 text-center">{mapApdAction(row.apron)}</td>
-                    <td className="px-2 py-4 text-center">{mapApdAction(row.goggle)}</td>
-                    <td className="px-2 py-4 text-center">{mapApdAction(row.sepatu_boot)}</td>
-                    <td className="px-2 py-4 text-center">{mapApdAction(row.gaun_pelindung)}</td>
-                    <td className="px-4 py-4 border-l border-white/5 text-emerald-400 text-sm font-black font-mono text-center">{patuh}</td>
-                    <td className="px-4 py-4 text-rose-400 text-sm font-black font-mono text-center">{tidakPatuh}</td>
+                    <td className="px-4 py-4 text-center text-[10px] font-bold text-slate-300 leading-relaxed max-w-[150px] whitespace-pre-wrap">
+                      {row.tindakan ? (
+                        toTitleCase(row.tindakan)
+                      ) : (
+                        <span className="text-amber-400/90 italic font-semibold flex items-center justify-center gap-1 text-[10px]">
+                          Belum Diisi
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-2 py-4 text-center">{isEvaluated ? mapApdAction(row.masker) : <span className="flex justify-center font-bold text-slate-500">-</span>}</td>
+                    <td className="px-2 py-4 text-center">{isEvaluated ? mapApdAction(row.sarung_tangan) : <span className="flex justify-center font-bold text-slate-500">-</span>}</td>
+                    <td className="px-2 py-4 text-center">{isEvaluated ? mapApdAction(row.penutup_kepala) : <span className="flex justify-center font-bold text-slate-500">-</span>}</td>
+                    <td className="px-2 py-4 text-center">{isEvaluated ? mapApdAction(row.apron) : <span className="flex justify-center font-bold text-slate-500">-</span>}</td>
+                    <td className="px-2 py-4 text-center">{isEvaluated ? mapApdAction(row.goggle) : <span className="flex justify-center font-bold text-slate-500">-</span>}</td>
+                    <td className="px-2 py-4 text-center">{isEvaluated ? mapApdAction(row.sepatu_boot) : <span className="flex justify-center font-bold text-slate-500">-</span>}</td>
+                    <td className="px-2 py-4 text-center">{isEvaluated ? mapApdAction(row.gaun_pelindung) : <span className="flex justify-center font-bold text-slate-500">-</span>}</td>
+                    <td className="px-4 py-4 border-l border-white/5 text-emerald-400 text-sm font-black font-mono text-center">
+                      {isEvaluated ? patuh : <span className="text-slate-500 font-bold">-</span>}
+                    </td>
+                    <td className="px-4 py-4 text-rose-400 text-sm font-black font-mono text-center">
+                      {isEvaluated ? tidakPatuh : <span className="text-slate-500 font-bold">-</span>}
+                    </td>
                     <td className="px-4 py-4 font-black text-center">
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase border shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)] ${
-                        persentase >= 85 ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40' :
-                        persentase >= 70 ? 'bg-amber-950/80 text-amber-300 border-amber-500/40' :
-                        'bg-rose-950/80 text-rose-300 border-rose-500/40'
-                      }`}>
-                        {persentase}%
-                      </span>
+                      {isEvaluated ? (
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase border shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)] ${
+                          persentase >= 85 ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40' :
+                          persentase >= 70 ? 'bg-amber-950/80 text-amber-300 border-amber-500/40' :
+                          'bg-rose-950/80 text-rose-300 border-rose-500/40'
+                        }`}>
+                          {persentase}%
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-1 rounded-full text-[9px] font-bold uppercase bg-slate-800/80 text-slate-400 border border-slate-700/60 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)]">
+                          Belum Dinilai
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-4 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handleEditClick(row.id)}
                           type="button"
-                          className="p-2 rounded-xl bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all duration-200 shadow-sm border border-blue-500/20"
-                          title="Edit Data"
+                          className="px-2.5 py-2 rounded-xl bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all duration-200 shadow-sm border border-blue-500/20 flex items-center gap-1 text-[11px] font-bold"
+                          title="Isi / Edit Tindakan & APD"
                         >
                           <Edit className="w-3.5 h-3.5" />
+                          <span>Edit</span>
                         </button>
-                        <button
-                          onClick={() => setDeleteConfirmId(row.id)}
-                          type="button"
-                          className="p-2 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white transition-all duration-200 shadow-sm border border-rose-500/20"
-                          title="Hapus Data"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        {isEvaluated && (
+                          <button
+                            onClick={() => setDeleteConfirmId(row.id)}
+                            type="button"
+                            className="p-2 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white transition-all duration-200 shadow-sm border border-rose-500/20"
+                            title="Hapus Penilaian APD"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -817,9 +1064,10 @@ export default function ApdReport({
                     const tidakPatuh = items.filter(val => val && (val.toLowerCase() === 'tidak' || val.toLowerCase() === 'tidak sesuai')).length;
                     const dinilai = patuh + tidakPatuh;
                     const persentase = dinilai > 0 ? Math.round((patuh / dinilai) * 100) : 0;
+                    const isEvaluated = !!row.isFilled && dinilai > 0;
 
                     return (
-                      <tr key={`print_apd_${row.id || index}`} className="even:bg-slate-50/50">
+                      <tr key={`print_apd_${row.id || 'row'}_${index}`} className="even:bg-slate-50/50">
                         <td className="border border-black px-1 py-1 text-center font-mono text-[7.5pt] align-middle">{index + 1}</td>
                         <td className="border border-black px-1 py-1 text-center font-mono text-[7.5pt] whitespace-nowrap align-middle">
                           {formatDateTimeSafe(row.tanggal_waktu)}
@@ -827,20 +1075,24 @@ export default function ApdReport({
                         <td className="border border-black px-1 py-1 text-center text-slate-800 text-[7.5pt] leading-tight break-words align-middle" title={row.observer || '-'}>{row.observer || '-'}</td>
                         <td className="border border-black px-1 py-1 text-center text-[7.5pt] leading-tight break-words align-middle" title={row.unit || '-'}>{toTitleCase(row.unit)}</td>
                         <td className="border border-black px-1 py-1 text-center text-[7.5pt] leading-tight break-words align-middle" title={row.profesi || '-'}>{toTitleCase(row.profesi)}</td>
-                        <td className="border border-black px-1 py-1 text-center text-[7.5pt] leading-tight break-words align-middle" title={row.tindakan || '-'}>{toTitleCase(row.tindakan)}</td>
-                        <td className="border border-black px-0.5 py-1 text-center text-[8pt] align-middle">{formatApdOfficial(row.masker)}</td>
-                        <td className="border border-black px-0.5 py-1 text-center text-[8pt] align-middle">{formatApdOfficial(row.sarung_tangan)}</td>
-                        <td className="border border-black px-0.5 py-1 text-center text-[8pt] align-middle">{formatApdOfficial(row.penutup_kepala)}</td>
-                        <td className="border border-black px-0.5 py-1 text-center text-[8pt] align-middle">{formatApdOfficial(row.apron)}</td>
-                        <td className="border border-black px-0.5 py-1 text-center text-[8pt] align-middle">{formatApdOfficial(row.goggle)}</td>
-                        <td className="border border-black px-0.5 py-1 text-center text-[8pt] align-middle">{formatApdOfficial(row.sepatu_boot)}</td>
-                        <td className="border border-black px-0.5 py-1 text-center text-[8pt] align-middle">{formatApdOfficial(row.gaun_pelindung)}</td>
-                        <td className="border border-black px-1 py-1 text-center font-mono text-emerald-800 text-[8pt] align-middle">{patuh}</td>
-                        <td className="border border-black px-1 py-1 text-center font-mono text-rose-800 text-[8pt] align-middle">{tidakPatuh}</td>
+                        <td className="border border-black px-1 py-1 text-center text-[7.5pt] leading-tight break-words align-middle" title={row.tindakan || '-'}>{toTitleCase(row.tindakan) || '-'}</td>
+                        <td className="border border-black px-0.5 py-1 text-center text-[8pt] align-middle">{isEvaluated ? formatApdOfficial(row.masker) : '-'}</td>
+                        <td className="border border-black px-0.5 py-1 text-center text-[8pt] align-middle">{isEvaluated ? formatApdOfficial(row.sarung_tangan) : '-'}</td>
+                        <td className="border border-black px-0.5 py-1 text-center text-[8pt] align-middle">{isEvaluated ? formatApdOfficial(row.penutup_kepala) : '-'}</td>
+                        <td className="border border-black px-0.5 py-1 text-center text-[8pt] align-middle">{isEvaluated ? formatApdOfficial(row.apron) : '-'}</td>
+                        <td className="border border-black px-0.5 py-1 text-center text-[8pt] align-middle">{isEvaluated ? formatApdOfficial(row.goggle) : '-'}</td>
+                        <td className="border border-black px-0.5 py-1 text-center text-[8pt] align-middle">{isEvaluated ? formatApdOfficial(row.sepatu_boot) : '-'}</td>
+                        <td className="border border-black px-0.5 py-1 text-center text-[8pt] align-middle">{isEvaluated ? formatApdOfficial(row.gaun_pelindung) : '-'}</td>
+                        <td className="border border-black px-1 py-1 text-center font-mono text-emerald-800 text-[8pt] align-middle">{isEvaluated ? patuh : '-'}</td>
+                        <td className="border border-black px-1 py-1 text-center font-mono text-rose-800 text-[8pt] align-middle">{isEvaluated ? tidakPatuh : '-'}</td>
                         <td className="border border-black px-1 py-1 text-center text-[8pt] align-middle">
-                          <span className={persentase >= 85 ? 'text-emerald-800' : persentase >= 70 ? 'text-amber-800' : 'text-rose-800'}>
-                            {persentase}%
-                          </span>
+                          {isEvaluated ? (
+                            <span className={persentase >= 85 ? 'text-emerald-800 font-bold' : persentase >= 70 ? 'text-amber-800 font-bold' : 'text-rose-800 font-bold'}>
+                              {persentase}%
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 font-bold">-</span>
+                          )}
                         </td>
                       </tr>
                     );
