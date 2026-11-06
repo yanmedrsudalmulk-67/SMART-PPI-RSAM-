@@ -92,10 +92,11 @@ export default function EtikaBatukReport({
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
+      const candidateIds = [tableName, tableName.startsWith('audit_') ? tableName.replace(/^audit_/, '') : `audit_${tableName}`];
       let sessionQuery = supabase
         .from("audit_sessions")
         .select("*")
-        .eq("indikator_id", tableName);
+        .in("indikator_id", candidateIds);
       if (extraFilter) sessionQuery = sessionQuery.match(extraFilter);
       const { data: sessionData } = await sessionQuery.order("tanggal_waktu", { ascending: true });
       

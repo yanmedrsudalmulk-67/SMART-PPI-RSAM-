@@ -758,3 +758,17 @@ export const genericAuditConfigs: Record<string, { tableName: string; extraFilte
     tableName: 'surveilans_ido',
   },
 };
+
+// Aliases for prefix variants and alternative keys
+genericAuditConfigs['audit_dekontaminasi_alat'] = genericAuditConfigs['dekontaminasi_alat'];
+genericAuditConfigs['audit_pengendalian_lingkungan'] = genericAuditConfigs['pengendalian_lingkungan'];
+genericAuditConfigs['audit_pengelolaan_limbah_medis'] = genericAuditConfigs['pengelolaan_limbah_medis'];
+genericAuditConfigs['audit_pengelolaan_limbah_tajam'] = genericAuditConfigs['pengelolaan_limbah_tajam'];
+genericAuditConfigs['audit_penatalaksanaan_linen'] = genericAuditConfigs['penatalaksanaan_linen'];
+genericAuditConfigs['audit_perlindungan_petugas'] = genericAuditConfigs['perlindungan_petugas'];
+genericAuditConfigs['audit_penempatan_pasien'] = genericAuditConfigs['penempatan_pasien'];
+genericAuditConfigs['audit_penyuntikan_aman'] = genericAuditConfigs['penyuntikan_aman'];
+genericAuditConfigs['audit_etika_batuk'] = genericAuditConfigs['etika_batuk'];
+genericAuditConfigs['phlebitis'] = genericAuditConfigs['phl'];
+genericAuditConfigs['diklat'] = genericAuditConfigs['diklat_ppi'];
+

@@ -185,45 +185,45 @@ const SummaryCard = ({ indicator, stats, onClick }: any) => {
 
   return (
     <motion.div 
-      whileHover={{ y: -6, scale: 1.02 }} 
+      whileHover={{ y: -5, scale: 1.015 }} 
       onClick={onClick}
-      className="group relative bg-[#18193b] p-6 sm:p-7 rounded-[28px] md:rounded-[32px] border border-[#2b2d56] cursor-pointer overflow-hidden flex flex-col justify-between min-h-[240px] shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] hover:shadow-[-8px_-8px_24px_rgba(140,165,255,0.1),12px_16px_40px_rgba(0,0,0,0.8),inset_1px_1px_2px_rgba(255,255,255,0.25)] transition-all duration-300 transform-gpu"
+      className="group relative bg-[#18193b] p-5 sm:p-6 rounded-[26px] md:rounded-[30px] border border-[#2b2d56] cursor-pointer overflow-hidden flex flex-col justify-between min-h-[220px] shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] hover:shadow-[-8px_-8px_24px_rgba(140,165,255,0.1),12px_16px_40px_rgba(0,0,0,0.8),inset_1px_1px_2px_rgba(255,255,255,0.25)] transition-all duration-300 transform-gpu"
     >
       {/* Top Bevel Highlight */}
       <div className="absolute top-0 inset-x-6 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
       
-      <div className="flex justify-between items-start mb-4 relative z-10">
+      <div className="flex justify-between items-start mb-3 relative z-10">
         <div className="shrink-0 relative">
-          <div className="w-14 h-14 rounded-[20px] bg-gradient-to-br from-[#272952] to-[#12132d] border-2 border-indigo-400/30 shadow-[-3px_-3px_10px_rgba(140,165,255,0.12),6px_8px_18px_rgba(0,0,0,0.7),inset_1.5px_1.5px_2px_rgba(255,255,255,0.2)] flex items-center justify-center transform group-hover:scale-105 group-hover:-rotate-3 transition-transform duration-300">
-            <div className="w-9 h-9 rounded-[14px] bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 shadow-[0_6px_16px_rgba(59,130,246,0.5),inset_1px_1px_2px_rgba(255,255,255,0.4)] flex items-center justify-center text-white">
-              <Icon className="w-5 h-5 drop-shadow" />
+          <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-[18px] bg-gradient-to-br from-[#272952] to-[#12132d] border-2 border-indigo-400/30 shadow-[-3px_-3px_10px_rgba(140,165,255,0.12),6px_8px_18px_rgba(0,0,0,0.7),inset_1.5px_1.5px_2px_rgba(255,255,255,0.2)] flex items-center justify-center transform group-hover:scale-105 group-hover:-rotate-3 transition-transform duration-300">
+            <div className="w-8 h-8 rounded-[12px] bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 shadow-[0_6px_16px_rgba(59,130,246,0.5),inset_1px_1px_2px_rgba(255,255,255,0.4)] flex items-center justify-center text-white">
+              <Icon className="w-4.5 h-4.5 drop-shadow" />
             </div>
           </div>
         </div>
 
         <div className="flex flex-col items-end text-right">
-          <span className={`text-3xl sm:text-4xl font-black font-mono tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] ${colorClass}`}>
+          <span className={`text-2xl sm:text-3xl lg:text-[32px] font-black font-mono tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] ${colorClass}`}>
             {Math.round(avgPercent)}%
           </span>
-          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1 text-right">CAPAIAN RATA-RATA</span>
+          <span className="text-[7.5px] sm:text-[8px] font-black text-slate-400 uppercase tracking-widest mt-0.5 text-right">CAPAIAN RATA-RATA</span>
         </div>
       </div>
 
-      <div className="mt-2 relative z-10">
-        <h3 className="text-sm sm:text-base font-extrabold text-white mb-3 uppercase tracking-tight leading-snug group-hover:text-cyan-300 transition-colors">
+      <div className="mt-1 relative z-10">
+        <h3 className="text-xs sm:text-[13px] lg:text-[14px] font-extrabold text-white mb-2.5 uppercase tracking-tight leading-snug group-hover:text-cyan-300 transition-colors line-clamp-2 min-h-[2.4rem] flex items-center">
           {indicator.title}
         </h3>
         
         {/* Recessed Tray for details */}
-        <div className="bg-[#12132e] rounded-2xl p-3 border border-black/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] flex items-center justify-between">
+        <div className="bg-[#12132e] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-black/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{count} Audit Terdata</span>
-            <span className={`text-[10px] font-black uppercase px-2 py-0.5 mt-1 rounded-full border ${badgeBg} w-fit`}>
+            <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider">{count} Audit Terdata</span>
+            <span className={`text-[8.5px] sm:text-[9.5px] font-black uppercase px-2 py-0.5 mt-1 rounded-full border ${badgeBg} w-fit`}>
               {targetStatus}
             </span>
           </div>
-          <div className="w-8 h-8 rounded-xl bg-[#18193b] border border-white/10 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all text-slate-400 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)]">
-            <ArrowLeft className="w-4 h-4 rotate-180" />
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-[#18193b] border border-white/10 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all text-slate-400 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)] shrink-0">
+            <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 rotate-180" />
           </div>
         </div>
       </div>
@@ -253,62 +253,62 @@ const SurveilansSummaryCard = ({ indicator, stats, onClick }: any) => {
 
   return (
     <motion.div 
-      whileHover={{ y: -6, scale: 1.02 }} 
+      whileHover={{ y: -5, scale: 1.015 }} 
       onClick={onClick}
-      className="group relative bg-[#18193b] p-6 sm:p-7 rounded-[28px] md:rounded-[32px] border border-[#2b2d56] cursor-pointer overflow-hidden flex flex-col justify-between min-h-[250px] shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] hover:shadow-[-8px_-8px_24px_rgba(140,165,255,0.1),12px_16px_40px_rgba(0,0,0,0.8),inset_1px_1px_2px_rgba(255,255,255,0.25)] transition-all duration-300 transform-gpu"
+      className="group relative bg-[#18193b] p-5 sm:p-6 rounded-[26px] md:rounded-[30px] border border-[#2b2d56] cursor-pointer overflow-hidden flex flex-col justify-between min-h-[220px] shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] hover:shadow-[-8px_-8px_24px_rgba(140,165,255,0.1),12px_16px_40px_rgba(0,0,0,0.8),inset_1px_1px_2px_rgba(255,255,255,0.25)] transition-all duration-300 transform-gpu"
     >
       {/* Top Bevel Highlight */}
       <div className="absolute top-0 inset-x-6 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
       
-      <div className="flex justify-between items-start mb-4 relative z-10">
+      <div className="flex justify-between items-start mb-3 relative z-10">
         <div className="shrink-0 relative">
-          <div className="w-14 h-14 rounded-[20px] bg-gradient-to-br from-[#272952] to-[#12132d] border-2 border-indigo-400/30 shadow-[-3px_-3px_10px_rgba(140,165,255,0.12),6px_8px_18px_rgba(0,0,0,0.7),inset_1.5px_1.5px_2px_rgba(255,255,255,0.2)] flex items-center justify-center transform group-hover:scale-105 group-hover:-rotate-3 transition-transform duration-300">
-            <div className="w-9 h-9 rounded-[14px] bg-gradient-to-tr from-purple-600 via-fuchsia-500 to-pink-500 shadow-[0_6px_16px_rgba(168,85,247,0.5),inset_1px_1px_2px_rgba(255,255,255,0.4)] flex items-center justify-center text-white">
-              <Icon className="w-5 h-5 drop-shadow" />
+          <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-[18px] bg-gradient-to-br from-[#272952] to-[#12132d] border-2 border-indigo-400/30 shadow-[-3px_-3px_10px_rgba(140,165,255,0.12),6px_8px_18px_rgba(0,0,0,0.7),inset_1.5px_1.5px_2px_rgba(255,255,255,0.2)] flex items-center justify-center transform group-hover:scale-105 group-hover:-rotate-3 transition-transform duration-300">
+            <div className="w-8 h-8 rounded-[12px] bg-gradient-to-tr from-purple-600 via-fuchsia-500 to-pink-500 shadow-[0_6px_16px_rgba(168,85,247,0.5),inset_1px_1px_2px_rgba(255,255,255,0.4)] flex items-center justify-center text-white">
+              <Icon className="w-4.5 h-4.5 drop-shadow" />
             </div>
           </div>
         </div>
 
         <div className="flex flex-col items-end text-right">
-          <span className={`text-3xl sm:text-4xl font-black font-mono tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] ${colorClass}`}>
+          <span className={`text-2xl sm:text-3xl lg:text-[32px] font-black font-mono tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] ${colorClass}`}>
             {rate.toFixed(2)}{symbol}
           </span>
-          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1 text-right">RATE REALTIME</span>
+          <span className="text-[7.5px] sm:text-[8px] font-black text-slate-400 uppercase tracking-widest mt-0.5 text-right">RATE REALTIME</span>
         </div>
       </div>
 
-      <div className="mt-auto relative z-10">
-        <h3 className="text-sm sm:text-base font-extrabold text-white mb-3 uppercase tracking-tight leading-snug group-hover:text-cyan-300 transition-colors">
+      <div className="mt-1 relative z-10">
+        <h3 className="text-xs sm:text-[13px] lg:text-[14px] font-extrabold text-white mb-2.5 uppercase tracking-tight leading-snug group-hover:text-cyan-300 transition-colors line-clamp-2 min-h-[2.4rem] flex items-center">
           {indicator.title}
         </h3>
         
         {/* Recessed Tray for details */}
-        <div className="bg-[#12132e] rounded-2xl p-3 border border-black/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] flex flex-col gap-2">
+        <div className="bg-[#12132e] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-black/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] flex flex-col gap-2">
           <div className="flex justify-between items-center text-xs">
-            <span className="text-slate-400 font-medium text-[11px]">Status</span>
+            <span className="text-slate-400 font-medium text-[10.5px]">Status</span>
             {count === 0 ? (
-              <span className="text-slate-500 font-bold text-[10px]">Belum ada data</span>
+              <span className="text-slate-500 font-bold text-[9.5px]">Belum ada data</span>
             ) : isSesuai ? (
-              <span className="text-emerald-300 font-black text-[10px] bg-emerald-950/80 border border-emerald-500/40 px-2 py-0.5 rounded-full">Sesuai Standar</span>
+              <span className="text-emerald-300 font-black text-[9.5px] bg-emerald-950/80 border border-emerald-500/40 px-2 py-0.5 rounded-full">Sesuai Standar</span>
             ) : (
-              <span className="text-rose-300 font-black text-[10px] bg-rose-950/80 border border-rose-500/40 px-2 py-0.5 rounded-full">Di Atas Standar</span>
+              <span className="text-rose-300 font-black text-[9.5px] bg-rose-950/80 border border-rose-500/40 px-2 py-0.5 rounded-full">Di Atas Standar</span>
             )}
           </div>
           <div className="flex justify-between items-center text-xs border-t border-white/5 pt-1.5">
-            <span className="text-slate-400 font-medium text-[11px]">Trend (vs sblm)</span>
+            <span className="text-slate-400 font-medium text-[10.5px]">Trend (vs sblm)</span>
             {count === 0 ? (
-              <span className="text-slate-500 font-bold text-[10px]">-</span>
+              <span className="text-slate-500 font-bold text-[9.5px]">-</span>
             ) : trendSame ? (
-              <span className="text-slate-300 font-bold text-[10px]">-</span>
+              <span className="text-slate-300 font-bold text-[9.5px]">-</span>
             ) : trendUp ? (
-              <span className="text-rose-400 font-bold text-[10px] flex items-center gap-1">Naik <Activity className="w-3 h-3" /></span>
+              <span className="text-rose-400 font-bold text-[9.5px] flex items-center gap-1">Naik <Activity className="w-3 h-3" /></span>
             ) : (
-              <span className="text-emerald-400 font-bold text-[10px] flex items-center gap-1">Turun <Activity className="w-3 h-3 rotate-180" /></span>
+              <span className="text-emerald-400 font-bold text-[9.5px] flex items-center gap-1">Turun <Activity className="w-3 h-3 rotate-180" /></span>
             )}
           </div>
           <div className="flex justify-between items-center text-xs border-t border-white/5 pt-1.5">
-            <span className="text-slate-400 font-medium text-[11px]">Total Input</span>
-            <span className="text-white font-bold text-[11px]">{count} Data</span>
+            <span className="text-slate-400 font-medium text-[10.5px]">Total Input</span>
+            <span className="text-white font-bold text-[10.5px]">{count} Data</span>
           </div>
         </div>
       </div>
@@ -318,6 +318,95 @@ const SurveilansSummaryCard = ({ indicator, stats, onClick }: any) => {
 
 
 import { useDashboardStore } from '@/hooks/useDashboardStore';
+
+const CANONICAL_INDICATOR_MAP: Record<string, string> = {
+  // Aliases for Standar
+  'audit_hand_hygiene': 'audit_hand_hygiene',
+  'hand_hygiene': 'audit_hand_hygiene',
+  'audit_apd': 'audit_apd',
+  'apd': 'audit_apd',
+  'audit_dekontaminasi_alat': 'dekontaminasi_alat',
+  'dekontaminasi_alat': 'dekontaminasi_alat',
+  'audit_pengendalian_lingkungan': 'pengendalian_lingkungan',
+  'pengendalian_lingkungan': 'pengendalian_lingkungan',
+  'audit_pengelolaan_limbah_medis': 'pengelolaan_limbah_medis',
+  'pengelolaan_limbah_medis': 'pengelolaan_limbah_medis',
+  'audit_pengelolaan_limbah_tajam': 'pengelolaan_limbah_tajam',
+  'pengelolaan_limbah_tajam': 'pengelolaan_limbah_tajam',
+  'audit_penatalaksanaan_linen': 'penatalaksanaan_linen',
+  'penatalaksanaan_linen': 'penatalaksanaan_linen',
+  'audit_perlindungan_petugas': 'perlindungan_petugas',
+  'perlindungan_petugas': 'perlindungan_petugas',
+  'audit_penempatan_pasien': 'penempatan_pasien',
+  'penempatan_pasien': 'penempatan_pasien',
+  'audit_etika_batuk': 'etika_batuk',
+  'etika_batuk': 'etika_batuk',
+  'audit_penyuntikan_aman': 'penyuntikan_aman',
+  'penyuntikan_aman': 'penyuntikan_aman',
+
+  // Transmisi
+  'monitoring_ppi_ruang_isolasi': 'monitoring_ppi_ruang_isolasi',
+  'audit_monitoring_ppi': 'monitoring_ppi_ruang_isolasi',
+  'monitoring_ruang_isolasi': 'monitoring_ppi_ruang_isolasi',
+  'audit_ruang_isolasi': 'monitoring_ppi_ruang_isolasi',
+  'ruang_isolasi': 'monitoring_ppi_ruang_isolasi',
+  'ppi_ruang_isolasi': 'ppi_ruang_isolasi',
+  'monitoring_airborne': 'monitoring_airborne',
+  'penempatan_pasien_airbone': 'monitoring_airborne',
+  'penempatan_pasien_airborne': 'monitoring_airborne',
+  'monitoring_immuno': 'monitoring_immuno',
+
+  // Monitoring
+  'monitoring_fasilitas_hand_hygiene': 'monitoring_fasilitas_hand_hygiene',
+  'fasilitas_hh': 'monitoring_fasilitas_hand_hygiene',
+  'monitoring_fasilitas_hh': 'monitoring_fasilitas_hand_hygiene',
+  'monitoring_fasilitas_apd': 'monitoring_fasilitas_apd',
+  'fasilitas_apd': 'monitoring_fasilitas_apd',
+  'monitoring_ibs': 'monitoring_ibs',
+  'audit_ruangan_ibs': 'monitoring_ibs',
+  'monitoring_ruangan_ibs': 'monitoring_ibs',
+  'ruangan_ibs': 'monitoring_ibs',
+  'monitoring_cssd': 'monitoring_cssd',
+  'audit_cssd': 'monitoring_cssd',
+  'monitoring_laboratorium': 'monitoring_laboratorium',
+  'audit_laboratorium': 'monitoring_laboratorium',
+  'monitoring_radiologi': 'monitoring_radiologi',
+  'audit_radiologi': 'monitoring_radiologi',
+  'monitoring_farmasi': 'monitoring_farmasi',
+  'audit_farmasi': 'monitoring_farmasi',
+  'monitoring_gizi': 'monitoring_gizi',
+  'audit_gizi': 'monitoring_gizi',
+  'monitoring_jenazah': 'monitoring_jenazah',
+  'audit_jenazah': 'monitoring_jenazah',
+  'monitoring_ambulance': 'monitoring_ambulance',
+  'audit_ambulance': 'monitoring_ambulance',
+  'monitoring_tps': 'monitoring_tps',
+  'audit_tps': 'monitoring_tps',
+  'monitoring_tunggu': 'monitoring_tunggu',
+  'audit_ruang_tunggu': 'monitoring_tunggu',
+  'monitoring_ruang_tunggu': 'monitoring_tunggu',
+
+  // Diklat
+  'diklat_ppi': 'diklat_ppi',
+  'diklat': 'diklat_ppi',
+
+  // Surveilans HAIs
+  'isk': 'isk',
+  'phlebitis': 'phlebitis',
+  'vap': 'vap',
+  'ido': 'ido',
+
+  // Monitoring Bundles
+  'iadp': 'iadp',
+  'cauti': 'cauti',
+  'ido_b': 'ido_b',
+  'vap_b': 'vap_b',
+};
+
+const normalizeIndikatorId = (id: string): string => {
+  if (!id) return id;
+  return CANONICAL_INDICATOR_MAP[id] || id;
+};
 
 export default function ReportsPage() {
   const { reportsData, setReportsData, isReportsLoaded } = useDashboardStore();
@@ -348,13 +437,51 @@ export default function ReportsPage() {
   const [haisStatsMap, setHaisStatsMap] = useState<Map<string, { count: number, num: number, den: number, rate: number, prevRate: number }>>(new Map());
   const [loading, setLoading] = useState(true);
 
+  const { startDateISO, endDateISO, prevPeriodStartISO, prevPeriodEndISO } = useMemo(() => {
+    let start: Date;
+    let end: Date;
+    let prevStart: Date;
+    let prevEnd: Date;
+
+    if (periode === 'Bulanan') {
+      start = new Date(Date.UTC(selectedYear, selectedMonth, 1, 0, 0, 0, 0));
+      end = new Date(Date.UTC(selectedYear, selectedMonth + 1, 0, 23, 59, 59, 999));
+      prevStart = new Date(Date.UTC(selectedYear, selectedMonth - 1, 1, 0, 0, 0, 0));
+      prevEnd = new Date(Date.UTC(selectedYear, selectedMonth, 0, 23, 59, 59, 999));
+    } else if (periode === 'Triwulan') {
+      start = new Date(Date.UTC(selectedYear, selectedQuarter * 3, 1, 0, 0, 0, 0));
+      end = new Date(Date.UTC(selectedYear, (selectedQuarter + 1) * 3, 0, 23, 59, 59, 999));
+      prevStart = new Date(Date.UTC(selectedYear, (selectedQuarter - 1) * 3, 1, 0, 0, 0, 0));
+      prevEnd = new Date(Date.UTC(selectedYear, selectedQuarter * 3, 0, 23, 59, 59, 999));
+    } else if (periode === 'Semester') {
+      start = new Date(Date.UTC(selectedYear, selectedSemester * 6, 1, 0, 0, 0, 0));
+      end = new Date(Date.UTC(selectedYear, (selectedSemester + 1) * 6, 0, 23, 59, 59, 999));
+      prevStart = new Date(Date.UTC(selectedYear, (selectedSemester - 1) * 6, 1, 0, 0, 0, 0));
+      prevEnd = new Date(Date.UTC(selectedYear, selectedSemester * 6, 0, 23, 59, 59, 999));
+    } else { // Tahunan
+      start = new Date(Date.UTC(selectedYear, 0, 1, 0, 0, 0, 0));
+      end = new Date(Date.UTC(selectedYear, 11, 31, 23, 59, 59, 999));
+      prevStart = new Date(Date.UTC(selectedYear - 1, 0, 1, 0, 0, 0, 0));
+      prevEnd = new Date(Date.UTC(selectedYear - 1, 11, 31, 23, 59, 59, 999));
+    }
+
+    return {
+      startDateISO: start.toISOString(),
+      endDateISO: end.toISOString(),
+      prevPeriodStartISO: prevStart.toISOString(),
+      prevPeriodEndISO: prevEnd.toISOString(),
+    };
+  }, [periode, selectedMonth, selectedYear, selectedQuarter, selectedSemester]);
+
   useEffect(() => {
-    if (isReportsLoaded && reportsData && reportsData.statsMap && reportsData.haisStatsMap) {
+    // Only restore cache if startDateISO matches (prevent stale period data)
+    if (isReportsLoaded && reportsData && reportsData.statsMap && reportsData.haisStatsMap
+        && reportsData.startDateISO === startDateISO) {
       setStatsMap(reportsData.statsMap);
       setHaisStatsMap(reportsData.haisStatsMap);
       setLoading(false);
     }
-  }, [isReportsLoaded, reportsData]);
+  }, [isReportsLoaded, reportsData, startDateISO]);
 
   const isInitialMount = useRef(true);
 
@@ -367,92 +494,157 @@ export default function ReportsPage() {
     forceScrollToTop();
   }, [selectedIndicator, kategori, subKategori]);
 
-  const startDateISO = useMemo(() => {
-    if (periode === 'Bulanan') {
-      return new Date(Date.UTC(selectedYear, selectedMonth, 1)).toISOString();
-    }
-    if (periode === 'Triwulan') {
-      return new Date(Date.UTC(selectedYear, selectedQuarter * 3, 1)).toISOString();
-    }
-    if (periode === 'Semester') {
-      return new Date(Date.UTC(selectedYear, selectedSemester * 6, 1)).toISOString();
-    }
-    if (periode === 'Tahunan') {
-      return new Date(Date.UTC(selectedYear, 0, 1)).toISOString();
-    }
-    
-    return new Date().toISOString();
-  }, [periode, selectedMonth, selectedYear, selectedQuarter, selectedSemester]);
-
-  // Calculate previous period for trend comparison
-  const prevPeriodStartISO = useMemo(() => {
-    const d = new Date(startDateISO);
-    if (periode === 'Bulanan') d.setUTCMonth(d.getUTCMonth() - 1);
-    else if (periode === 'Triwulan') d.setUTCMonth(d.getUTCMonth() - 3);
-    else if (periode === 'Semester') d.setUTCMonth(d.getUTCMonth() - 6);
-    else if (periode === 'Tahunan') d.setUTCFullYear(d.getUTCFullYear() - 1);
-    return d.toISOString();
-  }, [startDateISO, periode]);
-
   useEffect(() => {
     const fetchStats = async () => {
       const currentIsLoaded = useDashboardStore.getState().isReportsLoaded;
       if (!currentIsLoaded) setLoading(true);
       try {
-        const [auditRes] = await Promise.all([
-           supabase.from('audit_sessions').select('indikator_id, kategori, persentase, tanggal_waktu, jumlah_patuh, jumlah_dinilai').gte('tanggal_waktu', prevPeriodStartISO)
+        const [auditRes, hhRes, apdRes] = await Promise.all([
+          supabase.from('audit_sessions').select('id, indikator_id, kategori, persentase, tanggal_waktu, created_at, jumlah_patuh, jumlah_dinilai'),
+          supabase.from('audit_hand_hygiene').select('id, start_time, created_at, patuh, peluang, persentase'),
+          supabase.from('audit_apd').select('id, tanggal_waktu, created_at, jumlah_patuh, jumlah_dinilai, persentase')
         ]);
           
-        if (auditRes.data) {
-          const map = new Map<string, { count: number, sum: number, avgPercent: number }>();
-          const hMap = new Map<string, { count: number, num: number, den: number, rate: number, prevRate: number, prevNum: number, prevDen: number }>();
+        const allRows: any[] = auditRes.data ? [...auditRes.data] : [];
+        const seenSessionKeys = new Set(allRows.map(r => `${r.id}_${normalizeIndikatorId(r.indikator_id)}`));
 
-          auditRes.data.forEach((row: any) => {
-             const key = row.indikator_id;
-
-             // HAIs stats
-             if (row.kategori === 'Surveilans HAIs' && ['isk', 'phlebitis', 'vap', 'ido'].includes(key)) {
-                if (!hMap.has(key)) hMap.set(key, { count: 0, num: 0, den: 0, rate: 0, prevRate: 0, prevNum: 0, prevDen: 0 });
-                const entry = hMap.get(key)!;
-                if (row.tanggal_waktu >= startDateISO) {
-                   entry.count += 1;
-                   entry.num += (row.jumlah_patuh || 0);
-                   entry.den += (row.jumlah_dinilai || 0);
-                } else {
-                   entry.prevNum += (row.jumlah_patuh || 0);
-                   entry.prevDen += (row.jumlah_dinilai || 0);
-                }
-             }
-
-             // General stats
-             if (row.tanggal_waktu >= startDateISO) {
-                 if (!map.has(key)) map.set(key, { count: 0, sum: 0, avgPercent: 0 });
-                 const entry = map.get(key)!;
-                 entry.count += 1;
-                 entry.sum += (key === 'etika_batuk' ? 100 : (row.persentase || 0));
-             }
+        if (hhRes.data) {
+          hhRes.data.forEach((hh: any) => {
+            const key = `${hh.id}_audit_hand_hygiene`;
+            if (!seenSessionKeys.has(key)) {
+              allRows.push({
+                id: hh.id,
+                indikator_id: 'audit_hand_hygiene',
+                kategori: 'Kewaspadaan Isolasi',
+                tanggal_waktu: hh.start_time || hh.created_at,
+                jumlah_patuh: hh.patuh,
+                jumlah_dinilai: hh.peluang,
+                persentase: hh.persentase,
+              });
+              seenSessionKeys.add(key);
+            }
           });
-          
-          for (let [key, val] of Array.from(map.entries())) {
-             val.avgPercent = val.count > 0 ? (val.sum / val.count) : 0;
-          }
-          setStatsMap(map);
-
-          for (let [key, val] of Array.from(hMap.entries())) {
-             const mult = key === 'ido' ? 100 : 1000;
-             val.rate = val.den > 0 ? (val.num / val.den) * mult : 0;
-             val.prevRate = val.prevDen > 0 ? (val.prevNum / val.prevDen) * mult : 0;
-          }
-          setHaisStatsMap(hMap);
-          
-          setReportsData({ statsMap: map, haisStatsMap: hMap, startDateISO });
-        } else {
-          const map = new Map();
-          const hMap = new Map();
-          setStatsMap(map);
-          setHaisStatsMap(hMap);
-          setReportsData({ statsMap: map, haisStatsMap: hMap, startDateISO });
         }
+
+        if (apdRes.data) {
+          apdRes.data.forEach((apd: any) => {
+            const key = `${apd.id}_audit_apd`;
+            const altKey = `apd-${apd.id}_audit_apd`;
+            if (!seenSessionKeys.has(key) && !seenSessionKeys.has(altKey)) {
+              allRows.push({
+                id: apd.id,
+                indikator_id: 'audit_apd',
+                kategori: 'Kewaspadaan Isolasi',
+                tanggal_waktu: apd.tanggal_waktu || apd.created_at,
+                jumlah_patuh: apd.jumlah_patuh,
+                jumlah_dinilai: apd.jumlah_dinilai,
+                persentase: apd.persentase,
+              });
+              seenSessionKeys.add(key);
+            }
+          });
+        }
+
+        const isDateInPeriod = (dateStr: string, isCurrentPeriod: boolean) => {
+          if (!dateStr) return false;
+          const d = new Date(dateStr);
+          if (isNaN(d.getTime())) return false;
+
+          let targetYear = selectedYear;
+          let targetMonth = selectedMonth;
+          let targetQuarter = selectedQuarter;
+          let targetSemester = selectedSemester;
+
+          if (!isCurrentPeriod) {
+            if (periode === 'Bulanan') {
+              if (targetMonth === 0) { targetMonth = 11; targetYear--; }
+              else { targetMonth--; }
+            } else if (periode === 'Triwulan') {
+              if (targetQuarter === 0) { targetQuarter = 3; targetYear--; }
+              else { targetQuarter--; }
+            } else if (periode === 'Semester') {
+              if (targetSemester === 0) { targetSemester = 1; targetYear--; }
+              else { targetSemester--; }
+            } else {
+              targetYear--;
+            }
+          }
+
+          if (d.getFullYear() !== targetYear) return false;
+          if (periode === 'Bulanan') return d.getMonth() === targetMonth;
+          if (periode === 'Triwulan') return Math.floor(d.getMonth() / 3) === targetQuarter;
+          if (periode === 'Semester') return Math.floor(d.getMonth() / 6) === targetSemester;
+          return true; // Tahunan
+        };
+
+        const map = new Map<string, { count: number, sum: number, avgPercent: number, totalPatuh: number, totalDinilai: number }>();
+        const hMap = new Map<string, { count: number, num: number, den: number, rate: number, prevRate: number, prevNum: number, prevDen: number }>();
+
+        allRows.forEach((row: any) => {
+           const key = normalizeIndikatorId(row.indikator_id);
+           const rowDate = row.tanggal_waktu || row.created_at;
+           const isCurrent = isDateInPeriod(rowDate, true);
+           const isPrev = isDateInPeriod(rowDate, false);
+
+           const numPatuh = row.jumlah_patuh != null && !isNaN(Number(row.jumlah_patuh)) ? Number(row.jumlah_patuh) : null;
+           const numDinilai = row.jumlah_dinilai != null && !isNaN(Number(row.jumlah_dinilai)) ? Number(row.jumlah_dinilai) : null;
+           const numPersen = row.persentase != null && !isNaN(Number(row.persentase)) ? Number(row.persentase) : null;
+
+           // HAIs stats
+           if ((row.kategori === 'Surveilans HAIs' || ['isk', 'phlebitis', 'vap', 'ido'].includes(key)) && ['isk', 'phlebitis', 'vap', 'ido'].includes(key)) {
+              if (!hMap.has(key)) hMap.set(key, { count: 0, num: 0, den: 0, rate: 0, prevRate: 0, prevNum: 0, prevDen: 0 });
+              const entry = hMap.get(key)!;
+              if (isCurrent) {
+                 entry.count += 1;
+                 entry.num += (numPatuh || 0);
+                 entry.den += (numDinilai || 0);
+              } else if (isPrev) {
+                 entry.prevNum += (numPatuh || 0);
+                 entry.prevDen += (numDinilai || 0);
+              }
+           }
+
+           // General stats
+           if (isCurrent) {
+               if (!map.has(key)) map.set(key, { count: 0, sum: 0, avgPercent: 0, totalPatuh: 0, totalDinilai: 0 });
+               const entry = map.get(key)!;
+               entry.count += 1;
+               
+               if (numPatuh !== null && numDinilai !== null && numDinilai > 0) {
+                 entry.totalPatuh += numPatuh;
+                 entry.totalDinilai += numDinilai;
+                 entry.sum += (numPatuh / numDinilai) * 100;
+               } else if (numPersen !== null) {
+                 entry.sum += numPersen;
+                 entry.totalPatuh += (numPersen >= 85 ? 1 : 0);
+                 entry.totalDinilai += 1;
+               } else if (key === 'etika_batuk') {
+                 entry.sum += 100;
+                 entry.totalPatuh += 1;
+                 entry.totalDinilai += 1;
+               }
+           }
+        });
+        
+        for (let [key, val] of Array.from(map.entries())) {
+           if (val.totalDinilai > 0) {
+             val.avgPercent = Math.round((val.totalPatuh / val.totalDinilai) * 100);
+           } else if (val.count > 0) {
+             val.avgPercent = Math.round(val.sum / val.count);
+           } else {
+             val.avgPercent = 0;
+           }
+        }
+        setStatsMap(map);
+
+        for (let [key, val] of Array.from(hMap.entries())) {
+           const mult = key === 'ido' ? 100 : 1000;
+           val.rate = val.den > 0 ? Number(((val.num / val.den) * mult).toFixed(2)) : 0;
+           val.prevRate = val.prevDen > 0 ? Number(((val.prevNum / val.prevDen) * mult).toFixed(2)) : 0;
+        }
+        setHaisStatsMap(hMap);
+        
+        setReportsData({ statsMap: map, haisStatsMap: hMap, startDateISO });
 
       } catch (e) {
         console.error(e);
@@ -466,11 +658,33 @@ export default function ReportsPage() {
     const channelAudit = supabase.channel('audit_sessions_changes_rep')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_sessions' }, fetchStats)
       .subscribe();
+
+    const channelHH = supabase.channel('audit_hh_changes_rep')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_hand_hygiene' }, fetchStats)
+      .subscribe();
+
+    const channelAPD = supabase.channel('audit_apd_changes_rep')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_apd' }, fetchStats)
+      .subscribe();
+
+    const handleWindowMessage = (e: MessageEvent) => {
+      if (e.data && (e.data.type === "audit_submitted" || e.data.type === "AUDIT_SUBMITTED")) {
+        fetchStats();
+      }
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("message", handleWindowMessage);
+    }
       
     return () => {
       supabase.removeChannel(channelAudit);
+      supabase.removeChannel(channelHH);
+      supabase.removeChannel(channelAPD);
+      if (typeof window !== "undefined") {
+        window.removeEventListener("message", handleWindowMessage);
+      }
     };
-  }, [startDateISO, prevPeriodStartISO, setReportsData]);
+  }, [periode, selectedMonth, selectedYear, selectedQuarter, selectedSemester, startDateISO, setReportsData]);
 
   // Compute displayed indicators based on category/subcategory
   const displayedIndicators = useMemo(() => {
@@ -495,7 +709,6 @@ export default function ReportsPage() {
 
   return (
     <div className="max-w-[1600px] mx-auto pb-32 relative space-y-4 sm:space-y-6">
-      
       {/* Top Page Header Banner - Identik dengan Layout Menu Dashboard */}
       <div className="flex flex-col items-center justify-between gap-4 mb-2 landscape:lg:flex-row landscape:lg:items-center">
         <div className="text-center landscape:lg:text-left w-full landscape:lg:w-auto">
@@ -622,7 +835,7 @@ export default function ReportsPage() {
         {!selectedIndicator && (
           <motion.div key="hub" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16, scale: 0.98 }} onAnimationComplete={forceScrollToTop} className="space-y-8">
             {/* Navigation Filter Kategori & Sub */}
-            <div id="smart-ppi-category-cards" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div id="smart-ppi-category-cards" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4.5 lg:gap-5">
               {CATEGORY_DETAILS.map(detail => {
                 const isActive = kategori === detail.id;
                 const Icon = detail.icon;
@@ -631,10 +844,10 @@ export default function ReportsPage() {
                   <motion.div
                     key={detail.id}
                     id={`cat-card-${detail.id.toLowerCase().replace(/\s+/g, '-')}`}
-                    whileHover={{ y: -5, scale: 1.02 }}
+                    whileHover={{ y: -4, scale: 1.015 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => handleCategoryChange(detail.id)}
-                    className={`relative rounded-[24px] sm:rounded-[28px] p-5 sm:p-6 border transition-all duration-300 transform-gpu overflow-hidden cursor-pointer select-none flex flex-col justify-between min-h-[160px] shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] ${
+                    className={`relative rounded-[22px] sm:rounded-[26px] p-4.5 sm:p-5 lg:p-5.5 border transition-all duration-300 transform-gpu overflow-hidden cursor-pointer select-none flex flex-col justify-between min-h-[145px] sm:min-h-[155px] shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] ${
                       isActive 
                         ? `bg-[#1c1e48] border-cyan-400/50 shadow-[-6px_-6px_20px_rgba(140,165,255,0.12),12px_16px_36px_rgba(0,0,0,0.85),inset_1px_1px_2px_rgba(255,255,255,0.25)] ring-1 ring-cyan-400/30` 
                         : `bg-[#18193b] hover:bg-[#1f214d] border-[#2b2d56]`
@@ -644,23 +857,23 @@ export default function ReportsPage() {
                     <div className="absolute top-0 inset-x-6 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
                     <div className="flex items-start justify-between relative z-10">
-                      <div className="flex flex-col gap-1 pr-3">
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-2xl filter drop-shadow">{detail.emoji}</span>
-                          <h3 className={`text-[20px] font-black tracking-tight leading-snug ${
+                      <div className="flex flex-col gap-1 pr-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl sm:text-2xl filter drop-shadow">{detail.emoji}</span>
+                          <h3 className={`text-[17px] sm:text-[18px] lg:text-[19px] font-black tracking-tight leading-snug ${
                             isActive ? 'text-cyan-300' : 'text-white'
                           }`}>
                             {detail.title}
                           </h3>
                         </div>
-                        <p className="text-[10px] sm:text-xs leading-relaxed mt-1 font-medium text-slate-300">
+                        <p className="text-[10px] sm:text-[11px] leading-relaxed mt-0.5 font-medium text-slate-300">
                           {detail.subtitle}
                         </p>
                       </div>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between relative z-10">
-                      <span className={`text-[10px] sm:text-[11px] font-black uppercase tracking-wider ${
+                    <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between relative z-10">
+                      <span className={`text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider ${
                         isActive ? 'text-emerald-400' : 'text-slate-400'
                       }`}>
                         {detail.statistic}
@@ -747,9 +960,9 @@ export default function ReportsPage() {
             </AnimatePresence>
 
             {/* Indicator Grid or Unified Report */}
-            <div className="pt-4">
+            <div className="pt-2 sm:pt-4">
               {isCategoryTransitioning || loading ? (
-                <div id="reports-skeleton-container" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div id="reports-skeleton-container" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
                   {[1, 2, 3, 4, 5, 6, 7, 8].map(n => (
                     <div key={n} id={`skeleton-indicator-${n}`} className="h-56 bg-white/50 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 rounded-3xl p-6 flex flex-col justify-between animate-pulse">
                       <div className="flex justify-between items-start">
@@ -768,7 +981,20 @@ export default function ReportsPage() {
                   ))}
                 </div>
               ) : kategori === 'Surveilans HAIs' ? (
-                 <UnifiedSurveilansHaisReport />
+                 <UnifiedSurveilansHaisReport
+                   externalPeriode={{
+                     periodeType: periode,
+                     setPeriodeType: setPeriode,
+                     selectedMonth,
+                     setSelectedMonth,
+                     selectedYear,
+                     setSelectedYear,
+                     selectedQuarter,
+                     setSelectedQuarter,
+                     selectedSemester,
+                     setSelectedSemester,
+                   }}
+                 />
               ) : displayedIndicators.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-20 text-center bg-white/50 dark:bg-[#111827]/50 rounded-3xl border border-slate-200 dark:border-white/5">
                   <Filter className="w-12 h-12 text-slate-400 dark:text-slate-600 mb-4" />
@@ -778,7 +1004,7 @@ export default function ReportsPage() {
               ) : (
                 <motion.div 
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6"
                 >
                   {displayedIndicators.map((ind, idx) => (
                     <motion.div

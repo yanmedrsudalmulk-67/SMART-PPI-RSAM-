@@ -128,10 +128,67 @@ export default function InputIndexPage() {
 
   const fetchSessions = async () => {
     try {
-      const { data, error } = await supabase.from("audit_sessions").select("*");
-      if (!error && data) {
-        setSessions(data);
+      const [sessionsRes, hhRes, apdRes] = await Promise.all([
+        supabase.from("audit_sessions").select("*"),
+        supabase.from("audit_hand_hygiene").select("*"),
+        supabase.from("audit_apd").select("*"),
+      ]);
+
+      const sessionList: any[] = sessionsRes.data
+        ? sessionsRes.data.map((s: any) => ({
+            ...s,
+            jumlah_dinilai: Number(s.jumlah_dinilai) || 0,
+            jumlah_patuh: Number(s.jumlah_patuh) || 0,
+            persentase: Number(s.persentase) || 0,
+          }))
+        : [];
+      const sessionIds = new Set(sessionList.map((s) => s.id));
+
+      if (hhRes.data) {
+        hhRes.data.forEach((hh: any) => {
+          if (!sessionIds.has(hh.id)) {
+            sessionList.push({
+              id: hh.id,
+              created_at: hh.created_at,
+              tanggal_waktu: hh.start_time || hh.created_at,
+              indikator_id: "audit_hand_hygiene",
+              nama_indikator: "AUDIT KEBERSIHAN TANGAN",
+              kategori: "Kewaspadaan Isolasi",
+              persentase: Number(hh.persentase) || 0,
+              jumlah_patuh: Number(hh.patuh) || 0,
+              jumlah_dinilai: Number(hh.peluang) || 0,
+              unit: hh.unit,
+              observer: hh.observer,
+              profesi: hh.profesi,
+            });
+            sessionIds.add(hh.id);
+          }
+        });
       }
+
+      if (apdRes.data) {
+        apdRes.data.forEach((apd: any) => {
+          if (!sessionIds.has(apd.id)) {
+            sessionList.push({
+              id: apd.id,
+              created_at: apd.created_at,
+              tanggal_waktu: apd.tanggal_waktu || apd.created_at,
+              indikator_id: "audit_apd",
+              nama_indikator: "AUDIT APD",
+              kategori: "Kewaspadaan Isolasi",
+              persentase: Number(apd.persentase) || 0,
+              jumlah_patuh: Number(apd.jumlah_patuh) || 0,
+              jumlah_dinilai: Number(apd.jumlah_dinilai) || 0,
+              unit: apd.unit_ruangan || apd.unit,
+              observer: apd.observer,
+              profesi: apd.profesi,
+            });
+            sessionIds.add(apd.id);
+          }
+        });
+      }
+
+      setSessions(sessionList);
     } catch (err) {
       console.error(err);
     } finally {
@@ -141,19 +198,54 @@ export default function InputIndexPage() {
 
   useEffect(() => {
     fetchSessions();
-    const chan = supabase
-      .channel("audit_sessions_changes")
+    const todayStr = new Date().toISOString().slice(0, 10);
+    fetch(`/api/simrs/hais?startDate=2026-01-01&endDate=${todayStr}&autoSync=true`)
+      .then(() => fetchSessions())
+      .catch(() => {});
+
+    const chanSessions = supabase
+      .channel("audit_sessions_changes_input")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "audit_sessions" },
-        () => {
-          // Debounce or fetch straight away for realtime
-          fetchSessions();
-        },
+        () => fetchSessions(),
       )
       .subscribe();
+
+    const chanHH = supabase
+      .channel("audit_hh_changes_input")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "audit_hand_hygiene" },
+        () => fetchSessions(),
+      )
+      .subscribe();
+
+    const chanAPD = supabase
+      .channel("audit_apd_changes_input")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "audit_apd" },
+        () => fetchSessions(),
+      )
+      .subscribe();
+
+    const handleWindowMessage = (e: MessageEvent) => {
+      if (e.data && (e.data.type === "audit_submitted" || e.data.type === "AUDIT_SUBMITTED")) {
+        fetchSessions();
+      }
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("message", handleWindowMessage);
+    }
+
     return () => {
-      supabase.removeChannel(chan);
+      supabase.removeChannel(chanSessions);
+      supabase.removeChannel(chanHH);
+      supabase.removeChannel(chanAPD);
+      if (typeof window !== "undefined") {
+        window.removeEventListener("message", handleWindowMessage);
+      }
     };
   }, []);
 
@@ -239,18 +331,18 @@ export default function InputIndexPage() {
         indIds.some((id) => d.indikator_id?.includes(id)),
       );
       const totalDinilai = filtered.reduce(
-        (acc, curr) => acc + (curr.jumlah_dinilai || 0),
+        (acc, curr) => acc + (Number(curr.jumlah_dinilai) || 0),
         0,
       );
       const totalPatuh = filtered.reduce(
-        (acc, curr) => acc + (curr.jumlah_patuh || 0),
+        (acc, curr) => acc + (Number(curr.jumlah_patuh) || 0),
         0,
       );
       const persentase =
         totalDinilai > 0 ? (totalPatuh / totalDinilai) * 100 : 0;
       const avgPersentase =
         filtered.length > 0
-          ? filtered.reduce((acc, curr) => acc + (curr.persentase || 0), 0) /
+          ? filtered.reduce((acc, curr) => acc + (Number(curr.persentase) || 0), 0) /
             filtered.length
           : 0;
       return {
@@ -310,7 +402,9 @@ export default function InputIndexPage() {
             const monitoringSet = new Set(data.filter(d => monitoringIds.some(id => d.indikator_id?.includes(id))).map(d => monitoringIds.find(id => d.indikator_id?.includes(id))));
             
             const standarSize = Math.min(standarSet.size, 10);
-            const totalFilled = standarSize + transmisiSet.size + monitoringSet.size;
+            const transmisiSize = Math.min(transmisiSet.size, 4);
+            const monitoringSize = Math.min(monitoringSet.size, 12);
+            const totalFilled = standarSize + transmisiSize + monitoringSize;
             const totalExpected = 10 + 4 + 12; // 26
             
             return {
@@ -320,19 +414,19 @@ export default function InputIndexPage() {
                 persentase: (totalFilled / totalExpected) * 100,
                 avgPersentase: 0,
                 standarFilled: standarSize,
-                transmisiFilled: transmisiSet.size,
-                monitoringFilled: monitoringSet.size,
+                transmisiFilled: transmisiSize,
+                monitoringFilled: monitoringSize,
             };
         };
 
         curr = calcIso(currSessions);
         prev = calcIso(prevSessions);
       } else if (mod.id === "surveilans-hais") {
-        curr = calculateStats(currSessions, ["surveilans"]);
-        prev = calculateStats(prevSessions, ["surveilans"]);
+        curr = calculateStats(currSessions, ["surveilans", "isk", "phlebitis", "vap", "ido"]);
+        prev = calculateStats(prevSessions, ["surveilans", "isk", "phlebitis", "vap", "ido"]);
       } else if (mod.id === "bundles-hais") {
-        curr = calculateStats(currSessions, ["bundles"]);
-        prev = calculateStats(prevSessions, ["bundles"]);
+        curr = calculateStats(currSessions, ["bundle", "iadp", "cauti", "ido_b", "vap_b"]);
+        prev = calculateStats(prevSessions, ["bundle", "iadp", "cauti", "ido_b", "vap_b"]);
       } else if (mod.id === "diklat") {
         curr = calculateStats(currSessions, ["diklat"]);
         prev = calculateStats(prevSessions, ["diklat"]);
@@ -353,13 +447,14 @@ export default function InputIndexPage() {
         valLabel = "TERPENUHI";
         isTerpenuhi = curr.totalPatuh >= curr.totalDinilai;
       } else if (mod.id === "surveilans-hais") {
-        finalPersentase = curr.avgPersentase;
-        finalPrevPersentase = prev.avgPersentase;
+        finalPersentase = curr.persentase;
+        finalPrevPersentase = prev.persentase;
         diff = finalPersentase - finalPrevPersentase;
         valLabel = "RATE";
         statCountLabel = "Tindakan";
         statPatuhLabel = "Insiden HAIs";
-        statPatuhVal = (curr.totalDinilai - curr.totalPatuh).toString(); // total dinilai - patuh is insiden count
+        statCountVal = Number(curr.totalDinilai || 0).toLocaleString("id-ID");
+        statPatuhVal = Number(curr.totalPatuh || 0).toLocaleString("id-ID");
       } else if (mod.id === "diklat") {
         // Diklat PPI => Kegiatan
         finalPersentase = curr.records > 0 ? 100 : 0; // If any activities, 100% terlaksana? Just fallback logic
@@ -383,7 +478,7 @@ export default function InputIndexPage() {
       }
 
       const isTrendUp = diff > 0;
-      const trendText = `${Math.abs(diff).toFixed(1)}% dari sebelumnya`;
+      const trendText = `${Math.abs(Number(diff)).toFixed(2)}% dari sebelumnya`;
       const passStandard =
         mod.operator === ">="
           ? finalPersentase >= mod.standard
@@ -402,11 +497,11 @@ export default function InputIndexPage() {
       }
 
       // Format count text
-      let mainCount = curr.totalDinilai.toString();
+      let mainCount = Number(curr.totalDinilai || 0).toLocaleString("id-ID");
       if (mod.id === "kewaspadaan-isolasi")
         mainCount = curr.totalPatuh.toString();
       if (mod.id === "surveilans-hais")
-        mainCount = (curr.totalDinilai - curr.totalPatuh).toString();
+        mainCount = Number(finalPersentase || 0).toFixed(2);
       if (mod.id === "diklat") mainCount = curr.records.toString();
 
       let subStatsArray = [
@@ -426,7 +521,7 @@ export default function InputIndexPage() {
         },
         {
           label: "Trend",
-          value: `${diff > 0 ? "+" : ""}${diff.toFixed(1)}%`,
+          value: `${diff > 0 ? "+" : ""}${Number(diff).toFixed(2)}%`,
           icon: isTrendUp ? TrendingUp : TrendingDown,
           iconColor: mod.colorTheme.colIconBox,
         },
@@ -459,9 +554,11 @@ export default function InputIndexPage() {
         ...mod,
         passStandard: mod.id === "kewaspadaan-isolasi" ? isTerpenuhi : passStandard,
         computed: {
-          standardLabel: mod.id === "kewaspadaan-isolasi" ? (isTerpenuhi ? "SUDAH TERPENUHI" : "BELUM TERPENUHI") : (passStandard ? "DI ATAS STANDAR" : "DI BAWAH STANDAR"),
+          standardLabel: mod.id === "kewaspadaan-isolasi" 
+            ? (isTerpenuhi ? "SUDAH TERPENUHI" : "BELUM TERPENUHI") 
+            : (passStandard ? (mod.operator === "<=" ? "SESUAI STANDAR" : "DI ATAS STANDAR") : (mod.operator === "<=" ? "MELEBIHI STANDAR" : "DI BAWAH STANDAR")),
           mainCount,
-          mainLabel: `${finalPersentase.toFixed(1)}% ${valLabel}`,
+          mainLabel: mod.id === "surveilans-hais" ? "% RATE" : `${Number(finalPersentase).toFixed(2)}% ${valLabel}`,
           trendUp: isTrendUp,
           trendColor:
             mod.id === "surveilans-hais"
@@ -694,7 +791,7 @@ export default function InputIndexPage() {
                 <div className="flex justify-between items-center mb-1.5 px-0.5 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
                   <span>Progress Realtime</span>
                   <span className="text-slate-300 font-semibold">
-                    {Math.round(mod.computed.progress)}%
+                    {Number(mod.computed.progress).toFixed(2)}%
                   </span>
                 </div>
                 <div className="h-2.5 w-full bg-[#0d0f22] rounded-full overflow-hidden p-[1px] border border-white/5 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.85),inset_-1px_-1px_2px_rgba(255,255,255,0.06)]">

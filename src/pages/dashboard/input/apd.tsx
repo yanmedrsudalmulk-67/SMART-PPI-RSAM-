@@ -153,102 +153,175 @@ export default function InputApdPage() {
       const params = new URLSearchParams(window.location.search);
       const id = params.get("id");
       const mode = params.get("mode");
+      const paramObserver = params.get("observer") || "";
+      const paramUnit = params.get("unit") || "";
+      const paramProfesi = params.get("profesi") || "";
+      const paramTime = params.get("time") || "";
+      const paramTindakan = params.get("tindakan") || "";
+
+      let sessionStored: any = null;
+      try {
+        const raw = sessionStorage.getItem("smartppi_edit_apd");
+        if (raw) sessionStored = JSON.parse(raw);
+      } catch (e) {}
+
+      // Prioritas 1: Ambil langsung dari parameter URL atau sessionStorage agar input langsung terisi instan tanpa delay!
+      const initObserver = paramObserver || sessionStored?.observer || "";
+      const initUnit = paramUnit || sessionStored?.unit || "";
+      const initProfesi = paramProfesi || sessionStored?.profesi || "";
+      const initTimeStr = paramTime || sessionStored?.tanggal_waktu || sessionStored?.end_time || sessionStored?.start_time || "";
+      const initTindakan = paramTindakan || sessionStored?.tindakan || "";
+
+      if (initObserver) setObserver(initObserver);
+      if (initUnit) setUnit(initUnit);
+      if (initProfesi) setProfesi(initProfesi);
+
+      if (initTimeStr) {
+        try {
+          const parsed = new Date(initTimeStr);
+          if (!isNaN(parsed.getTime())) {
+            setStartTime(parsed);
+          } else {
+            setStartTime(d);
+          }
+        } catch (_) {
+          setStartTime(d);
+        }
+      } else {
+        setStartTime(d);
+      }
+
+      if (initTindakan) {
+        setTindakan(initTindakan);
+        if (listTindakanOptions.includes(initTindakan)) {
+          setTindakanOption(initTindakan);
+          setCustomTindakan("");
+        } else {
+          setTindakanOption("Lainnya");
+          setCustomTindakan(initTindakan);
+        }
+      }
+
+      if (sessionStored) {
+        const hasApd = sessionStored.masker !== undefined && sessionStored.masker !== null;
+        if (hasApd) {
+          setApdData({
+            masker: sessionStored.masker || null,
+            sarung_tangan: sessionStored.sarung_tangan || null,
+            penutup_kepala: sessionStored.penutup_kepala || null,
+            apron: sessionStored.apron || null,
+            goggle: sessionStored.goggle || null,
+            sepatu_boot: sessionStored.sepatu_boot || null,
+            gaun_pelindung: sessionStored.gaun_pelindung || null,
+          });
+        }
+        if (sessionStored.upaya_perbaikan) setUpayaPerbaikan(sessionStored.upaya_perbaikan);
+        if (sessionStored.waktu_perbaikan) setWaktuPerbaikan(sessionStored.waktu_perbaikan);
+        if (sessionStored.foto_perbaikan) {
+          const pArr = Array.isArray(sessionStored.foto_perbaikan) ? sessionStored.foto_perbaikan : [sessionStored.foto_perbaikan];
+          setPerbaikanImages(pArr.map((url: string) => (typeof url === 'string' ? { url } : url)));
+        }
+      }
+
       if (id && mode === "edit") {
         setIsEditMode(true);
         setEditId(id);
         const loadEditData = async () => {
-          // 1. Ambil data sesi audit
-          const { data: sessionData } = await supabase
-            .from("audit_sessions")
-            .select("*")
-            .eq("id", id)
-            .maybeSingle();
+          try {
+            // 1. Ambil data sesi audit
+            const { data: sessionData } = await supabase
+              .from("audit_sessions")
+              .select("*")
+              .eq("id", id)
+              .maybeSingle();
 
-          // 2. Ambil data spesifik audit_apd jika ada
-          const { data: apdDataRes } = await supabase
-            .from("audit_apd")
-            .select("*")
-            .eq("id", id)
-            .maybeSingle();
+            // 2. Ambil data spesifik audit_apd jika ada
+            const { data: apdDataRes } = await supabase
+              .from("audit_apd")
+              .select("*")
+              .eq("id", id)
+              .maybeSingle();
 
-          // 3. Ambil data audit_hand_hygiene jika sesi berasal dari HH
-          let hhDataRes: any = null;
-          if (!sessionData && !apdDataRes) {
+            // 3. Ambil data audit_hand_hygiene jika sesi berasal dari HH
             const { data: hhNative } = await supabase
               .from("audit_hand_hygiene")
               .select("*")
               .eq("id", id)
               .maybeSingle();
-            hhDataRes = hhNative;
-          }
 
-          // 4. Cari juga jika ada sesi APD terhubung dengan hh_id
-          let apdSessionData: any = null;
-          if (sessionData?.indikator_id === "audit_hand_hygiene") {
-            const { data: linkedApdSession } = await supabase
-              .from("audit_sessions")
-              .select("*")
-              .eq("indikator_id", "audit_apd")
-              .filter("data_indikator->>hh_id", "eq", id)
-              .maybeSingle();
-            apdSessionData = linkedApdSession;
-          }
-
-          const rawJson = apdDataRes?.data_indikator || apdSessionData?.data_indikator || sessionData?.data_indikator || sessionData?.checklist_json || {};
-          const indicatorsData = typeof rawJson === "string" ? (() => { try { return JSON.parse(rawJson); } catch { return {}; } })() : rawJson;
-
-          // Observer, Unit, Profesi (Otomatis muncul dari Kepatuhan Kebersihan Tangan atau APD)
-          const loadedObserver = apdDataRes?.observer || apdSessionData?.observer || sessionData?.observer || hhDataRes?.observer || "";
-          const loadedUnit = apdDataRes?.unit || apdSessionData?.unit || sessionData?.unit || hhDataRes?.unit || "";
-          const loadedProfesi = apdDataRes?.profesi || apdSessionData?.profesi || sessionData?.profesi || hhDataRes?.profesi || "";
-
-          if (loadedObserver) setObserver(loadedObserver);
-          if (loadedUnit) setUnit(loadedUnit);
-          if (loadedProfesi) setProfesi(loadedProfesi);
-
-          // Waktu: otomatis dimunculkan waktu selesai dari Kepatuhan Kebersihan Tangan
-          const waktuSelesaiStr = apdDataRes?.tanggal_waktu || apdSessionData?.tanggal_waktu || indicatorsData.waktu_selesai || indicatorsData.end_time || hhDataRes?.end_time || sessionData?.tanggal_waktu || hhDataRes?.start_time;
-          if (waktuSelesaiStr) {
-            try {
-              const parsed = new Date(waktuSelesaiStr);
-              if (!isNaN(parsed.getTime())) setStartTime(parsed);
-            } catch (_) {}
-          }
-
-          // Tindakan: jika sudah pernah diisi, otomatis muncul
-          const tindakanVal = apdDataRes?.tindakan || apdSessionData?.jenis_tindakan || sessionData?.jenis_tindakan || indicatorsData.tindakan || "";
-          if (tindakanVal) {
-            setTindakan(tindakanVal);
-            if (listTindakanOptions.includes(tindakanVal)) {
-              setTindakanOption(tindakanVal);
-              setCustomTindakan("");
-            } else {
-              setTindakanOption("Lainnya");
-              setCustomTindakan(tindakanVal);
+            // 4. Cari juga jika ada sesi APD dengan id terhubung
+            let apdSessionData: any = null;
+            if (sessionData?.indikator_id === "audit_hand_hygiene" || sessionData?.indikator_id === "hand_hygiene") {
+              const { data: linkedApdSession } = await supabase
+                .from("audit_sessions")
+                .select("*")
+                .eq("id", `apd-${id}`)
+                .maybeSingle();
+              apdSessionData = linkedApdSession;
             }
-          }
 
-          // APD yang digunakan
-          setApdData({
-            masker: apdDataRes?.masker || apdSessionData?.masker || indicatorsData.masker || null,
-            sarung_tangan: apdDataRes?.sarung_tangan || apdSessionData?.sarung_tangan || indicatorsData.sarung_tangan || null,
-            penutup_kepala: apdDataRes?.penutup_kepala || apdSessionData?.penutup_kepala || indicatorsData.penutup_kepala || null,
-            apron: apdDataRes?.apron || apdSessionData?.apron || indicatorsData.apron || null,
-            goggle: apdDataRes?.goggle || apdSessionData?.goggle || indicatorsData.goggle || null,
-            sepatu_boot: apdDataRes?.sepatu_boot || apdSessionData?.sepatu_boot || indicatorsData.sepatu_boot || null,
-            gaun_pelindung: apdDataRes?.gaun_pelindung || apdSessionData?.gaun_pelindung || indicatorsData.gaun_pelindung || null,
-          });
+            const rawJson = apdDataRes?.data_indikator || apdSessionData?.data_indikator || sessionData?.data_indikator || sessionData?.checklist_json || {};
+            const indicatorsData = typeof rawJson === "string" ? (() => { try { return JSON.parse(rawJson); } catch { return {}; } })() : rawJson;
 
-          const upaya = indicatorsData.upaya_perbaikan || indicatorsData.upayaPerbaikan || apdDataRes?.upaya_perbaikan || "";
-          if (upaya) setUpayaPerbaikan(upaya);
+            // Observer, Unit, Profesi (Otomatis muncul dari Kepatuhan Kebersihan Tangan atau APD)
+            const loadedObserver = apdDataRes?.observer || apdSessionData?.observer || sessionData?.observer || hhNative?.observer || "";
+            const loadedUnit = apdDataRes?.unit || apdDataRes?.ruangan || apdSessionData?.unit || sessionData?.unit || hhNative?.unit || "";
+            const loadedProfesi = apdDataRes?.profesi || apdSessionData?.profesi || sessionData?.profesi || hhNative?.profesi || "";
 
-          const waktuPerb = indicatorsData.waktu_perbaikan || indicatorsData.tanggal_perbaikan || apdDataRes?.waktu_perbaikan || "";
-          if (waktuPerb) setWaktuPerbaikan(waktuPerb);
+            if (loadedObserver) setObserver(prev => prev || loadedObserver);
+            if (loadedUnit) setUnit(prev => prev || loadedUnit);
+            if (loadedProfesi) setProfesi(prev => prev || loadedProfesi);
 
-          const perbaikanDocs = indicatorsData.foto_perbaikan || indicatorsData.dokumentasi_perbaikan || apdDataRes?.foto_perbaikan;
-          if (perbaikanDocs) {
-            const pArr = Array.isArray(perbaikanDocs) ? perbaikanDocs : [perbaikanDocs];
-            setPerbaikanImages(pArr.map((url: string) => (typeof url === 'string' ? { url } : url)));
+            // Waktu: otomatis dimunculkan waktu selesai dari Kepatuhan Kebersihan Tangan
+            const waktuSelesaiStr = apdDataRes?.tanggal_waktu || apdSessionData?.tanggal_waktu || indicatorsData.waktu_selesai || indicatorsData.end_time || hhNative?.end_time || sessionData?.tanggal_waktu || hhNative?.start_time;
+            if (waktuSelesaiStr) {
+              try {
+                const parsed = new Date(waktuSelesaiStr);
+                if (!isNaN(parsed.getTime())) {
+                  setStartTime(prev => prev || parsed);
+                }
+              } catch (_) {}
+            }
+
+            // Tindakan: jika sudah pernah diisi, otomatis muncul
+            const tindakanVal = apdDataRes?.tindakan || apdDataRes?.jenis_tindakan || apdSessionData?.jenis_tindakan || sessionData?.jenis_tindakan || indicatorsData.tindakan || indicatorsData.jenis_tindakan || "";
+            if (tindakanVal) {
+              setTindakan(prev => prev || tindakanVal);
+              if (listTindakanOptions.includes(tindakanVal)) {
+                setTindakanOption(prev => prev || tindakanVal);
+              } else {
+                setTindakanOption(prev => prev || "Lainnya");
+                setCustomTindakan(prev => prev || tindakanVal);
+              }
+            }
+
+            // APD yang digunakan
+            const apdSource = apdDataRes || apdSessionData?.data_indikator || indicatorsData.apd || indicatorsData;
+            if (apdSource && (apdSource.masker !== undefined || apdSource.sarung_tangan !== undefined)) {
+              setApdData(prev => ({
+                masker: apdSource.masker ?? prev.masker,
+                sarung_tangan: apdSource.sarung_tangan ?? prev.sarung_tangan,
+                penutup_kepala: apdSource.penutup_kepala ?? prev.penutup_kepala,
+                apron: apdSource.apron ?? prev.apron,
+                goggle: apdSource.goggle ?? prev.goggle,
+                sepatu_boot: apdSource.sepatu_boot ?? prev.sepatu_boot,
+                gaun_pelindung: apdSource.gaun_pelindung ?? prev.gaun_pelindung,
+              }));
+            }
+
+            const upaya = indicatorsData.upaya_perbaikan || indicatorsData.upayaPerbaikan || apdDataRes?.upaya_perbaikan || apdSessionData?.data_indikator?.upaya_perbaikan || "";
+            if (upaya) setUpayaPerbaikan(prev => prev || upaya);
+
+            const waktuPerb = indicatorsData.waktu_perbaikan || indicatorsData.tanggal_perbaikan || apdDataRes?.waktu_perbaikan || apdSessionData?.data_indikator?.waktu_perbaikan || "";
+            if (waktuPerb) setWaktuPerbaikan(prev => prev || waktuPerb);
+
+            const perbaikanDocs = indicatorsData.foto_perbaikan || indicatorsData.dokumentasi_perbaikan || apdDataRes?.foto_perbaikan || apdSessionData?.data_indikator?.foto_perbaikan;
+            if (perbaikanDocs) {
+              const pArr = Array.isArray(perbaikanDocs) ? perbaikanDocs : [perbaikanDocs];
+              setPerbaikanImages(pArr.map((url: string) => (typeof url === 'string' ? { url } : url)));
+            }
+          } catch (err) {
+            console.error("Error loading edit data:", err);
           }
         };
         loadEditData();
@@ -494,7 +567,7 @@ export default function InputApdPage() {
           .eq("id", editId)
           .maybeSingle();
 
-        if (existingSession && existingSession.indikator_id === "audit_hand_hygiene") {
+        if (existingSession && (existingSession.indikator_id === "audit_hand_hygiene" || existingSession.indikator_id === "hand_hygiene")) {
           // JAGA AGAR DATA KEPATUHAN KEBERSIHAN TANGAN TIDAK HILANG / BERUBAH INDIKATORNYA!
           // Simpan jenis tindakan ke sesi tersebut dan perbarui data_indikator
           const currJson = existingSession.data_indikator || {};
@@ -510,37 +583,19 @@ export default function InputApdPage() {
             })
             .eq("id", editId);
 
-          // Cek apakah sudah ada sesi indikator_id = audit_apd yang mereferensikan hh_id ini
-          const { data: linkedApdSession } = await supabase
+          // Simpan juga sesi khusus APD di audit_sessions agar indikator APD tercatat
+          const apdSessionId = `apd-${editId}`;
+          await supabase
             .from("audit_sessions")
-            .select("id")
-            .eq("indikator_id", "audit_apd")
-            .filter("data_indikator->>hh_id", "eq", editId)
-            .maybeSingle();
-
-          if (linkedApdSession) {
-            await supabase
-              .from("audit_sessions")
-              .update({
-                ...sessionPayload,
-                data_indikator: {
-                  ...sessionPayload.data_indikator,
-                  hh_id: editId,
-                }
-              })
-              .eq("id", linkedApdSession.id);
-          } else {
-            await supabase
-              .from("audit_sessions")
-              .insert([{
-                ...sessionPayload,
-                data_indikator: {
-                  ...sessionPayload.data_indikator,
-                  hh_id: editId,
-                }
-              }]);
-          }
-        } else if (existingSession && existingSession.indikator_id === "audit_apd") {
+            .upsert([{
+              ...sessionPayload,
+              id: apdSessionId,
+              data_indikator: {
+                ...sessionPayload.data_indikator,
+                hh_id: editId,
+              }
+            }]);
+        } else if (existingSession && (existingSession.indikator_id === "audit_apd" || existingSession.indikator_id === "apd")) {
           await supabase
             .from("audit_sessions")
             .update(sessionPayload)
@@ -565,17 +620,17 @@ export default function InputApdPage() {
           await supabase.from("audit_apd").insert([{ ...payload, id: editId }]);
         }
       } else {
-        const { data: sessionData, error: sessionError } = await supabase
-          .from("audit_sessions")
-          .insert([sessionPayload])
-          .select("*")
-          .single();
-        if (sessionError) throw sessionError;
-        if (sessionData && sessionData.id) {
-          createdSessionId = sessionData.id;
-        }
+        const newSessionId = (typeof crypto !== "undefined" && crypto.randomUUID)
+          ? crypto.randomUUID()
+          : ("apd-" + Date.now() + "-" + Math.random().toString(36).substring(2, 9));
+        createdSessionId = newSessionId;
 
-        const nativePayload = createdSessionId ? { ...payload, id: createdSessionId } : payload;
+        const { error: sessionError } = await supabase
+          .from("audit_sessions")
+          .insert([{ ...sessionPayload, id: newSessionId }]);
+        if (sessionError) throw sessionError;
+
+        const nativePayload = { ...payload, id: newSessionId };
         await supabase.from("audit_apd").insert([nativePayload]);
       }
 
@@ -587,13 +642,20 @@ export default function InputApdPage() {
         });
       } catch (_) {}
 
+      // Bersihkan sessionStorage edit data setelah berhasil disimpan
+      try {
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('smartppi_edit_apd');
+        }
+      } catch (_) {}
+
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
         const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
         const returnUrl = params?.get("returnUrl") || (isEditMode ? "/dashboard/reports" : "/dashboard/input/isolasi");
         router.push(returnUrl);
-      }, 1500);
+      }, 1200);
     } catch (err: any) {
       handleError(err);
     } finally {

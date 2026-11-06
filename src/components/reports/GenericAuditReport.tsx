@@ -228,12 +228,13 @@ export default function GenericAuditReport({
       ...item,
       waktu: item.tanggal_waktu || item.waktu || item.created_at,
       checklist_json: jsonFallback,
-      persentase:
+      persentase: Number(
         item.persentase !== undefined
           ? item.persentase
           : item.compliance_score !== undefined
             ? item.compliance_score
-            : 0,
+            : 0
+      ) || 0,
       tanda_tangan_1:
         item.ttd_pj_ruangan ||
         item.ttd_pj ||
@@ -319,6 +320,31 @@ export default function GenericAuditReport({
       const configExtraFilter = config?.extraFilter;
       const finalExtraFilter = extraFilter || configExtraFilter;
 
+      const candidateIds = [tableName];
+      if (tableName.startsWith('audit_')) {
+        candidateIds.push(tableName.replace(/^audit_/, ''));
+      } else {
+        candidateIds.push(`audit_${tableName}`);
+      }
+      if (tableName === 'monitoring_ibs') {
+        candidateIds.push('audit_ruangan_ibs', 'monitoring_ruangan_ibs', 'ruangan_ibs');
+      }
+      if (tableName === 'monitoring_ppi_ruang_isolasi') {
+        candidateIds.push('audit_monitoring_ppi', 'monitoring_ruang_isolasi', 'audit_ruang_isolasi', 'ruang_isolasi');
+      }
+      if (tableName === 'monitoring_airborne') {
+        candidateIds.push('penempatan_pasien_airbone', 'penempatan_pasien_airborne');
+      }
+      if (tableName === 'monitoring_fasilitas_hand_hygiene') {
+        candidateIds.push('fasilitas_hh', 'monitoring_fasilitas_hh');
+      }
+      if (tableName === 'monitoring_fasilitas_apd') {
+        candidateIds.push('fasilitas_apd', 'monitoring_fasilitas_apd');
+      }
+      if (tableName === 'diklat_ppi') {
+        candidateIds.push('diklat');
+      }
+
       let sessionQuery = supabase
         .from("audit_sessions")
         .select("*");
@@ -329,7 +355,7 @@ export default function GenericAuditReport({
           sessionQuery = sessionQuery.eq("jenis_tindakan", configExtraFilter.bundle_id);
         }
       } else {
-        sessionQuery = sessionQuery.eq("indikator_id", tableName);
+        sessionQuery = sessionQuery.in("indikator_id", candidateIds);
         if (extraFilter) sessionQuery = sessionQuery.match(extraFilter);
       }
 
@@ -599,8 +625,8 @@ export default function GenericAuditReport({
         trendData: [],
       };
 
-    const allPerc = filteredData.map((r) => r.persentase);
-    const avg = allPerc.reduce((a, b) => a + b, 0) / allPerc.length;
+    const allPerc = filteredData.map((r) => Number(r.persentase) || 0);
+    const avg = allPerc.length > 0 ? allPerc.reduce((a, b) => a + b, 0) / allPerc.length : 0;
 
     // Trend Data Logic
     const periodMap = new Map<string, any[]>();
@@ -640,7 +666,7 @@ export default function GenericAuditReport({
     const trend = Array.from(periodMap.entries()).map(([k, recs]) => {
       const a =
         recs.length > 0
-          ? recs.reduce((sum, r) => sum + (r.persentase || 0), 0) / recs.length
+          ? recs.reduce((sum, r) => sum + (Number(r.persentase) || 0), 0) / recs.length
           : 0;
       return { name: k, val: Math.round(a) };
     });
@@ -650,8 +676,8 @@ export default function GenericAuditReport({
       summaryStats: {
         avg: Math.round(avg),
         count: filteredData.length,
-        high: Math.max(...allPerc),
-        low: Math.min(...allPerc),
+        high: allPerc.length > 0 ? Math.max(...allPerc) : 0,
+        low: allPerc.length > 0 ? Math.min(...allPerc) : 0,
         trend:
           trend.length > 1 ? trend[trend.length - 1].val - trend[0].val : 0,
       },
@@ -674,15 +700,17 @@ export default function GenericAuditReport({
 
   const selectedRecord = filteredRecords.find((r) => r.id === selectedRecordId);
 
-  const getStatus = (itemId: string) => {
+  const [detailsKeteranganMap, setDetailsKeteranganMap] = useState<Record<string, string>>({});
+  const [detailsJawabanMap, setDetailsJawabanMap] = useState<Record<string, string>>({});
+
+  const getStatus = (itemId: string, itemIdx?: number) => {
     if (!selectedRecord) return undefined;
     const checklistJson: any = selectedRecord.checklist_json || (selectedRecord as any).data_indikator || {};
     
-    // Check direct or key variants (e.g. '1', 1, 'item_1', 'fapd_1', 'fasilitas_apd_1')
-    const keyCandidates = [
+    // Check direct or key variants (e.g. '1', 1, 'item_1', 'fapd_1', 'fasilitas_apd_1', 'c1')
+    const keyCandidates: (string | number)[] = [
       itemId,
       String(itemId),
-      Number(itemId),
       `item_${itemId}`,
       `fapd_${itemId}`,
       `fasilitas_apd_${itemId}`,
@@ -690,15 +718,52 @@ export default function GenericAuditReport({
       itemId.replace(/^fapd_/, ''),
       itemId.replace(/^fasilitas_apd_/, '')
     ];
+    if (itemIdx !== undefined) {
+      keyCandidates.push(
+        itemIdx + 1,
+        String(itemIdx + 1),
+        `item_${itemIdx + 1}`,
+        `c${itemIdx + 1}`,
+        `fapd_${itemIdx + 1}`
+      );
+    }
 
+    // 1. Check detailsJawabanMap first (from audit_details)
     for (const key of keyCandidates) {
-      if (key !== undefined && key !== null && checklistJson[key] !== undefined) {
-        const val = checklistJson[key];
-        if (typeof val === "string") return val.toLowerCase();
-        if (typeof val === "boolean") return val ? "ya" : "tidak";
-        if (val && typeof val === "object") {
-          if ("status" in val && typeof val.status === "string") return val.status.toLowerCase();
-          if ("jawaban" in val && typeof val.jawaban === "string") return val.jawaban.toLowerCase();
+      const val = detailsJawabanMap[String(key)];
+      if (val !== undefined && val !== null) {
+        const lower = String(val).toLowerCase().trim();
+        if (lower === 'ya' || lower === 'patuh' || lower === 'sesuai' || lower === 'true' || lower === '1') return 'ya';
+        if (lower === 'tidak' || lower === 'tidak patuh' || lower === 'tidak sesuai' || lower === 'false' || lower === '0') return 'tidak';
+        if (lower === 'na' || lower === 'n/a') return 'na';
+        return lower;
+      }
+    }
+
+    // 2. Check checklistJson / selectedRecord
+    for (const key of keyCandidates) {
+      if (key !== undefined && key !== null) {
+        const val = checklistJson[key] ?? (selectedRecord as any)[key];
+        if (val !== undefined && val !== null) {
+          if (typeof val === "boolean") return val ? "ya" : "tidak";
+          if (typeof val === "number") return val === 1 ? "ya" : val === 0 ? "tidak" : String(val);
+          if (typeof val === "string") {
+            const lower = val.toLowerCase().trim();
+            if (lower === 'ya' || lower === 'patuh' || lower === 'sesuai' || lower === 'true' || lower === '1') return 'ya';
+            if (lower === 'tidak' || lower === 'tidak patuh' || lower === 'tidak sesuai' || lower === 'false' || lower === '0') return 'tidak';
+            if (lower === 'na' || lower === 'n/a') return 'na';
+            return lower;
+          }
+          if (val && typeof val === "object") {
+            const raw = val.status || val.jawaban;
+            if (raw !== undefined && raw !== null) {
+              const lower = String(raw).toLowerCase().trim();
+              if (lower === 'ya' || lower === 'patuh' || lower === 'sesuai' || lower === 'true' || lower === '1') return 'ya';
+              if (lower === 'tidak' || lower === 'tidak patuh' || lower === 'tidak sesuai' || lower === 'false' || lower === '0') return 'tidak';
+              if (lower === 'na' || lower === 'n/a') return 'na';
+              return lower;
+            }
+          }
         }
       }
     }
@@ -729,19 +794,16 @@ export default function GenericAuditReport({
     );
   };
 
-  const [detailsKeteranganMap, setDetailsKeteranganMap] = useState<Record<string, string>>({});
-
-  const getKeterangan = (itemId: string) => {
+  const getKeterangan = (itemId: string, itemIdx?: number) => {
     if (!selectedRecord) return "";
     
     // Cast checklist_json to any for flexible nested object navigation
     const checklistJson: any = selectedRecord.checklist_json || (selectedRecord as any).data_indikator || {};
     const rawDataIndikator: any = (selectedRecord as any).data_indikator || {};
     
-    const keyCandidates = [
+    const keyCandidates: (string | number)[] = [
       itemId,
       String(itemId),
-      Number(itemId),
       `item_${itemId}`,
       `fapd_${itemId}`,
       `fasilitas_apd_${itemId}`,
@@ -749,11 +811,20 @@ export default function GenericAuditReport({
       itemId.replace(/^fapd_/, ''),
       itemId.replace(/^fasilitas_apd_/, '')
     ];
+    if (itemIdx !== undefined) {
+      keyCandidates.push(
+        itemIdx + 1,
+        String(itemIdx + 1),
+        `item_${itemIdx + 1}`,
+        `c${itemIdx + 1}`,
+        `fapd_${itemIdx + 1}`
+      );
+    }
 
     // Check direct in audit_details map
     for (const k of keyCandidates) {
-      if (k !== undefined && k !== null && detailsKeteranganMap[k as string]) {
-        return detailsKeteranganMap[k as string];
+      if (k !== undefined && k !== null && detailsKeteranganMap[String(k)]) {
+        return detailsKeteranganMap[String(k)];
       }
     }
 
@@ -820,6 +891,7 @@ export default function GenericAuditReport({
     if (!selectedRecordId) {
       setDynamicChecklist(null);
       setDetailsKeteranganMap({});
+      setDetailsJawabanMap({});
       return;
     }
     const fetchDetails = async () => {
@@ -832,15 +904,25 @@ export default function GenericAuditReport({
         
         if (!error && data && data.length > 0) {
           const ketMap: Record<string, string> = {};
-          data.forEach((d: any) => {
-            if (d.pertanyaan_id && d.keterangan) {
-              ketMap[d.pertanyaan_id] = d.keterangan;
+          const jawMap: Record<string, string> = {};
+          data.forEach((d: any, idx: number) => {
+            const pId = String(d.pertanyaan_id || `item_${idx + 1}`);
+            if (d.keterangan) {
+              ketMap[pId] = d.keterangan;
+              ketMap[String(idx + 1)] = d.keterangan;
+              ketMap[`item_${idx + 1}`] = d.keterangan;
+            }
+            if (d.jawaban !== undefined && d.jawaban !== null) {
+              jawMap[pId] = String(d.jawaban).toLowerCase();
+              jawMap[String(idx + 1)] = String(d.jawaban).toLowerCase();
+              jawMap[`item_${idx + 1}`] = String(d.jawaban).toLowerCase();
             }
           });
           setDetailsKeteranganMap(ketMap);
+          setDetailsJawabanMap(jawMap);
 
-          const uniqueItems = Array.from(new Set(data.map(d => d.pertanyaan_id))).map(id => {
-            const item = data.find(d => d.pertanyaan_id === id);
+          const uniqueItems = Array.from(new Set(data.map((d: any) => d.pertanyaan_id))).map((id: any) => {
+            const item = data.find((d: any) => d.pertanyaan_id === id);
             return {
               id: item!.pertanyaan_id,
               label: item!.pertanyaan,
@@ -850,10 +932,12 @@ export default function GenericAuditReport({
           setDynamicChecklist(uniqueItems);
         } else {
           setDetailsKeteranganMap({});
+          setDetailsJawabanMap({});
           setDynamicChecklist(null);
         }
       } catch (err) {
         setDetailsKeteranganMap({});
+        setDetailsJawabanMap({});
         setDynamicChecklist(null);
       }
     };
@@ -1012,22 +1096,22 @@ export default function GenericAuditReport({
         const unitName = selectedRecord.unit || selectedRecord.ruangan || "-";
         const pjName = selectedRecord.nama_pj_ruangan || selectedRecord.nama_pj || "";
 
-        const patuhCount = checklistItems.filter((item) => {
-          const status = getStatus(item.id);
+        const patuhCount = checklistItems.filter((item, idx) => {
+          const status = getStatus(item.id, idx);
           return checkIsNegative(item.id) ? status === "tidak" : status === "ya";
         }).length;
-        const tidakPatuhCount = checklistItems.filter((item) => {
-          const status = getStatus(item.id);
+        const tidakPatuhCount = checklistItems.filter((item, idx) => {
+          const status = getStatus(item.id, idx);
           return checkIsNegative(item.id) ? status === "ya" : status === "tidak";
         }).length;
-        const naCount = checklistItems.filter((item) => {
-          const status = getStatus(item.id);
+        const naCount = checklistItems.filter((item, idx) => {
+          const status = getStatus(item.id, idx);
           return status === "na" || status === "n/a";
         }).length;
         const totalDinilai = patuhCount + tidakPatuhCount;
         const persentaseVal = totalDinilai > 0
           ? Math.round((patuhCount / totalDinilai) * 100)
-          : (selectedRecord.persentase || 0);
+          : (Number(selectedRecord.persentase) || 0);
         const isSesuai = persentaseVal >= 85;
 
         const photosList = Array.isArray(selectedRecord.foto)
@@ -1060,7 +1144,6 @@ export default function GenericAuditReport({
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
                       }}
-                      crossOrigin="anonymous"
                     />
                   ) : (
                     <ShieldCheck className="w-10 h-10 text-black" />
@@ -1120,8 +1203,8 @@ export default function GenericAuditReport({
             <tbody>
               {items.map((item, localIdx) => {
                 const globalIdx = startIndex + localIdx;
-                const status = getStatus(item.id);
-                const ket = getKeterangan(item.id);
+                const status = getStatus(item.id, globalIdx);
+                const ket = getKeterangan(item.id, globalIdx);
                 const isNegative = checkIsNegative(item.id);
                 const prevItem = globalIdx > 0 ? checklistItems[globalIdx - 1] : null;
                 const showSectionHeader = Boolean(item.section && (!prevItem || prevItem.section !== item.section));
@@ -1351,7 +1434,6 @@ export default function GenericAuditReport({
                             onError={(e) => {
                               e.currentTarget.style.display = "none";
                             }}
-                            crossOrigin="anonymous"
                           />
                         </div>
                       ))}
@@ -1403,7 +1485,6 @@ export default function GenericAuditReport({
                                 onError={(e) => {
                                   e.currentTarget.style.display = "none";
                                 }}
-                                crossOrigin="anonymous"
                               />
                             </div>
                           ))}

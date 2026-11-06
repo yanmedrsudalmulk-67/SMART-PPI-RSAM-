@@ -6,7 +6,7 @@ import { useAppContext } from '@/components/Providers';
 import { ShieldCheck, Activity, Clock, BarChart3, TrendingUp } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
-const DEFAULT_VIDEO_URL = 'https://assets.mixkit.co/videos/preview/mixkit-stethoscopes-on-a-table-in-a-medical-clinic-40097-large.mp4';
+const DEFAULT_VIDEO_URL = '/videos/welcome-background.mp4';
 
 const WelcomeClock = memo(function WelcomeClock() {
   const [timeStr, setTimeStr] = useState<string>('00:00:00');
@@ -37,9 +37,12 @@ const WelcomeBackgroundMedia = memo(function WelcomeBackgroundMedia({ activeBack
     if (videoRef.current) {
       videoRef.current.defaultMuted = true;
       videoRef.current.muted = true;
-      videoRef.current.play().catch(() => {
-        // Autoplay policy fallback
-      });
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Autoplay policy fallback
+        });
+      }
     }
   }, [activeBackground?.url]);
 
@@ -66,7 +69,10 @@ const WelcomeBackgroundMedia = memo(function WelcomeBackgroundMedia({ activeBack
       loop
       preload="auto"
       onContextMenu={(e) => e.preventDefault()}
-      className="absolute inset-0 w-full h-full object-cover opacity-[0.35] pointer-events-none z-0 transition-opacity duration-700"
+      onLoadedData={(e) => {
+        e.currentTarget.play().catch(() => {});
+      }}
+      className="absolute inset-0 w-full h-full object-cover opacity-[0.35] pointer-events-none z-0 transition-opacity duration-500"
     >
       <source src={activeBackground.url} type={activeBackground.type || 'video/mp4'} />
     </video>
@@ -96,7 +102,10 @@ export default function WelcomePage() {
           .limit(1)
           .single();
         if (data && !error && data.public_url) {
-          setActiveBackground({ url: data.public_url, type: data.file_type || 'video/mp4' });
+          const isDefaultRemote = data.public_url.includes('1789251875366-yd1sk4.mp4') || data.public_url.includes('mixkit');
+          if (!isDefaultRemote && data.public_url !== DEFAULT_VIDEO_URL) {
+            setActiveBackground({ url: data.public_url, type: data.file_type || 'video/mp4' });
+          }
         }
       } catch (err) {
         // Table might not exist yet, fallback gracefully
@@ -114,10 +123,10 @@ export default function WelcomePage() {
 
       {/* Futuristic Ambient Glowing Orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/20 blur-[130px] animate-pulse" style={{ animationDuration: '8s' }} />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[130px] animate-pulse" style={{ animationDuration: '10s' }} />
-        <div className="absolute top-[25%] left-[25%] w-[45%] h-[45%] rounded-full bg-[#4f46e5]/10 blur-[120px] animate-pulse" style={{ animationDuration: '12s' }} />
-        <div className="absolute top-[40%] right-[10%] w-[35%] h-[35%] rounded-full bg-fuchsia-600/10 blur-[110px] animate-pulse" style={{ animationDuration: '9s' }} />
+        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/20 blur-[130px] animate-pulse" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[130px] animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-[20%] left-[30%] w-[40%] h-[40%] rounded-full bg-[#4f46e5]/15 blur-[120px] animate-pulse" style={{ animationDelay: '4s' }} />
+        <div className="absolute top-[50%] right-[20%] w-[30%] h-[30%] rounded-full bg-fuchsia-600/15 blur-[100px] animate-pulse" style={{ animationDelay: '3s' }} />
       </div>
 
       {/* Background Media */}
@@ -293,7 +302,7 @@ export default function WelcomePage() {
           >
             <Link 
               href="/login"
-              className="group relative inline-flex items-center justify-center px-14 py-5 font-bold text-white text-lg rounded-full shadow-lg hover:-translate-y-1 w-full transition-all bg-blue-600 hover:bg-blue-500"
+              className="group relative inline-flex items-center justify-center px-14 py-5 font-bold text-white text-lg rounded-full shadow-lg hover:-translate-y-1 w-full transition-all bg-blue-600 hover:bg-blue-500 active:scale-95"
             >
               <span className="relative z-10 flex items-center gap-3 tracking-wider">
                 Ayo Mulai

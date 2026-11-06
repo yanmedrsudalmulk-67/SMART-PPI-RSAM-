@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { useSafeRouter } from '@/hooks/useSafeRouter';
 import { 
   BarChart2, Target as TargetIcon, Activity, CheckCircle2, AlertTriangle, TrendingUp, TrendingDown,
-  Users, MapPin, Clock, Calendar as CalendarIcon, Check, X, ShieldCheck, Edit, Trash2
+  Users, MapPin, Clock, Calendar as CalendarIcon, Check, X, ShieldCheck, Edit, Trash2, Camera
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -44,13 +44,35 @@ export default function ApdReport({
     let patuh = 0;
     const components = ['masker', 'sarung_tangan', 'penutup_kepala', 'apron', 'goggle', 'sepatu_boot', 'gaun_pelindung'];
     components.forEach(comp => {
-      const val = String(item[comp] || json[comp] || '').toLowerCase();
-      if (val === 'ya' || val === 'sesuai' || val === 'tidak' || val === 'tidak sesuai') {
-        dinilai++;
-        if (val === 'ya' || val === 'sesuai') patuh++;
+      const rawVal = item[comp] ?? json[comp];
+      if (rawVal !== undefined && rawVal !== null && rawVal !== '') {
+        if (typeof rawVal === 'boolean') {
+          dinilai++;
+          if (rawVal) patuh++;
+        } else if (typeof rawVal === 'number') {
+          dinilai++;
+          if (rawVal === 1) patuh++;
+        } else {
+          const val = String(rawVal).toLowerCase().trim();
+          if (val === 'ya' || val === 'sesuai' || val === 'patuh' || val === 'true' || val === '1') {
+            dinilai++;
+            patuh++;
+          } else if (val === 'tidak' || val === 'tidak sesuai' || val === 'tidak patuh' || val === 'false' || val === '0') {
+            dinilai++;
+          }
+        }
       }
     });
-    const persentase = dinilai > 0 ? Math.round((patuh / dinilai) * 100) : item.persentase || 0;
+
+    const rawFoto = item.foto || json.foto || item.dokumentasi || json.dokumentasi;
+    const foto = Array.isArray(rawFoto) ? rawFoto : (typeof rawFoto === 'string' && rawFoto ? [rawFoto] : []);
+    const rawPerbaikan = item.foto_perbaikan || json.foto_perbaikan || item.dokumentasi_perbaikan || json.dokumentasi_perbaikan;
+    const foto_perbaikan = Array.isArray(rawPerbaikan) ? rawPerbaikan : (typeof rawPerbaikan === 'string' && rawPerbaikan ? [rawPerbaikan] : []);
+
+    const persentase = dinilai > 0 
+      ? Math.round((patuh / dinilai) * 100) 
+      : (Number(item.persentase) || 0);
+
     return {
       ...item,
       id: item.id,
@@ -70,6 +92,11 @@ export default function ApdReport({
       jumlah_dinilai: dinilai || item.jumlah_dinilai || 0,
       jumlah_patuh: patuh || item.jumlah_patuh || 0,
       persentase,
+      foto,
+      dokumentasi: foto,
+      foto_perbaikan,
+      upaya_perbaikan: item.upaya_perbaikan || json.upaya_perbaikan || json.upayaPerbaikan || '',
+      waktu_perbaikan: item.waktu_perbaikan || json.waktu_perbaikan || item.tanggal_perbaikan || json.tanggal_perbaikan || '',
     };
   };
 
@@ -77,8 +104,27 @@ export default function ApdReport({
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleEditClick = (recordId: string) => {
-    router.push(`/dashboard/input/apd?id=${recordId}&mode=edit&returnUrl=/dashboard/reports`);
+  const handleEditClick = (row: any) => {
+    try {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('smartppi_edit_apd', JSON.stringify(row));
+      }
+    } catch (e) {
+      console.error('Failed to save to sessionStorage', e);
+    }
+    const q = new URLSearchParams();
+    q.set('id', row.id || '');
+    if (row.hh_id) q.set('hh_id', row.hh_id);
+    if (row.apd_id) q.set('apd_id', row.apd_id);
+    if (row.observer) q.set('observer', row.observer);
+    if (row.unit) q.set('unit', row.unit);
+    if (row.profesi) q.set('profesi', row.profesi);
+    const dateVal = row.tanggal_waktu || row.end_time || row.start_time;
+    if (dateVal) q.set('time', dateVal);
+    if (row.tindakan) q.set('tindakan', row.tindakan);
+    q.set('mode', 'edit');
+    q.set('returnUrl', '/dashboard/reports');
+    router.push(`/dashboard/input/apd?${q.toString()}`);
   };
 
   const handleConfirmDelete = async () => {
@@ -89,7 +135,7 @@ export default function ApdReport({
       if (targetItem?.isFromHh) {
         // Hapus evaluasi APD terkait saja, jaga agar data Kepatuhan Kebersihan Tangan tetap utuh
         await supabase.from("audit_apd").delete().eq("id", deleteConfirmId);
-        await supabase.from("audit_sessions").delete().eq("indikator_id", "audit_apd").or(`id.eq.${deleteConfirmId},data_indikator->>hh_id.eq.${deleteConfirmId}`);
+        await supabase.from("audit_sessions").delete().eq("id", `apd-${deleteConfirmId}`);
         const { data: hhSess } = await supabase.from("audit_sessions").select("id, data_indikator").eq("id", deleteConfirmId).maybeSingle();
         if (hhSess) {
           const sJson = hhSess.data_indikator || {};
@@ -119,9 +165,9 @@ export default function ApdReport({
     try {
       const [hhRes, hhSessionsRes, apdRes, apdSessionsRes] = await Promise.all([
         supabase.from('audit_hand_hygiene').select('*').order('start_time', { ascending: true }),
-        supabase.from('audit_sessions').select('*').eq('indikator_id', 'audit_hand_hygiene').order('tanggal_waktu', { ascending: true }),
+        supabase.from('audit_sessions').select('*').in('indikator_id', ['audit_hand_hygiene', 'hand_hygiene']).order('tanggal_waktu', { ascending: true }),
         supabase.from('audit_apd').select('*').order('tanggal_waktu', { ascending: true }),
-        supabase.from('audit_sessions').select('*').eq('indikator_id', 'audit_apd').order('tanggal_waktu', { ascending: true })
+        supabase.from('audit_sessions').select('*').in('indikator_id', ['audit_apd', 'apd']).order('tanggal_waktu', { ascending: true })
       ]);
 
       const rawHhSessions = hhSessionsRes.data || [];
@@ -241,6 +287,7 @@ export default function ApdReport({
         let apdMatch = allApdRecords.find(a => 
           !usedApdIds.has(a.id) && (
             a.id === hh.id || 
+            a.id === `apd-${hh.id}` ||
             a.hh_id === hh.id || 
             a.data_indikator?.hh_id === hh.id ||
             a.checklist_json?.hh_id === hh.id
@@ -287,9 +334,9 @@ export default function ApdReport({
             goggle: apdMatch.goggle,
             sepatu_boot: apdMatch.sepatu_boot,
             gaun_pelindung: apdMatch.gaun_pelindung,
-            jumlah_dinilai: apdMatch.jumlah_dinilai || 0,
-            jumlah_patuh: apdMatch.jumlah_patuh || 0,
-            persentase: apdMatch.persentase || 0,
+            jumlah_dinilai: Number(apdMatch.jumlah_dinilai || 0),
+            jumlah_patuh: Number(apdMatch.jumlah_patuh || 0),
+            persentase: Number(apdMatch.persentase || 0),
             isFilled: true,
             isFromHh: true,
           });
@@ -312,9 +359,9 @@ export default function ApdReport({
             goggle: embeddedApd.goggle,
             sepatu_boot: embeddedApd.sepatu_boot,
             gaun_pelindung: embeddedApd.gaun_pelindung,
-            jumlah_dinilai: embeddedApd.jumlah_dinilai || 0,
-            jumlah_patuh: embeddedApd.jumlah_patuh || 0,
-            persentase: embeddedApd.persentase || 0,
+            jumlah_dinilai: Number(embeddedApd.jumlah_dinilai || 0),
+            jumlah_patuh: Number(embeddedApd.jumlah_patuh || 0),
+            persentase: Number(embeddedApd.persentase || 0),
             isFilled: true,
             isFromHh: true,
           });
@@ -418,17 +465,67 @@ export default function ApdReport({
         const itemDate = new Date(itemDateStr);
         const filterDate = new Date(filters.periode);
         
+        const itemMonth = itemDate.getMonth();
+        const itemYear = itemDate.getFullYear();
+        const filterMonth = filterDate.getMonth();
+        const filterYear = filterDate.getFullYear();
+
         if (filters.type === 'Bulanan') {
-          return itemDate.getUTCMonth() === filterDate.getUTCMonth() && 
-                 itemDate.getUTCFullYear() === filterDate.getUTCFullYear();
+          if (itemMonth !== filterMonth || itemYear !== filterYear) return false;
+        } else if (filters.type === 'Triwulan') {
+          const itemQuarter = Math.floor(itemMonth / 3);
+          const filterQuarter = Math.floor(filterMonth / 3);
+          if (itemQuarter !== filterQuarter || itemYear !== filterYear) return false;
+        } else if (filters.type === 'Semester') {
+          const itemSemester = Math.floor(itemMonth / 6);
+          const filterSemester = Math.floor(filterMonth / 6);
+          if (itemSemester !== filterSemester || itemYear !== filterYear) return false;
+        } else if (filters.type === 'Tahunan') {
+          if (itemYear !== filterYear) return false;
         }
-        
-        if (itemDate < filterDate) return false;
       }
 
       return true;
     });
   }, [data, filters]);
+
+  const allPhotos = useMemo(() => {
+    const photos: { url: string; unit: string; date: string; observer: string }[] = [];
+    filteredData.forEach(d => {
+      const raw = d.foto || d.dokumentasi || d.data_indikator?.foto || d.data_indikator?.dokumentasi;
+      const list = Array.isArray(raw) ? raw : (typeof raw === 'string' && raw ? [raw] : []);
+      list.forEach((url: string) => {
+        if (url && typeof url === 'string' && !url.startsWith('blob:')) {
+          photos.push({
+            url,
+            unit: d.unit || '-',
+            date: d.tanggal_waktu || '',
+            observer: d.observer || '-'
+          });
+        }
+      });
+    });
+    return photos;
+  }, [filteredData]);
+
+  const allPerbaikan = useMemo(() => {
+    const items: any[] = [];
+    filteredData.forEach(d => {
+      const text = d.upaya_perbaikan || d.data_indikator?.upaya_perbaikan || '';
+      const rawPhotos = d.foto_perbaikan || d.data_indikator?.foto_perbaikan;
+      const photos = Array.isArray(rawPhotos) ? rawPhotos : (typeof rawPhotos === 'string' && rawPhotos ? [rawPhotos] : []);
+      const validPhotos = photos.filter((u: string) => u && typeof u === 'string' && !u.startsWith('blob:'));
+      if (text || validPhotos.length > 0) {
+        items.push({
+          unit: d.unit || '-',
+          date: d.waktu_perbaikan || d.tanggal_waktu || '',
+          text,
+          photos: validPhotos
+        });
+      }
+    });
+    return items;
+  }, [filteredData]);
 
   const { summaryStats, pieData, trendData, recommendationData } = useMemo(() => {
     if (filteredData.length === 0) return { 
@@ -754,7 +851,7 @@ export default function ApdReport({
                     <td className="px-4 py-4 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-center gap-2">
                         <button
-                          onClick={() => handleEditClick(row.id)}
+                          onClick={() => handleEditClick(row)}
                           type="button"
                           className="px-2.5 py-2 rounded-xl bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all duration-200 shadow-sm border border-blue-500/20 flex items-center gap-1 text-[11px] font-bold"
                           title="Isi / Edit Tindakan & APD"
@@ -913,7 +1010,6 @@ export default function ApdReport({
                         onError={(e) => {
                           e.currentTarget.style.display = "none";
                         }}
-                        crossOrigin="anonymous"
                       />
                     ) : (
                       <ShieldCheck className="w-10 h-10 text-black" />
@@ -1203,6 +1299,73 @@ export default function ApdReport({
                   Keterangan: (✓) = Patuh/Sesuai | (✗) = Tidak Patuh | (-) = Tidak Dinilai/NA
                 </div>
               </div>
+
+              {/* III. Foto Dokumentasi Temuan Audit APD (Jika Ada) */}
+              {allPhotos.length > 0 && (
+                <div className="mt-4 pt-3 border-t border-slate-300 break-inside-avoid">
+                  <h4 className="text-[10pt] font-black uppercase tracking-wider text-slate-900 mb-2 flex items-center gap-1.5">
+                    <Camera className="w-3.5 h-3.5 text-black" /> III. Foto Dokumentasi Temuan Audit APD
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4 print:page-break-inside-avoid">
+                    {allPhotos.map((item, idx) => (
+                      <div key={idx} className="border border-slate-400 p-2 bg-white rounded shadow-sm">
+                        <div className="relative pt-[60%] w-full mb-1.5 overflow-hidden rounded bg-slate-100">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={item.url}
+                            alt="Dokumentasi APD"
+                            className="absolute inset-0 w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        </div>
+                        <div className="flex justify-between text-[7.5pt] text-slate-600 font-bold">
+                          <span>Unit: {item.unit}</span>
+                          <span>Observer: {item.observer}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* IV. Upaya Perbaikan & Tindak Lanjut (Jika Ada) */}
+              {allPerbaikan.length > 0 && (
+                <div className="mt-4 pt-3 border-t border-slate-300 break-inside-avoid space-y-3">
+                  <h4 className="text-[10pt] font-black uppercase tracking-wider text-slate-900 mb-2">
+                    🛠️ IV. Tindak Lanjut &amp; Upaya Perbaikan APD
+                  </h4>
+                  {allPerbaikan.map((pb, idx) => (
+                    <div key={idx} className="p-3 bg-slate-50 border border-slate-300 rounded space-y-2">
+                      <div className="flex justify-between text-[8pt] font-bold text-slate-700">
+                        <span>Unit: {pb.unit}</span>
+                        <span>Waktu Perbaikan: {pb.date ? (pb.date.includes('T') ? pb.date.replace('T', ' ') : pb.date) : '-'}</span>
+                      </div>
+                      {pb.text && (
+                        <p className="text-[8.5pt] text-black whitespace-pre-wrap font-medium">{pb.text}</p>
+                      )}
+                      {pb.photos.length > 0 && (
+                        <div className="grid grid-cols-2 gap-2 pt-1">
+                          {pb.photos.map((pUrl: string, pIdx: number) => (
+                            <div key={pIdx} className="relative pt-[60%] rounded border border-slate-300 overflow-hidden bg-white">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={pUrl}
+                                alt="Bukti Perbaikan"
+                                className="absolute inset-0 w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = "none";
+                                }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Lembar Tanda Tangan / Pengesahan */}
               <div className="mt-4 pt-3 border-t border-slate-300 grid grid-cols-2 gap-8 text-[9pt] text-center signature-block break-inside-avoid" data-pdf-block="signature" data-pdf-signature="true">

@@ -247,9 +247,9 @@ export default function HandHygieneReport({
       m3: item.m3 || json.m3 || null,
       m4: item.m4 || json.m4 || null,
       m5: item.m5 || json.m5 || null,
-      peluang: item.peluang !== undefined ? item.peluang : item.jumlah_dinilai !== undefined ? item.jumlah_dinilai : 0,
-      patuh: item.patuh !== undefined ? item.patuh : item.jumlah_patuh !== undefined ? item.jumlah_patuh : 0,
-      persentase: item.persentase !== undefined ? item.persentase : 0,
+      peluang: Number(item.peluang !== undefined ? item.peluang : item.jumlah_dinilai !== undefined ? item.jumlah_dinilai : 0) || 0,
+      patuh: Number(item.patuh !== undefined ? item.patuh : item.jumlah_patuh !== undefined ? item.jumlah_patuh : 0) || 0,
+      persentase: Number(item.persentase !== undefined ? item.persentase : 0) || 0,
     };
   };
 
@@ -294,7 +294,7 @@ export default function HandHygieneReport({
     try {
       const [hhRes, sessionsRes] = await Promise.all([
         supabase.from('audit_hand_hygiene').select('*').order('start_time', { ascending: true }),
-        supabase.from('audit_sessions').select('*').eq('indikator_id', 'audit_hand_hygiene').order('tanggal_waktu', { ascending: true })
+        supabase.from('audit_sessions').select('*').in('indikator_id', ['audit_hand_hygiene', 'hand_hygiene']).order('tanggal_waktu', { ascending: true })
       ]);
 
       const rawSessions = sessionsRes.data || [];
@@ -362,9 +362,9 @@ export default function HandHygieneReport({
           m3: match?.m3 ?? sJson.m3 ?? s.m3 ?? null,
           m4: match?.m4 ?? sJson.m4 ?? s.m4 ?? null,
           m5: match?.m5 ?? sJson.m5 ?? s.m5 ?? null,
-          peluang: match?.peluang !== undefined ? match.peluang : s.jumlah_dinilai !== undefined ? s.jumlah_dinilai : 0,
-          patuh: match?.patuh !== undefined ? match.patuh : s.jumlah_patuh !== undefined ? s.jumlah_patuh : 0,
-          persentase: match?.persentase !== undefined ? match.persentase : s.persentase !== undefined ? s.persentase : 0,
+          peluang: Number(match?.peluang !== undefined ? match.peluang : s.jumlah_dinilai !== undefined ? s.jumlah_dinilai : 0) || 0,
+          patuh: Number(match?.patuh !== undefined ? match.patuh : s.jumlah_patuh !== undefined ? s.jumlah_patuh : 0) || 0,
+          persentase: Number(match?.persentase !== undefined ? match.persentase : s.persentase !== undefined ? s.persentase : 0) || 0,
           data_indikator: s.data_indikator || sJson,
         });
       }
@@ -393,9 +393,9 @@ export default function HandHygieneReport({
           m3: h.m3 ?? null,
           m4: h.m4 ?? null,
           m5: h.m5 ?? null,
-          peluang: h.peluang !== undefined ? h.peluang : h.jumlah_dinilai !== undefined ? h.jumlah_dinilai : 0,
-          patuh: h.patuh !== undefined ? h.patuh : h.jumlah_patuh !== undefined ? h.jumlah_patuh : 0,
-          persentase: h.persentase !== undefined ? h.persentase : 0,
+          peluang: Number(h.peluang !== undefined ? h.peluang : h.jumlah_dinilai !== undefined ? h.jumlah_dinilai : 0) || 0,
+          patuh: Number(h.patuh !== undefined ? h.patuh : h.jumlah_patuh !== undefined ? h.jumlah_patuh : 0) || 0,
+          persentase: Number(h.persentase !== undefined ? h.persentase : 0) || 0,
         });
       }
 
@@ -458,12 +458,24 @@ export default function HandHygieneReport({
         const itemDate = new Date(itemDateStr);
         const filterDate = new Date(filters.periode);
         
+        const itemMonth = itemDate.getMonth();
+        const itemYear = itemDate.getFullYear();
+        const filterMonth = filterDate.getMonth();
+        const filterYear = filterDate.getFullYear();
+
         if (filters.type === 'Bulanan') {
-          return itemDate.getUTCMonth() === filterDate.getUTCMonth() && 
-                 itemDate.getUTCFullYear() === filterDate.getUTCFullYear();
+          if (itemMonth !== filterMonth || itemYear !== filterYear) return false;
+        } else if (filters.type === 'Triwulan') {
+          const itemQuarter = Math.floor(itemMonth / 3);
+          const filterQuarter = Math.floor(filterMonth / 3);
+          if (itemQuarter !== filterQuarter || itemYear !== filterYear) return false;
+        } else if (filters.type === 'Semester') {
+          const itemSemester = Math.floor(itemMonth / 6);
+          const filterSemester = Math.floor(filterMonth / 6);
+          if (itemSemester !== filterSemester || itemYear !== filterYear) return false;
+        } else if (filters.type === 'Tahunan') {
+          if (itemYear !== filterYear) return false;
         }
-        
-        if (itemDate < filterDate) return false;
       }
       return true;
     });
@@ -532,12 +544,12 @@ export default function HandHygieneReport({
            const p = (r.profesi || 'LAINNYA').trim().toUpperCase();
            if (!profMap.has(p)) profMap.set(p, { sum: 0, count: 0 });
            const entry = profMap.get(p)!;
-           entry.sum += (r.persentase || 0);
+           entry.sum += Number(r.persentase || 0);
            entry.count++;
        });
        
        profMap.forEach((data, prof) => {
-           group[prof] = Math.round(data.sum / data.count);
+           group[prof] = Math.round(data.sum / (data.count || 1));
        });
        
        return group;
@@ -560,7 +572,9 @@ export default function HandHygieneReport({
       m5: mStats.m5.t > 0 ? Math.round((mStats.m5.p / mStats.m5.t) * 100) : 0,
     };
     
-    const avgOverall = filteredData.reduce((sum, r) => sum + (r.persentase || 0), 0) / filteredData.length;
+    const avgOverall = filteredData.length > 0 
+      ? filteredData.reduce((sum, r) => sum + Number(r.persentase || 0), 0) / filteredData.length 
+      : (totalActionMomen > 0 ? (totalPatuhMomen / totalActionMomen) * 100 : 0);
 
     return { 
       trendData: trend, 
@@ -1000,7 +1014,6 @@ export default function HandHygieneReport({
                         onError={(e) => {
                           e.currentTarget.style.display = "none";
                         }}
-                        crossOrigin="anonymous"
                       />
                     ) : (
                       <ShieldCheck className="w-10 h-10 text-black" />

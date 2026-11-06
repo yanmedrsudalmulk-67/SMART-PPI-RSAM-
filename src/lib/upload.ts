@@ -49,8 +49,8 @@ export const uploadImagesToSupabase = async (
         }
       } else {
         console.error("Upload failed", error);
-        // If upload failed, but an existing URL was present, preserve the existing URL
-        if (existingUrl) {
+        // If upload failed, but a valid remote/local existing URL was present (NOT a blob URL), preserve it
+        if (existingUrl && !existingUrl.startsWith('blob:')) {
           urls.push(existingUrl);
         } else if (error.message && error.message.toLowerCase().includes('bucket not found')) {
           throw new Error(`Bucket '${bucket}' tidak ditemukan. Silakan buat bucket public bernama '${bucket}' di menu Storage Supabase.`);

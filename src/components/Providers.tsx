@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 
 interface AppContextType {
@@ -14,11 +14,53 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+const ROLE_STORAGE_KEY = 'smart_ppi_role';
+const SIDEBAR_STORAGE_KEY = 'smart_ppi_sidebar_open';
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [appLogoUrl, setAppLogoUrl] = useState<string | null>(null);
   const [hospitalLogoUrl, setHospitalLogoUrl] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<string>('IPCN');
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
+  const [userRole, setUserRoleState] = useState<string>('IPCN');
+  const [isSidebarOpen, setIsSidebarOpenState] = useState<boolean>(true);
+
+  // Pulihkan status sidebar & role login terakhir
+  useEffect(() => {
+    try {
+      const savedRole = localStorage.getItem(ROLE_STORAGE_KEY);
+      if (savedRole) setUserRoleState(savedRole);
+
+      const savedSidebar = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+      if (savedSidebar !== null) {
+        setIsSidebarOpenState(savedSidebar === 'true');
+      }
+    } catch (e) {
+      // ignore storage errors
+    }
+  }, []);
+
+  const setIsSidebarOpen = useCallback((openOrFn: boolean | ((prev: boolean) => boolean)) => {
+    setIsSidebarOpenState((prev) => {
+      const next = typeof openOrFn === 'function' ? openOrFn(prev) : openOrFn;
+      try {
+        localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next));
+      } catch (e) {}
+      return next;
+    });
+  }, []);
+
+  const setUserRole = useCallback((role: string) => {
+    setUserRoleState(role);
+    try {
+      if (role) {
+        localStorage.setItem(ROLE_STORAGE_KEY, role);
+      } else {
+        localStorage.removeItem(ROLE_STORAGE_KEY);
+        localStorage.removeItem('smart_ppi_user');
+      }
+    } catch (e) {
+      // ignore storage errors
+    }
+  }, []);
 
   useEffect(() => {
     const fetchLogos = async () => {
@@ -40,7 +82,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     hospitalLogoUrl, setHospitalLogoUrl,
     userRole, setUserRole,
     isSidebarOpen, setIsSidebarOpen
-  }), [appLogoUrl, hospitalLogoUrl, userRole, isSidebarOpen]);
+  }), [appLogoUrl, hospitalLogoUrl, userRole, setUserRole, isSidebarOpen]);
 
   return (
     <AppContext.Provider value={contextValue}>

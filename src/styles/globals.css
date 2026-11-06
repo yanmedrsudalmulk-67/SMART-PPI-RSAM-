@@ -10,16 +10,44 @@ img, svg {
   vertical-align: middle !important;
 }
 
-/* Font Calibri Standar Laporan Resmi */
-.font-calibri {
-  font-family: 'Calibri', 'Carlito', 'Candara', 'Segoe UI', Arial, sans-serif;
+/* Font Arial Standar Laporan Resmi F4 */
+.font-arial {
+  font-family: Arial, Helvetica, sans-serif !important;
 }
 
-.official-report-sheet {
-  font-family: 'Calibri', 'Carlito', 'Candara', 'Segoe UI', Arial, sans-serif !important;
-  font-size: 11pt !important;
+.official-report-sheet,
+.official-pdf-page,
+[data-pdf-page="true"],
+.f4-page {
+  font-family: Arial, Helvetica, sans-serif !important;
   background-color: #ffffff !important;
   color: #000000 !important;
+}
+
+/* Base typography for official report paragraphs and text: Arial, 12pt, 1.5 line spacing (excluding tables & charts) */
+.official-pdf-page:not([data-is-cover="true"]) p:not(table *):not(svg *):not(.chart-caption),
+.official-pdf-page:not([data-is-cover="true"]) li:not(table *):not(svg *),
+.official-pdf-page:not([data-is-cover="true"]) ol:not(table *):not(svg *),
+.official-pdf-page:not([data-is-cover="true"]) ul:not(table *):not(svg *),
+.official-pdf-page:not([data-is-cover="true"]) .report-text,
+.f4-page:not([data-is-cover="true"]) p:not(table *):not(svg *):not(.chart-caption),
+.f4-page:not([data-is-cover="true"]) li:not(table *):not(svg *),
+.f4-page:not([data-is-cover="true"]) ol:not(table *):not(svg *),
+.f4-page:not([data-is-cover="true"]) ul:not(table *):not(svg *) {
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: 12pt !important;
+  line-height: 1.5 !important;
+}
+
+.official-pdf-page:not([data-is-cover="true"]) h3:not(table *):not(svg *),
+.official-pdf-page:not([data-is-cover="true"]) h4:not(table *):not(svg *),
+.official-pdf-page:not([data-is-cover="true"]) h5:not(table *),
+.f4-page:not([data-is-cover="true"]) h3:not(table *):not(svg *),
+.f4-page:not([data-is-cover="true"]) h4:not(table *):not(svg *),
+.f4-page:not([data-is-cover="true"]) h5:not(table *) {
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: 12pt !important;
+  line-height: 1.5 !important;
 }
 
 /* PDF Generation & Print Styles: Default vertical alignment to middle for table cells, while respecting align-top */
@@ -175,7 +203,6 @@ img, svg {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   perspective: 1000px;
-  -webkit-perspective: 1000px;
   will-change: transform, opacity;
 }
 
@@ -188,11 +215,34 @@ img, svg {
   contain: layout style paint;
 }
 
-/* 120 FPS / 144 Hz frame rate pacing & touch optimizations */
-@media (min-resolution: 120dpi) or (-webkit-min-device-pixel-ratio: 1.5) {
+/* 120 FPS / 120Hz & 144Hz ProMotion Touch Engine & Smooth Scroll Optimization */
+@media (max-width: 1024px) {
   * {
-    -webkit-tap-highlight-color: transparent;
+    -webkit-tap-highlight-color: transparent !important;
   }
+
+  nav, button, a, [role="button"], input, select {
+    touch-action: manipulation;
+  }
+}
+
+.scroll-container-120fps {
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-y: contain;
+  scroll-behavior: auto !important;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: scroll-position;
+}
+
+.nav-dock-120fps {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform;
 }
 
 .optimize-gpu {
@@ -236,6 +286,46 @@ html, body {
 * {
   -ms-overflow-style: none !important; /* IE and Edge */
   scrollbar-width: none !important; /* Firefox */
+}
+
+/* Scrollbar Khusus untuk Laporan Resmi di samping kanan layar agar bisa digulir cepat */
+.resmi-report-scroll-container {
+  scrollbar-width: auto !important; /* Firefox: tampilkan scrollbar standar */
+  scrollbar-color: #06b6d4 #0d0f28 !important; /* Firefox: thumb cyan dan track navy */
+  -ms-overflow-style: auto !important; /* IE & Edge */
+}
+
+.resmi-report-scroll-container::-webkit-scrollbar {
+  display: block !important;
+  width: 14px !important; /* Lebar nyaman untuk di-klik & drag cepat */
+  height: 14px !important;
+}
+
+.resmi-report-scroll-container::-webkit-scrollbar-track {
+  display: block !important;
+  background: #0d0f28 !important;
+  border-left: 1px solid rgba(99, 102, 241, 0.35) !important;
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.7) !important;
+}
+
+.resmi-report-scroll-container::-webkit-scrollbar-thumb {
+  display: block !important;
+  background: linear-gradient(180deg, #06b6d4, #2563eb) !important;
+  border-radius: 9999px !important;
+  border: 2px solid #0d0f28 !important;
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.7) !important;
+  min-height: 60px !important;
+  cursor: grab !important;
+}
+
+.resmi-report-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #22d3ee, #3b82f6) !important;
+  box-shadow: 0 0 16px rgba(6, 182, 212, 1) !important;
+}
+
+.resmi-report-scroll-container::-webkit-scrollbar-thumb:active {
+  background: #38bdf8 !important;
+  cursor: grabbing !important;
 }
 
 :root {
@@ -717,5 +807,157 @@ video {
   -ms-overflow-style: none !important;  /* IE and Edge */
   scrollbar-width: none !important;  /* Firefox */
 }
+
+/* ========================================================= */
+/* KERTAS RESMI F4 (INDONESIAN FOLIO: 215mm x 330mm) STYLING */
+/* ========================================================= */
+@page {
+  size: 215mm 330mm;
+  margin: 0;
+}
+
+/* Force pure white paper with black text in all modes (Screen & Print) */
+.report-desk-canvas {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.f4-page {
+  width: 215mm !important;
+  min-height: 330mm !important;
+  height: 330mm !important;
+  box-sizing: border-box !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25), 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid #cbd5e1 !important;
+  margin-bottom: 36px !important;
+}
+
+.f4-page:last-child {
+  margin-bottom: 0 !important;
+}
+
+.f4-page:not([data-is-cover="true"]),
+.f4-page:not([data-is-cover="true"]) p, .f4-page:not([data-is-cover="true"]) span, .f4-page:not([data-is-cover="true"]) div, .f4-page:not([data-is-cover="true"]) td, .f4-page:not([data-is-cover="true"]) th,
+.f4-page:not([data-is-cover="true"]) h1, .f4-page:not([data-is-cover="true"]) h2, .f4-page:not([data-is-cover="true"]) h3, .f4-page:not([data-is-cover="true"]) h4, .f4-page:not([data-is-cover="true"]) h5, .f4-page:not([data-is-cover="true"]) h6,
+.f4-page:not([data-is-cover="true"]) li, .f4-page:not([data-is-cover="true"]) ol, .f4-page:not([data-is-cover="true"]) ul, .f4-page:not([data-is-cover="true"]) b, .f4-page:not([data-is-cover="true"]) strong {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}
+
+/* Explicit rule for Cover Title to be White */
+.f4-page[data-is-cover="true"] .cover-title,
+.f4-page[data-is-cover="true"] .cover-title *,
+.f4-page[data-is-cover="true"] h1,
+.f4-page[data-is-cover="true"] h2,
+.f4-page[data-is-cover="true"] h3,
+.cover-title-text {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+.f4-page table {
+  border-collapse: collapse !important;
+  border: 1px solid #000000 !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.f4-page th,
+.f4-page td {
+  border: 1px solid #000000 !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.f4-page th {
+  background-color: #f1f5f9 !important;
+  font-weight: bold !important;
+}
+
+.f4-page table.border-none,
+.f4-page table.border-none th,
+.f4-page table.border-none td {
+  border: none !important;
+  background-color: transparent !important;
+}
+
+#print-area-annual,
+#print-area-monthly,
+#print-area-quarterly,
+#print-area-semester,
+#print-area-overview,
+.report-zoom-stage {
+  background-color: transparent !important;
+  color: #000000 !important;
+}
+
+@media print {
+  html, body {
+    width: 215mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide app navigation, sidebar, header, buttons during print */
+  .no-print,
+  aside,
+  header,
+  nav,
+  button,
+  .print-hidden,
+  #app-header,
+  #app-sidebar {
+    display: none !important;
+  }
+
+  /* Remove all margins/paddings from main layout wrapper */
+  main, .dashboard-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    background: #ffffff !important;
+  }
+
+  #print-area-annual,
+  #print-area-monthly,
+  #print-area-quarterly,
+  #print-area-semester,
+  #print-area-overview,
+  .report-zoom-stage {
+    background-color: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+
+  .f4-page {
+    width: 215mm !important;
+    min-height: 330mm !important;
+    height: 330mm !important;
+    max-height: 330mm !important;
+    padding: 25mm 25mm 25mm 30mm !important;
+    margin: 0 !important;
+    margin-bottom: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+    background-color: #ffffff !important;
+  }
+
+  .f4-page.is-cover {
+    padding: 0 !important;
+  }
+}
+
 
 

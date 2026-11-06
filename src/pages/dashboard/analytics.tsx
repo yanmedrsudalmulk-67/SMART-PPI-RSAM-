@@ -227,6 +227,105 @@ const HaisTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
+// Custom Tooltip for Generic PPI Audits
+const GenericTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const item = payload[0];
+    const data = item.payload;
+    return (
+      <div className="bg-[#18193b] backdrop-blur-xl border border-[#2b2d56] p-4 rounded-2xl shadow-[0_12px_32px_rgba(0,0,0,0.8)] text-xs space-y-2 text-white z-50 min-w-[210px]">
+        <div className="font-black border-b border-indigo-900/40 pb-1.5 text-cyan-300 flex items-center justify-between uppercase tracking-wider">
+          <span>{label}</span>
+          <span className="text-[9px] text-slate-400 font-bold">Kepatuhan</span>
+        </div>
+        <div className="space-y-1 pt-1">
+          <div className="flex items-center justify-between gap-4 font-bold">
+            <span className="text-slate-300">Capaian:</span>
+            <span className="font-mono font-black text-cyan-400 text-sm">
+              {typeof item.value === 'number' ? `${item.value}%` : item.value}
+            </span>
+          </div>
+          {data && data.Target !== undefined && (
+            <div className="flex items-center justify-between gap-4 text-slate-400 font-medium">
+              <span>Target Mutu:</span>
+              <span className="font-mono font-bold text-amber-400">{data.Target}%</span>
+            </div>
+          )}
+          {data && data.Observasi !== undefined && (
+            <div className="flex items-center justify-between gap-4 text-slate-400 font-medium">
+              <span>Sesi Audit:</span>
+              <span className="font-mono font-bold text-white">{data.Observasi} Sesi</span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+// All PPI Indicators Definition and Targets
+export const ALL_PPI_INDICATORS: { id: string; title: string; category: string; target: number }[] = [
+  // Kewaspadaan Isolasi - Standar
+  { id: 'dekontaminasi_alat', title: 'Dekontaminasi Alat', category: 'Kewaspadaan Standar', target: 100 },
+  { id: 'pengendalian_lingkungan', title: 'Pengendalian Lingkungan', category: 'Kewaspadaan Standar', target: 100 },
+  { id: 'pengelolaan_limbah_medis', title: 'Pengelolaan Limbah Medis', category: 'Kewaspadaan Standar', target: 100 },
+  { id: 'pengelolaan_limbah_tajam', title: 'Pengelolaan Limbah Tajam', category: 'Kewaspadaan Standar', target: 100 },
+  { id: 'penatalaksanaan_linen', title: 'Penatalaksanaan Linen', category: 'Kewaspadaan Standar', target: 100 },
+  { id: 'perlindungan_petugas', title: 'Perlindungan Petugas', category: 'Kewaspadaan Standar', target: 100 },
+  { id: 'penempatan_pasien', title: 'Penempatan Pasien', category: 'Kewaspadaan Standar', target: 100 },
+  { id: 'etika_batuk', title: 'Etika Batuk', category: 'Kewaspadaan Standar', target: 100 },
+  { id: 'penyuntikan_aman', title: 'Penyuntikan Aman', category: 'Kewaspadaan Standar', target: 100 },
+
+  // Kewaspadaan Isolasi - Transmisi
+  { id: 'monitoring_ppi_ruang_isolasi', title: 'Ruang Isolasi', category: 'Kewaspadaan Transmisi', target: 100 },
+  { id: 'ppi_ruang_isolasi', title: 'PPI di Ruang Isolasi', category: 'Kewaspadaan Transmisi', target: 100 },
+  { id: 'monitoring_airborne', title: 'Penempatan Pasien Airborne', category: 'Kewaspadaan Transmisi', target: 100 },
+  { id: 'monitoring_immuno', title: 'Penempatan Pasien Immunocompromised', category: 'Kewaspadaan Transmisi', target: 100 },
+
+  // Monitoring Fasilitas & Penunjang
+  { id: 'monitoring_fasilitas_hand_hygiene', title: 'Fasilitas Hand Hygiene', category: 'Monitoring Fasilitas', target: 100 },
+  { id: 'monitoring_fasilitas_apd', title: 'Fasilitas APD', category: 'Monitoring Fasilitas', target: 100 },
+  { id: 'monitoring_ibs', title: 'Ruangan IBS', category: 'Monitoring Fasilitas', target: 100 },
+  { id: 'monitoring_cssd', title: 'CSSD', category: 'Monitoring Fasilitas', target: 100 },
+  { id: 'monitoring_laboratorium', title: 'Laboratorium', category: 'Monitoring Fasilitas', target: 100 },
+  { id: 'monitoring_radiologi', title: 'Radiologi', category: 'Monitoring Fasilitas', target: 100 },
+  { id: 'monitoring_farmasi', title: 'Farmasi', category: 'Monitoring Fasilitas', target: 100 },
+  { id: 'monitoring_gizi', title: 'Gizi & Dapur', category: 'Monitoring Fasilitas', target: 100 },
+  { id: 'monitoring_jenazah', title: 'Kamar Jenazah', category: 'Monitoring Fasilitas', target: 100 },
+  { id: 'monitoring_ambulance', title: 'Ambulance', category: 'Monitoring Fasilitas', target: 100 },
+  { id: 'monitoring_tps', title: 'TPS Limbah', category: 'Monitoring Fasilitas', target: 100 },
+  { id: 'monitoring_tunggu', title: 'Ruang Tunggu', category: 'Monitoring Fasilitas', target: 100 },
+
+  // Monitoring Bundles
+  { id: 'iadp', title: 'Bundles PLABSI / IADP', category: 'Monitoring Bundles', target: 100 },
+  { id: 'cauti', title: 'Bundles CAUTI / ISK', category: 'Monitoring Bundles', target: 100 },
+  { id: 'ido_b', title: 'Bundles IDO', category: 'Monitoring Bundles', target: 100 },
+  { id: 'vap_b', title: 'Bundles VAP', category: 'Monitoring Bundles', target: 100 },
+
+  // Diklat PPI
+  { id: 'diklat_ppi', title: 'Pendidikan & Pelatihan Staf', category: 'Pendidikan & Pelatihan', target: 100 }
+];
+
+function normalizeGenericIndikatorId(id: string | null | undefined): string {
+  if (!id) return '';
+  const clean = id.toLowerCase().trim();
+  if (clean === 'audit_dekontaminasi_alat') return 'dekontaminasi_alat';
+  if (clean === 'audit_pengendalian_lingkungan') return 'pengendalian_lingkungan';
+  if (clean === 'audit_pengelolaan_limbah_medis') return 'pengelolaan_limbah_medis';
+  if (clean === 'audit_pengelolaan_limbah_tajam') return 'pengelolaan_limbah_tajam';
+  if (clean === 'audit_penatalaksanaan_linen') return 'penatalaksanaan_linen';
+  if (clean === 'audit_perlindungan_petugas') return 'perlindungan_petugas';
+  if (clean === 'audit_penempatan_pasien') return 'penempatan_pasien';
+  if (clean === 'audit_etika_batuk') return 'etika_batuk';
+  if (clean === 'audit_penyuntikan_aman') return 'penyuntikan_aman';
+  if (clean === 'audit_ruang_isolasi') return 'monitoring_ppi_ruang_isolasi';
+  if (clean === 'fasilitas_hand_hygiene') return 'monitoring_fasilitas_hand_hygiene';
+  if (clean === 'fasilitas_apd') return 'monitoring_fasilitas_apd';
+  if (clean === 'diklat') return 'diklat_ppi';
+  return clean;
+}
+
 // Global in-memory cache for instant zero-delay navigation without loading flickers
 let cachedSessions: any[] = [];
 let cachedHH: any[] = [];
@@ -303,11 +402,39 @@ export default function AnalyticsPage() {
     return selectedProfesiGroups.includes(profName);
   }, [selectedProfesiGroups]);
 
+  // Auto-detect latest active month if current selected month has 0 data on initial load
+  const hasAdjustedInitialMonth = useRef(false);
+  useEffect(() => {
+    if (!hasAdjustedInitialMonth.current && rawSessions.length > 0) {
+      const currentMonthHasData = rawSessions.some(s => {
+        if (!s.tanggal_waktu) return false;
+        const d = new Date(s.tanggal_waktu);
+        return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+      });
+      if (!currentMonthHasData) {
+        const thisYearSessions = rawSessions.filter(s => {
+          if (!s.tanggal_waktu) return false;
+          return new Date(s.tanggal_waktu).getFullYear() === currentYear;
+        });
+        if (thisYearSessions.length > 0) {
+          const latestD = new Date(thisYearSessions[thisYearSessions.length - 1].tanggal_waktu);
+          setSelectedMonth(latestD.getMonth());
+          setSelectedQuarter(Math.floor(latestD.getMonth() / 3) + 1);
+          setSelectedSemester(latestD.getMonth() < 6 ? 1 : 2);
+        }
+      }
+      hasAdjustedInitialMonth.current = true;
+    }
+  }, [rawSessions, currentYear, currentMonth]);
+
   // Chart Type Display States (Grafik Line vs Grafik Batang)
   const [hhChartType, setHhChartType] = useState<'line' | 'bar'>('line');
   const [apdChartType, setApdChartType] = useState<'line' | 'bar'>('line');
   const [haisChartType, setHaisChartType] = useState<'line' | 'bar'>('line');
   const [haisRoomChartType, setHaisRoomChartType] = useState<'line' | 'bar'>('bar');
+  const [selectedGenericIndicator, setSelectedGenericIndicator] = useState<string>('dekontaminasi_alat');
+  const [genericChartType, setGenericChartType] = useState<'line' | 'bar'>('line');
+  const [genericUnitChartType, setGenericUnitChartType] = useState<'line' | 'bar'>('bar');
 
   // Fetch Data from Supabase in the background
   const fetchData = useCallback(async () => {
@@ -630,6 +757,159 @@ export default function AnalyticsPage() {
     return records;
   }, [rawSessions, matchesPeriod, selectedUnit]);
 
+  // Normalize & Process Generic Audit Sessions (all indicators other than HH, APD, and HAIs)
+  const normalizedGenericSessions = useMemo(() => {
+    const records: any[] = [];
+    for (const s of rawSessions) {
+      if (!s.id) continue;
+      const indId = (s.indikator_id || '').toLowerCase().trim();
+      // Skip HH and APD (they have dedicated sections 1 & 2)
+      if (indId === 'audit_hand_hygiene' || indId === 'audit_apd') continue;
+      // Skip HAIs (dedicated section 3)
+      if (
+        s.kategori === 'Surveilans HAIs' ||
+        indId.startsWith('surveilans') ||
+        ['isk', 'phlebitis', 'vap', 'ido', 'decubitus'].includes(indId)
+      ) {
+        continue;
+      }
+
+      if (!matchesPeriod(s.tanggal_waktu)) continue;
+      if (selectedUnit !== 'Semua Unit' && (s.unit || '').trim() !== selectedUnit) continue;
+
+      const normalizedId = normalizeGenericIndikatorId(indId);
+      const patuh = Number(s.jumlah_patuh) || 0;
+      const dinilai = Number(s.jumlah_dinilai) || 0;
+      let persentase = 0;
+      if (s.persentase !== null && s.persentase !== undefined && !isNaN(Number(s.persentase))) {
+        persentase = Number(s.persentase);
+      } else if (dinilai > 0) {
+        persentase = Math.round((patuh / dinilai) * 100);
+      }
+
+      records.push({
+        id: s.id,
+        indikator_id: normalizedId,
+        raw_indikator_id: indId,
+        nama_indikator: s.nama_indikator || normalizedId,
+        unit: (s.unit || 'Lainnya').trim(),
+        date: new Date(s.tanggal_waktu),
+        persentase,
+        patuh,
+        dinilai,
+        observer: s.observer || '-'
+      });
+    }
+    return records;
+  }, [rawSessions, matchesPeriod, selectedUnit]);
+
+  // Indicator counts for badge display in dropdown
+  const genericIndicatorCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    normalizedGenericSessions.forEach(s => {
+      counts[s.indikator_id] = (counts[s.indikator_id] || 0) + 1;
+    });
+    return counts;
+  }, [normalizedGenericSessions]);
+
+  // Active indicator definition
+  const activeIndicatorDef = useMemo(() => {
+    return ALL_PPI_INDICATORS.find(i => i.id === selectedGenericIndicator) || {
+      id: selectedGenericIndicator,
+      title: selectedGenericIndicator.replace(/_/g, ' ').toUpperCase(),
+      category: 'Indikator PPI',
+      target: 100
+    };
+  }, [selectedGenericIndicator]);
+
+  // Filtered records for the selected generic indicator
+  const selectedGenericData = useMemo(() => {
+    return normalizedGenericSessions.filter(r => r.indikator_id === selectedGenericIndicator);
+  }, [normalizedGenericSessions, selectedGenericIndicator]);
+
+  // KPIs for the selected generic indicator
+  const selectedGenericStats = useMemo(() => {
+    if (selectedGenericData.length === 0) {
+      return { avgPct: null, totalObs: 0, totalPatuh: 0, totalDinilai: 0 };
+    }
+    let sumPct = 0;
+    let totalPatuh = 0;
+    let totalDinilai = 0;
+    selectedGenericData.forEach(r => {
+      sumPct += r.persentase;
+      totalPatuh += r.patuh;
+      totalDinilai += r.dinilai;
+    });
+    const avgPct = Math.round(sumPct / selectedGenericData.length);
+    return {
+      avgPct,
+      totalObs: selectedGenericData.length,
+      totalPatuh,
+      totalDinilai
+    };
+  }, [selectedGenericData]);
+
+  // Master comparison & ranking across ALL active PPI indicators in current period
+  const allIndicatorsRanking = useMemo(() => {
+    const list: { id: string; name: string; category: string; pct: number; count: number; target: number }[] = [];
+
+    // 1. Hand Hygiene
+    let hhP = 0, hhD = 0;
+    normalizedHH.forEach(r => { hhP += r.patuh; hhD += r.dinilai; });
+    if (normalizedHH.length > 0 && hhD > 0) {
+      list.push({
+        id: 'audit_hand_hygiene',
+        name: 'Kepatuhan Kebersihan Tangan',
+        category: 'Kewaspadaan Standar',
+        pct: Math.round((hhP / hhD) * 100),
+        count: normalizedHH.length,
+        target: 85
+      });
+    }
+
+    // 2. APD
+    let apdP = 0, apdD = 0;
+    normalizedApd.forEach(r => { apdP += r.patuh; apdD += r.dinilai; });
+    if (normalizedApd.length > 0 && apdD > 0) {
+      list.push({
+        id: 'audit_apd',
+        name: 'Kepatuhan Penggunaan APD',
+        category: 'Kewaspadaan Standar',
+        pct: Math.round((apdP / apdD) * 100),
+        count: normalizedApd.length,
+        target: 100
+      });
+    }
+
+    // 3. Generic indicators
+    const groupMap: Record<string, { sumPct: number; count: number }> = {};
+    normalizedGenericSessions.forEach(r => {
+      if (!groupMap[r.indikator_id]) {
+        groupMap[r.indikator_id] = { sumPct: 0, count: 0 };
+      }
+      groupMap[r.indikator_id].sumPct += r.persentase;
+      groupMap[r.indikator_id].count += 1;
+    });
+
+    Object.keys(groupMap).forEach(indId => {
+      const def = ALL_PPI_INDICATORS.find(i => i.id === indId);
+      const name = def ? def.title : indId.replace(/_/g, ' ').toUpperCase();
+      const cat = def ? def.category : 'Indikator PPI';
+      const target = def ? def.target : 100;
+      const avg = Math.round(groupMap[indId].sumPct / groupMap[indId].count);
+      list.push({
+        id: indId,
+        name,
+        category: cat,
+        pct: avg,
+        count: groupMap[indId].count,
+        target
+      });
+    });
+
+    return list.sort((a, b) => b.pct - a.pct);
+  }, [normalizedHH, normalizedApd, normalizedGenericSessions]);
+
   // --- STATS COMPUTATION FOR TOP SUMMARY CARDS ---
   const summaryStats = useMemo(() => {
     // 1. Hand Hygiene Avg
@@ -648,25 +928,20 @@ export default function AnalyticsPage() {
     });
     const apdAvg = apdDinilai > 0 ? Math.round((apdPatuh / apdDinilai) * 100) : null;
 
-    // 3. Total Observasi
-    const totalObservasi = normalizedHH.length + normalizedApd.length;
+    // 3. Total Observasi (includes HH, APD, and ALL Generic Audit Sessions)
+    const totalObservasi = normalizedHH.length + normalizedApd.length + normalizedGenericSessions.length;
 
     // 4. Total HAIs Incidents
     let totalHaisCases = 0;
     normalizedHais.forEach(r => totalHaisCases += r.cases);
 
-    // 5. Best & Improvement Needed Indicators
-    const indicatorsList: { name: string; pct: number }[] = [];
-    if (hhAvg !== null) indicatorsList.push({ name: 'Kebersihan Tangan', pct: hhAvg });
-    if (apdAvg !== null) indicatorsList.push({ name: 'Kepatuhan APD', pct: apdAvg });
-
+    // 5. Best & Improvement Needed Indicators (computed across ALL indicators)
     let bestInd = '-';
     let worstInd = '-';
 
-    if (indicatorsList.length > 0) {
-      indicatorsList.sort((a, b) => b.pct - a.pct);
-      bestInd = `${indicatorsList[0].name} (${indicatorsList[0].pct}%)`;
-      worstInd = `${indicatorsList[indicatorsList.length - 1].name} (${indicatorsList[indicatorsList.length - 1].pct}%)`;
+    if (allIndicatorsRanking.length > 0) {
+      bestInd = `${allIndicatorsRanking[0].name} (${allIndicatorsRanking[0].pct}%)`;
+      worstInd = `${allIndicatorsRanking[allIndicatorsRanking.length - 1].name} (${allIndicatorsRanking[allIndicatorsRanking.length - 1].pct}%)`;
     }
 
     return {
@@ -677,7 +952,7 @@ export default function AnalyticsPage() {
       bestInd,
       worstInd
     };
-  }, [normalizedHH, normalizedApd, normalizedHais]);
+  }, [normalizedHH, normalizedApd, normalizedHais, normalizedGenericSessions, allIndicatorsRanking]);
 
   // --- HAND HYGIENE PROFESSION BREAKDOWN ---
   const hhProfBreakdown = useMemo(() => {
@@ -977,6 +1252,67 @@ export default function AnalyticsPage() {
     return { haisTrendData: trend, haisRoomData: room };
   }, [normalizedHais, timeBuckets, getBucketLabel]);
 
+  // --- GENERIC PPI AUDIT TREND & UNIT DATA ---
+  const { genericTrendData, genericUnitData } = useMemo(() => {
+    if (selectedGenericData.length === 0) return { genericTrendData: [], genericUnitData: [] };
+
+    // 1. Trend by Time Bucket
+    const bucketMap: Record<string, { sumPct: number; count: number; patuh: number; dinilai: number }> = {};
+    timeBuckets.forEach(b => {
+      bucketMap[b] = { sumPct: 0, count: 0, patuh: 0, dinilai: 0 };
+    });
+
+    // 2. Breakdown by Unit
+    const unitMap: Record<string, { sumPct: number; count: number; patuh: number; dinilai: number }> = {};
+
+    selectedGenericData.forEach(r => {
+      const bLabel = getBucketLabel(r.date);
+      if (bucketMap[bLabel]) {
+        bucketMap[bLabel].sumPct += r.persentase;
+        bucketMap[bLabel].count += 1;
+        bucketMap[bLabel].patuh += r.patuh;
+        bucketMap[bLabel].dinilai += r.dinilai;
+      }
+
+      const u = r.unit || 'Lainnya';
+      if (!unitMap[u]) {
+        unitMap[u] = { sumPct: 0, count: 0, patuh: 0, dinilai: 0 };
+      }
+      unitMap[u].sumPct += r.persentase;
+      unitMap[u].count += 1;
+      unitMap[u].patuh += r.patuh;
+      unitMap[u].dinilai += r.dinilai;
+    });
+
+    const targetVal = activeIndicatorDef?.target || 100;
+
+    const trend = timeBuckets.map(b => {
+      const item = bucketMap[b];
+      const avg = item.count > 0 ? Math.round(item.sumPct / item.count) : 0;
+      return {
+        periode: b,
+        Capaian: avg,
+        Target: targetVal,
+        Observasi: item.count,
+        Patuh: item.patuh,
+        Dinilai: item.dinilai
+      };
+    });
+
+    const unitArr = Object.keys(unitMap).map(u => {
+      const item = unitMap[u];
+      const avg = item.count > 0 ? Math.round(item.sumPct / item.count) : 0;
+      return {
+        unit: u,
+        Capaian: avg,
+        Target: targetVal,
+        Observasi: item.count
+      };
+    }).sort((a, b) => b.Capaian - a.Capaian);
+
+    return { genericTrendData: trend, genericUnitData: unitArr };
+  }, [selectedGenericData, timeBuckets, getBucketLabel, activeIndicatorDef]);
+
   // EXPORT FUNCTIONALITY (PDF, EXCEL, PRINT)
   const handleExport = (type: 'pdf' | 'excel' | 'print') => {
     const filterTitle = `${periodeType} - ${
@@ -1027,6 +1363,43 @@ export default function AnalyticsPage() {
       const ws3 = XLSX.utils.aoa_to_sheet(apdExportData);
       XLSX.utils.book_append_sheet(wb, ws3, 'Kepatuhan APD');
 
+      // Sheet 4: Surveilans HAIs
+      const haisExportData = [
+        ['RUANGAN / UNIT', 'TOTAL KEJADIAN HAIS'],
+        ...haisRoomData.map(r => [r.unit, r.Kejadian])
+      ];
+      const ws4 = XLSX.utils.aoa_to_sheet(haisExportData);
+      XLSX.utils.book_append_sheet(wb, ws4, 'Surveilans HAIs');
+
+      // Sheet 5: Audit Indikator Terpilih
+      const genericExportData = [
+        ['INDIKATOR AUDIT', activeIndicatorDef?.title || selectedGenericIndicator],
+        ['TARGET STANDAR', `${activeIndicatorDef?.target || 100}%`],
+        ['RATA-RATA CAPAIAN', selectedGenericStats.avgPct !== null ? `${selectedGenericStats.avgPct}%` : '0%'],
+        ['TOTAL OBSERVASI', selectedGenericStats.totalObs],
+        [],
+        ['UNIT / RUANGAN', 'RATA-RATA CAPAIAN (%)', 'JUMLAH OBSERVASI'],
+        ...genericUnitData.map(u => [u.unit, `${u.Capaian}%`, u.Observasi])
+      ];
+      const ws5 = XLSX.utils.aoa_to_sheet(genericExportData);
+      XLSX.utils.book_append_sheet(wb, ws5, 'Audit Indikator Terpilih');
+
+      // Sheet 6: Rekap Seluruh Indikator
+      const allIndExportData = [
+        ['NO', 'NAMA INDIKATOR PPI', 'KATEGORI', 'TARGET (%)', 'CAPAIAN (%)', 'JUMLAH AUDIT', 'STATUS'],
+        ...allIndicatorsRanking.map((ind, idx) => [
+          idx + 1,
+          ind.name,
+          ind.category,
+          `${ind.target}%`,
+          `${ind.pct}%`,
+          ind.count,
+          ind.pct >= ind.target ? 'Memenuhi Standar' : 'Perlu Evaluasi'
+        ])
+      ];
+      const ws6 = XLSX.utils.aoa_to_sheet(allIndExportData);
+      XLSX.utils.book_append_sheet(wb, ws6, 'Rekap Semua Indikator');
+
       // Save file
       const fileName = `Grafik_SMART_PPI_${selectedYear}_${periodeType}.xlsx`;
       XLSX.writeFile(wb, fileName);
@@ -1050,12 +1423,12 @@ export default function AnalyticsPage() {
                 Grafik SMART PPI
               </h1>
             </div>
-              <p className="text-xs sm:text-sm text-slate-300 font-medium mt-1 text-center landscape:lg:text-left">
-                Pusat Visualisasi Realtime Capaian Indikator Mutu PPI Terintegrasi
-              </p>
-            </div>
+            <p className="text-xs sm:text-sm text-slate-300 font-medium mt-1 text-center landscape:lg:text-left">
+              Pusat Visualisasi Realtime Capaian Indikator Mutu PPI Terintegrasi
+            </p>
           </div>
         </div>
+      </div>
 
         {/* CONTROLS & FILTER SECTION - 3D Tactile Container with Recessed Trays */}
         <div className="relative group bg-[#18193b] rounded-[28px] md:rounded-[32px] p-6 sm:p-7 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] space-y-4 print:hidden">
@@ -1866,6 +2239,313 @@ export default function AnalyticsPage() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* SECTION 4: INDIKATOR MUTU & AUDIT PPI TERINTEGRASI - 3D Tactile Neumorphic Container */}
+        <div className="relative group bg-[#18193b] rounded-[28px] md:rounded-[32px] p-6 sm:p-8 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] space-y-6">
+          {/* Top Bevel Highlight */}
+          <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+          {/* Section Header */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-indigo-900/40 pb-5 relative z-10">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-[14px] bg-gradient-to-br from-[#272952] to-[#12132d] border border-cyan-400/30 shadow-[-2px_-2px_6px_rgba(34,211,238,0.15),3px_4px_12px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.25)] flex items-center justify-center text-cyan-400">
+                <ClipboardCheck className="w-5 h-5 drop-shadow" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-lg sm:text-xl font-black text-white tracking-wide uppercase font-heading">
+                    INDIKATOR MUTU &amp; AUDIT PPI TERINTEGRASI
+                  </h2>
+                </div>
+                <p className="text-xs text-slate-300 font-medium mt-0.5">
+                  Visualisasi Kepatuhan Kewaspadaan Standar, Penempatan Pasien, Fasilitas, dan Bundles PPI
+                </p>
+              </div>
+            </div>
+
+            {/* Indicator Selector Dropdown */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="relative min-w-[280px]">
+                <label className="absolute -top-2.5 left-3 px-2 bg-[#18193b] border border-cyan-500/20 text-[9px] font-black text-cyan-300 uppercase tracking-widest z-10 rounded-md shadow-sm">
+                  PILIH INDIKATOR AUDIT
+                </label>
+                <select
+                  value={selectedGenericIndicator}
+                  onChange={(e) => setSelectedGenericIndicator(e.target.value)}
+                  className="w-full bg-[#12132e] border border-cyan-500/30 text-cyan-300 text-xs font-bold rounded-xl px-4 py-2.5 pr-8 outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500/50 transition-all appearance-none cursor-pointer hover:border-cyan-400/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.5),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+                >
+                  {/* Categorized options */}
+                  {['Kewaspadaan Standar', 'Kewaspadaan Transmisi', 'Monitoring Fasilitas', 'Monitoring Bundles', 'Pendidikan & Pelatihan'].map(cat => {
+                    const inds = ALL_PPI_INDICATORS.filter(i => i.category === cat);
+                    if (inds.length === 0) return null;
+                    return (
+                      <optgroup key={cat} label={`── ${cat} ──`} className="bg-[#18193b] text-slate-300 font-bold">
+                        {inds.map(ind => {
+                          const count = genericIndicatorCounts[ind.id] || 0;
+                          return (
+                            <option key={ind.id} value={ind.id} className="bg-[#12132e] text-white">
+                              {ind.title} {count > 0 ? `(${count} data)` : ''}
+                            </option>
+                          );
+                        })}
+                      </optgroup>
+                    );
+                  })}
+                </select>
+                <ChevronDown className="w-4 h-4 text-cyan-400 absolute right-3 top-3 pointer-events-none" />
+              </div>
+            </div>
+          </div>
+
+          {/* Indicator KPI Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
+            {/* 1. Capaian Rata-Rata */}
+            <div className="p-4 rounded-2xl bg-[#12132e] border border-indigo-900/40 space-y-1.5 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Capaian Rata-Rata</span>
+              <div className="flex items-baseline gap-2">
+                <span className={`text-2xl font-black font-heading ${
+                  selectedGenericStats.avgPct === null ? 'text-slate-400' :
+                  selectedGenericStats.avgPct >= (activeIndicatorDef?.target || 85) ? 'text-emerald-400 drop-shadow-[0_2px_6px_rgba(16,185,129,0.4)]' :
+                  'text-rose-400 drop-shadow-[0_2px_6px_rgba(244,63,94,0.4)]'
+                }`}>
+                  {selectedGenericStats.avgPct !== null ? `${selectedGenericStats.avgPct}%` : 'Belum Ada Data'}
+                </span>
+              </div>
+              <span className="text-[10px] text-slate-400 block">
+                {selectedGenericStats.avgPct !== null && selectedGenericStats.avgPct >= (activeIndicatorDef?.target || 85)
+                  ? '✓ Memenuhi Standar Mutu'
+                  : selectedGenericStats.avgPct !== null
+                  ? '⚠ Di Bawah Target Standar'
+                  : 'Belum ada observasi'}
+              </span>
+            </div>
+
+            {/* 2. Target Standar */}
+            <div className="p-4 rounded-2xl bg-[#12132e] border border-indigo-900/40 space-y-1.5 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Target Standar Mutu</span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-black text-amber-400 font-heading drop-shadow-[0_2px_6px_rgba(245,158,11,0.4)]">
+                  {activeIndicatorDef?.target || 100}%
+                </span>
+              </div>
+              <span className="text-[10px] text-slate-400 block">Standar Komite PPI</span>
+            </div>
+
+            {/* 3. Total Sesi Audit */}
+            <div className="p-4 rounded-2xl bg-[#12132e] border border-indigo-900/40 space-y-1.5 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Total Sesi Audit</span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-black text-cyan-400 font-heading drop-shadow-[0_2px_6px_rgba(34,211,238,0.4)]">
+                  {selectedGenericStats.totalObs}
+                </span>
+                <span className="text-xs text-slate-400">Sesi</span>
+              </div>
+              <span className="text-[10px] text-slate-400 block">Tercatat di Sistem</span>
+            </div>
+
+            {/* 4. Ruangan Tervalidasi */}
+            <div className="p-4 rounded-2xl bg-[#12132e] border border-indigo-900/40 space-y-1.5 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Unit Terobservasi</span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-black text-purple-400 font-heading drop-shadow-[0_2px_6px_rgba(192,132,252,0.4)]">
+                  {genericUnitData.length}
+                </span>
+                <span className="text-xs text-slate-400">Unit</span>
+              </div>
+              <span className="text-[10px] text-slate-400 block">Cakupan Ruangan Audit</span>
+            </div>
+          </div>
+
+          {/* Charts Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 relative z-10">
+            {/* A. Tren Kepatuhan Waktu */}
+            <div className="space-y-4 p-5 rounded-2xl bg-[#12132e] border border-indigo-900/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#18193b] border border-white/10 shadow-sm">
+                  <TrendingUp className="w-3.5 h-3.5 text-cyan-400" />
+                  <span className="text-[10px] font-black text-cyan-300 uppercase tracking-wider">
+                    A. Tren Kepatuhan ({activeIndicatorDef?.title || 'Indikator'})
+                  </span>
+                </div>
+                <ChartTypeToggle type={genericChartType} onChange={setGenericChartType} colorScheme="sky" />
+              </div>
+
+              {genericTrendData.length === 0 ? (
+                <div className="p-8 rounded-2xl bg-[#161735]/40 border border-white/5 text-center space-y-2">
+                  <BarChart2 className="w-8 h-8 text-slate-500 mx-auto animate-pulse" />
+                  <p className="text-xs text-slate-400">Belum ada data audit {activeIndicatorDef?.title || 'indikator ini'} pada periode yang dipilih.</p>
+                </div>
+              ) : (
+                <div className="h-[290px] w-full pt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    {genericChartType === 'line' ? (
+                      <LineChart data={genericTrendData} margin={{ top: 25, right: 25, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#2b2d56" />
+                        <XAxis dataKey="periode" stroke="#94a3b8" tick={{ fontSize: 10, fill: '#cbd5e1' }} />
+                        <YAxis domain={[0, 115]} stroke="#94a3b8" tick={{ fontSize: 10, fill: '#cbd5e1' }} unit="%" />
+                        <Tooltip content={<GenericTooltip />} />
+                        <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
+                        <ReferenceLine y={activeIndicatorDef?.target || 100} label={{ value: `Target: ${activeIndicatorDef?.target || 100}%`, fill: '#f59e0b', fontSize: 10, position: 'top', fontWeight: 'bold' }} stroke="#f59e0b" strokeDasharray="5 5" strokeWidth={2} />
+                        <Line type="monotone" dataKey="Capaian" stroke="#06b6d4" strokeWidth={3} dot={{ r: 5, fill: '#06b6d4' }} activeDot={{ r: 8 }}>
+                          <LabelList dataKey="Capaian" position="top" formatter={(val: any) => typeof val === 'number' && val > 0 ? `${val}%` : ''} fill="#22d3ee" fontSize={10} fontWeight="bold" dy={-6} />
+                        </Line>
+                      </LineChart>
+                    ) : (
+                      <BarChart data={genericTrendData} margin={{ top: 25, right: 25, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#2b2d56" />
+                        <XAxis dataKey="periode" stroke="#94a3b8" tick={{ fontSize: 10, fill: '#cbd5e1' }} />
+                        <YAxis domain={[0, 115]} stroke="#94a3b8" tick={{ fontSize: 10, fill: '#cbd5e1' }} unit="%" />
+                        <Tooltip content={<GenericTooltip />} />
+                        <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
+                        <ReferenceLine y={activeIndicatorDef?.target || 100} label={{ value: `Target: ${activeIndicatorDef?.target || 100}%`, fill: '#f59e0b', fontSize: 10, position: 'top', fontWeight: 'bold' }} stroke="#f59e0b" strokeDasharray="5 5" strokeWidth={2} />
+                        <Bar dataKey="Capaian" fill="#06b6d4" radius={[6, 6, 0, 0]}>
+                          <LabelList dataKey="Capaian" position="top" formatter={(val: any) => typeof val === 'number' && val > 0 ? `${val}%` : ''} fill="#22d3ee" fontSize={10} fontWeight="bold" />
+                          {genericTrendData.map((entry, index) => (
+                            <Cell key={`trend-cell-${index}`} fill={entry.Capaian >= (activeIndicatorDef?.target || 85) ? '#10b981' : '#f59e0b'} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    )}
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+
+            {/* B. Distribusi Capaian Berdasarkan Unit / Ruangan */}
+            <div className="space-y-4 p-5 rounded-2xl bg-[#12132e] border border-indigo-900/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#18193b] border border-white/10 shadow-sm">
+                  <Building2 className="w-3.5 h-3.5 text-cyan-400" />
+                  <span className="text-[10px] font-black text-cyan-300 uppercase tracking-wider">
+                    B. Capaian per Unit / Ruangan
+                  </span>
+                </div>
+                <ChartTypeToggle type={genericUnitChartType} onChange={setGenericUnitChartType} colorScheme="sky" />
+              </div>
+
+              {genericUnitData.length === 0 ? (
+                <div className="p-8 rounded-2xl bg-[#161735]/40 border border-white/5 text-center space-y-2">
+                  <BarChart2 className="w-8 h-8 text-slate-500 mx-auto animate-pulse" />
+                  <p className="text-xs text-slate-400">Belum ada distribusi unit untuk {activeIndicatorDef?.title || 'indikator ini'}.</p>
+                </div>
+              ) : (
+                <div className="h-[290px] w-full pt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    {genericUnitChartType === 'bar' ? (
+                      <BarChart data={genericUnitData} margin={{ top: 25, right: 25, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#2b2d56" />
+                        <XAxis dataKey="unit" stroke="#94a3b8" tick={{ fontSize: 10, fill: '#cbd5e1' }} />
+                        <YAxis domain={[0, 115]} stroke="#94a3b8" tick={{ fontSize: 10, fill: '#cbd5e1' }} unit="%" />
+                        <Tooltip content={<GenericTooltip />} />
+                        <ReferenceLine y={activeIndicatorDef?.target || 100} stroke="#f59e0b" strokeDasharray="5 5" strokeWidth={2} />
+                        <Bar dataKey="Capaian" fill="#38bdf8" radius={[6, 6, 0, 0]}>
+                          <LabelList dataKey="Capaian" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#7dd3fc" fontSize={10} fontWeight="bold" />
+                          {genericUnitData.map((entry, index) => (
+                            <Cell key={`unit-cell-${index}`} fill={entry.Capaian >= (activeIndicatorDef?.target || 85) ? '#0284c7' : '#e11d48'} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    ) : (
+                      <LineChart data={genericUnitData} margin={{ top: 25, right: 25, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#2b2d56" />
+                        <XAxis dataKey="unit" stroke="#94a3b8" tick={{ fontSize: 10, fill: '#cbd5e1' }} />
+                        <YAxis domain={[0, 115]} stroke="#94a3b8" tick={{ fontSize: 10, fill: '#cbd5e1' }} unit="%" />
+                        <Tooltip content={<GenericTooltip />} />
+                        <ReferenceLine y={activeIndicatorDef?.target || 100} stroke="#f59e0b" strokeDasharray="5 5" strokeWidth={2} />
+                        <Line type="monotone" dataKey="Capaian" stroke="#38bdf8" strokeWidth={3} dot={{ r: 5, fill: '#38bdf8' }}>
+                          <LabelList dataKey="Capaian" position="top" formatter={(val: any) => typeof val === 'number' ? `${val}%` : ''} fill="#7dd3fc" fontSize={10} fontWeight="bold" dy={-6} />
+                        </Line>
+                      </LineChart>
+                    )}
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Master Section: Ranking & Rekap Seluruh Indikator PPI */}
+          <div className="space-y-4 pt-4 border-t border-indigo-900/40 relative z-10">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#12132e] border border-white/10 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)]">
+                <Award className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-[10px] font-black text-amber-300 uppercase tracking-wider">
+                  C. Komparasi Capaian Seluruh Indikator Mutu PPI ({allIndicatorsRanking.length} Indikator Aktif)
+                </span>
+              </div>
+            </div>
+
+            {allIndicatorsRanking.length === 0 ? (
+              <div className="p-8 rounded-2xl bg-[#12132e] border border-indigo-900/40 text-center space-y-2 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8)]">
+                <BarChart2 className="w-10 h-10 text-slate-500 mx-auto animate-pulse" />
+                <h4 className="text-sm font-bold text-slate-300">Belum tersedia data indikator pada periode yang dipilih.</h4>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {allIndicatorsRanking.map((ind, idx) => {
+                  const isPassed = ind.pct >= ind.target;
+                  return (
+                    <div
+                      key={ind.id}
+                      onClick={() => {
+                        if (ALL_PPI_INDICATORS.some(i => i.id === ind.id)) {
+                          setSelectedGenericIndicator(ind.id);
+                        }
+                      }}
+                      className={`p-4 rounded-2xl bg-[#12132e] border transition-all cursor-pointer hover:scale-[1.01] ${
+                        selectedGenericIndicator === ind.id
+                          ? 'border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.25)]'
+                          : 'border-indigo-900/40 hover:border-indigo-600/60'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">
+                          #{idx + 1} {ind.category}
+                        </span>
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${
+                          isPassed
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                            : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                        }`}>
+                          Target: {ind.target}%
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-xs font-black text-white truncate max-w-[70%]" title={ind.name}>
+                          {ind.name}
+                        </span>
+                        <span className={`text-xl font-black font-heading ${
+                          isPassed ? 'text-emerald-400' : 'text-rose-400'
+                        }`}>
+                          {ind.pct}%
+                        </span>
+                      </div>
+
+                      {/* Recessed Progress Bar */}
+                      <div className="w-full h-2 bg-[#0a0a1a] rounded-full overflow-hidden p-0.5 mt-2.5 border border-black/40">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            isPassed
+                              ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
+                              : 'bg-gradient-to-r from-rose-500 to-amber-500'
+                          }`}
+                          style={{ width: `${Math.min(100, ind.pct)}%` }}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold mt-2 pt-1.5 border-t border-indigo-900/30">
+                        <span>{ind.count} Sesi Audit</span>
+                        <span className={isPassed ? 'text-emerald-400' : 'text-amber-400'}>
+                          {isPassed ? 'Memenuhi Standar' : 'Perlu Evaluasi'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 

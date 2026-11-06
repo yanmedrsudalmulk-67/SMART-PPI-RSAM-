@@ -172,8 +172,9 @@ function NavIcon3D({
  * Using an identical command topology for all indices ensures perfectly smooth, 
  * tear-free, continuous interpolation without jitter or geometric warping.
  */
-function getNavContourPath(activeIndex: number): string {
-  const cx = 100 + activeIndex * 200;
+function getNavContourPath(activeIndex: number, itemCount: number = 5): string {
+  const slot = 1000 / Math.max(1, itemCount);
+  const cx = slot / 2 + activeIndex * slot;
   const R = 72;
   const x_left = Math.max(30, cx - R);
   const x_right = Math.min(970, cx + R);
@@ -181,49 +182,64 @@ function getNavContourPath(activeIndex: number): string {
   return `M 0 120 L 0 95 C 0 75, 12 55, 28 55 L ${x_left} 55 C ${x_left + 35} 55, ${cx - 35} 14, ${cx} 14 C ${cx + 35} 14, ${x_right - 35} 55, ${x_right} 55 L 972 55 C 988 55, 1000 75, 1000 95 L 1000 120 C 1000 145, 980 165, 955 165 L 45 165 C 20 165, 0 145, 0 120 Z`;
 }
 
-// Fluid cubic-bezier transition: Apple-style deceleration curve that eliminates snappy rebounds/hentakan completely
+// Fluid cubic-bezier transition: Apple-style 120 FPS ProMotion deceleration curve
 const NAV_TRANSITION = {
   type: "tween" as const,
-  ease: [0.25, 1, 0.5, 1] as [number, number, number, number],
-  duration: 0.36,
+  ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
+  duration: 0.22,
 };
 
 interface MobilePortraitNavBarProps {
   currentPath: string;
+  /** Sembunyikan menu Pengaturan (untuk akun IPCLN) */
+  hideSettings?: boolean;
 }
 
-export default function MobilePortraitNavBar({ currentPath }: MobilePortraitNavBarProps) {
+export default function MobilePortraitNavBar({ currentPath, hideSettings = false }: MobilePortraitNavBarProps) {
+  const navItems = useMemo(
+    () => (hideSettings ? MOBILE_NAV_ITEMS.filter((item) => item.id !== 'settings') : MOBILE_NAV_ITEMS),
+    [hideSettings]
+  );
+  const itemCount = navItems.length;
+  const itemWidth = `${100 / itemCount}%`;
+
   // Determine index from route
   const routeIndex = useMemo(() => {
-    if (currentPath === '/dashboard') return 0;
-    if (currentPath.startsWith('/dashboard/input')) return 1;
-    if (currentPath.startsWith('/dashboard/analytics')) return 2;
-    if (currentPath.startsWith('/dashboard/reports')) return 3;
-    if (currentPath.startsWith('/dashboard/settings')) return 4;
-    return 0;
-  }, [currentPath]);
+    const idOf = (): string => {
+      if (currentPath === '/dashboard') return 'dashboard';
+      if (currentPath.startsWith('/dashboard/input')) return 'input';
+      if (currentPath.startsWith('/dashboard/analytics')) return 'analytics';
+      if (currentPath.startsWith('/dashboard/reports')) return 'reports';
+      if (currentPath.startsWith('/dashboard/settings')) return 'settings';
+      return 'dashboard';
+    };
+    const idx = navItems.findIndex((item) => item.id === idOf());
+    return idx >= 0 ? idx : 0;
+  }, [currentPath, navItems]);
 
   // Optimistic index for instantaneous response on tap, eliminating route transition lag
   const [optimisticIndex, setOptimisticIndex] = useState<number | null>(null);
 
-  const activeIndex = optimisticIndex !== null ? optimisticIndex : routeIndex;
+  const rawActiveIndex = optimisticIndex !== null ? optimisticIndex : routeIndex;
+  const activeIndex = Math.min(rawActiveIndex, itemCount - 1);
 
   // Sync back with router when navigation finishes
   useEffect(() => {
     setOptimisticIndex(null);
   }, [currentPath]);
 
-  const svgPath = useMemo(() => getNavContourPath(activeIndex), [activeIndex]);
+  const svgPath = useMemo(() => getNavContourPath(activeIndex, itemCount), [activeIndex, itemCount]);
 
   return (
-    <div className="fixed bottom-3 sm:bottom-4 inset-x-3 sm:inset-x-6 z-50 flex justify-center landscape:hidden portrait:flex pb-[env(safe-area-inset-bottom)] pointer-events-none">
+    <div className="fixed bottom-3 sm:bottom-4 inset-x-3 sm:inset-x-6 z-50 flex justify-center landscape:hidden portrait:flex pb-[env(safe-area-inset-bottom)] pointer-events-none overflow-visible">
       <nav 
         aria-label="Mobile Navigation Bar"
-        className="w-full max-w-md h-[86px] relative pointer-events-auto select-none"
+        className="w-full max-w-md h-[86px] relative pointer-events-auto select-none nav-dock-120fps transform-gpu overflow-visible"
+        style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
       >
         {/* SVG Background Contour: Fluidly morphs without snapping */}
         <svg 
-          className="absolute inset-0 w-full h-full pointer-events-none drop-shadow-[0_16px_36px_rgba(0,0,0,0.85)] drop-shadow-[0_4px_14px_rgba(0,0,0,0.7)]" 
+          className="absolute inset-0 w-full h-full pointer-events-none overflow-visible drop-shadow-[0_16px_36px_rgba(0,0,0,0.85)] drop-shadow-[0_4px_14px_rgba(0,0,0,0.7)]" 
           viewBox="0 0 1000 170" 
           preserveAspectRatio="none"
         >
@@ -254,28 +270,29 @@ export default function MobilePortraitNavBar({ currentPath }: MobilePortraitNavB
 
         {/* 
           Dedicated Gliding Squircle Floating Button:
-          - A single persistent container sliding horizontally with GPU-accelerated translateX
-          - Prevents unmounting/remounting layout shifts and eliminates violent snapping (hentakan)
+          - A single persistent container sliding horizontally with GPU-accelerated translateX at 120 FPS
+          - Prevents unmounting/remounting layout shifts and eliminates snapping
         */}
-        <div className="absolute inset-x-0 top-0 h-full pointer-events-none z-20 flex">
+        <div className="absolute inset-x-0 top-0 h-full pointer-events-none z-20 flex overflow-visible">
           <motion.div 
-            className="w-1/5 h-full flex flex-col items-center"
+            className="h-full flex flex-col items-center transform-gpu will-change-transform overflow-visible"
+            style={{ width: itemWidth }}
             animate={{ x: `${activeIndex * 100}%` }}
             transition={NAV_TRANSITION}
           >
             <div className="absolute -top-3.5 sm:-top-4 w-[58px] h-[58px] rounded-[22px] p-[1.8px] bg-gradient-to-tr from-[#38bdf8] via-[#818cf8] to-[#d946ef] shadow-[0_10px_26px_rgba(112,68,229,0.45),0_18px_36px_rgba(0,0,0,0.9)] flex items-center justify-center">
               {/* Inner Dark Violet/Indigo Glass Surface */}
-              <div className="w-full h-full rounded-[20px] bg-gradient-to-b from-[#251d56] via-[#1a1542] to-[#120e2f] shadow-[inset_0_1.5px_2px_rgba(255,255,255,0.25),inset_0_-2px_4px_rgba(0,0,0,0.6)] flex items-center justify-center overflow-hidden">
+              <div className="w-full h-full rounded-[20px] bg-gradient-to-b from-[#251d56] via-[#1a1542] to-[#120e2f] shadow-[inset_0_1.5px_2px_rgba(255,255,255,0.25),inset_0_-2px_4px_rgba(0,0,0,0.6)] flex items-center justify-center">
                 <AnimatePresence mode="popLayout" initial={false}>
                   <motion.div
-                    key={MOBILE_NAV_ITEMS[activeIndex].id}
-                    initial={{ opacity: 0, scale: 0.65 }}
+                    key={navItems[activeIndex].id}
+                    initial={{ opacity: 0, scale: 0.7 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.65 }}
-                    transition={{ duration: 0.22, ease: "easeOut" }}
+                    exit={{ opacity: 0, scale: 0.7 }}
+                    transition={{ duration: 0.16, ease: "easeOut" }}
                     className="flex items-center justify-center"
                   >
-                    <NavIcon3D id={MOBILE_NAV_ITEMS[activeIndex].id} isActive={true} />
+                    <NavIcon3D id={navItems[activeIndex].id} isActive={true} />
                   </motion.div>
                 </AnimatePresence>
               </div>
@@ -283,17 +300,20 @@ export default function MobilePortraitNavBar({ currentPath }: MobilePortraitNavB
           </motion.div>
         </div>
 
-        {/* 5 Navigation Item Interactive Links with Stable Baselines */}
+        {/* Navigation Item Interactive Links with Instant Touch Feedback */}
         <div className="relative z-10 w-full h-full flex items-center justify-around px-1 pt-1 pb-2">
-          {MOBILE_NAV_ITEMS.map((item, idx) => {
+          {navItems.map((item, idx) => {
             const isActive = activeIndex === idx;
 
             return (
               <Link 
                 key={item.id} 
                 href={item.href}
+                prefetch={true}
+                scroll={false}
                 onClick={() => setOptimisticIndex(idx)}
-                className="relative w-1/5 h-full flex flex-col items-center justify-end pb-3 pt-1 outline-none group select-none cursor-pointer"
+                className="relative h-full flex flex-col items-center justify-end pb-3 pt-1 outline-none group select-none cursor-pointer touch-manipulation active:scale-95 transition-transform duration-100 will-change-transform"
+                style={{ width: itemWidth, WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
               >
                 {/* Inactive Icon: Smoothly fades out when active squircle glides over it */}
                 <div className="relative flex items-center justify-center mb-1.5 h-6">
@@ -302,7 +322,7 @@ export default function MobilePortraitNavBar({ currentPath }: MobilePortraitNavB
                       opacity: isActive ? 0 : 1,
                       scale: isActive ? 0.6 : 1,
                     }}
-                    transition={{ duration: 0.22, ease: "easeOut" }}
+                    transition={{ duration: 0.16, ease: "easeOut" }}
                   >
                     <NavIcon3D id={item.id} isActive={false} />
                   </motion.div>
@@ -314,7 +334,7 @@ export default function MobilePortraitNavBar({ currentPath }: MobilePortraitNavB
                     color: isActive ? '#ddd6fe' : '#94a3b8',
                     scale: isActive ? 1.04 : 1,
                   }}
-                  transition={{ duration: 0.25 }}
+                  transition={{ duration: 0.18 }}
                   className={`text-[11px] tracking-tight text-center leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] transition-colors duration-200 ${
                     isActive ? 'font-black' : 'font-semibold group-hover:text-violet-200'
                   }`}

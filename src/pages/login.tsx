@@ -34,7 +34,7 @@ export default function LoginPage() {
     return () => observer.disconnect();
   }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
@@ -48,12 +48,34 @@ export default function LoginPage() {
         setIsLoading(false);
       }
     } else {
-      if (username && password) {
-         setUserRole('IPCLN');
-         router.push('/dashboard');
-      } else {
-         setError('Harap isi username dan password.');
-         setIsLoading(false);
+      if (!username.trim() || !password) {
+        setError('Harap isi username dan password.');
+        setIsLoading(false);
+        return;
+      }
+      try {
+        // Verifikasi akun IPCLN ke server lokal (SQLite)
+        const res = await fetch('/api/auth/ipcln', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'login', username: username.trim(), password }),
+        });
+        const result = await res.json().catch(() => ({}));
+        if (!res.ok || !result.ok) {
+          setError(result.error || 'Gagal masuk. Periksa kembali username dan password.');
+          setIsLoading(false);
+          return;
+        }
+        try {
+          localStorage.setItem('smart_ppi_user', JSON.stringify(result.user));
+        } catch (err) {
+          // ignore storage errors
+        }
+        setUserRole('IPCLN');
+        router.push('/dashboard');
+      } catch (err) {
+        setError('Tidak dapat terhubung ke server SMART PPI. Pastikan server sedang berjalan.');
+        setIsLoading(false);
       }
     }
   };
@@ -138,7 +160,7 @@ export default function LoginPage() {
             {/* Username */}
             <div>
               <label htmlFor="username" className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">
-                Email / Username
+                Username
               </label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">

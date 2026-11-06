@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Default tetap '.next'; NEXT_DIST_DIR hanya dipakai untuk server uji agar tidak menimpa build produksi
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   reactStrictMode: true,
-  output: 'standalone',
   images: {
     remotePatterns: [
       {
@@ -26,6 +27,18 @@ const nextConfig = {
     scrollRestoration: true,
   },
   swcMinify: true,
+  async headers() {
+    return [
+      {
+        source: '/uploads/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET, OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: '*' },
+        ],
+      },
+    ];
+  },
 }
 
 module.exports = nextConfig

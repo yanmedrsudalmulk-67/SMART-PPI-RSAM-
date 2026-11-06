@@ -380,15 +380,15 @@ export default function HandHygieneAuditPage() {
           .eq("id", editId);
         if (sessionError) throw sessionError;
       } else {
-        const { data: sessionData, error: sessionError } = await supabase
+        const newSessionId = (typeof crypto !== "undefined" && crypto.randomUUID)
+          ? crypto.randomUUID()
+          : ("hh-" + Date.now() + "-" + Math.random().toString(36).substring(2, 9));
+        createdSessionId = newSessionId;
+
+        const { error: sessionError } = await supabase
           .from("audit_sessions")
-          .insert([sessionPayload])
-          .select("*")
-          .single();
+          .insert([{ ...sessionPayload, id: newSessionId }]);
         if (sessionError) throw sessionError;
-        if (sessionData && sessionData.id) {
-          createdSessionId = sessionData.id;
-        }
       }
 
       try {
@@ -398,8 +398,8 @@ export default function HandHygieneAuditPage() {
             await supabase.from("audit_hand_hygiene").insert([{ ...payload, id: editId }]);
           }
         } else {
-          const nativePayload = createdSessionId ? { ...payload, id: createdSessionId } : payload;
-          await supabase.from("audit_hand_hygiene").upsert([nativePayload], { onConflict: 'id' });
+          const nativePayload = { ...payload, id: createdSessionId };
+          await supabase.from("audit_hand_hygiene").insert([nativePayload]);
         }
       } catch (err) {
         console.warn("Failed to insert native hand hygiene table", err);

@@ -179,10 +179,24 @@ export default function SurveilansHaisReport({
   const color = COLORS[indicator] || "#3b82f6";
   const indName = IND_NAMES[indicator] || indicator;
 
+  // Compute end period boundary to prevent audits from other periods bleeding in
+  const endPeriodISO = useMemo(() => {
+    const dt = new Date(periodeStartISO);
+    if (periodeType === "Bulanan") dt.setMonth(dt.getMonth() + 1);
+    else if (periodeType === "Triwulan") dt.setMonth(dt.getMonth() + 3);
+    else if (periodeType === "Semester") dt.setMonth(dt.getMonth() + 6);
+    else if (periodeType === "Tahunan") dt.setFullYear(dt.getFullYear() + 1);
+    dt.setMilliseconds(dt.getMilliseconds() - 1);
+    return dt.toISOString();
+  }, [periodeStartISO, periodeType]);
+
   // Filter data for the table exactly matching the current period
   const currentPeriodData = useMemo(() => {
-    return data.filter((d) => (d.tanggal_waktu || d.created_at) >= periodeStartISO);
-  }, [data, periodeStartISO]);
+    return data.filter((d) => {
+      const t = d.tanggal_waktu || d.created_at;
+      return t >= periodeStartISO && t <= endPeriodISO;
+    });
+  }, [data, periodeStartISO, endPeriodISO]);
 
   // Chart data grouping
   const chartData = useMemo(() => {
@@ -201,8 +215,8 @@ export default function SurveilansHaisReport({
       }
 
       if (!grouped[key]) grouped[key] = { num: 0, den: 0 };
-      grouped[key].num += item.jumlah_patuh || 0;
-      grouped[key].den += item.jumlah_dinilai || 0;
+      grouped[key].num += Number(item.jumlah_patuh || 0);
+      grouped[key].den += Number(item.jumlah_dinilai || 0);
     });
 
     return Object.entries(grouped).map(([period, counts]) => {
@@ -290,10 +304,11 @@ export default function SurveilansHaisReport({
                 </tr>
               ) : (
                 currentPeriodData.map((row, idx) => {
+                  const numVal = Number(row.jumlah_patuh) || 0;
+                  const denVal = Number(row.jumlah_dinilai) || 0;
                   const rate =
-                    row.jumlah_dinilai > 0
-                      ? (row.jumlah_patuh / row.jumlah_dinilai) *
-                        (isPercent ? 100 : 1000)
+                    denVal > 0
+                      ? (numVal / denVal) * (isPercent ? 100 : 1000)
                       : 0;
                   return (
                     <tr

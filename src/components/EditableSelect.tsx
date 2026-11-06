@@ -26,7 +26,11 @@ export function EditableSelect({ label, value, onChange, options: defaultOptions
       try {
         const { data, error } = await supabase.from(table).select('*').order('nama');
         if (!error && data) {
-          setItems(data);
+          const list = [...data];
+          if (value && !list.some(m => m.nama?.trim().toLowerCase() === value.trim().toLowerCase())) {
+            list.unshift({ id: `val-${value}`, nama: value });
+          }
+          setItems(list);
           return;
         }
       } catch (err) {
@@ -39,7 +43,9 @@ export function EditableSelect({ label, value, onChange, options: defaultOptions
     if (storageKey) {
       const stored = localStorage.getItem(storageKey);
       if (stored) {
-        localItems = JSON.parse(stored);
+        try {
+          localItems = JSON.parse(stored);
+        } catch (_) {}
       }
     }
     
@@ -51,9 +57,12 @@ export function EditableSelect({ label, value, onChange, options: defaultOptions
         merged.push(li);
       }
     }
+    if (value && !merged.some(m => m.nama?.trim().toLowerCase() === value.trim().toLowerCase())) {
+      merged.unshift({ id: `val-${value}`, nama: value });
+    }
     setItems(merged);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [table, storageKey, JSON.stringify(defaultOptions)]);
+  }, [table, storageKey, JSON.stringify(defaultOptions), value]);
 
   useEffect(() => {
     setMounted(true);
@@ -123,10 +132,13 @@ export function EditableSelect({ label, value, onChange, options: defaultOptions
       <select 
         value={value} 
         onChange={(e) => onChange(e.target.value)} 
-        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 transition-colors"
+        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 transition-colors cursor-pointer"
       >
-        <option value="" className="bg-slate-900">{placeholder || `Pilih ${label}...`}</option>
-        {items.map(o => <option key={o.id} value={o.nama} className="bg-slate-900">{o.nama}</option>)}
+        <option value="" className="bg-slate-900 text-slate-400">{placeholder || `Pilih ${label}...`}</option>
+        {value && !items.some(o => o.nama?.trim().toLowerCase() === value.trim().toLowerCase()) && (
+          <option value={value} className="bg-slate-900 text-white">{value}</option>
+        )}
+        {items.map(o => <option key={o.id} value={o.nama} className="bg-slate-900 text-white">{o.nama}</option>)}
       </select>
 
       {mounted && isModalOpen && createPortal(
