@@ -1618,16 +1618,17 @@ export default function MonthlyOfficialReport({
     // =========================================================================
     b.push({ type: 'pageBreak', key: 'm-pb-rekomendasi' });
 
+    // Halaman Rekomendasi Surveilans
     b.push({
       type: 'element',
-      key: 'm-rekomendasi-rtl-block',
+      key: 'm-rekomendasi-surveilans-block',
       gapAfter: 8,
       node: (
-        <div className="w-full text-black text-[12pt] leading-[1.5]">
+        <div className="w-full text-black text-[12pt] leading-[1.45]">
           <p className="font-bold mb-2">Rekomendasi dan Tindak Lanjut</p>
           
           {/* 1. Rekomendasi dari hasil audit Surveilans */}
-          <div className="mb-3">
+          <div>
             <p className="font-bold">1.  Rekomendasi dari hasil audit Surveilans</p>
             
             {/* a. Phlebitis */}
@@ -1688,9 +1689,22 @@ export default function MonthlyOfficialReport({
               </p>
             </div>
           </div>
+        </div>
+      ),
+    });
 
+    // Pindah ke halaman baru agar Rekomendasi Hand Hygiene, APD & RTL tidak terpotong
+    b.push({ type: 'pageBreak', key: 'm-pb-rtl' });
+
+    // Halaman Rekomendasi Hand Hygiene, APD dan Rencana Tindak Lanjut
+    b.push({
+      type: 'element',
+      key: 'm-rekomendasi-hh-rtl-block',
+      gapAfter: 8,
+      node: (
+        <div className="w-full text-black text-[12pt] leading-[1.5]">
           {/* 2. Rekomendasi dari hasil audit Hand Hygiene dan APD */}
-          <div className="mb-3">
+          <div className="mb-4">
             <p className="font-bold">2.  Rekomendasi dari hasil audit Hand Hygiene dan APD</p>
             
             {/* a. Hand Hygiene */}
@@ -1717,7 +1731,7 @@ export default function MonthlyOfficialReport({
           {/* 3. Rencana Tindak Lanjut */}
           <div>
             <p className="font-bold">3.  Rencana Tindak Lanjut</p>
-            <ol className="list-decimal ml-8 mt-1 space-y-1 text-justify">
+            <ol className="list-decimal ml-8 mt-1.5 space-y-1.5 text-justify">
               <li>Melaksanakan ronde supervisi harian oleh IPCN dan IPCLN untuk memonitor bundle HAIs, kepatuhan hand hygiene, dan kepatuhan APD.</li>
               <li>Mengadakan penyegaran teknik aseptik pemasangan infus dan perawatan kateter urin secara berkala di ruang rawat inap.</li>
               <li>Berkoordinasi dengan instalasi farmasi dan logistik untuk menjamin kelancaran pasokan sabun cuci tangan, handrub, dan APD di seluruh titik pelayanan.</li>
