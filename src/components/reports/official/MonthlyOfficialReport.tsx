@@ -1457,24 +1457,27 @@ export default function MonthlyOfficialReport({
       ),
     });
 
-    const allHhMeetTarget = hhProfessions.list.every((p) => p.rate >= 85);
-    const hhAnalisaText = allHhMeetTarget
-      ? `Berdasarkan grafik diatas menunjukkan secara keseluruhan semua tenaga kesehatan (perawat, dokter dan tenaga kesehatan lainnya) telah memenuhi standar kepatuhan kebersihan tangan Kementerian Kesehatan (≥ 85%). Hal ini menunjukkan kesadaran dan kepatuhan yang baik dalam pelaksanaan hand hygiene berdasarkan 5 moment.`
-      : `Berdasarkan grafik diatas menunjukkan secara keseluruhan semua tenaga kesehatan (perawat, dokter dan tenaga kesehatan lainnya) memiliki nilai kepatuhan dibawah standar kemenkes 85%. Hal ini menunjukkan perlunya intervensi yang lebih efektif untuk meningkatkan kesadaran dan kepatuhan melakukan hand hygiene berdasarkan 5 moment.`;
+    const meetProfessions = hhProfessions.list.filter((p) => p.rate >= 85);
+    const belowProfessions = hhProfessions.list.filter((p) => p.rate < 85);
 
-    b.push({
-      type: 'element',
-      key: 'm-hh-analisa-block',
-      gapAfter: 6,
-      node: (
-        <div className="w-full text-black">
-          <p className="font-bold text-[12pt] mb-1">Analisa :</p>
-          <p className="indent-8 text-justify text-[12pt] leading-[1.5]">
-            {hhAnalisaText}
-          </p>
-        </div>
-      ),
-    });
+    let hhAnalisaText = '';
+    if (belowProfessions.length === 0) {
+      hhAnalisaText = `Berdasarkan grafik diatas menunjukkan secara keseluruhan semua tenaga kesehatan (perawat, dokter dan tenaga kesehatan lainnya) telah memenuhi standar kepatuhan kebersihan tangan Kementerian Kesehatan (≥ 85%) dengan rata-rata capaian sebesar ${fmtIdNum(hhProfessions.avg)}%. Hal ini menunjukkan kesadaran dan kepatuhan yang baik dalam pelaksanaan hand hygiene berdasarkan 5 moment di seluruh unit pelayanan.`;
+    } else if (meetProfessions.length === 0) {
+      hhAnalisaText = `Berdasarkan grafik diatas menunjukkan secara keseluruhan semua tenaga kesehatan (perawat, dokter dan tenaga kesehatan lainnya) memiliki nilai kepatuhan dibawah standar kemenkes 85% dengan rata-rata ${fmtIdNum(hhProfessions.avg)}%. Hal ini menunjukkan perlunya intervensi yang lebih efektif untuk meningkatkan kesadaran dan kepatuhan melakukan hand hygiene berdasarkan 5 moment.`;
+    } else {
+      const meetNames = meetProfessions.map((p) => `${p.label} (${fmtIdNum(p.rate)}%)`).join(', ');
+      const belowNames = belowProfessions.map((p) => `${p.label} (${fmtIdNum(p.rate)}%)`).join(' dan ');
+      hhAnalisaText = `Berdasarkan grafik diatas menunjukkan bahwa kepatuhan kebersihan tangan pada profesi ${meetNames} telah memenuhi standar Kementerian Kesehatan (≥ 85%). Namun, untuk profesi ${belowNames} masih berada di bawah target standar Kemenkes 85%, dengan rata-rata capaian keseluruhan sebesar ${fmtIdNum(hhProfessions.avg)}%. Hal ini menunjukkan perlunya intervensi yang lebih efektif untuk meningkatkan kesadaran dan kepatuhan melakukan hand hygiene berdasarkan 5 moment, khususnya bagi profesi yang belum mencapai target.`;
+    }
+
+    pushNarrativeBlocks(
+      b,
+      'm-hh',
+      hhAnalisaText,
+      narratives.hh.rekomendasi,
+      narratives.hh.tindakLanjut
+    );
 
     // Tabel 1 Hand Hygiene (Green Header - Image 1)
     b.push({
@@ -1536,7 +1539,7 @@ export default function MonthlyOfficialReport({
     });
 
     // =========================================================================
-    // PINDAH KE HALAMAN BARU: 2. APD (Image 2)
+    // 2. APD (Image 2)
     // =========================================================================
     b.push({ type: 'pageBreak', key: 'm-pb-apd' });
 
@@ -1599,147 +1602,302 @@ export default function MonthlyOfficialReport({
       ? `Berdasarkan grafik, capaian kepatuhan penggunaan Alat Pelindung Diri (APD) pada bulan ${monthName} ${reportYear} mencapai 100%, sehingga telah memenuhi target standar Kementerian Kesehatan yaitu 100%. Capaian optimal ini menunjukkan konsistensi dan kesadaran tinggi seluruh petugas medis dalam menggunakan APD sesuai indikasi pada setiap tindakan pelayanan.`
       : `Berdasarkan grafik, capaian kepatuhan penggunaan Alat Pelindung Diri (APD) pada bulan ${monthName} ${reportYear} mencapai ${fmtIdNum(apdVal)}%, sehingga masih belum memenuhi target standar Kementerian Kesehatan yaitu 100%. Ketidaktercapaian ini dapat disebabkan oleh beberapa faktor, seperti masih adanya petugas yang belum konsisten menggunakan APD sesuai indikasi, keterbatasan pengawasan di area pelayanan tertentu, kurangnya kepatuhan pada waktu sibuk pelayanan, serta kemungkinan ketersediaan APD yang belum optimal di beberapa unit.`;
 
+    pushNarrativeBlocks(
+      b,
+      'm-apd',
+      apdAnalisaText,
+      narratives.apd.rekomendasi,
+      narratives.apd.tindakLanjut
+    );
+
+    // Tabel 2 APD (12-Month Summary Table)
     b.push({
       type: 'element',
-      key: 'm-apd-analisa-block',
+      key: 'm-tabel2-apd',
       gapAfter: 8,
       node: (
         <div className="w-full text-black">
-          <p className="font-bold text-[12pt] mb-1">Analisa</p>
-          <p className="indent-8 text-justify text-[12pt] leading-[1.5]">
-            {apdAnalisaText}
+          <p className="font-bold text-[11pt] mb-1">
+            Tabel 2.  Kepatuhan Penggunaan APD di UOBK RSUD Al-Mulk Periode {reportYear}.
+          </p>
+          <table className="w-full border-collapse border border-black text-center text-[8.5pt] leading-[1.25]">
+            <thead>
+              <tr className="bg-slate-200 font-bold">
+                <th className="border border-black p-1 w-[16%]">Indikator</th>
+                {apdMonths.map((m) => (
+                  <th key={m} className="border border-black p-1">{m}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="border border-black p-1 font-semibold text-center">Capaian (%)</td>
+                {apdData.full12.map((m, idx) => (
+                  <td key={idx} className="border border-black p-1">
+                    {m.value !== null ? `${fmtIdNum(m.value)}%` : '-'}
+                  </td>
+                ))}
+              </tr>
+              <tr>
+                <td className="border border-black p-1 font-semibold text-center">Target (%)</td>
+                {apdData.full12.map((m, idx) => (
+                  <td key={idx} className="border border-black p-1">100%</td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      ),
+    });
+
+    // =========================================================================
+    // REKOMENDASI DAN TINDAK LANJUT (Granular Atomic Blocks for Natural Pagination)
+    // Only breaks to next page when approaching 1 line before bottom margin (2.5cm)
+    // =========================================================================
+    b.push({
+      type: 'element',
+      key: 'm-rtl-main-title',
+      keepWithNext: true,
+      gapAfter: 6,
+      node: (
+        <div className="w-full text-black pt-2">
+          <p className="font-bold text-[12pt]">Rekomendasi dan Tindak Lanjut</p>
+        </div>
+      ),
+    });
+
+    b.push({
+      type: 'element',
+      key: 'm-rtl-sec1-heading',
+      keepWithNext: true,
+      gapAfter: 4,
+      node: (
+        <div className="w-full text-black">
+          <p className="font-bold text-[12pt]">1.  Rekomendasi dari hasil audit Surveilans</p>
+        </div>
+      ),
+    });
+
+    // a. Phlebitis
+    b.push({
+      type: 'element',
+      key: 'm-rtl-phleb-intro',
+      keepWithNext: true,
+      gapAfter: 3,
+      node: (
+        <div className="w-full text-black text-[12pt] leading-[1.45] pl-4">
+          <p className="font-semibold">a.  Phlebitis</p>
+          <p className="pl-4 text-justify">
+            Tetap mempertahankan prosedur teknik memasang infus yang benar yaitu dengan cara :
           </p>
         </div>
       ),
     });
 
-    // =========================================================================
-    // PINDAH KE HALAMAN BARU: REKOMENDASI DAN TINDAK LANJUT (Image 3)
-    // =========================================================================
-    b.push({ type: 'pageBreak', key: 'm-pb-rekomendasi' });
+    const phlebPoints = [
+      'Kebersihan tangan selalu dilakukan pada 5 moment cuci tangan, salah satunya sebelum melakukan tindakan aseptik, seperti memasang infus.',
+      'Memakai APD sesuai tindakan yang dilakukan,',
+      'Pemilihan lokasi insersi yang tepat,',
+      'Pemberian elektrolit yang bersifat asam atau alkali memudahkan terjadinya extravasasi dan infiltrasi sebaiknya diberikan per drip, pemberian larutan infus dengan osmolaritas > 900 m Osm/l sebaiknya diberikan melalui CVC.',
+      'Edukasi petugas tentang pemasangan dan perawatan IV kateter',
+      'Lakukan desinfeksi area konektor tempat menyuntik sebelum pemberian terapi atau cairan.',
+      'Sesegera mungkin melepaskan kateter IV bila sudah tidak diperlukan.',
+      'Gunakan transparan dressing untuk memudahkan mengobservasi iv catheter.',
+    ];
 
-    // Halaman Rekomendasi Surveilans
+    phlebPoints.forEach((pt, idx) => {
+      b.push({
+        type: 'element',
+        key: `m-rtl-phleb-pt-${idx + 1}`,
+        gapAfter: idx === phlebPoints.length - 1 ? 6 : 2,
+        node: (
+          <div className="flex items-start gap-2 pl-10 text-[12pt] leading-[1.45] text-justify text-black">
+            <span className="w-6 shrink-0">{idx + 1})</span>
+            <span className="flex-1 text-justify">{pt}</span>
+          </div>
+        ),
+      });
+    });
+
+    // b. ISK
     b.push({
       type: 'element',
-      key: 'm-rekomendasi-surveilans-block',
-      gapAfter: 8,
+      key: 'm-rtl-isk',
+      gapAfter: 4,
       node: (
-        <div className="w-full text-black text-[12pt] leading-[1.45]">
-          <p className="font-bold mb-2">Rekomendasi dan Tindak Lanjut</p>
-          
-          {/* 1. Rekomendasi dari hasil audit Surveilans */}
-          <div>
-            <p className="font-bold">1.  Rekomendasi dari hasil audit Surveilans</p>
-            
-            {/* a. Phlebitis */}
-            <div className="ml-4 mt-1">
-              <p className="font-semibold">a.  Phlebitis</p>
-              <p className="ml-4 text-justify">
-                Tetap mempertahankan prosedur teknik memasang infus yang benar yaitu dengan cara :
-              </p>
-              <ol className="list-none ml-6 space-y-1 text-justify">
-                <li>1) Kebersihan tangan selalu dilakukan pada 5 moment cuci tangan, salah satunya sebelum melakukan tindakan aseptik, seperti memasang infus.</li>
-                <li>2) Memakai APD sesuai tindakan yang dilakukan,</li>
-                <li>3) Pemilihan lokasi insersi yang tepat,</li>
-                <li>4) Pemberian elektrolit yang bersifat asam atau alkali memudahkan terjadinya extravasasi dan infiltrasi sebaiknya diberikan per drip, pemberian larutan infus dengan osmolaritas &gt; 900 m Osm/l sebaiknya diberikan melalui CVC.</li>
-                <li>5) Edukasi petugas tentang pemasangan dan perawatan IV kateter</li>
-                <li>6) Lakukan desinfeksi area konektor tempat menyuntik sebelum pemberian terapi atau cairan.</li>
-                <li>7) Sesegera mungkin melepaskan kateter IV bila sudah tidak diperlukan.</li>
-                <li>8) Gunakan transparan dressing untuk memudahkan mengobservasi iv catheter.</li>
-              </ol>
-            </div>
-
-            {/* b. ISK */}
-            <div className="ml-4 mt-2">
-              <p className="font-semibold">b.  Infeksi Saluran Kemih (ISK)</p>
-              <p className="ml-4">
-                {roomBreakdown.isk.totalCases === 0
-                  ? `Bulan ${monthName} ${reportYear} tidak ada kejadian ISK`
-                  : `Bulan ${monthName} ${reportYear} terdapat ${roomBreakdown.isk.totalCases} kasus ISK (${fmtIdNum(roomBreakdown.isk.rate)}‰)`}
-              </p>
-            </div>
-
-            {/* c. Decubitus */}
-            <div className="ml-4 mt-2">
-              <p className="font-semibold">c.  Infeksi Decubitus</p>
-              <p className="ml-4">
-                {roomBreakdown.decubitus.totalCases === 0
-                  ? `Bulan ${monthName} ${reportYear} tidak ada kejadian Decubitus`
-                  : `Bulan ${monthName} ${reportYear} terdapat ${roomBreakdown.decubitus.totalCases} kasus Decubitus (${fmtIdNum(roomBreakdown.decubitus.rate)}‰)`}
-              </p>
-            </div>
-
-            {/* d. VAP */}
-            <div className="ml-4 mt-2">
-              <p className="font-semibold">d.  Infeksi Ventilator Associated Pneumonia (VAP)</p>
-              <p className="ml-4">
-                {roomBreakdown.vap.totalCases === 0
-                  ? `Bulan ${monthName} ${reportYear} tidak ada infeksi akibat pemasangan Ventilator`
-                  : `Bulan ${monthName} ${reportYear} terdapat ${roomBreakdown.vap.totalCases} kasus VAP (${fmtIdNum(roomBreakdown.vap.rate)}‰)`}
-              </p>
-            </div>
-
-            {/* e. IDO */}
-            <div className="ml-4 mt-2">
-              <p className="font-semibold">e.  Infeksi Daerah Operasi (IDO)</p>
-              <p className="ml-4">
-                {roomBreakdown.ido.totalCases === 0
-                  ? `Bulan ${monthName} ${reportYear} tidak ada infeksi akibat luka operasi`
-                  : `Bulan ${monthName} ${reportYear} terdapat ${roomBreakdown.ido.totalCases} kasus IDO (${fmtIdNum(roomBreakdown.ido.rate)}%)`}
-              </p>
-            </div>
-          </div>
+        <div className="w-full text-black text-[12pt] leading-[1.45] pl-4">
+          <p className="font-semibold">b.  Infeksi Saluran Kemih (ISK)</p>
+          <p className="pl-4">
+            {roomBreakdown.isk.totalCases === 0
+              ? `Bulan ${monthName} ${reportYear} tidak ada kejadian ISK`
+              : `Bulan ${monthName} ${reportYear} terdapat ${roomBreakdown.isk.totalCases} kasus ISK (${fmtIdNum(roomBreakdown.isk.rate)}‰)`}
+          </p>
         </div>
       ),
     });
 
-    // Pindah ke halaman baru agar Rekomendasi Hand Hygiene, APD & RTL tidak terpotong
-    b.push({ type: 'pageBreak', key: 'm-pb-rtl' });
-
-    // Halaman Rekomendasi Hand Hygiene, APD dan Rencana Tindak Lanjut
+    // c. Decubitus
     b.push({
       type: 'element',
-      key: 'm-rekomendasi-hh-rtl-block',
-      gapAfter: 8,
+      key: 'm-rtl-decub',
+      gapAfter: 4,
       node: (
-        <div className="w-full text-black text-[12pt] leading-[1.5]">
-          {/* 2. Rekomendasi dari hasil audit Hand Hygiene dan APD */}
-          <div className="mb-4">
-            <p className="font-bold">2.  Rekomendasi dari hasil audit Hand Hygiene dan APD</p>
-            
-            {/* a. Hand Hygiene */}
-            <div className="ml-4 mt-1">
-              <p className="font-semibold">a.  Hand Hygiene</p>
-              <ol className="list-none ml-6 space-y-1">
-                <li>1) Edukasi staf tentang pentingnya Hand Hygiene</li>
-                <li>2) Motivasi staf untuk melakukan Hand Hygiene berdasarkan 5 moment, khususnya petugas medis</li>
-                <li>3) Lakukan monitoring evaluasi dan demonstrasikan langkah-langkah cuci tangan</li>
-              </ol>
-            </div>
-
-            {/* b. APD */}
-            <div className="ml-4 mt-2">
-              <p className="font-semibold">b.  Kepatuhan Penggunaan APD</p>
-              <ol className="list-none ml-6 space-y-1">
-                <li>1) Sosialisasi ulang dan re-edukasi kepatuhan pemakaian APD sesuai tingkat risiko dan indikasi tindakan medis.</li>
-                <li>2) Memastikan ketersediaan logistik APD lengkap dan mudah diakses di seluruh unit pelayanan.</li>
-                <li>3) Mengoptimalkan pengawasan berkala dan audit kepatuhan oleh IPCN dan IPCLN di seluruh ruangan terutama jam sibuk.</li>
-              </ol>
-            </div>
-          </div>
-
-          {/* 3. Rencana Tindak Lanjut */}
-          <div>
-            <p className="font-bold">3.  Rencana Tindak Lanjut</p>
-            <ol className="list-decimal ml-8 mt-1.5 space-y-1.5 text-justify">
-              <li>Melaksanakan ronde supervisi harian oleh IPCN dan IPCLN untuk memonitor bundle HAIs, kepatuhan hand hygiene, dan kepatuhan APD.</li>
-              <li>Mengadakan penyegaran teknik aseptik pemasangan infus dan perawatan kateter urin secara berkala di ruang rawat inap.</li>
-              <li>Berkoordinasi dengan instalasi farmasi dan logistik untuk menjamin kelancaran pasokan sabun cuci tangan, handrub, dan APD di seluruh titik pelayanan.</li>
-              <li>Menyampaikan laporan umpan balik bulanan hasil audit PPI kepada Direktur, Komite Mutu, dan seluruh Kepala Ruangan.</li>
-            </ol>
-          </div>
+        <div className="w-full text-black text-[12pt] leading-[1.45] pl-4">
+          <p className="font-semibold">c.  Infeksi Decubitus</p>
+          <p className="pl-4">
+            {roomBreakdown.decubitus.totalCases === 0
+              ? `Bulan ${monthName} ${reportYear} tidak ada kejadian Decubitus`
+              : `Bulan ${monthName} ${reportYear} terdapat ${roomBreakdown.decubitus.totalCases} kasus Decubitus (${fmtIdNum(roomBreakdown.decubitus.rate)}‰)`}
+          </p>
         </div>
       ),
+    });
+
+    // d. VAP
+    b.push({
+      type: 'element',
+      key: 'm-rtl-vap',
+      gapAfter: 4,
+      node: (
+        <div className="w-full text-black text-[12pt] leading-[1.45] pl-4">
+          <p className="font-semibold">d.  Infeksi Ventilator Associated Pneumonia (VAP)</p>
+          <p className="pl-4">
+            {roomBreakdown.vap.totalCases === 0
+              ? `Bulan ${monthName} ${reportYear} tidak ada infeksi akibat pemasangan Ventilator`
+              : `Bulan ${monthName} ${reportYear} terdapat ${roomBreakdown.vap.totalCases} kasus VAP (${fmtIdNum(roomBreakdown.vap.rate)}‰)`}
+          </p>
+        </div>
+      ),
+    });
+
+    // e. IDO
+    b.push({
+      type: 'element',
+      key: 'm-rtl-ido',
+      gapAfter: 6,
+      node: (
+        <div className="w-full text-black text-[12pt] leading-[1.45] pl-4">
+          <p className="font-semibold">e.  Infeksi Daerah Operasi (IDO)</p>
+          <p className="pl-4">
+            {roomBreakdown.ido.totalCases === 0
+              ? `Bulan ${monthName} ${reportYear} tidak ada infeksi akibat luka operasi`
+              : `Bulan ${monthName} ${reportYear} terdapat ${roomBreakdown.ido.totalCases} kasus IDO (${fmtIdNum(roomBreakdown.ido.rate)}%)`}
+          </p>
+        </div>
+      ),
+    });
+
+    // 2. Rekomendasi dari hasil audit Hand Hygiene dan APD
+    b.push({
+      type: 'element',
+      key: 'm-rtl-sec2-heading',
+      keepWithNext: true,
+      gapAfter: 4,
+      node: (
+        <div className="w-full text-black">
+          <p className="font-bold text-[12pt]">2.  Rekomendasi dari hasil audit Hand Hygiene dan APD</p>
+        </div>
+      ),
+    });
+
+    // a. Hand Hygiene
+    b.push({
+      type: 'element',
+      key: 'm-rtl-sec2-hh-intro',
+      keepWithNext: true,
+      gapAfter: 3,
+      node: (
+        <div className="w-full text-black text-[12pt] leading-[1.45] pl-4">
+          <p className="font-semibold">a.  Hand Hygiene</p>
+        </div>
+      ),
+    });
+
+    const hhSummaryPoints = [
+      'Edukasi staf tentang pentingnya Hand Hygiene',
+      'Motivasi staf untuk melakukan Hand Hygiene berdasarkan 5 moment, khususnya petugas medis',
+      'Lakukan monitoring evaluasi dan demonstrasikan langkah-langkah cuci tangan',
+    ];
+
+    hhSummaryPoints.forEach((pt, idx) => {
+      b.push({
+        type: 'element',
+        key: `m-rtl-sec2-hh-pt-${idx + 1}`,
+        gapAfter: idx === hhSummaryPoints.length - 1 ? 5 : 2,
+        node: (
+          <div className="flex items-start gap-2 pl-10 text-[12pt] leading-[1.45] text-justify text-black">
+            <span className="w-6 shrink-0">{idx + 1})</span>
+            <span className="flex-1 text-justify">{pt}</span>
+          </div>
+        ),
+      });
+    });
+
+    // b. APD
+    b.push({
+      type: 'element',
+      key: 'm-rtl-sec2-apd-intro',
+      keepWithNext: true,
+      gapAfter: 3,
+      node: (
+        <div className="w-full text-black text-[12pt] leading-[1.45] pl-4">
+          <p className="font-semibold">b.  Kepatuhan Penggunaan APD</p>
+        </div>
+      ),
+    });
+
+    const apdSummaryPoints = [
+      'Sosialisasi ulang dan re-edukasi kepatuhan pemakaian APD sesuai tingkat risiko dan indikasi tindakan medis.',
+      'Memastikan ketersediaan logistik APD lengkap dan mudah diakses di seluruh unit pelayanan.',
+      'Mengoptimalkan pengawasan berkala dan audit kepatuhan oleh IPCN dan IPCLN di seluruh ruangan terutama jam sibuk.',
+    ];
+
+    apdSummaryPoints.forEach((pt, idx) => {
+      b.push({
+        type: 'element',
+        key: `m-rtl-sec2-apd-pt-${idx + 1}`,
+        gapAfter: idx === apdSummaryPoints.length - 1 ? 6 : 2,
+        node: (
+          <div className="flex items-start gap-2 pl-10 text-[12pt] leading-[1.45] text-justify text-black">
+            <span className="w-6 shrink-0">{idx + 1})</span>
+            <span className="flex-1 text-justify">{pt}</span>
+          </div>
+        ),
+      });
+    });
+
+    // 3. Rencana Tindak Lanjut
+    b.push({
+      type: 'element',
+      key: 'm-rtl-sec3-heading',
+      keepWithNext: true,
+      gapAfter: 4,
+      node: (
+        <div className="w-full text-black">
+          <p className="font-bold text-[12pt]">3.  Rencana Tindak Lanjut</p>
+        </div>
+      ),
+    });
+
+    const rtlPlans = [
+      'Melaksanakan ronde supervisi harian oleh IPCN dan IPCLN untuk memonitor bundle HAIs, kepatuhan hand hygiene, dan kepatuhan APD.',
+      'Mengadakan penyegaran teknik aseptik pemasangan infus dan perawatan kateter urin secara berkala di ruang rawat inap.',
+      'Berkoordinasi dengan instalasi farmasi dan logistik untuk menjamin kelancaran pasokan sabun cuci tangan, handrub, dan APD di seluruh titik pelayanan.',
+      'Menyampaikan laporan umpan balik bulanan hasil audit PPI kepada Direktur, Komite Mutu, dan seluruh Kepala Ruangan.',
+    ];
+
+    rtlPlans.forEach((plan, idx) => {
+      b.push({
+        type: 'element',
+        key: `m-rtl-plan-${idx + 1}`,
+        gapAfter: idx === rtlPlans.length - 1 ? 8 : 3,
+        node: (
+          <div className="flex items-start gap-2 pl-4 text-[12pt] leading-[1.5] text-justify text-black">
+            <span className="w-6 shrink-0 font-bold">{idx + 1}.</span>
+            <span className="flex-1 text-justify">{plan}</span>
+          </div>
+        ),
+      });
     });
 
     // =========================================================================
