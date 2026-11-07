@@ -316,7 +316,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           let newSlides: any[] = [];
           if (slidesRes.data && slidesRes.data.length > 0) {
-            newSlides = slidesRes.data;
+            newSlides = slidesRes.data.map((s: any, idx: number) => {
+              let url = s.image_url || '/uploads/public/slider/slider_1787961366248.png';
+              if (url.includes('/storage/v1/object/public/')) {
+                const rel = url.split('/storage/v1/object/public/')[1]?.split('?')[0];
+                if (rel) url = `/uploads/${rel}`;
+              }
+              return {
+                ...s,
+                image_url: url,
+                active: s.active === undefined ? true : s.active === true || s.active === 1 || s.active === '1' || s.active === 'true',
+                sort_order: Number(s.sort_order) || idx + 1,
+              };
+            });
             try {
               localStorage.setItem('spp_slides', JSON.stringify(newSlides));
             } catch (e) {}

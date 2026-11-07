@@ -67,7 +67,7 @@ export default function SurveilansFormPage() {
       const data = await res.json();
       if (data.ok) {
         setSimrsData(data);
-        if (typeof window !== 'undefined') {
+        if (!data.isOfflineFallback && data.syncedToSmartPpi > 0 && typeof window !== 'undefined') {
           window.postMessage({ type: 'AUDIT_SUBMITTED' }, '*');
           try {
             if ('BroadcastChannel' in window) {
@@ -238,6 +238,26 @@ export default function SurveilansFormPage() {
             Surveilans HAIs
           </h1>
         </div>
+        {simrsData && (
+          <div
+            className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-[11px] font-bold ${
+              simrsData.isOfflineFallback
+                ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+            }`}
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${
+                simrsData.isOfflineFallback ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400 animate-pulse'
+              }`}
+            />
+            <span>
+              {simrsData.isOfflineFallback
+                ? 'Data Terakhir Terkoneksi SIMRS • Otomatis Update Saat SIMRS Terhubung'
+                : 'SIMRS Terhubung Realtime'}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* ERROR ALERT JIKA ADA */}

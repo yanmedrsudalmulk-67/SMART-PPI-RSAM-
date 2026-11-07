@@ -15,12 +15,31 @@ interface Slide {
   sort_order: number;
 }
 
+const normalizeSliderUrl = (url?: string): string => {
+  if (!url) return '/uploads/public/slider/slider_1787961366248.png';
+  if (url.includes('/storage/v1/object/public/')) {
+    const rel = url.split('/storage/v1/object/public/')[1]?.split('?')[0];
+    if (rel) return `/uploads/${rel}`;
+  }
+  return url;
+};
+
+const normalizeSlidesList = (list: any[]): Slide[] => {
+  if (!Array.isArray(list) || list.length === 0) return DEFAULT_SLIDES;
+  return list.map((s, idx) => ({
+    ...s,
+    image_url: normalizeSliderUrl(s.image_url),
+    active: s.active === undefined ? true : s.active === true || s.active === 1 || s.active === '1' || s.active === 'true',
+    sort_order: Number(s.sort_order) || idx + 1,
+  }));
+};
+
 const DEFAULT_SLIDES: Slide[] = [
   {
     id: 'new_1',
-    title: 'SMART PPI Terpadu',
+    title: 'Pencegahan dan Pengendalian Infeksi di RSUD Al-Mulk',
     subtitle: 'Pusat Pemantauan dan Pengendalian Infeksi UOBK RSUD AL-MULK. Mencegah lebih baik daripada mengobati.',
-    image_url: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=1600',
+    image_url: '/uploads/public/slider/slider_1787961366248.png',
     active: true,
     sort_order: 1
   }
@@ -40,15 +59,15 @@ function SliderSettings() {
     const loadSlides = async () => {
       try {
         const { data } = await supabase.from('dashboard_slider').select('*').order('sort_order', { ascending: true });
-        if (data && data.length > 0) setSlides(data);
+        if (data && data.length > 0) setSlides(normalizeSlidesList(data));
         else {
           const stored = localStorage.getItem('spp_slides');
-          if (stored) setSlides(JSON.parse(stored));
+          if (stored) setSlides(normalizeSlidesList(JSON.parse(stored)));
           else setSlides(DEFAULT_SLIDES);
         }
       } catch(e) {
           const stored = localStorage.getItem('spp_slides');
-          if (stored) setSlides(JSON.parse(stored));
+          if (stored) setSlides(normalizeSlidesList(JSON.parse(stored)));
           else setSlides(DEFAULT_SLIDES);
       }
     };

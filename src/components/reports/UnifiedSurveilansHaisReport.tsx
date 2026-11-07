@@ -250,11 +250,17 @@ export default function UnifiedSurveilansHaisReport({
         syncedYearsRef.current.add(selectedYear);
         const todayStr = new Date().toISOString().slice(0, 10);
         const maxEnd = `${selectedYear}-12-31` > todayStr ? todayStr : `${selectedYear}-12-31`;
-        await fetch(`/api/simrs/hais?startDate=${selectedYear}-01-01&endDate=${maxEnd}&autoSync=true`);
-        await loadData();
+        const res = await fetch(`/api/simrs/hais?startDate=${selectedYear}-01-01&endDate=${maxEnd}&autoSync=true`);
+        const json = await res.json();
+        if (json?.syncedToSmartPpi > 0) {
+          await loadData();
+        }
       } else {
-        await fetch(`/api/simrs/hais?startDate=${startDateStr}&endDate=${endDateStr}&autoSync=true`);
-        await loadData();
+        const res = await fetch(`/api/simrs/hais?startDate=${startDateStr}&endDate=${endDateStr}&autoSync=true`);
+        const json = await res.json();
+        if (json?.syncedToSmartPpi > 0) {
+          await loadData();
+        }
       }
     } catch {
       // SIMRS offline fallback uses existing local SQLite data

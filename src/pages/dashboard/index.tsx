@@ -71,26 +71,61 @@ interface HaisData {
   vap: number;
 }
 
+const normalizeSliderUrl = (url?: string): string => {
+  if (!url) return "/uploads/public/slider/slider_1787961366248.png";
+  if (url.includes("/storage/v1/object/public/")) {
+    const rel = url.split("/storage/v1/object/public/")[1]?.split("?")[0];
+    if (rel) return `/uploads/${rel}`;
+  }
+  return url;
+};
+
+const normalizeSlidesList = (list: any[]): Slide[] => {
+  if (!Array.isArray(list) || list.length === 0) return DEFAULT_SLIDES;
+  return list.map((s, idx) => ({
+    ...s,
+    image_url: normalizeSliderUrl(s.image_url),
+    active: s.active === undefined ? true : s.active === true || s.active === 1 || s.active === "1" || s.active === "true",
+    sort_order: Number(s.sort_order) || idx + 1,
+  }));
+};
+
 const DEFAULT_SLIDES: Slide[] = [
   {
     id: "s1",
-    title: "SMART PPI Terpadu",
+    title: "Pencegahan dan Pengendalian Infeksi di RSUD Al-Mulk",
     subtitle:
       "Pusat Pemantauan dan Pengendalian Infeksi UOBK RSUD AL-MULK. Mencegah lebih baik daripada mengobati.",
-    image_url:
-      "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=70&w=1200",
+    image_url: "/uploads/public/slider/slider_1787961366248.png",
     active: true,
     sort_order: 1,
   },
   {
     id: "s2",
-    title: "Standar Keselamatan Pasien",
+    title: "RSUD Al-Mulk IGD 24 Jam",
     subtitle:
-      "Mari tingkatkan kepatuhan Kebersihan Tangan dan penggunaan APD demi mewujudkan zero insiden.",
-    image_url:
-      "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&q=70&w=1200",
+      "Pelayanan Gawat Darurat 24 Jam dengan standar keselamatan pasien dan pengendalian infeksi terpadu.",
+    image_url: "/uploads/public/slider/slider_1783861400970.png",
     active: true,
     sort_order: 2,
+  },
+  {
+    id: "s3",
+    title: "Kepatuhan Penggunaan APD Sesuai Standar PPI",
+    subtitle:
+      "Mari tingkatkan kepatuhan Kebersihan Tangan dan penggunaan APD demi mewujudkan zero insiden.",
+    image_url: "/uploads/public/slider/slider_1787965692127.png",
+    active: true,
+    sort_order: 3,
+  },
+  {
+    id: "s4",
+    title: "Surveilans HAIs di RSUD Al-Mulk",
+    subtitle:
+      "Pemantauan dan pencegahan Healthcare-Associated Infections secara aktif dan berkelanjutan.",
+    image_url: "/uploads/public/slider/slider_1787968703726.png",
+    active: true,
+    sort_order: 4,
   },
 ];
 
@@ -190,7 +225,7 @@ if (typeof window !== "undefined") {
     if (stored) {
       const parsed = JSON.parse(stored);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        cachedDashboardSlides = parsed;
+        cachedDashboardSlides = normalizeSlidesList(parsed);
       }
     }
   } catch (e) {}
@@ -203,25 +238,36 @@ const SliderImage = ({
   slide: any;
   setImageErrors: any;
 }) => {
+  const normalizedSrc = normalizeSliderUrl(slide.image_url);
+  const [imgSrc, setImgSrc] = useState(normalizedSrc);
+
+  useEffect(() => {
+    setImgSrc(normalizeSliderUrl(slide.image_url));
+  }, [slide.image_url]);
+
   return (
     <>
       <div
         className="absolute inset-0 w-full h-full bg-cover bg-center blur-[32px] saturate-150 scale-110 opacity-30 pointer-events-none"
         style={{
-          backgroundImage: `url(${slide.image_url})`,
+          backgroundImage: `url(${imgSrc})`,
         }}
       />
       <div className="absolute inset-0 w-full h-full bg-slate-950/20" />
       <img
-        src={slide.image_url}
+        src={imgSrc}
         alt={slide.title || "Slider"}
         loading="eager"
         decoding="async"
         className="absolute inset-0 w-full h-full object-cover drop-shadow-2xl scale-100 group-[.swiper-slide-active]:scale-105 transition-transform duration-1000 ease-out"
         referrerPolicy="no-referrer"
         onError={() => {
-          console.error("Slider image error", slide.image_url);
-          setImageErrors((prev: any) => ({ ...prev, [slide.id]: true }));
+          if (imgSrc !== "/uploads/public/slider/slider_1787961366248.png") {
+            setImgSrc("/uploads/public/slider/slider_1787961366248.png");
+          } else {
+            console.error("Slider image error", slide.image_url);
+            setImageErrors((prev: any) => ({ ...prev, [slide.id]: true }));
+          }
         }}
       />
     </>
@@ -251,7 +297,8 @@ const HeroSlider = ({
   }, []);
 
   const visibleSlides = useMemo(() => {
-    const active = slides.filter((s) => s.active);
+    const normalized = normalizeSlidesList(slides);
+    const active = normalized.filter((s) => s.active);
     return active.length > 0 ? active : DEFAULT_SLIDES;
   }, [slides]);
 
@@ -478,7 +525,7 @@ export default function DashboardPage() {
         // Ensure slides fallback to DEFAULT_SLIDES if table is empty
         const newSlides =
           slidesRes.data && slidesRes.data.length > 0
-            ? slidesRes.data
+            ? normalizeSlidesList(slidesRes.data)
             : DEFAULT_SLIDES;
 
         cachedDashboardSlides = newSlides;

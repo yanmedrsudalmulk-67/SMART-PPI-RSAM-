@@ -86,7 +86,9 @@ export interface SimrsHaisTabSummary {
 
 export interface SimrsHaisWebResponse {
   ok: boolean;
-  source: 'simrs_web' | 'simrs_mysql' | 'error';
+  source: 'simrs_web' | 'simrs_mysql' | 'local_cache' | 'error';
+  isOfflineFallback?: boolean;
+  lastSyncedAt?: string;
   startDate: string;
   endDate: string;
   grandTotal: {
