@@ -519,6 +519,7 @@ export default function LaporanResmiPage() {
               paperSize="f4"
               margin={0}
               size="md"
+              disabled={reportData.loading}
               className="justify-center"
             />
 

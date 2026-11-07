@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase';
 import {
   Activity, BarChart, LineChart, TrendingUp,
-  Calendar, ChevronDown, Edit2, CheckCircle2, RefreshCw, AlertCircle, Sparkles
+  Calendar, ChevronDown, Edit2, CheckCircle2, RefreshCw, AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -710,29 +710,21 @@ export default function UnifiedSurveilansHaisReport({
 
             {/* Logo, Header Laporan */}
             <div className="p-6 sm:p-8 border-b border-indigo-900/30 bg-[#141532]/60 backdrop-blur-md">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="flex flex-col md:flex-row items-center gap-6">
-                  {hospitalLogoUrl && (
-                    <img src={hospitalLogoUrl} alt="Logo RS" className="w-20 h-20 object-contain" />
-                  )}
-                  <div className="text-center md:text-left">
-                    <h2 className="text-xl font-black text-white uppercase tracking-tight">
-                      Laporan Surveilans HAIs
-                    </h2>
-                    <h3 className="text-sm font-bold text-slate-300 uppercase">
-                      UOBK RSUD AL-MULK KOTA SUKABUMI
-                    </h3>
-                    <p className="text-slate-400 font-bold mt-1 uppercase text-xs">
-                      Periode: {periodeType} {selectedYear}{' '}
-                      {periodeType === 'Bulanan' ? `- ${MONTHS_FULL[selectedMonth]}` : ''}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Badge Penunjuk Fitur Interaktif */}
-                <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-950/60 border border-cyan-500/40 text-[11px] font-bold text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.15)] self-center md:self-auto">
-                  <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse shrink-0" />
-                  <span>Fitur Edit Tabel: Klik angka <strong>N</strong> atau <strong>D</strong> untuk ubah & simpan otomatis</span>
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                {hospitalLogoUrl && (
+                  <img src={hospitalLogoUrl} alt="Logo RS" className="w-20 h-20 object-contain" />
+                )}
+                <div className="text-center md:text-left">
+                  <h2 className="text-xl font-black text-white uppercase tracking-tight">
+                    Laporan Surveilans HAIs
+                  </h2>
+                  <h3 className="text-sm font-bold text-slate-300 uppercase">
+                    UOBK RSUD AL-MULK KOTA SUKABUMI
+                  </h3>
+                  <p className="text-slate-400 font-bold mt-1 uppercase text-xs">
+                    Periode: {periodeType} {selectedYear}{' '}
+                    {periodeType === 'Bulanan' ? `- ${MONTHS_FULL[selectedMonth]}` : ''}
+                  </p>
                 </div>
               </div>
             </div>

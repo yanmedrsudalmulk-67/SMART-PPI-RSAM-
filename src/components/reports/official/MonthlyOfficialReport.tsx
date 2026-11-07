@@ -146,7 +146,7 @@ export default function MonthlyOfficialReport({
       const summary = data.haisSummary?.[ind];
       const monthlyPt = data.yearlySeries?.hais?.[ind]?.monthly?.[month];
 
-      if (summary && (data.hasCustomData || (month === 8 && reportYear === 2026))) {
+      if (summary && summary.rooms && summary.rooms.length > 0) {
         const mapByRoom = new Map(summary.rooms.map((r) => [r.room, r]));
         const roomsTabel1 = ROOM_ORDER_TABEL1.map((rName) => {
           const item = mapByRoom.get(rName);
@@ -187,7 +187,7 @@ export default function MonthlyOfficialReport({
       vap: extractRooms('vap', [0.0, 0.0, 0.0, 1.0]),
       ido: extractRooms('ido', [0.52, 0.0, 0.48, 0.0]),
     };
-  }, [data, month, reportYear]);
+  }, [data, month]);
 
   // Map rooms to display order for Line Charts & Tables 2 & 3: Dewasa, Anak, Kebidanan, Bedah
   const mapToChartRooms = (roomsTabel1: { room: string; days: number; cases: number; rate: number }[]) => {
@@ -243,12 +243,12 @@ export default function MonthlyOfficialReport({
 
   // Hand Hygiene per profesi
   const hhProfessions = useMemo(() => {
-    if (data.hasCustomData && data.hhProfessions && data.hhProfessions.some((p) => p.opportunity > 0)) {
+    if (data.hhProfessions && data.hhProfessions.some((p) => p.opportunity > 0)) {
       const getP = (match: string) =>
         data.hhProfessions.find((p) => p.profession.toLowerCase().includes(match));
-      const perawat = getP('perawat') || { profession: 'Perawat / Bidan', compliance: 250, opportunity: 310, rate: 80.6 };
-      const dokter = getP('dokter') || { profession: 'Dokter', compliance: 51, opportunity: 63, rate: 81.0 };
-      const nakes = getP('lain') || { profession: 'Nakes Lain', compliance: 54, opportunity: 67, rate: 80.6 };
+      const perawat = getP('perawat') || getP('bidan') || { profession: 'Perawat / Bidan', compliance: 0, opportunity: 0, rate: 0 };
+      const dokter = getP('dokter') || { profession: 'Dokter', compliance: 0, opportunity: 0, rate: 0 };
+      const nakes = getP('lain') || { profession: 'Nakes Lain', compliance: 0, opportunity: 0, rate: 0 };
       const list = [
         { label: 'Perawat / Bidan', chartLabel: 'PERAWAT/BIDAN', num: perawat.compliance, denum: perawat.opportunity, rate: Math.round(perawat.rate) },
         { label: 'Dokter', chartLabel: 'DOKTER', num: dokter.compliance, denum: dokter.opportunity, rate: Math.round(dokter.rate) },
@@ -266,12 +266,12 @@ export default function MonthlyOfficialReport({
       const pPer = ysProfs.find((p) => p.profession.toLowerCase().includes('perawat')) || ysProfs[1];
       const pNak = ysProfs.find((p) => p.profession.toLowerCase().includes('lain')) || ysProfs[2];
 
-      const dOpp = pDoc.monthlyOpp[month] ?? 63;
-      const dHh = pDoc.monthlyHh[month] ?? 51;
-      const pOpp = pPer.monthlyOpp[month] ?? 310;
-      const pHh = pPer.monthlyHh[month] ?? 250;
-      const nOpp = pNak.monthlyOpp[month] ?? 67;
-      const nHh = pNak.monthlyHh[month] ?? 54;
+      const dOpp = pDoc.monthlyOpp?.[month] ?? (month === 8 ? 63 : 0);
+      const dHh = pDoc.monthlyHh?.[month] ?? (month === 8 ? 51 : 0);
+      const pOpp = pPer.monthlyOpp?.[month] ?? (month === 8 ? 310 : 0);
+      const pHh = pPer.monthlyHh?.[month] ?? (month === 8 ? 250 : 0);
+      const nOpp = pNak.monthlyOpp?.[month] ?? (month === 8 ? 67 : 0);
+      const nHh = pNak.monthlyHh?.[month] ?? (month === 8 ? 54 : 0);
 
       const list = [
         {
@@ -279,21 +279,21 @@ export default function MonthlyOfficialReport({
           chartLabel: 'PERAWAT/BIDAN',
           num: pHh,
           denum: pOpp,
-          rate: pOpp > 0 ? Math.round((pHh / pOpp) * 100) : 81,
+          rate: pOpp > 0 ? Math.round((pHh / pOpp) * 100) : (month === 8 ? 81 : 0),
         },
         {
           label: 'Dokter',
           chartLabel: 'DOKTER',
           num: dHh,
           denum: dOpp,
-          rate: dOpp > 0 ? Math.round((dHh / dOpp) * 100) : 81,
+          rate: dOpp > 0 ? Math.round((dHh / dOpp) * 100) : (month === 8 ? 81 : 0),
         },
         {
           label: 'Nakes Lain',
           chartLabel: 'NAKES LAIN',
           num: nHh,
           denum: nOpp,
-          rate: nOpp > 0 ? Math.floor((nHh / nOpp) * 100) : 80,
+          rate: nOpp > 0 ? Math.floor((nHh / nOpp) * 100) : (month === 8 ? 80 : 0),
         },
       ];
       const totNum = list.reduce((s, i) => s + i.num, 0);
@@ -302,13 +302,24 @@ export default function MonthlyOfficialReport({
       return { list, avg };
     }
 
+    if (month === 8) {
+      return {
+        list: [
+          { label: 'Perawat / Bidan', chartLabel: 'PERAWAT/BIDAN', num: 250, denum: 310, rate: 81 },
+          { label: 'Dokter', chartLabel: 'DOKTER', num: 51, denum: 63, rate: 81 },
+          { label: 'Nakes Lain', chartLabel: 'NAKES LAIN', num: 54, denum: 67, rate: 80 },
+        ],
+        avg: 81,
+      };
+    }
+
     return {
       list: [
-        { label: 'Perawat / Bidan', chartLabel: 'PERAWAT/BIDAN', num: 250, denum: 310, rate: 81 },
-        { label: 'Dokter', chartLabel: 'DOKTER', num: 51, denum: 63, rate: 81 },
-        { label: 'Nakes Lain', chartLabel: 'NAKES LAIN', num: 54, denum: 67, rate: 80 },
+        { label: 'Perawat / Bidan', chartLabel: 'PERAWAT/BIDAN', num: 0, denum: 0, rate: 0 },
+        { label: 'Dokter', chartLabel: 'DOKTER', num: 0, denum: 0, rate: 0 },
+        { label: 'Nakes Lain', chartLabel: 'NAKES LAIN', num: 0, denum: 0, rate: 0 },
       ],
-      avg: 81,
+      avg: 0,
     };
   }, [data, month]);
 
@@ -645,16 +656,54 @@ export default function MonthlyOfficialReport({
           </p>
           <table className="w-full border-collapse border border-black text-center text-[9pt] leading-[1.25]">
             <thead>
-              <tr className="bg-slate-200 font-bold">
-                <th className="border border-black p-1 w-[20%]" rowSpan={2}>JENIS INFEKSI</th>
-                <th className="border border-black p-1 w-[28%]" rowSpan={2}>ALAT INVASIF</th>
-                <th className="border border-black p-1" colSpan={4}>Ruangan</th>
+              <tr className="font-bold">
+                <th
+                  className="border border-black p-1 w-[20%] text-center align-middle font-bold text-black"
+                  rowSpan={2}
+                  style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                >
+                  JENIS INFEKSI
+                </th>
+                <th
+                  className="border border-black p-1 w-[28%] text-center align-middle font-bold text-black"
+                  rowSpan={2}
+                  style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                >
+                  ALAT INVASIF
+                </th>
+                <th
+                  className="border border-black p-1 text-center align-middle font-bold text-black"
+                  colSpan={4}
+                  style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                >
+                  Ruangan
+                </th>
               </tr>
-              <tr className="bg-slate-200 font-bold">
-                <th className="border border-black p-1 w-[13%]">Ranap Bedah</th>
-                <th className="border border-black p-1 w-[13%]">Ranap Anak</th>
-                <th className="border border-black p-1 w-[13%]">Ranap Kebidanan</th>
-                <th className="border border-black p-1 w-[13%]">Ranap Dewasa</th>
+              <tr className="font-bold">
+                <th
+                  className="border border-black p-1 w-[13%] text-center align-middle font-bold text-black"
+                  style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                >
+                  Ranap Bedah
+                </th>
+                <th
+                  className="border border-black p-1 w-[13%] text-center align-middle font-bold text-black"
+                  style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                >
+                  Ranap Anak
+                </th>
+                <th
+                  className="border border-black p-1 w-[13%] text-center align-middle font-bold text-black"
+                  style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                >
+                  Ranap Kebidanan
+                </th>
+                <th
+                  className="border border-black p-1 w-[13%] text-center align-middle font-bold text-black"
+                  style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                >
+                  Ranap Dewasa
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -747,12 +796,37 @@ export default function MonthlyOfficialReport({
           {/* Subtabel IDO */}
           <table className="w-full border-collapse border border-black text-center text-[9pt] leading-[1.25] mt-2.5">
             <thead>
-              <tr className="bg-slate-200 font-bold">
-                <th className="border border-black p-1 w-[20%]">Jenis Infeksi</th>
-                <th className="border border-black p-1 w-[28%]">Jumlah pasien yang di operasi</th>
-                <th className="border border-black p-1 w-[16%]">Infeksi</th>
-                <th className="border border-black p-1 w-[16%]">Rate In</th>
-                <th className="border border-black p-1 w-[20%]">Kasus Operasi</th>
+              <tr className="font-bold">
+                <th
+                  className="border border-black p-1 w-[20%] text-center align-middle font-bold text-black"
+                  style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                >
+                  Jenis Infeksi
+                </th>
+                <th
+                  className="border border-black p-1 w-[28%] text-center align-middle font-bold text-black"
+                  style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                >
+                  Jumlah pasien yang di operasi
+                </th>
+                <th
+                  className="border border-black p-1 w-[16%] text-center align-middle font-bold text-black"
+                  style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                >
+                  Infeksi
+                </th>
+                <th
+                  className="border border-black p-1 w-[16%] text-center align-middle font-bold text-black"
+                  style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                >
+                  Rate In
+                </th>
+                <th
+                  className="border border-black p-1 w-[20%] text-center align-middle font-bold text-black"
+                  style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                >
+                  Kasus Operasi
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -915,10 +989,21 @@ export default function MonthlyOfficialReport({
           </p>
           <table className="w-full border-collapse border border-black text-center text-[9pt] leading-[1.25]">
             <thead>
-              <tr className="bg-slate-200 font-bold">
-                <th className="border border-black p-1 w-[28%]">INDIKATOR</th>
+              <tr className="font-bold">
+                <th
+                  className="border border-black p-1 w-[28%] text-center align-middle font-bold text-black"
+                  style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                >
+                  INDIKATOR
+                </th>
                 {chartRoomsPhlebitis.map((r) => (
-                  <th key={r.room} className="border border-black p-1 w-[18%]">{r.room}</th>
+                  <th
+                    key={r.room}
+                    className="border border-black p-1 w-[18%] text-center align-middle font-bold text-black"
+                    style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                  >
+                    {r.room}
+                  </th>
                 ))}
               </tr>
             </thead>
@@ -1024,10 +1109,21 @@ export default function MonthlyOfficialReport({
           </p>
           <table className="w-full border-collapse border border-black text-center text-[9pt] leading-[1.25]">
             <thead>
-              <tr className="bg-slate-200 font-bold">
-                <th className="border border-black p-1 w-[28%]">INDIKATOR</th>
+              <tr className="font-bold">
+                <th
+                  className="border border-black p-1 w-[28%] text-center align-middle font-bold text-black"
+                  style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                >
+                  INDIKATOR
+                </th>
                 {chartRoomsIsk.map((r) => (
-                  <th key={r.room} className="border border-black p-1 w-[18%]">{r.room}</th>
+                  <th
+                    key={r.room}
+                    className="border border-black p-1 w-[18%] text-center align-middle font-bold text-black"
+                    style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                  >
+                    {r.room}
+                  </th>
                 ))}
               </tr>
             </thead>
@@ -1133,10 +1229,21 @@ export default function MonthlyOfficialReport({
           </p>
           <table className="w-full border-collapse border border-black text-center text-[9pt] leading-[1.25]">
             <thead>
-              <tr className="bg-slate-200 font-bold">
-                <th className="border border-black p-1 w-[28%]">INDIKATOR</th>
+              <tr className="font-bold">
+                <th
+                  className="border border-black p-1 w-[28%] text-center align-middle font-bold text-black"
+                  style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                >
+                  INDIKATOR
+                </th>
                 {chartRoomsDecubitus.map((r) => (
-                  <th key={r.room} className="border border-black p-1 w-[18%]">{r.room}</th>
+                  <th
+                    key={r.room}
+                    className="border border-black p-1 w-[18%] text-center align-middle font-bold text-black"
+                    style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                  >
+                    {r.room}
+                  </th>
                 ))}
               </tr>
             </thead>
@@ -1242,10 +1349,21 @@ export default function MonthlyOfficialReport({
           </p>
           <table className="w-full border-collapse border border-black text-center text-[9pt] leading-[1.25]">
             <thead>
-              <tr className="bg-slate-200 font-bold">
-                <th className="border border-black p-1 w-[28%]">INDIKATOR</th>
+              <tr className="font-bold">
+                <th
+                  className="border border-black p-1 w-[28%] text-center align-middle font-bold text-black"
+                  style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                >
+                  INDIKATOR
+                </th>
                 {chartRoomsVap.map((r) => (
-                  <th key={r.room} className="border border-black p-1 w-[18%]">{r.room}</th>
+                  <th
+                    key={r.room}
+                    className="border border-black p-1 w-[18%] text-center align-middle font-bold text-black"
+                    style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                  >
+                    {r.room}
+                  </th>
                 ))}
               </tr>
             </thead>
@@ -1491,17 +1609,29 @@ export default function MonthlyOfficialReport({
           </p>
           <table className="w-full border-collapse border border-black text-center text-[9.5pt] leading-[1.25]">
             <thead>
-              <tr className="bg-[#00a651] text-white">
-                <th rowSpan={2} className="border border-black p-1.5 w-[25%] font-bold text-center align-middle">
+              <tr>
+                <th
+                  rowSpan={2}
+                  className="border border-black p-1.5 w-[25%] font-bold text-center align-middle text-white"
+                  style={{ backgroundColor: '#00a651', color: '#ffffff' }}
+                >
                   Indikator
                 </th>
-                <th colSpan={3} className="border border-black p-1.5 font-bold text-center">
+                <th
+                  colSpan={3}
+                  className="border border-black p-1.5 font-bold text-center align-middle text-white"
+                  style={{ backgroundColor: '#00a651', color: '#ffffff' }}
+                >
                   Profesi
                 </th>
               </tr>
-              <tr className="bg-[#00a651] text-white">
+              <tr>
                 {hhProfessions.list.map((p) => (
-                  <th key={p.label} className="border border-black p-1.5 w-[25%] font-bold text-center">
+                  <th
+                    key={p.label}
+                    className="border border-black p-1.5 w-[25%] font-bold text-center align-middle text-white"
+                    style={{ backgroundColor: '#00a651', color: '#ffffff' }}
+                  >
                     {p.label === 'Perawat / Bidan' ? 'Perawat /Bidan' : p.label}
                   </th>
                 ))}
@@ -1622,10 +1752,21 @@ export default function MonthlyOfficialReport({
           </p>
           <table className="w-full border-collapse border border-black text-center text-[8.5pt] leading-[1.25]">
             <thead>
-              <tr className="bg-slate-200 font-bold">
-                <th className="border border-black p-1 w-[16%]">Indikator</th>
+              <tr className="font-bold">
+                <th
+                  className="border border-black p-1 w-[16%] text-center align-middle font-bold text-black"
+                  style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                >
+                  Indikator
+                </th>
                 {apdMonths.map((m) => (
-                  <th key={m} className="border border-black p-1">{m}</th>
+                  <th
+                    key={m}
+                    className="border border-black p-1 text-center align-middle font-bold text-black"
+                    style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                  >
+                    {m}
+                  </th>
                 ))}
               </tr>
             </thead>

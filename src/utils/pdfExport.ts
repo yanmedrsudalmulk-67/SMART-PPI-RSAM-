@@ -423,6 +423,23 @@ export function injectPrintStyles(clonedDoc: Document, isLandscape: boolean = fa
       box-sizing: border-box !important;
       vertical-align: middle !important;
       line-height: 1.25 !important;
+      background-clip: padding-box !important;
+    }
+
+    /* Prevent html2canvas tr-background bleeding into rowspanned cells */
+    tr {
+      background-color: transparent !important;
+      background: none !important;
+    }
+
+    .text-white,
+    [class*="text-white"],
+    th.text-white,
+    td.text-white,
+    th[style*="background-color: rgb(0, 166, 81)"],
+    th[style*="background-color: #00a651"],
+    th[style*="background-color:#00a651"] {
+      color: #ffffff !important;
     }
 
     th:not(.align-top):not([class*="align-top"]),
@@ -472,6 +489,96 @@ export function injectPrintStyles(clonedDoc: Document, isLandscape: boolean = fa
 }
 
 export const injectA4PrintStyles = injectPrintStyles;
+
+/**
+ * Sanitizes all tables inside cloned DOM to guarantee pixel-perfect PDF export in html2canvas:
+ * 1. html2canvas paints <tr> background across the full table width, which covers the bottom portion
+ *    of any preceding cells with rowSpan > 1. This function transfers the row's background and text color
+ *    directly to individual <th> and <td> cells, and removes background from the <tr>.
+ * 2. Enforces pure white text (#ffffff !important) on green or dark table headers.
+ * 3. Enforces crisp box-sizing, line-height, and middle vertical alignment.
+ */
+export function sanitizeTableStylesForPdf(rootEl: HTMLElement, clonedDoc: Document): void {
+  const tables = rootEl.querySelectorAll('table');
+  tables.forEach((tbl) => {
+    const tableEl = tbl as HTMLElement;
+    tableEl.style.width = '100%';
+    tableEl.style.borderCollapse = 'collapse';
+
+    const rows = tableEl.querySelectorAll('tr');
+    rows.forEach((row) => {
+      const trEl = row as HTMLElement;
+      const win = clonedDoc.defaultView || window;
+      const compStyle = win.getComputedStyle ? win.getComputedStyle(trEl) : null;
+      const rowBg = trEl.style.backgroundColor || compStyle?.backgroundColor || '';
+      const rowColor = trEl.style.color || compStyle?.color || '';
+
+      const hasBg =
+        rowBg &&
+        rowBg !== 'transparent' &&
+        rowBg !== 'rgba(0, 0, 0, 0)' &&
+        !rowBg.startsWith('rgba(0, 0, 0, 0)');
+
+      const isGreenRow =
+        rowBg.includes('166, 81') ||
+        rowBg.toLowerCase().includes('00a651') ||
+        trEl.classList.contains('bg-[#00a651]');
+
+      const cells = trEl.querySelectorAll<HTMLElement>('th, td');
+      cells.forEach((cell) => {
+        cell.style.boxSizing = 'border-box';
+        cell.style.lineHeight = '1.25';
+        if (!cell.classList.contains('align-top') && !cell.getAttribute('class')?.includes('align-top')) {
+          cell.style.verticalAlign = 'middle';
+        }
+
+        // Transfer background from TR if cell doesn't have an explicit one
+        const cellBg = cell.style.backgroundColor;
+        const cellHasExplicitBg =
+          cellBg &&
+          cellBg !== 'transparent' &&
+          cellBg !== 'rgba(0, 0, 0, 0)' &&
+          !cellBg.startsWith('rgba(0, 0, 0, 0)');
+
+        if (hasBg && !cellHasExplicitBg) {
+          cell.style.backgroundColor = rowBg;
+        }
+
+        // Check if cell is green header (Hand Hygiene, etc.) or has white text
+        const effectiveBg = cell.style.backgroundColor || (hasBg ? rowBg : '');
+        const isGreenCell =
+          isGreenRow ||
+          effectiveBg.includes('166, 81') ||
+          effectiveBg.toLowerCase().includes('00a651') ||
+          cell.classList.contains('bg-[#00a651]');
+
+        const isWhiteText =
+          cell.classList.contains('text-white') ||
+          trEl.classList.contains('text-white') ||
+          rowColor === 'rgb(255, 255, 255)' ||
+          rowColor === '#ffffff' ||
+          cell.style.color === 'rgb(255, 255, 255)' ||
+          cell.style.color === '#ffffff';
+
+        if (isGreenCell || isWhiteText) {
+          cell.style.color = '#ffffff';
+          cell.style.setProperty('color', '#ffffff', 'important');
+        } else if (hasBg && rowColor && rowColor !== 'inherit' && rowColor !== 'initial') {
+          if (!cell.style.color || cell.style.color === 'inherit') {
+            cell.style.color = rowColor;
+          }
+        }
+      });
+
+      // Clear background from TR so html2canvas never paints a row rect over rowspanned cells
+      if (hasBg || isGreenRow || trEl.classList.contains('bg-slate-200')) {
+        trEl.style.backgroundColor = 'transparent';
+        trEl.style.background = 'none';
+        trEl.classList.remove('bg-slate-200', 'bg-[#00a651]', 'bg-slate-100', 'bg-white', 'text-white');
+      }
+    });
+  });
+}
 
 export async function exportElementToA4Pdf(
   element: HTMLElement,
@@ -700,16 +807,8 @@ export async function exportElementToA4Pdf(
               targetClonedPage.style.color = '#000000';
               targetClonedPage.style.overflow = 'visible';
 
-              // Ensure cells vertical-alignment in table
-              const allCells = targetClonedPage.querySelectorAll('th, td');
-              allCells.forEach((cell) => {
-                const c = cell as HTMLElement;
-                c.style.boxSizing = 'border-box';
-                c.style.lineHeight = '1.25';
-                if (!c.classList.contains('align-top') && !c.getAttribute('class')?.includes('align-top')) {
-                  c.style.verticalAlign = 'middle';
-                }
-              });
+              // Sanitize table styles to avoid rowSpan background overlaps and preserve text-white
+              sanitizeTableStylesForPdf(targetClonedPage, clonedDoc);
 
               // Ensure images inside cloned page are displayed properly and signatures are pure black
               const imgs = targetClonedPage.querySelectorAll('img');
@@ -906,24 +1005,8 @@ export async function exportElementToA4Pdf(
           clonedEl.style.overflow = 'visible';
         }
 
-        // Ensure all tables inside the cloned document maintain crisp borders and alignments
-        const tables = clonedEl.querySelectorAll('table');
-        tables.forEach((tbl) => {
-          const tableEl = tbl as HTMLElement;
-          tableEl.style.width = '100%';
-          tableEl.style.borderCollapse = 'collapse';
-        });
-
-        // Ensure table cells maintain vertical alignment & prevent line wrapping/dropping
-        const allCells = clonedEl.querySelectorAll('th, td');
-        allCells.forEach((cell) => {
-          const c = cell as HTMLElement;
-          c.style.boxSizing = 'border-box';
-          c.style.lineHeight = '1.25';
-          if (!c.classList.contains('align-top') && !c.getAttribute('class')?.includes('align-top')) {
-            c.style.verticalAlign = 'middle';
-          }
-        });
+        // Sanitize table styles to avoid rowSpan background overlaps and preserve text-white
+        sanitizeTableStylesForPdf(clonedEl, clonedDoc);
 
         // Ensure images inside cloned element are displayed properly and signatures are pure black
         const imgs = clonedEl.querySelectorAll('img');
