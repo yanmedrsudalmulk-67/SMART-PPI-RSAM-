@@ -168,6 +168,9 @@ async function syncHaisToSmartPpi(webData: any, startDate: string, endDate: stri
     }
 
     for (const [tgl, t] of byDate.entries()) {
+      // Protect official verified Excel historical data for 2026-01 to 2026-09
+      if (tgl >= '2026-01-01' && tgl <= '2026-09-30') continue;
+
       const sessionDate = `${tgl}T12:00:00.000Z`;
 
       // 1. Phlebitis
