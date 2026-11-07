@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 
 export interface HaisRoomData {
@@ -84,11 +84,11 @@ export interface OfficialReportData {
   monthName: string;
   year: number;
   quarterLabel: string;
-  
+
   // HAIs
   haisSummary: Record<string, IndicatorSummary>;
   overallHaisRate: number;
-  
+
   // Hand Hygiene
   hhOverallRate: number;
   hhProfessions: HhProfessionSummary[];
@@ -97,14 +97,14 @@ export interface OfficialReportData {
     months: { monthName: string; opp: number; hh: number; rate: number }[];
     totalRate: number;
   }[];
-  
+
   // APD
   apdOverallRate: number;
   apdRooms: ApdRoomSummary[];
 
   // Detailed Quarterly Data for Triwulan Reports
   quarterData: QuarterData;
-  
+
   // Refetch
   refetch: () => Promise<void>;
 }
@@ -118,6 +118,85 @@ const MONTH_SHORT = [
   'JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN',
   'JUL', 'AGUST', 'SEP', 'OKT', 'NOV', 'DES'
 ];
+
+function pad2(n: number): string {
+  return String(n).padStart(2, '0');
+}
+
+function lastDayOfMonth(year: number, monthZeroIndexed: number): number {
+  return new Date(year, monthZeroIndexed + 1, 0).getDate();
+}
+
+function extractMonthIndex(dateVal: any): number {
+  if (!dateVal) return -1;
+  const s = String(dateVal).trim();
+  const match = s.match(/^(\d{4})-(\d{2})/);
+  if (match) {
+    return parseInt(match[2], 10) - 1;
+  }
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? -1 : d.getMonth();
+}
+
+function extractDateYMD(dateVal: any): string {
+  if (!dateVal) return '';
+  const s = String(dateVal).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    return s.slice(0, 10);
+  }
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return '';
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function normalizeApdItem(item: any) {
+  const rawJson = item.data_indikator || item.checklist_json || {};
+  const json = typeof rawJson === 'string'
+    ? (() => { try { return JSON.parse(rawJson); } catch { return {}; } })()
+    : rawJson;
+
+  let dinilai = 0;
+  let patuh = 0;
+  const components = ['masker', 'sarung_tangan', 'penutup_kepala', 'apron', 'goggle', 'sepatu_boot', 'gaun_pelindung'];
+  components.forEach(comp => {
+    const rawVal = item[comp] ?? json[comp] ?? json?.apd?.[comp];
+    if (rawVal !== undefined && rawVal !== null && rawVal !== '') {
+      if (typeof rawVal === 'boolean') {
+        dinilai++;
+        if (rawVal) patuh++;
+      } else if (typeof rawVal === 'number') {
+        dinilai++;
+        if (rawVal === 1) patuh++;
+      } else {
+        const val = String(rawVal).toLowerCase().trim();
+        if (val === 'ya' || val === 'sesuai' || val === 'patuh' || val === 'true' || val === '1') {
+          dinilai++;
+          patuh++;
+        } else if (val === 'tidak' || val === 'tidak sesuai' || val === 'tidak patuh' || val === 'false' || val === '0') {
+          dinilai++;
+        }
+      }
+    }
+  });
+
+  const finalDinilai = dinilai || Number(item.jumlah_dinilai) || 0;
+  const finalPatuh = dinilai > 0 ? patuh : (Number(item.jumlah_patuh) || 0);
+  const persentase = finalDinilai > 0
+    ? Math.round((finalPatuh / finalDinilai) * 100)
+    : (Number(item.persentase) || 0);
+
+  return {
+    ...item,
+    id: item.id,
+    hh_id: item.hh_id || json.hh_id || json?.apd?.hh_id,
+    tanggal_waktu: item.tanggal_waktu || item.end_time || item.start_time || item.waktu || item.created_at,
+    unit: item.unit || item.ruangan || 'Ranap Dewasa',
+    profesi: item.profesi || json.profesi || 'LAINNYA',
+    jumlah_dinilai: finalDinilai,
+    jumlah_patuh: finalPatuh,
+    persentase,
+  };
+}
 
 export function useOfficialReportData({
   periodType = 'monthly',
@@ -135,93 +214,217 @@ export function useOfficialReportData({
   const [loading, setLoading] = useState(true);
   const [hasCustomData, setHasCustomData] = useState(false);
 
-  // Raw fetched rows from Supabase
   const [rawHaisSessions, setRawHaisSessions] = useState<any[]>([]);
   const [rawHh, setRawHh] = useState<any[]>([]);
   const [rawApd, setRawApd] = useState<any[]>([]);
+  const syncedRangesRef = useRef<Set<string>>(new Set());
 
-  // Calculate start & end ISO strings
-  const { startDateISO, endDateISO, periodLabel, quarterLabel } = useMemo(() => {
-    let start = new Date();
-    let end = new Date();
+  // Compute timezone-safe YYYY-MM-DD start & end dates
+  const { startDateStr, endDateStr, periodLabel, quarterLabel } = useMemo(() => {
+    let startStr = '';
+    let endStr = '';
     let label = '';
     let qLabel = '';
 
     if (periodType === 'monthly') {
-      start = new Date(year, month, 1);
-      end = new Date(year, month + 1, 0, 23, 59, 59, 999);
+      const lastDay = lastDayOfMonth(year, month);
+      startStr = `${year}-${pad2(month + 1)}-01`;
+      endStr = `${year}-${pad2(month + 1)}-${pad2(lastDay)}`;
       label = `Bulan ${MONTH_NAMES[month]} ${year}`;
     } else if (periodType === 'quarterly') {
       const qStartMonth = quarter * 3;
-      start = new Date(year, qStartMonth, 1);
-      end = new Date(year, qStartMonth + 3, 0, 23, 59, 59, 999);
-      const roman = ['I', 'II', 'III', 'IV'][quarter];
+      const qEndMonth = qStartMonth + 2;
+      const lastDay = lastDayOfMonth(year, qEndMonth);
+      startStr = `${year}-${pad2(qStartMonth + 1)}-01`;
+      endStr = `${year}-${pad2(qEndMonth + 1)}-${pad2(lastDay)}`;
+      const roman = ['I', 'II', 'III', 'IV'][quarter] || 'III';
       qLabel = `Triwulan ${roman} ${year}`;
-      label = `Triwulan ${roman} Periode ${MONTH_NAMES[qStartMonth]} - ${MONTH_NAMES[qStartMonth + 2]} ${year}`;
+      label = `Triwulan ${roman} Periode ${MONTH_NAMES[qStartMonth]} - ${MONTH_NAMES[qEndMonth]} ${year}`;
     } else if (periodType === 'semester') {
       const sStartMonth = semester * 6;
-      start = new Date(year, sStartMonth, 1);
-      end = new Date(year, sStartMonth + 6, 0, 23, 59, 59, 999);
-      const roman = ['I', 'II'][semester];
-      label = `Semester ${roman} Periode ${MONTH_NAMES[sStartMonth]} - ${MONTH_NAMES[sStartMonth + 5]} ${year}`;
+      const sEndMonth = sStartMonth + 5;
+      const lastDay = lastDayOfMonth(year, sEndMonth);
+      startStr = `${year}-${pad2(sStartMonth + 1)}-01`;
+      endStr = `${year}-${pad2(sEndMonth + 1)}-${pad2(lastDay)}`;
+      const roman = ['I', 'II'][semester] || 'I';
+      label = `Semester ${roman} Periode ${MONTH_NAMES[sStartMonth]} - ${MONTH_NAMES[sEndMonth]} ${year}`;
     } else {
-      // Annual
-      start = new Date(year, 0, 1);
-      end = new Date(year, 11, 31, 23, 59, 59, 999);
+      startStr = `${year}-01-01`;
+      endStr = `${year}-12-31`;
       label = `Tahun ${year}`;
     }
 
     return {
-      startDateISO: start.toISOString(),
-      endDateISO: end.toISOString(),
+      startDateStr: startStr,
+      endDateStr: endStr,
       periodLabel: label,
       quarterLabel: qLabel,
     };
   }, [periodType, year, month, quarter, semester]);
 
   const fetchData = useCallback(async () => {
-    setLoading(true);
     try {
-      // 1. Fetch HAIs sessions
-      const haisPromise = supabase
-        .from('audit_sessions')
-        .select('*')
-        .eq('kategori', 'Surveilans HAIs')
-        .gte('tanggal_waktu', startDateISO)
-        .lte('tanggal_waktu', endDateISO);
+      const yearStart = `${year}-01-01T00:00:00.000Z`;
+      const yearEnd = `${year}-12-31T23:59:59.999Z`;
 
-      // 2. Fetch Hand Hygiene
-      const hhPromise = supabase
-        .from('audit_hand_hygiene')
-        .select('*')
-        .gte('start_time', startDateISO)
-        .lte('start_time', endDateISO);
+      const [haisRes, hhTableRes, hhSessRes, apdTableRes, apdSessRes] = await Promise.all([
+        supabase
+          .from('audit_sessions')
+          .select('*')
+          .eq('kategori', 'Surveilans HAIs')
+          .gte('tanggal_waktu', yearStart)
+          .lte('tanggal_waktu', yearEnd),
+        supabase
+          .from('audit_hand_hygiene')
+          .select('*'),
+        supabase
+          .from('audit_sessions')
+          .select('*')
+          .in('indikator_id', ['audit_hand_hygiene', 'hand_hygiene']),
+        supabase
+          .from('audit_apd')
+          .select('*'),
+        supabase
+          .from('audit_sessions')
+          .select('*')
+          .in('indikator_id', ['audit_apd', 'apd']),
+      ]);
 
-      // 3. Fetch APD
-      const apdPromise = supabase
-        .from('audit_apd')
-        .select('*')
-        .gte('tanggal_waktu', startDateISO)
-        .lte('tanggal_waktu', endDateISO);
+      // 1. Filter HAIs sessions by YYYY-MM-DD range
+      const haisFiltered = (haisRes.data || []).filter((r: any) => {
+        const ymd = extractDateYMD(r.tanggal_waktu || r.created_at);
+        return ymd >= startDateStr && ymd <= endDateStr;
+      });
 
-      const [haisRes, hhRes, apdRes] = await Promise.all([haisPromise, hhPromise, apdPromise]);
+      // 2. Merge & deduplicate Hand Hygiene (audit_sessions + audit_hand_hygiene)
+      const rawHhSessions = hhSessRes.data || [];
+      const rawHhTable = hhTableRes.data || [];
+      const hhById = new Map<string, any>();
+      for (const h of rawHhTable) {
+        if (h.id) hhById.set(h.id, h);
+      }
+      const usedHhIds = new Set<string>();
+      const seenHhIds = new Set<string>();
+      const mergedHh: any[] = [];
 
-      setRawHaisSessions(haisRes.data || []);
-      setRawHh(hhRes.data || []);
-      setRawApd(apdRes.data || []);
-      
-      const foundRecords = (haisRes.data?.length || 0) + (hhRes.data?.length || 0) + (apdRes.data?.length || 0) > 0;
-      setHasCustomData(foundRecords);
+      for (const s of rawHhSessions) {
+        if (!s.id || seenHhIds.has(s.id)) continue;
+        let match: any = null;
+        if (hhById.has(s.id) && !usedHhIds.has(s.id)) {
+          match = hhById.get(s.id);
+          usedHhIds.add(s.id);
+        } else {
+          const sStart = s.tanggal_waktu || s.start_time || s.created_at;
+          const sTime = sStart ? new Date(sStart).getTime() : 0;
+          match = rawHhTable.find((h: any) => {
+            if (usedHhIds.has(h.id)) return false;
+            const hTime = h.start_time ? new Date(h.start_time).getTime() : 0;
+            return (
+              (h.observer || '').trim().toLowerCase() === (s.observer || '').trim().toLowerCase() &&
+              (h.unit || '').trim().toLowerCase() === (s.unit || '').trim().toLowerCase() &&
+              Math.abs(hTime - sTime) < 120000
+            );
+          });
+          if (match) usedHhIds.add(match.id);
+        }
+
+        const rawSJson = s.data_indikator || s.checklist_json || {};
+        const sJson = typeof rawSJson === 'string'
+          ? (() => { try { return JSON.parse(rawSJson); } catch { return {}; } })()
+          : rawSJson;
+
+        const startTime = sJson.waktu_mulai || sJson.start_time || match?.start_time || s.tanggal_waktu || s.start_time || s.created_at;
+        seenHhIds.add(s.id);
+        if (match?.id) seenHhIds.add(match.id);
+
+        mergedHh.push({
+          ...s,
+          ...(match || {}),
+          id: s.id,
+          unit: s.unit || match?.unit || 'Ranap Dewasa',
+          profesi: s.profesi || match?.profesi || sJson.profesi || 'LAINNYA',
+          start_time: startTime,
+          peluang: Number(match?.peluang !== undefined ? match.peluang : s.jumlah_dinilai !== undefined ? s.jumlah_dinilai : 0) || 0,
+          patuh: Number(match?.patuh !== undefined ? match.patuh : s.jumlah_patuh !== undefined ? s.jumlah_patuh : 0) || 0,
+        });
+      }
+
+      for (const h of rawHhTable) {
+        if (!h.id || usedHhIds.has(h.id) || seenHhIds.has(h.id)) continue;
+        seenHhIds.add(h.id);
+        mergedHh.push({
+          ...h,
+          id: h.id,
+          unit: h.unit || 'Ranap Dewasa',
+          profesi: h.profesi || 'LAINNYA',
+          start_time: h.start_time || h.created_at,
+          peluang: Number(h.peluang !== undefined ? h.peluang : h.jumlah_dinilai !== undefined ? h.jumlah_dinilai : 0) || 0,
+          patuh: Number(h.patuh !== undefined ? h.patuh : h.jumlah_patuh !== undefined ? h.jumlah_patuh : 0) || 0,
+        });
+      }
+
+      const hhFiltered = mergedHh.filter((h: any) => {
+        const ymd = extractDateYMD(h.start_time || h.tanggal_waktu || h.created_at);
+        return ymd >= startDateStr && ymd <= endDateStr;
+      });
+
+      // 3. Merge & deduplicate APD (audit_sessions + audit_apd)
+      const mergedApd: any[] = [];
+      const seenApdIds = new Set<string>();
+      for (const item of [...(apdSessRes.data || []), ...(apdTableRes.data || [])]) {
+        if (!item.id || seenApdIds.has(item.id)) continue;
+        seenApdIds.add(item.id);
+        mergedApd.push(normalizeApdItem(item));
+      }
+
+      const apdFiltered = mergedApd.filter((a: any) => {
+        const ymd = extractDateYMD(a.tanggal_waktu || a.created_at);
+        return ymd >= startDateStr && ymd <= endDateStr;
+      });
+
+      setRawHaisSessions(haisFiltered);
+      setRawHh(hhFiltered);
+      setRawApd(apdFiltered);
+      setHasCustomData(haisFiltered.length + hhFiltered.length + apdFiltered.length > 0);
     } catch (e) {
       console.error('Error fetching official report data:', e);
     } finally {
       setLoading(false);
     }
-  }, [startDateISO, endDateISO]);
+  }, [year, startDateStr, endDateStr]);
 
+  // Auto-sync SIMRS HAIs data & subscribe to realtime updates
   useEffect(() => {
+    setLoading(true);
     fetchData();
-  }, [fetchData]);
+
+    const rangeKey = `${startDateStr}_${endDateStr}`;
+    if (!syncedRangesRef.current.has(rangeKey)) {
+      syncedRangesRef.current.add(rangeKey);
+      fetch(`/api/simrs/hais?startDate=${startDateStr}&endDate=${endDateStr}&autoSync=true`)
+        .then(() => fetchData())
+        .catch(() => {});
+    }
+
+    const ch = supabase
+      .channel(`official_report_sync_${rangeKey}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_sessions' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_hand_hygiene' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_apd' }, () => fetchData())
+      .subscribe();
+
+    const onFocus = () => fetchData();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', onFocus);
+    }
+
+    return () => {
+      supabase.removeChannel(ch);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('focus', onFocus);
+      }
+    };
+  }, [fetchData, startDateStr, endDateStr]);
 
   // Aggregate Data with Fallback to Verified Official Baseline
   const reportData = useMemo(() => {
@@ -246,9 +449,9 @@ export function useOfficialReportData({
     for (const session of rawHaisSessions) {
       const indId = (session.indikator_id || '').toLowerCase();
       if (haisByIndicator[indId]) {
-        hasDbHais = true;
         const num = Number(session.jumlah_patuh) || 0;
         const den = Number(session.jumlah_dinilai) || 0;
+        if (num > 0 || den > 0) hasDbHais = true;
         haisByIndicator[indId].cases += num;
         haisByIndicator[indId].days += den;
 
@@ -368,21 +571,21 @@ export function useOfficialReportData({
     let hhTotalAction = 0;
     const hhProfMap: Record<string, { opp: number; hh: number }> = {
       'Dokter': { opp: 0, hh: 0 },
-      'Perawat': { opp: 0, hh: 0 },
-      'Nakes Lain': { opp: 0, hh: 0 },
+      'Perawat / Bidan': { opp: 0, hh: 0 },
+      'Tenaga Kesehatan Lainnya': { opp: 0, hh: 0 },
     };
 
-    let hasDbHh = rawHh.length > 0;
+    const hasDbHh = rawHh.length > 0;
     for (const h of rawHh) {
       const opp = Number(h.peluang || h.jumlah_dinilai) || 0;
       const act = Number(h.patuh || h.jumlah_patuh) || 0;
       hhTotalOpp += opp;
       hhTotalAction += act;
 
-      let prof = (h.profesi || '').toLowerCase();
-      let key = 'Nakes Lain';
+      const prof = (h.profesi || '').toLowerCase();
+      let key = 'Tenaga Kesehatan Lainnya';
       if (prof.includes('dokter')) key = 'Dokter';
-      else if (prof.includes('perawat') || prof.includes('bidan')) key = 'Perawat';
+      else if (prof.includes('perawat') || prof.includes('bidan')) key = 'Perawat / Bidan';
 
       hhProfMap[key].opp += opp;
       hhProfMap[key].hh += act;
@@ -452,7 +655,7 @@ export function useOfficialReportData({
     let apdTotalComp = 0;
     const apdRoomMap: Record<string, { eval: number; comp: number }> = {};
 
-    let hasDbApd = rawApd.length > 0;
+    const hasDbApd = rawApd.length > 0;
     for (const a of rawApd) {
       const evaluated = Number(a.jumlah_dinilai) || 0;
       const compliant = Number(a.jumlah_patuh) || 0;
@@ -500,32 +703,29 @@ export function useOfficialReportData({
     });
 
     // Monthly breakdown by indicator for the 3 months
-    const monthlyHaisByMonth: Record<number, Record<string, { days: number; cases: number }>> = {
-      [qMonths[0].monthIndex]: { phlebitis: { days: 0, cases: 0 }, isk: { days: 0, cases: 0 }, decubitus: { days: 0, cases: 0 }, vap: { days: 0, cases: 0 }, ido: { days: 0, cases: 0 } },
-      [qMonths[1].monthIndex]: { phlebitis: { days: 0, cases: 0 }, isk: { days: 0, cases: 0 }, decubitus: { days: 0, cases: 0 }, vap: { days: 0, cases: 0 }, ido: { days: 0, cases: 0 } },
-      [qMonths[2].monthIndex]: { phlebitis: { days: 0, cases: 0 }, isk: { days: 0, cases: 0 }, decubitus: { days: 0, cases: 0 }, vap: { days: 0, cases: 0 }, ido: { days: 0, cases: 0 } },
+    const monthlyHaisByMonth: Record<number, Record<string, { days: number; cases: number; hasRecord: boolean }>> = {
+      [qMonths[0].monthIndex]: { phlebitis: { days: 0, cases: 0, hasRecord: false }, isk: { days: 0, cases: 0, hasRecord: false }, decubitus: { days: 0, cases: 0, hasRecord: false }, vap: { days: 0, cases: 0, hasRecord: false }, ido: { days: 0, cases: 0, hasRecord: false } },
+      [qMonths[1].monthIndex]: { phlebitis: { days: 0, cases: 0, hasRecord: false }, isk: { days: 0, cases: 0, hasRecord: false }, decubitus: { days: 0, cases: 0, hasRecord: false }, vap: { days: 0, cases: 0, hasRecord: false }, ido: { days: 0, cases: 0, hasRecord: false } },
+      [qMonths[2].monthIndex]: { phlebitis: { days: 0, cases: 0, hasRecord: false }, isk: { days: 0, cases: 0, hasRecord: false }, decubitus: { days: 0, cases: 0, hasRecord: false }, vap: { days: 0, cases: 0, hasRecord: false }, ido: { days: 0, cases: 0, hasRecord: false } },
     };
 
-    let hasQuarterDbHais = false;
     for (const session of rawHaisSessions) {
-      if (!session.tanggal_waktu) continue;
-      const sMonth = new Date(session.tanggal_waktu).getMonth();
+      const sMonth = extractMonthIndex(session.tanggal_waktu || session.created_at);
       if (monthlyHaisByMonth[sMonth]) {
         const indId = (session.indikator_id || '').toLowerCase();
         if (monthlyHaisByMonth[sMonth][indId]) {
-          hasQuarterDbHais = true;
-          monthlyHaisByMonth[sMonth][indId].cases += Number(session.jumlah_patuh) || 0;
-          monthlyHaisByMonth[sMonth][indId].days += Number(session.jumlah_dinilai) || 0;
+          const c = Number(session.jumlah_patuh) || 0;
+          const d = Number(session.jumlah_dinilai) || 0;
+          monthlyHaisByMonth[sMonth][indId].cases += c;
+          monthlyHaisByMonth[sMonth][indId].days += d;
+          if (c > 0 || d > 0) {
+            monthlyHaisByMonth[sMonth][indId].hasRecord = true;
+          }
         }
       }
     }
 
-    // Default Baseline Fallback for Triwulan III 2026 exactly matching Word file:
-    // Phlebitis: 1243 (6 inf, 4.8‰), 1345 (8 inf, 5.9‰), 1420 (13 inf, 9.1‰), Total 4008 (27 inf, 6.7‰)
-    // ISK: 26 (0 inf), 61 (0 inf), 55 (0 inf), Total 142 (0 inf, 0‰)
-    // Decubitus: 16 (0 inf), 55 (0 inf), 49 (0 inf), Total 120 (0 inf, 0‰)
-    // VAP: 0 (0 inf), 2 (0 inf), 2 (0 inf), Total 4 (0 inf, 0‰)
-    // IDO: 47 (0 inf), 55 (0 inf), 42 (0 inf), Total 144 (0 inf, 0%)
+    // Default Baseline Fallback for Triwulan III 2026 matching Word file:
     const defaultQuarterBaseline: Record<string, { m1: { days: number; cases: number }; m2: { days: number; cases: number }; m3: { days: number; cases: number } }> = {
       phlebitis: {
         m1: { days: 1243, cases: 6 },
@@ -557,15 +757,13 @@ export function useOfficialReportData({
     const haisRows: Record<string, QuarterHaisRow> = {};
     indicatorsConfig.forEach(cfg => {
       const ind = cfg.id;
-      const m1Data = hasQuarterDbHais && monthlyHaisByMonth[qMonths[0].monthIndex][ind].days > 0
-        ? monthlyHaisByMonth[qMonths[0].monthIndex][ind]
-        : defaultQuarterBaseline[ind].m1;
-      const m2Data = hasQuarterDbHais && monthlyHaisByMonth[qMonths[1].monthIndex][ind].days > 0
-        ? monthlyHaisByMonth[qMonths[1].monthIndex][ind]
-        : defaultQuarterBaseline[ind].m2;
-      const m3Data = hasQuarterDbHais && monthlyHaisByMonth[qMonths[2].monthIndex][ind].days > 0
-        ? monthlyHaisByMonth[qMonths[2].monthIndex][ind]
-        : defaultQuarterBaseline[ind].m3;
+      const dbM1 = monthlyHaisByMonth[qMonths[0].monthIndex][ind];
+      const dbM2 = monthlyHaisByMonth[qMonths[1].monthIndex][ind];
+      const dbM3 = monthlyHaisByMonth[qMonths[2].monthIndex][ind];
+
+      const m1Data = dbM1.hasRecord ? dbM1 : defaultQuarterBaseline[ind].m1;
+      const m2Data = dbM2.hasRecord ? dbM2 : defaultQuarterBaseline[ind].m2;
+      const m3Data = dbM3.hasRecord ? dbM3 : defaultQuarterBaseline[ind].m3;
 
       const m1Rate = m1Data.days > 0 ? Number(((m1Data.cases / m1Data.days) * cfg.multiplier).toFixed(1)) : 0;
       const m2Rate = m2Data.days > 0 ? Number(((m2Data.cases / m2Data.days) * cfg.multiplier).toFixed(1)) : 0;
@@ -589,78 +787,78 @@ export function useOfficialReportData({
 
     // Hand Hygiene monthly per profession
     const monthlyHhByMonth: Record<number, Record<string, { opp: number; hh: number }>> = {
-      [qMonths[0].monthIndex]: { 'Perawat/Bidan': { opp: 0, hh: 0 }, 'Dokter': { opp: 0, hh: 0 }, 'Nakes Lain': { opp: 0, hh: 0 } },
-      [qMonths[1].monthIndex]: { 'Perawat/Bidan': { opp: 0, hh: 0 }, 'Dokter': { opp: 0, hh: 0 }, 'Nakes Lain': { opp: 0, hh: 0 } },
-      [qMonths[2].monthIndex]: { 'Perawat/Bidan': { opp: 0, hh: 0 }, 'Dokter': { opp: 0, hh: 0 }, 'Nakes Lain': { opp: 0, hh: 0 } },
+      [qMonths[0].monthIndex]: { 'Perawat /Bidan': { opp: 0, hh: 0 }, 'Dokter': { opp: 0, hh: 0 }, 'Tenaga Kesehatan Lainnya': { opp: 0, hh: 0 } },
+      [qMonths[1].monthIndex]: { 'Perawat /Bidan': { opp: 0, hh: 0 }, 'Dokter': { opp: 0, hh: 0 }, 'Tenaga Kesehatan Lainnya': { opp: 0, hh: 0 } },
+      [qMonths[2].monthIndex]: { 'Perawat /Bidan': { opp: 0, hh: 0 }, 'Dokter': { opp: 0, hh: 0 }, 'Tenaga Kesehatan Lainnya': { opp: 0, hh: 0 } },
     };
 
-    let hasQuarterDbHh = false;
     for (const h of rawHh) {
-      if (!h.start_time) continue;
-      const hMonth = new Date(h.start_time).getMonth();
+      const hMonth = extractMonthIndex(h.start_time || h.tanggal_waktu || h.created_at);
       if (monthlyHhByMonth[hMonth]) {
-        hasQuarterDbHh = true;
         const opp = Number(h.peluang || h.jumlah_dinilai) || 0;
         const act = Number(h.patuh || h.jumlah_patuh) || 0;
 
-        let prof = (h.profesi || '').toLowerCase();
-        let key = 'Nakes Lain';
+        const prof = (h.profesi || '').toLowerCase();
+        let key = 'Tenaga Kesehatan Lainnya';
         if (prof.includes('dokter')) key = 'Dokter';
-        else if (prof.includes('perawat') || prof.includes('bidan')) key = 'Perawat/Bidan';
+        else if (prof.includes('perawat') || prof.includes('bidan')) key = 'Perawat /Bidan';
 
         monthlyHhByMonth[hMonth][key].opp += opp;
         monthlyHhByMonth[hMonth][key].hh += act;
       }
     }
 
-    // Default authentic Hand Hygiene per profession Triwulan III
+    // Default authentic Hand Hygiene per profession Triwulan III matching Word file:
     const defaultQuarterHhBaseline = {
-      'Perawat/Bidan': {
-        m1: { opp: 385, hh: 308, rate: 80.0 },
-        m2: { opp: 305, hh: 251, rate: 82.0 },
-        m3: { opp: 310, hh: 250, rate: 81.0 },
+      'Perawat /Bidan': {
+        m1: { opp: 385, hh: 308, rate: 80 },
+        m2: { opp: 305, hh: 251, rate: 82 },
+        m3: { opp: 310, hh: 250, rate: 81 },
       },
       'Dokter': {
-        m1: { opp: 60, hh: 49, rate: 81.0 },
-        m2: { opp: 48, hh: 40, rate: 83.0 },
-        m3: { opp: 63, hh: 51, rate: 81.0 },
+        m1: { opp: 60, hh: 49, rate: 81 },
+        m2: { opp: 48, hh: 40, rate: 83 },
+        m3: { opp: 63, hh: 51, rate: 81 },
       },
       'Tenaga Kesehatan Lainnya': {
-        m1: { opp: 78, hh: 62, rate: 79.0 },
-        m2: { opp: 68, hh: 55, rate: 81.0 },
-        m3: { opp: 67, hh: 54, rate: 80.0 },
+        m1: { opp: 78, hh: 62, rate: 79 },
+        m2: { opp: 68, hh: 55, rate: 81 },
+        m3: { opp: 67, hh: 54, rate: 80 },
       },
     };
 
     const quarterHhProfessions: QuarterHhProfItem[] = Object.keys(defaultQuarterHhBaseline).map(prof => {
-      const baseKey = prof === 'Tenaga Kesehatan Lainnya' ? 'Nakes Lain' : prof;
-      const m1 = hasQuarterDbHh && monthlyHhByMonth[qMonths[0].monthIndex][baseKey]?.opp > 0
+      const dbM1 = monthlyHhByMonth[qMonths[0].monthIndex][prof];
+      const dbM2 = monthlyHhByMonth[qMonths[1].monthIndex][prof];
+      const dbM3 = monthlyHhByMonth[qMonths[2].monthIndex][prof];
+
+      const m1 = dbM1 && dbM1.opp > 0
         ? {
-            opp: monthlyHhByMonth[qMonths[0].monthIndex][baseKey].opp,
-            hh: monthlyHhByMonth[qMonths[0].monthIndex][baseKey].hh,
-            rate: Number(((monthlyHhByMonth[qMonths[0].monthIndex][baseKey].hh / monthlyHhByMonth[qMonths[0].monthIndex][baseKey].opp) * 100).toFixed(1)),
+            opp: dbM1.opp,
+            hh: dbM1.hh,
+            rate: Math.round((dbM1.hh / dbM1.opp) * 100),
           }
         : (defaultQuarterHhBaseline as any)[prof].m1;
 
-      const m2 = hasQuarterDbHh && monthlyHhByMonth[qMonths[1].monthIndex][baseKey]?.opp > 0
+      const m2 = dbM2 && dbM2.opp > 0
         ? {
-            opp: monthlyHhByMonth[qMonths[1].monthIndex][baseKey].opp,
-            hh: monthlyHhByMonth[qMonths[1].monthIndex][baseKey].hh,
-            rate: Number(((monthlyHhByMonth[qMonths[1].monthIndex][baseKey].hh / monthlyHhByMonth[qMonths[1].monthIndex][baseKey].opp) * 100).toFixed(1)),
+            opp: dbM2.opp,
+            hh: dbM2.hh,
+            rate: Math.round((dbM2.hh / dbM2.opp) * 100),
           }
         : (defaultQuarterHhBaseline as any)[prof].m2;
 
-      const m3 = hasQuarterDbHh && monthlyHhByMonth[qMonths[2].monthIndex][baseKey]?.opp > 0
+      const m3 = dbM3 && dbM3.opp > 0
         ? {
-            opp: monthlyHhByMonth[qMonths[2].monthIndex][baseKey].opp,
-            hh: monthlyHhByMonth[qMonths[2].monthIndex][baseKey].hh,
-            rate: Number(((monthlyHhByMonth[qMonths[2].monthIndex][baseKey].hh / monthlyHhByMonth[qMonths[2].monthIndex][baseKey].opp) * 100).toFixed(1)),
+            opp: dbM3.opp,
+            hh: dbM3.hh,
+            rate: Math.round((dbM3.hh / dbM3.opp) * 100),
           }
         : (defaultQuarterHhBaseline as any)[prof].m3;
 
       const totOpp = m1.opp + m2.opp + m3.opp;
       const totHh = m1.hh + m2.hh + m3.hh;
-      const totRate = totOpp > 0 ? Number(((totHh / totOpp) * 100).toFixed(1)) : 0;
+      const totRate = totOpp > 0 ? Math.round((totHh / totOpp) * 100) : 0;
 
       return {
         profession: prof,
@@ -675,12 +873,38 @@ export function useOfficialReportData({
     const qHhTotalHh = quarterHhProfessions.reduce((acc, p) => acc + p.total.hh, 0);
     const qHhOverallRate = qHhTotalOpp > 0 ? Number(((qHhTotalHh / qHhTotalOpp) * 100).toFixed(1)) : 80.9;
 
-    // APD Monthly Triwulan (Juli: 99.4%, Agustus: 99.7%, September: 99.6% -> Rata-rata 99.6%)
-    const apdMonthly = [
-      { shortName: qMonths[0].shortName, rate: 99.4 },
-      { shortName: qMonths[1].shortName, rate: 99.7 },
-      { shortName: qMonths[2].shortName, rate: 99.6 },
-    ];
+    // APD Monthly Triwulan (computed from DB per month with fallback to verified baseline)
+    const monthlyApdByMonth: Record<number, { eval: number; comp: number }> = {
+      [qMonths[0].monthIndex]: { eval: 0, comp: 0 },
+      [qMonths[1].monthIndex]: { eval: 0, comp: 0 },
+      [qMonths[2].monthIndex]: { eval: 0, comp: 0 },
+    };
+
+    for (const a of rawApd) {
+      const aMonth = extractMonthIndex(a.tanggal_waktu || a.created_at);
+      if (monthlyApdByMonth[aMonth]) {
+        monthlyApdByMonth[aMonth].eval += Number(a.jumlah_dinilai) || 0;
+        monthlyApdByMonth[aMonth].comp += Number(a.jumlah_patuh) || 0;
+      }
+    }
+
+    const defaultApdRates = [100, 100, 99];
+    const apdMonthly = qMonths.map((qm, idx) => {
+      const mApd = monthlyApdByMonth[qm.monthIndex];
+      const rate = mApd && mApd.eval > 0
+        ? Number(((mApd.comp / mApd.eval) * 100).toFixed(1))
+        : defaultApdRates[idx];
+      return {
+        shortName: qm.shortName,
+        rate,
+      };
+    });
+
+    const totalQuarterApdEval = Object.values(monthlyApdByMonth).reduce((s, v) => s + v.eval, 0);
+    const totalQuarterApdComp = Object.values(monthlyApdByMonth).reduce((s, v) => s + v.comp, 0);
+    const quarterApdOverallRate = totalQuarterApdEval > 0
+      ? Number(((totalQuarterApdComp / totalQuarterApdEval) * 100).toFixed(1))
+      : 99.6;
 
     const quarterData: QuarterData = {
       quarterIndex: qIndex,
@@ -692,7 +916,7 @@ export function useOfficialReportData({
       hhProfessions: quarterHhProfessions,
       hhTotal: { opp: qHhTotalOpp, hh: qHhTotalHh, rate: qHhOverallRate },
       apdMonthly,
-      apdOverallRate: 99.6,
+      apdOverallRate: quarterApdOverallRate,
     };
 
     return {
@@ -712,7 +936,7 @@ export function useOfficialReportData({
       quarterData,
       refetch: fetchData,
     };
-  }, [loading, hasCustomData, periodLabel, quarterLabel, rawHaisSessions, rawHh, rawApd, month, year, periodType, quarter, fetchData]);
+  }, [loading, hasCustomData, periodLabel, quarterLabel, rawHaisSessions, rawHh, rawApd, month, year, quarter, fetchData]);
 
   return reportData;
 }

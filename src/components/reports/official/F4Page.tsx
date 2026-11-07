@@ -31,8 +31,8 @@ export default function F4Page({
   const defaultPadding = isCover
     ? 'p-0 overflow-hidden'
     : isLandscape
-    ? 'p-[15mm_20mm_15mm_20mm]'
-    : 'p-[25mm_25mm_25mm_30mm]';
+    ? 'p-[25mm]'
+    : 'p-[25mm]';
     
   const paddingClass = padding || defaultPadding;
 

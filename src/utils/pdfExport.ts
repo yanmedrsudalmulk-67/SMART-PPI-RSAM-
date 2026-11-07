@@ -340,8 +340,8 @@ export function injectPrintStyles(clonedDoc: Document, isLandscape: boolean = fa
       text-rendering: geometricPrecision;
     }
 
-    .official-pdf-page,
-    [data-pdf-page="true"],
+    .official-pdf-page:not(.f4-page),
+    [data-pdf-page="true"]:not(.f4-page),
     #generic-official-report,
     #official-report-sheet,
     #etika-batuk-official-report,
@@ -361,6 +361,29 @@ export function injectPrintStyles(clonedDoc: Document, isLandscape: boolean = fa
       border: none !important;
       border-radius: 0 !important;
       font-family: 'Calibri', 'Carlito', 'Candara', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+    }
+
+    .f4-page {
+      width: 215mm !important;
+      min-width: 215mm !important;
+      max-width: 215mm !important;
+      min-height: 330mm !important;
+      height: 330mm !important;
+      max-height: 330mm !important;
+      padding: 25mm !important;
+      margin: 0 !important;
+      box-sizing: border-box !important;
+      background-color: #ffffff !important;
+      color: #000000 !important;
+      box-shadow: none !important;
+      border: none !important;
+      border-radius: 0 !important;
+      font-family: Arial, Helvetica, sans-serif !important;
+    }
+
+    .f4-page[data-is-cover="true"],
+    .f4-page.is-cover {
+      padding: 0 !important;
     }
 
     .flex-col.sm\\:flex-row, .flex-col.md\\:flex-row, .flex-col.lg\\:flex-row {
@@ -701,7 +724,8 @@ export async function exportElementToA4Pdf(
           },
         });
 
-        const hasKopSurat = i === 0 || pageEl.querySelector('#kop-surat, .kop-surat, [data-kop-surat]') !== null;
+        const isSelfContainedF4Page = pageEl.classList.contains('f4-page');
+        const hasKopSurat = isSelfContainedF4Page || i === 0 || pageEl.querySelector('#kop-surat, .kop-surat, [data-kop-surat]') !== null;
         if (i > 0) {
           pdf.addPage();
           if (!hasKopSurat) {
@@ -718,23 +742,30 @@ export async function exportElementToA4Pdf(
         }
 
         const imgData = canvas.toDataURL('image/png');
+        const effMarginLeft = isSelfContainedF4Page ? 0 : marginLeftMm;
+        const effMarginRight = isSelfContainedF4Page ? 0 : marginRightMm;
+        const effMarginTop = isSelfContainedF4Page ? 0 : marginTopMm;
+        const effMarginBottom = isSelfContainedF4Page ? 0 : marginBottomMm;
+        const effPrintableWidthMm = pageWidthMm - effMarginLeft - effMarginRight;
         const runningHeaderOffsetMm = hasKopSurat ? 0 : runningHeaderHeightMm;
-        const posY = marginTopMm + runningHeaderOffsetMm;
-        const availableHeightMm = pageHeightMm - marginBottomMm - posY;
-        const naturalHeightMm = (canvas.height / canvas.width) * printableWidthMm;
+        const posY = effMarginTop + runningHeaderOffsetMm;
+        const availableHeightMm = pageHeightMm - effMarginBottom - posY;
+        const naturalHeightMm = (canvas.height / canvas.width) * effPrintableWidthMm;
         const renderHeightMm = Math.min(naturalHeightMm, availableHeightMm);
-        pdf.addImage(imgData, 'PNG', marginLeftMm, posY, printableWidthMm, renderHeightMm, undefined, 'FAST');
+        pdf.addImage(imgData, 'PNG', effMarginLeft, posY, effPrintableWidthMm, renderHeightMm, undefined, 'FAST');
 
-        const previewImg = createFullPagePreviewCanvas(
-          canvas,
-          hasKopSurat ? 0 : i,
-          pageWidthMm,
-          pageHeightMm,
-          marginLeftMm,
-          marginRightMm,
-          marginTopMm,
-          runningHeaderOffsetMm
-        );
+        const previewImg = isSelfContainedF4Page
+          ? imgData
+          : createFullPagePreviewCanvas(
+              canvas,
+              hasKopSurat ? 0 : i,
+              pageWidthMm,
+              pageHeightMm,
+              marginLeftMm,
+              marginRightMm,
+              marginTopMm,
+              runningHeaderOffsetMm
+            );
         pageImages.push(previewImg);
       }
 

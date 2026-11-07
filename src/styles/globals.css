@@ -942,7 +942,7 @@ video {
     min-height: 330mm !important;
     height: 330mm !important;
     max-height: 330mm !important;
-    padding: 25mm 25mm 25mm 30mm !important;
+    padding: 25mm !important;
     margin: 0 !important;
     margin-bottom: 0 !important;
     box-shadow: none !important;
@@ -954,7 +954,8 @@ video {
     background-color: #ffffff !important;
   }
 
-  .f4-page.is-cover {
+  .f4-page.is-cover,
+  .f4-page[data-is-cover="true"] {
     padding: 0 !important;
   }
 }
