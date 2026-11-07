@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import ReportCover from './ReportCover';
-import OfficialModernBarChart from './OfficialModernBarChart';
 import AutoPaginatedF4Document, { FlowBlock } from './AutoPaginatedF4Document';
+import { WordExcelBarChart, WordExcelLineChart } from './WordExcelCharts';
 import { OfficialReportData, useOfficialReportData } from '@/hooks/useOfficialReportData';
 import {
   buildHaisOverviewNarrative,
@@ -18,21 +18,15 @@ interface MonthlyReportProps {
   year?: number;
 }
 
-const ROOM_ORDER = ['Ranap Bedah', 'Ranap Anak', 'Ranap Kebidanan', 'Ranap Dewasa'] as const;
+// Room order in Tabel 1 (Image 3)
+const ROOM_ORDER_TABEL1 = ['Ranap Bedah', 'Ranap Anak', 'Ranap Kebidanan', 'Ranap Dewasa'] as const;
 
-const NEXT_MONTH_NAMES = [
-  'Februari',
-  'Maret',
-  'April',
-  'Mei',
-  'Juni',
-  'Juli',
-  'Agustus',
-  'September',
-  'Oktober',
-  'November',
-  'Desember',
-  'Januari',
+// Room order in Charts and Tables 2 & 3 (Image 4 & 5)
+const ROOM_ORDER_CHARTS = ['Ranap Dewasa', 'Ranap Anak', 'Ranap Kebidanan', 'Ranap Bedah'] as const;
+
+const MONTH_NAMES = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
 ];
 
 export default function MonthlyOfficialReport({
@@ -47,11 +41,16 @@ export default function MonthlyOfficialReport({
   });
 
   const data = reportData || internalData;
-  const monthName = data.monthName || 'September';
+  const monthName = MONTH_NAMES[month] || data.monthName || 'September';
   const reportYear = data.year || year;
   const periodLabel = `Bulan ${monthName} ${reportYear}`;
 
-  // Build room-level HAIs data dynamically from real-time DB / verified monthly series
+  // Previous month info for comparison narrative
+  const prevMonthIdx = month > 0 ? month - 1 : 11;
+  const prevYear = month > 0 ? reportYear : reportYear - 1;
+  const prevMonthName = MONTH_NAMES[prevMonthIdx];
+
+  // Room-level HAIs data dynamically from real-time DB or verified monthly baseline
   const roomBreakdown = useMemo(() => {
     const extractRooms = (
       ind: 'phlebitis' | 'isk' | 'decubitus' | 'vap' | 'ido',
@@ -61,10 +60,9 @@ export default function MonthlyOfficialReport({
       const summary = data.haisSummary?.[ind];
       const monthlyPt = data.yearlySeries?.hais?.[ind]?.monthly?.[month];
 
-      // Use real-time room breakdown when custom DB records exist or on September 2026 baseline
       if (summary && (data.hasCustomData || (month === 8 && reportYear === 2026))) {
         const mapByRoom = new Map(summary.rooms.map((r) => [r.room, r]));
-        const rooms = ROOM_ORDER.map((rName) => {
+        const roomsTabel1 = ROOM_ORDER_TABEL1.map((rName) => {
           const item = mapByRoom.get(rName);
           const days = item?.days ?? 0;
           const cases = item?.cases ?? 0;
@@ -74,17 +72,16 @@ export default function MonthlyOfficialReport({
         const totalDays = summary.totalDaysOrOps;
         const totalCases = summary.totalCases;
         const rate = totalDays > 0 ? Number(((totalCases / totalDays) * mult).toFixed(1)) : 0;
-        return { rooms, totalDays, totalCases, rate };
+        return { roomsTabel1, totalDays, totalCases, rate };
       }
 
-      // Otherwise distribute monthly series point proportionally across rooms
       const totDays = monthlyPt?.days ?? summary?.totalDaysOrOps ?? 0;
       const totCases = monthlyPt?.cases ?? summary?.totalCases ?? 0;
       let remDays = totDays;
       let remCases = totCases;
 
-      const rooms = ROOM_ORDER.map((rName, idx) => {
-        const isLast = idx === ROOM_ORDER.length - 1;
+      const roomsTabel1 = ROOM_ORDER_TABEL1.map((rName, idx) => {
+        const isLast = idx === ROOM_ORDER_TABEL1.length - 1;
         const d = isLast ? Math.max(0, remDays) : Math.round(totDays * weights[idx]);
         remDays -= d;
         const c = isLast ? Math.max(0, remCases) : Math.round(totCases * weights[idx]);
@@ -94,7 +91,7 @@ export default function MonthlyOfficialReport({
       });
 
       const rate = totDays > 0 ? Number(((totCases / totDays) * mult).toFixed(1)) : 0;
-      return { rooms, totalDays: totDays, totalCases: totCases, rate };
+      return { roomsTabel1, totalDays: totDays, totalCases: totCases, rate };
     };
 
     return {
@@ -106,37 +103,34 @@ export default function MonthlyOfficialReport({
     };
   }, [data, month, reportYear]);
 
-  // IDO per jenis operasi (sinkron dengan total kasus & tindakan operasi bulan berjalan)
-  const idoOperations = useMemo(() => {
-    const totOps = roomBreakdown.ido.totalDays;
-    const totCases = roomBreakdown.ido.totalCases;
-    const opsWeights = [
-      { code: 'App', label: 'APPENDICITIS', weight: 0.24 },
-      { code: 'Hernia', label: 'HERNIA', weight: 0.21 },
-      { code: 'SC', label: 'SECTIO CAESARIA', weight: 0.38 },
-      { code: 'STT', label: 'STT', weight: 0.17 },
-    ];
-    let remOps = totOps;
-    let remCases = totCases;
-    return opsWeights.map((op, idx) => {
-      const isLast = idx === opsWeights.length - 1;
-      const d = isLast ? Math.max(0, remOps) : Math.round(totOps * op.weight);
-      remOps -= d;
-      const c = isLast ? Math.max(0, remCases) : Math.round(totCases * op.weight);
-      remCases -= c;
-      const r = d > 0 ? Number(((c / d) * 100).toFixed(1)) : 0;
-      return {
-        code: op.code,
-        label: op.label,
-        ops: d,
-        cases: c,
-        rate: r,
-        target: 2,
-      };
-    });
-  }, [roomBreakdown.ido]);
+  // Map rooms to display order for Line Charts & Tables 2 & 3: Dewasa, Anak, Kebidanan, Bedah
+  const mapToChartRooms = (roomsTabel1: { room: string; days: number; cases: number; rate: number }[]) => {
+    const map = new Map(roomsTabel1.map((r) => [r.room, r]));
+    return ROOM_ORDER_CHARTS.map((name) => map.get(name) || { room: name, days: 0, cases: 0, rate: 0 });
+  };
 
-  // Hand Hygiene per profesi (sinkron real-time DB / bulanan)
+  const chartRoomsPhlebitis = useMemo(() => mapToChartRooms(roomBreakdown.phlebitis.roomsTabel1), [roomBreakdown.phlebitis]);
+  const chartRoomsIsk = useMemo(() => mapToChartRooms(roomBreakdown.isk.roomsTabel1), [roomBreakdown.isk]);
+  const chartRoomsDecubitus = useMemo(() => mapToChartRooms(roomBreakdown.decubitus.roomsTabel1), [roomBreakdown.decubitus]);
+  const chartRoomsVap = useMemo(() => mapToChartRooms(roomBreakdown.vap.roomsTabel1), [roomBreakdown.vap]);
+
+  // Previous month Phlebitis rate for dynamic comparison
+  const prevPhlebRate = useMemo(() => {
+    const prevPt = data.yearlySeries?.hais?.phlebitis?.monthly?.[prevMonthIdx];
+    return prevPt?.rate ?? (month === 8 ? 5.9 : 0);
+  }, [data.yearlySeries, prevMonthIdx, month]);
+
+  // Peak Phlebitis room
+  const peakPhlebRoom = useMemo(() => {
+    return [...chartRoomsPhlebitis].sort((a, b) => b.rate - a.rate || b.cases - a.cases)[0] || {
+      room: 'Ranap Dewasa',
+      days: 471,
+      cases: 8,
+      rate: 16.9,
+    };
+  }, [chartRoomsPhlebitis]);
+
+  // Hand Hygiene per profesi
   const hhProfessions = useMemo(() => {
     if (data.hasCustomData && data.hhProfessions && data.hhProfessions.some((p) => p.opportunity > 0)) {
       const getP = (match: string) =>
@@ -155,7 +149,6 @@ export default function MonthlyOfficialReport({
       return { list, avg };
     }
 
-    // Monthly slice from yearlySeries
     const ysProfs = data.yearlySeries?.hhProfessions;
     if (ysProfs && ysProfs.length >= 3) {
       const pDoc = ysProfs.find((p) => p.profession.toLowerCase().includes('dokter')) || ysProfs[0];
@@ -208,7 +201,7 @@ export default function MonthlyOfficialReport({
     };
   }, [data, month]);
 
-  // APD monthly series up to selected month (JAN..month active, future months '-' in 12-col table)
+  // APD 12 bulan
   const apdData = useMemo(() => {
     const ysApd = data.yearlySeries?.apdMonthly || [];
     const full12 = ysApd.length === 12
@@ -248,10 +241,8 @@ export default function MonthlyOfficialReport({
     return { full12, active, currentMonthVal, avgActive };
   }, [data, month]);
 
-  // Automatic Narratives (Analisa + Rekomendasi + Rencana Tindak Lanjut)
+  // Pre-generate standard narratives (Rekomendasi & RTL)
   const narratives = useMemo(() => {
-    const phlebPeak = [...roomBreakdown.phlebitis.rooms].sort((a, b) => b.rate - a.rate)[0];
-
     const haisOverview = buildHaisOverviewNarrative({
       periodLabel,
       phlebitis: {
@@ -279,17 +270,14 @@ export default function MonthlyOfficialReport({
         days: roomBreakdown.ido.totalDays,
         rate: roomBreakdown.ido.rate,
       },
-      peakDetail:
-        phlebPeak && phlebPeak.rate > 0
-          ? `kejadian tertinggi berada di ${phlebPeak.room} (${fmtIdNum(phlebPeak.rate)}‰; ${phlebPeak.cases} kasus)`
-          : undefined,
+      peakDetail: `kejadian tertinggi berada di ${peakPhlebRoom.room} (${fmtIdNum(peakPhlebRoom.rate)}‰; ${peakPhlebRoom.cases} kasus)`,
     });
 
     const phlebitis = buildSingleHaisNarrative({
       indicator: 'phlebitis',
       periodLabel,
       dimensionLabel: 'ruangan',
-      points: roomBreakdown.phlebitis.rooms.map((r) => ({
+      points: chartRoomsPhlebitis.map((r) => ({
         label: r.room,
         days: r.days,
         cases: r.cases,
@@ -304,7 +292,7 @@ export default function MonthlyOfficialReport({
       indicator: 'isk',
       periodLabel,
       dimensionLabel: 'ruangan',
-      points: roomBreakdown.isk.rooms.map((r) => ({
+      points: chartRoomsIsk.map((r) => ({
         label: r.room,
         days: r.days,
         cases: r.cases,
@@ -319,7 +307,7 @@ export default function MonthlyOfficialReport({
       indicator: 'decubitus',
       periodLabel,
       dimensionLabel: 'ruangan',
-      points: roomBreakdown.decubitus.rooms.map((r) => ({
+      points: chartRoomsDecubitus.map((r) => ({
         label: r.room,
         days: r.days,
         cases: r.cases,
@@ -334,7 +322,7 @@ export default function MonthlyOfficialReport({
       indicator: 'vap',
       periodLabel,
       dimensionLabel: 'ruangan',
-      points: roomBreakdown.vap.rooms.map((r) => ({
+      points: chartRoomsVap.map((r) => ({
         label: r.room,
         days: r.days,
         cases: r.cases,
@@ -349,12 +337,9 @@ export default function MonthlyOfficialReport({
       indicator: 'ido',
       periodLabel,
       dimensionLabel: 'ruangan',
-      points: idoOperations.map((op) => ({
-        label: `Jenis Operasi ${op.label}`,
-        days: op.ops,
-        cases: op.cases,
-        rate: op.rate,
-      })),
+      points: [
+        { label: 'Kamar Operasi Bedah', days: roomBreakdown.ido.totalDays, cases: roomBreakdown.ido.totalCases, rate: roomBreakdown.ido.rate },
+      ],
       totalDays: roomBreakdown.ido.totalDays,
       totalCases: roomBreakdown.ido.totalCases,
       overallRate: roomBreakdown.ido.rate,
@@ -380,268 +365,280 @@ export default function MonthlyOfficialReport({
     });
 
     return { haisOverview, phlebitis, isk, decubitus, vap, ido, hh, apd };
-  }, [periodLabel, roomBreakdown, idoOperations, hhProfessions, apdData, monthName, reportYear]);
+  }, [
+    periodLabel,
+    roomBreakdown,
+    chartRoomsPhlebitis,
+    chartRoomsIsk,
+    chartRoomsDecubitus,
+    chartRoomsVap,
+    peakPhlebRoom,
+    hhProfessions,
+    apdData,
+    monthName,
+    reportYear,
+  ]);
 
   const signMonthYear =
     month === 11
       ? `10 Januari ${reportYear + 1}`
-      : `10 ${NEXT_MONTH_NAMES[month] || monthName} ${reportYear}`;
+      : `10 ${MONTH_NAMES[(month + 1) % 12]} ${reportYear}`;
 
-  // Flow blocks for AutoPaginatedF4Document (F4 215x330mm, margin 2.5cm all sides, Arial 12pt)
+  // Build document flow blocks
   const blocks: FlowBlock[] = useMemo(() => {
     const b: FlowBlock[] = [];
 
-    // =========================================================
-    // BAB I PENDAHULUAN
-    // =========================================================
+    // =========================================================================
+    // HALAMAN 2 (SESUAI GAMBAR NO 1): BAB I PENDAHULUAN - A. Latar Belakang
+    // =========================================================================
     b.push({
       type: 'element',
-      key: 'm-title-header',
+      key: 'm-page2-heading',
       keepWithNext: true,
-      gapAfter: 14,
+      gapAfter: 8,
       node: (
-        <div className="text-center font-bold">
-          <p className="uppercase text-[12pt] leading-[1.4]">
-            LAPORAN IPCN BULAN {monthName.toUpperCase()} {reportYear}
-          </p>
-          <p className="uppercase text-[12pt] leading-[1.4]">
-            PENCEGAHAN DAN PENGENDALIAN INFEKSI (PPI)
-          </p>
-          <p className="uppercase text-[12pt] leading-[1.4]">
-            UOBK RSUD AL-MULK KOTA SUKABUMI
-          </p>
+        <div className="text-center font-bold text-[12pt] leading-[1.4] mb-3">
+          <p className="uppercase">BAB I</p>
+          <p className="uppercase">PENDAHULUAN</p>
         </div>
       ),
     });
 
     b.push({
       type: 'element',
-      key: 'm-bab1-heading',
-      keepWithNext: true,
-      gapAfter: 10,
-      node: (
-        <div className="text-center font-bold uppercase border-b border-black pb-1 text-[12pt]">
-          BAB I PENDAHULUAN
-        </div>
-      ),
-    });
-
-    b.push({
-      type: 'element',
-      key: 'm-latar-heading',
+      key: 'm-page2-latar-heading',
       keepWithNext: true,
       gapAfter: 6,
       node: <p className="font-bold text-[12pt]">A. Latar Belakang</p>,
     });
 
+    // 6 Exact paragraphs from Gambar No 1
     const latarParagraphs = [
-      'Pencegahan dan Pengendalian Infeksi (PPI) di rumah sakit merupakan suatu upaya kegiatan strategis untuk meminimalkan atau mencegah terjadinya infeksi pada pasien, petugas, pengunjung, dan masyarakat di sekitar rumah sakit. Program Pencegahan dan Pengendalian Infeksi meliputi kewaspadaan isolasi (kewaspadaan standar dan transmisi), surveilans aktif infeksi, penerapan bundles pencegahan HAIs, penggunaan antimikroba secara bijak, serta pendidikan dan pelatihan berkelanjutan.',
-      'Kegiatan surveilans infeksi di rumah sakit merupakan salah satu kegiatan inti yang sistematis dan berkesinambungan dalam program pengendalian infeksi serta menjadi tolok ukur keberhasilan pelaksanaan mutu pelayanan dan keselamatan pasien di UOBK RSUD Al-Mulk Kota Sukabumi.',
-      'Ditinjau dari asal didapatnya infeksi, infeksi dapat berasal dari komunitas (Community Acquired Infection) maupun berasal dari lingkungan fasilitas pelayanan kesehatan yang dikenal dengan istilah Healthcare Associated Infections (HAIs). Kejadian HAIs ditetapkan apabila infeksi muncul setelah pasien mendapatkan perawatan ≥ 48 jam dan tidak sedang berada dalam masa inkubasi saat masuk rumah sakit.',
-      'Pemantauan kejadian HAIs di rumah sakit difokuskan pada tindakan dan pemasangan alat medis invasif, meliputi Phlebitis akibat kateter intravena perifer, Catheter Associated Urinary Tract Infection (CAUTI/ISK), Ventilator Associated Pneumonia (VAP), luka tekan tirah baring (Decubitus), serta Infeksi Daerah Operasi (IDO) pasca-pembedahan.',
-      'Kegagalan melakukan kebersihan tangan yang baik dan benar serta ketidakpatuhan penggunaan Alat Pelindung Diri (APD) merupakan kontributor utama terjadinya transmisi silang mikroorganisme patogen di fasilitas pelayanan kesehatan (Boyce & Pittet, 2002). Oleh karena itu, audit kepatuhan pelaksanaan kewaspadaan standar dan surveilans HAIs dilaksanakan secara rutin setiap bulan oleh IPCN bersama IPCLN di UOBK RSUD Al-Mulk Kota Sukabumi.',
+      'Pencegahan dan Pengendalian infeksi di rumah sakit merupakan suatu upaya kegiatan untuk meminimalkan atau mencegah terjadinya infeksi pada pasien, petugas, pengunjung dan masyarakat di sekitar Rumah Sakit. Program pencegahan dan pengendalian infeksi antara lain; Pencegahan infeksi, penggunaan antibiotik secara rasional, kewaspadaan standar, surveilans, pendidikan dan pelatihan.',
+      'Kegaiatan surveilans infeksi dirumah sakit merupakan salah satu kegiatan yang penting dan luas dalam program pengendalian infeksi dan suatu hal yang harus dilakukan untuk mencapai keberhasilan dari Program PPI.',
+      'Ditinjau dari asal atau didapatnya infeksi dapat berasal dari komunitas atau berasal dari lingkungan rumah sakit (Hospital Acquired Infection) yang sebelumnya dikenal istilah infeksi nosokomial. Karena sering kali tidak bisa secara pasti ditentukan asal infeksi, maka sekarang istilah infeksi nosokomial diganti dengan istilah baru yaitu Healthcare Associated Infections (HAIs).',
+      'Healthcare Associated Infections (HAIs) merupakan kejadian infeksi yang didapatkan penderita setelah mendapatkan perawatan > 48 jam dan pasien tidak dalam masa inkubasi. Macam kejadian HAIs banyak dihubungkan karena pemasangan alat, seperti CAUTI (Catheter Associated Urinary Tract Infection), VAP (Ventilator Associated Pneumonia), CRBSI (Catheter IV Central Related Blood Stream Infections) dan IDO (Infeksi Daerah Operasi) karena tindakan operasi.',
+      'Pengetahuan tentang infeksi nosokomial dan pencegahannya merupakan stimulus sosial yang dapat menimbulkan respon emosional terhadap upaya universal precaution sehingga akan meningkatkan peran sertanya dalam upaya pencegahan infeksi nosokomial.',
+      'Kegagalan melakukan kebersihan tangan yang baik dan benar dianggap sebagai penyebab utama infeksi nosokomial atau HAIs dan penyebaran mikroorganisme multiresisten di fasilitas pelayanan kesehatan dan telah diakui sebagai kontribusi yang penting terhadap timbulnya wabah (Boyce and Pittet,, 2002). Sehingga perlu adanya audit kepatuhan pelaksanaan kewaspadaan standar yang dilakukan oleh Tim Pencegahan dan Pengendalian Infeksi di UOBK RSUD Al-Mulk Kota Sukabumi.',
     ];
 
     latarParagraphs.forEach((p, idx) => {
       b.push({
         type: 'element',
-        key: `m-latar-p-${idx}`,
-        gapAfter: 8,
-        node: <p className="indent-8 text-justify">{p}</p>,
+        key: `m-page2-latar-p-${idx}`,
+        gapAfter: idx === latarParagraphs.length - 1 ? 0 : 8,
+        node: <p className="indent-8 text-justify text-[12pt] leading-[1.5] text-black">{p}</p>,
+      });
+    });
+
+    // Break directly to Halaman 3 (Gambar No 2)
+    b.push({ type: 'pageBreak', key: 'm-pb-page2-to-3' });
+
+    // =========================================================================
+    // HALAMAN 3 (SESUAI GAMBAR NO 2): B. Tujuan Umum dan Khusus
+    // =========================================================================
+    b.push({
+      type: 'element',
+      key: 'm-page3-tujuan-block',
+      gapAfter: 0,
+      node: (
+        <div className="w-full text-justify text-[12pt] leading-[1.6] text-black">
+          <p className="font-bold mb-2">B. Tujuan Umum dan Khusus</p>
+          <div className="pl-6 mb-4">
+            <p className="font-bold">1.  Tujuan Umum</p>
+            <p className="pl-6">Mengetahui angka kepatuhan pelaksanaan kewaspadaan standar, dan surveilans Rumah Sakit.</p>
+          </div>
+          <div className="pl-6">
+            <p className="font-bold mb-1">2.  Tujuan Khusus</p>
+            <div className="pl-6 space-y-1">
+              <p>a. Mendapatkan data dasar infeksi di UOBK RSUD Al-Mulk.</p>
+              <p>b. Mengukur dan menilai keberhasilan suatu Program PPI di RSUD Al-Mulk.</p>
+              <p>c. Mengetahui permasalahan tentang kesehatan yang memerlukan penanggulangan.</p>
+            </div>
+          </div>
+        </div>
+      ),
+    });
+
+    // Break directly to Halaman 4 (Gambar No 3)
+    b.push({ type: 'pageBreak', key: 'm-pb-page3-to-4' });
+
+    // =========================================================================
+    // HALAMAN 4 (SESUAI GAMBAR NO 3): BAB II LAPORAN KEGIATAN PROGRAM PPI - A. SURVEILANS & TABEL 1
+    // =========================================================================
+    b.push({
+      type: 'element',
+      key: 'm-page4-bab2-heading',
+      keepWithNext: true,
+      gapAfter: 8,
+      node: (
+        <div className="text-center font-bold text-[12pt] leading-[1.4] mb-3">
+          <p className="uppercase">BAB II</p>
+          <p className="uppercase">LAPORAN KEGIATAN PROGRAM PPI</p>
+        </div>
+      ),
+    });
+
+    b.push({
+      type: 'element',
+      key: 'm-page4-surv-heading',
+      keepWithNext: true,
+      gapAfter: 6,
+      node: <p className="font-bold text-[12pt]">A. SURVEILANS</p>,
+    });
+
+    const survParagraphs = [
+      'Surveilans infeksi Rumah Sakit adalah suatu proses yang dinamis, sistematis, terus menerus dalam pengumpulan, identifikasi, analisis dan interpretasi data kesehatan yang penting pada suatu populasi spesifik dan didiseminasikan secara berkala kepada pihak-pihak yang memerlukan untuk digunakan dalam perencanaan, penerapan, serta evaluasi suatu tindakan yang berhubungan dengan kesehatan (Kemenkes, 2011).',
+      'Metode surveilans yang digunakan adalah Surveilans Hasil (Outcome Surveilans). Pada umumnya yang diperoleh dipantau adalah kejadian Phlebitis, Infeksi Saluran Kemih (ISK), Kejadian Decubitus, IDO dan VAP.',
+      'Angka Phlebitis yang dimasukkan kedalam HAIs adalah dari grade II-V.',
+    ];
+
+    survParagraphs.forEach((p, idx) => {
+      b.push({
+        type: 'element',
+        key: `m-page4-surv-p-${idx}`,
+        gapAfter: 6,
+        node: <p className="indent-8 text-justify text-[12pt] leading-[1.5] text-black">{p}</p>,
       });
     });
 
     b.push({
       type: 'element',
-      key: 'm-tujuan-block',
-      gapAfter: 10,
-      node: (
-        <div className="w-full text-justify">
-          <p className="font-bold text-[12pt] mb-1">B. Tujuan Umum dan Khusus</p>
-          <p className="font-bold pl-4 mb-0.5">1. Tujuan Umum</p>
-          <p className="indent-8 pl-4 mb-2">
-            Mengetahui angka kejadian infeksi terkait pelayanan kesehatan (surveilans HAIs) serta tingkat kepatuhan pelaksanaan kewaspadaan standar (Hand Hygiene dan penggunaan APD) di UOBK RSUD Al-Mulk Kota Sukabumi pada {periodLabel}.
-          </p>
-          <p className="font-bold pl-4 mb-0.5">2. Tujuan Khusus</p>
-          <ol className="list-decimal pl-10 space-y-1">
-            <li>Mendapatkan data dasar dan tren bulanan kejadian HAIs secara akurat dan real-time terintegrasi SIMRS di UOBK RSUD Al-Mulk.</li>
-            <li>Mengukur dan menilai efektivitas keberhasilan penerapan Program Kerja Tim PPI dan kepatuhan bundles di ruang perawatan.</li>
-            <li>Mengidentifikasi permasalahan lapangan yang memerlukan intervensi penanggulangan segera serta merumuskan rencana tindak lanjut berbasis data.</li>
-          </ol>
-        </div>
-      ),
-    });
-
-    b.push({
-      type: 'element',
-      key: 'm-manfaat-block',
-      gapAfter: 14,
-      node: (
-        <div className="w-full text-justify">
-          <p className="font-bold text-[12pt] mb-1">C. Manfaat Surveilans</p>
-          <ol className="list-decimal pl-8 space-y-1">
-            <li>Meningkatkan mutu pelayanan medis, keperawatan, dan keselamatan pasien di UOBK RSUD Al-Mulk Kota Sukabumi.</li>
-            <li>Mendeteksi dini dan mencegah terjadinya Kejadian Luar Biasa (KLB) infeksi nosokomial di seluruh lingkungan rumah sakit.</li>
-            <li>Memberikan perlindungan optimal bagi pasien, tenaga kesehatan, staf penunjang, dan pengunjung dari risiko penularan infeksi silang.</li>
-            <li>Menjadi dasar perencanaan, evaluasi berkala, dan pengambilan kebijakan manajemen rumah sakit.</li>
-          </ol>
-        </div>
-      ),
-    });
-
-    // =========================================================
-    // BAB II LAPORAN KEGIATAN PROGRAM PPI - A. SURVEILANS HAIs
-    // =========================================================
-    b.push({
-      type: 'element',
-      key: 'm-bab2-heading',
+      key: 'm-page4-sub1-heading',
       keepWithNext: true,
-      gapAfter: 10,
+      gapAfter: 4,
       node: (
-        <div className="text-center font-bold uppercase border-b border-black pb-1 text-[12pt]">
-          BAB II LAPORAN KEGIATAN PROGRAM PPI
-        </div>
+        <p className="font-bold text-[12pt]">
+          1.  Angka kejadian (Incident Rate) HAIs bulan {monthName} {reportYear}
+        </p>
       ),
     });
 
-    b.push({
-      type: 'element',
-      key: 'm-surv-intro',
-      gapAfter: 10,
-      node: (
-        <div className="w-full text-justify space-y-2">
-          <p className="font-bold text-[12pt]">A. Surveilans Healthcare Associated Infections (HAIs)</p>
-          <p className="indent-8">
-            Surveilans infeksi rumah sakit adalah proses pengumpulan, identifikasi, analisis, dan interpretasi data kesehatan secara sistematis dan terus-menerus pada populasi berisiko untuk didiseminasikan secara berkala kepada pihak terkait guna perencanaan serta evaluasi program pencegahan infeksi (Permenkes RI No. 27 Tahun 2017). Metode surveilans yang diterapkan adalah surveilans aktif hasil (Outcome Surveillance) terhadap kejadian Phlebitis (skor VIPS grade II–V), ISK, Decubitus, VAP, dan IDO.
-          </p>
-        </div>
-      ),
-    });
-
-    // Tabel 1 Rekapitulasi HAIs per Ruangan
-    const rPhleb = roomBreakdown.phlebitis.rooms;
-    const rIsk = roomBreakdown.isk.rooms;
-    const rDec = roomBreakdown.decubitus.rooms;
-    const rVap = roomBreakdown.vap.rooms;
+    // Tabel 1 & IDO Table matching Gambar No 3
+    const rT1Phleb = roomBreakdown.phlebitis.roomsTabel1;
+    const rT1Isk = roomBreakdown.isk.roomsTabel1;
+    const rT1Dec = roomBreakdown.decubitus.roomsTabel1;
+    const rT1Vap = roomBreakdown.vap.roomsTabel1;
 
     b.push({
       type: 'element',
-      key: 'm-tabel1-hais',
-      gapAfter: 14,
+      key: 'm-page4-tabel1-and-ido',
+      gapAfter: 0,
       node: (
-        <div className="w-full">
-          <p className="text-center font-bold text-[11pt] mb-1.5">
-            Tabel 1. Rekapitulasi Incidence Rate HAIs UOBK RSUD Al-Mulk Bulan {monthName} {reportYear}
+        <div className="w-full text-black">
+          <p className="font-bold text-[11pt] mb-1">
+            Tabel.1 Incident Rate HAIs UOBK RSUD Al-Mulk Bulan {monthName} {reportYear}.
           </p>
-          <table className="w-full border-collapse border border-black text-center text-[9.5pt] leading-[1.3]">
+          <table className="w-full border-collapse border border-black text-center text-[9pt] leading-[1.25]">
             <thead>
-              <tr className="bg-slate-100 font-bold">
-                <th className="border border-black p-1.5 w-[18%]" rowSpan={2}>JENIS INFEKSI</th>
-                <th className="border border-black p-1.5 w-[26%]" rowSpan={2}>INDIKATOR PEMANTAUAN</th>
-                <th className="border border-black p-1" colSpan={4}>RUANGAN PERAWATAN</th>
+              <tr className="bg-slate-200 font-bold">
+                <th className="border border-black p-1 w-[20%]" rowSpan={2}>JENIS INFEKSI</th>
+                <th className="border border-black p-1 w-[28%]" rowSpan={2}>ALAT INVASIF</th>
+                <th className="border border-black p-1" colSpan={4}>Ruangan</th>
               </tr>
-              <tr className="bg-slate-100 font-bold">
-                <th className="border border-black p-1 w-[14%]">Ranap Bedah</th>
-                <th className="border border-black p-1 w-[14%]">Ranap Anak</th>
-                <th className="border border-black p-1 w-[14%]">Ranap Kebidanan</th>
-                <th className="border border-black p-1 w-[14%]">Ranap Dewasa</th>
+              <tr className="bg-slate-200 font-bold">
+                <th className="border border-black p-1 w-[13%]">Ranap Bedah</th>
+                <th className="border border-black p-1 w-[13%]">Ranap Anak</th>
+                <th className="border border-black p-1 w-[13%]">Ranap Kebidanan</th>
+                <th className="border border-black p-1 w-[13%]">Ranap Dewasa</th>
               </tr>
             </thead>
             <tbody>
               {/* PHLEBITIS */}
               <tr>
-                <td className="border border-black p-1 font-bold text-left" rowSpan={3}>PHLEBITIS</td>
-                <td className="border border-black p-1 text-left">Hari pemasangan IVL</td>
-                {rPhleb.map((r) => (
+                <td className="border border-black p-1 font-bold text-center" rowSpan={3}>PHLEBITIS</td>
+                <td className="border border-black p-1 text-center">Total hari pemasangan</td>
+                {rT1Phleb.map((r) => (
                   <td key={r.room} className="border border-black p-1">{r.days}</td>
                 ))}
               </tr>
               <tr>
-                <td className="border border-black p-1 text-left">Jumlah kasus infeksi</td>
-                {rPhleb.map((r) => (
+                <td className="border border-black p-1 text-center">Infeksi</td>
+                {rT1Phleb.map((r) => (
                   <td key={r.room} className="border border-black p-1 font-semibold">{r.cases}</td>
                 ))}
               </tr>
-              <tr className="bg-slate-50 font-bold">
-                <td className="border border-black p-1 text-left">Rate Insiden (‰)</td>
-                {rPhleb.map((r) => (
-                  <td key={r.room} className="border border-black p-1">{fmtIdNum(r.rate)} ‰</td>
+              <tr>
+                <td className="border border-black p-1 text-center">Rate In</td>
+                {rT1Phleb.map((r) => (
+                  <td key={r.room} className="border border-black p-1">{fmtIdNum(r.rate)}‰</td>
                 ))}
               </tr>
 
               {/* ISK */}
               <tr>
-                <td className="border border-black p-1 font-bold text-left" rowSpan={3}>ISK</td>
-                <td className="border border-black p-1 text-left">Hari pemasangan kateter</td>
-                {rIsk.map((r) => (
+                <td className="border border-black p-1 font-bold text-center" rowSpan={3}>ISK</td>
+                <td className="border border-black p-1 text-center">Total hari pemasangan</td>
+                {rT1Isk.map((r) => (
                   <td key={r.room} className="border border-black p-1">{r.days}</td>
                 ))}
               </tr>
               <tr>
-                <td className="border border-black p-1 text-left">Jumlah kasus infeksi</td>
-                {rIsk.map((r) => (
+                <td className="border border-black p-1 text-center">Infeksi</td>
+                {rT1Isk.map((r) => (
                   <td key={r.room} className="border border-black p-1">{r.cases}</td>
                 ))}
               </tr>
-              <tr className="bg-slate-50 font-bold">
-                <td className="border border-black p-1 text-left">Rate Insiden (‰)</td>
-                {rIsk.map((r) => (
-                  <td key={r.room} className="border border-black p-1">{fmtIdNum(r.rate)} ‰</td>
+              <tr>
+                <td className="border border-black p-1 text-center">Rate In</td>
+                {rT1Isk.map((r) => (
+                  <td key={r.room} className="border border-black p-1">{fmtIdNum(r.rate)}‰</td>
                 ))}
               </tr>
 
               {/* DECUBITUS */}
               <tr>
-                <td className="border border-black p-1 font-bold text-left" rowSpan={3}>DECUBITUS</td>
-                <td className="border border-black p-1 text-left">Hari tirah baring</td>
-                {rDec.map((r) => (
+                <td className="border border-black p-1 font-bold text-center" rowSpan={3}>DECUBITUS</td>
+                <td className="border border-black p-1 text-center">Total hari tirah baring</td>
+                {rT1Dec.map((r) => (
                   <td key={r.room} className="border border-black p-1">{r.days}</td>
                 ))}
               </tr>
               <tr>
-                <td className="border border-black p-1 text-left">Jumlah kasus infeksi</td>
-                {rDec.map((r) => (
+                <td className="border border-black p-1 text-center">Infeksi</td>
+                {rT1Dec.map((r) => (
                   <td key={r.room} className="border border-black p-1">{r.cases}</td>
                 ))}
               </tr>
-              <tr className="bg-slate-50 font-bold">
-                <td className="border border-black p-1 text-left">Rate Insiden (‰)</td>
-                {rDec.map((r) => (
-                  <td key={r.room} className="border border-black p-1">{fmtIdNum(r.rate)} ‰</td>
+              <tr>
+                <td className="border border-black p-1 text-center">Rate In</td>
+                {rT1Dec.map((r) => (
+                  <td key={r.room} className="border border-black p-1">{fmtIdNum(r.rate)}‰</td>
                 ))}
               </tr>
 
               {/* VAP */}
               <tr>
-                <td className="border border-black p-1 font-bold text-left" rowSpan={3}>VAP</td>
-                <td className="border border-black p-1 text-left">Hari pemasangan ventilator</td>
-                {rVap.map((r) => (
+                <td className="border border-black p-1 font-bold text-center" rowSpan={3}>VAP</td>
+                <td className="border border-black p-1 text-center">Total hari pemasangan</td>
+                {rT1Vap.map((r) => (
                   <td key={r.room} className="border border-black p-1">{r.days}</td>
                 ))}
               </tr>
               <tr>
-                <td className="border border-black p-1 text-left">Jumlah kasus infeksi</td>
-                {rVap.map((r) => (
+                <td className="border border-black p-1 text-center">Infeksi</td>
+                {rT1Vap.map((r) => (
                   <td key={r.room} className="border border-black p-1">{r.cases}</td>
                 ))}
               </tr>
-              <tr className="bg-slate-50 font-bold">
-                <td className="border border-black p-1 text-left">Rate Insiden (‰)</td>
-                {rVap.map((r) => (
-                  <td key={r.room} className="border border-black p-1">{fmtIdNum(r.rate)} ‰</td>
+              <tr>
+                <td className="border border-black p-1 text-center">Rate In</td>
+                {rT1Vap.map((r) => (
+                  <td key={r.room} className="border border-black p-1">{fmtIdNum(r.rate)}‰</td>
                 ))}
               </tr>
             </tbody>
           </table>
 
-          <table className="w-full border-collapse border border-black text-center text-[9.5pt] leading-[1.3] mt-2">
+          {/* Subtabel IDO matching Gambar No 3 */}
+          <table className="w-full border-collapse border border-black text-center text-[9pt] leading-[1.25] mt-3">
             <thead>
-              <tr className="bg-slate-100 font-bold">
-                <th className="border border-black p-1">Jenis Infeksi</th>
-                <th className="border border-black p-1">Jumlah Pasien Operasi</th>
-                <th className="border border-black p-1">Kasus IDO</th>
-                <th className="border border-black p-1">Rate Insiden (%)</th>
-                <th className="border border-black p-1">Target Nasional</th>
+              <tr className="bg-slate-200 font-bold">
+                <th className="border border-black p-1 w-[20%]">Jenis Infeksi</th>
+                <th className="border border-black p-1 w-[28%]">Jumlah pasien yang di operasi</th>
+                <th className="border border-black p-1 w-[16%]">Infeksi</th>
+                <th className="border border-black p-1 w-[16%]">Rate In</th>
+                <th className="border border-black p-1 w-[20%]">Kasus Operasi</th>
               </tr>
             </thead>
             <tbody>
@@ -649,7 +646,910 @@ export default function MonthlyOfficialReport({
                 <td className="border border-black p-1 font-bold">IDO</td>
                 <td className="border border-black p-1">{roomBreakdown.ido.totalDays}</td>
                 <td className="border border-black p-1">{roomBreakdown.ido.totalCases}</td>
-                <td className="border border-black p-1 font-bold">{fmtIdNum(roomBreakdown.ido.rate)}%</td>
+                <td className="border border-black p-1">{fmtIdNum(roomBreakdown.ido.rate)}</td>
+                <td className="border border-black p-1">-</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      ),
+    });
+
+    // Break directly to Halaman 5 (Gambar No 4)
+    b.push({ type: 'pageBreak', key: 'm-pb-page4-to-5' });
+
+    // =========================================================================
+    // HALAMAN 5 (SESUAI GAMBAR NO 4): GRAFIK 1 HAIs & GRAFIK 2 PHLEBITIS
+    // =========================================================================
+    b.push({
+      type: 'element',
+      key: 'm-page5-grafik1-heading',
+      keepWithNext: true,
+      gapAfter: 4,
+      node: (
+        <p className="font-bold text-[11pt]">
+          Grafik.1 Incident Rate HAIs UOBK RSUD Al-Mulk Bulan {monthName} {reportYear}
+        </p>
+      ),
+    });
+
+    // Grafik 1 Bar Chart (Excel style matching Gambar No 4)
+    b.push({
+      type: 'element',
+      key: 'm-page5-grafik1-chart',
+      keepWithNext: true,
+      gapAfter: 6,
+      node: (
+        <WordExcelBarChart
+          title={`Insiden Rate HAIs ${monthName} ${reportYear}`}
+          categories={['Phlebitis', 'ISK', 'Decubitus', 'IDO', 'VAP']}
+          series={[
+            {
+              name: 'Rate In',
+              color: '#2563eb',
+              values: [
+                roomBreakdown.phlebitis.totalCases,
+                roomBreakdown.isk.totalCases,
+                roomBreakdown.decubitus.totalCases,
+                roomBreakdown.ido.totalCases,
+                roomBreakdown.vap.totalCases,
+              ],
+            },
+            {
+              name: '‰ & %',
+              color: '#f97316',
+              values: [
+                roomBreakdown.phlebitis.rate,
+                roomBreakdown.isk.rate,
+                roomBreakdown.decubitus.rate,
+                roomBreakdown.ido.rate,
+                roomBreakdown.vap.rate,
+              ],
+            },
+            {
+              name: 'Target',
+              color: '#64748b',
+              values: [1, 4.7, 1, 2, 5.8],
+            },
+          ]}
+          height={130}
+        />
+      ),
+    });
+
+    // Analisa Grafik 1 matching Gambar No 4 narrative structure
+    const phlebTrend =
+      roomBreakdown.phlebitis.rate > prevPhlebRate
+        ? `mengalami peningkatan dari bulan ${prevMonthName} ${prevYear} yaitu ${fmtIdNum(prevPhlebRate)}‰ menjadi ${fmtIdNum(roomBreakdown.phlebitis.rate)} ‰ pada bulan ${monthName} ${reportYear}`
+        : roomBreakdown.phlebitis.rate < prevPhlebRate
+        ? `mengalami penurunan dari bulan ${prevMonthName} ${prevYear} yaitu ${fmtIdNum(prevPhlebRate)}‰ menjadi ${fmtIdNum(roomBreakdown.phlebitis.rate)} ‰ pada bulan ${monthName} ${reportYear}`
+        : `berada stabil pada angka ${fmtIdNum(roomBreakdown.phlebitis.rate)}‰`;
+
+    const otherHaisZero =
+      roomBreakdown.isk.totalCases === 0 &&
+      roomBreakdown.decubitus.totalCases === 0 &&
+      roomBreakdown.ido.totalCases === 0 &&
+      roomBreakdown.vap.totalCases === 0;
+
+    const g1AnalisaText = `Berdasarkan grafik diatas menunjukkan bahwa insiden rate HAIs pada bulan ${monthName} ${reportYear}, kejadian infeksi phlebitis ${phlebTrend}. Dengan jumlah pasien yang phlebitis ${roomBreakdown.phlebitis.totalCases} orang. Sedangkan pada HAIs yang lain ${otherHaisZero ? 'tidak ada kejadian infeksi.' : 'terkendali sesuai standar.'}`;
+
+    b.push({
+      type: 'element',
+      key: 'm-page5-g1-analisa',
+      gapAfter: 6,
+      node: (
+        <div className="w-full text-[12pt] leading-[1.5] text-justify text-black">
+          <p className="font-bold underline mb-0.5">Analisa :</p>
+          <p className="indent-8 text-justify">{g1AnalisaText}</p>
+        </div>
+      ),
+    });
+
+    // Rekomendasi & RTL for Grafik 1
+    narratives.haisOverview.rekomendasi.forEach((item, idx) => {
+      const isFirst = idx === 0;
+      const isLast = idx === narratives.haisOverview.rekomendasi.length - 1;
+      b.push({
+        type: 'element',
+        key: `m-page5-g1-rekom-${idx}`,
+        keepWithNext: !isLast,
+        gapAfter: isLast ? 6 : 3,
+        node: (
+          <div className="text-[12pt] leading-[1.5] text-justify text-black">
+            {isFirst && <p className="font-bold underline mb-0.5">Rekomendasi :</p>}
+            <div className="flex items-start gap-2 pl-4">
+              <span className="w-5 shrink-0 font-bold">{idx + 1}.</span>
+              <span className="flex-1">{item}</span>
+            </div>
+          </div>
+        ),
+      });
+    });
+
+    narratives.haisOverview.tindakLanjut.forEach((item, idx) => {
+      const isFirst = idx === 0;
+      const isLast = idx === narratives.haisOverview.tindakLanjut.length - 1;
+      b.push({
+        type: 'element',
+        key: `m-page5-g1-rtl-${idx}`,
+        keepWithNext: !isLast,
+        gapAfter: isLast ? 8 : 3,
+        node: (
+          <div className="text-[12pt] leading-[1.5] text-justify text-black">
+            {isFirst && <p className="font-bold underline mb-0.5">Rencana Tindak Lanjut :</p>}
+            <div className="flex items-start gap-2 pl-4">
+              <span className="w-5 shrink-0 font-bold">{idx + 1}.</span>
+              <span className="flex-1">{item}</span>
+            </div>
+          </div>
+        ),
+      });
+    });
+
+    // Subheading 2: Phlebitis
+    b.push({
+      type: 'element',
+      key: 'm-page5-phleb-heading',
+      keepWithNext: true,
+      gapAfter: 4,
+      node: (
+        <div className="w-full text-black">
+          <p className="font-bold text-[12pt]">2.  Angka Kejadian (Incidence Rate) Phlebitis</p>
+          <p className="indent-8 text-justify text-[12pt] leading-[1.5]">
+            Angka Kejadian (Incidence Rate) Phlebitis per 1000 hari pemakaian <i>intra vascular line</i> (‰) pada bulan {monthName} {reportYear}.
+          </p>
+          <p className="font-bold text-[11pt] mt-1 mb-1">
+            Grafik.2  Incidence Rate Phlebitis Di RSUD Al-Mulk bulan {monthName} {reportYear}
+          </p>
+        </div>
+      ),
+    });
+
+    // Grafik 2 Line Chart matching Gambar No 4
+    b.push({
+      type: 'element',
+      key: 'm-page5-phleb-chart',
+      keepWithNext: true,
+      gapAfter: 6,
+      node: (
+        <WordExcelLineChart
+          title={`Insiden rate HAIs Phlebitis ${reportYear}`}
+          categories={['Ranap Dewasa', 'Ranap Anak', 'Ranap Kebidanan', 'Ranap Bedah']}
+          series={[
+            {
+              name: 'Phlebitis',
+              color: '#2563eb',
+              values: chartRoomsPhlebitis.map((r) => r.cases),
+            },
+            {
+              name: '‰',
+              color: '#f97316',
+              values: chartRoomsPhlebitis.map((r) => r.rate),
+            },
+            {
+              name: 'Target',
+              color: '#64748b',
+              values: [1, 1, 1, 1],
+            },
+          ]}
+          height={130}
+        />
+      ),
+    });
+
+    // Analisa Grafik 2 matching Gambar No 4
+    const g2AnalisaText = `Berdasarkan grafik diatas menunjukkan bahwa insiden rate phlebitis bulan ${monthName} ${reportYear} paling banyak di ruang rawat inap ${peakPhlebRoom.room.replace('Ranap ', '')} yaitu ${fmtIdNum(peakPhlebRoom.rate)}‰ dengan jumlah sebanyak ${peakPhlebRoom.cases} orang.`;
+
+    b.push({
+      type: 'element',
+      key: 'm-page5-g2-analisa',
+      gapAfter: 6,
+      node: (
+        <div className="w-full text-[12pt] leading-[1.5] text-justify text-black">
+          <p className="font-bold underline mb-0.5">Analisa :</p>
+          <p className="indent-8 text-justify">{g2AnalisaText}</p>
+        </div>
+      ),
+    });
+
+    // Rekomendasi & RTL for Grafik 2
+    narratives.phlebitis.rekomendasi.forEach((item, idx) => {
+      const isFirst = idx === 0;
+      const isLast = idx === narratives.phlebitis.rekomendasi.length - 1;
+      b.push({
+        type: 'element',
+        key: `m-page5-g2-rekom-${idx}`,
+        keepWithNext: !isLast,
+        gapAfter: isLast ? 6 : 3,
+        node: (
+          <div className="text-[12pt] leading-[1.5] text-justify text-black">
+            {isFirst && <p className="font-bold underline mb-0.5">Rekomendasi :</p>}
+            <div className="flex items-start gap-2 pl-4">
+              <span className="w-5 shrink-0 font-bold">{idx + 1}.</span>
+              <span className="flex-1">{item}</span>
+            </div>
+          </div>
+        ),
+      });
+    });
+
+    narratives.phlebitis.tindakLanjut.forEach((item, idx) => {
+      const isFirst = idx === 0;
+      const isLast = idx === narratives.phlebitis.tindakLanjut.length - 1;
+      b.push({
+        type: 'element',
+        key: `m-page5-g2-rtl-${idx}`,
+        keepWithNext: !isLast,
+        gapAfter: isLast ? 0 : 3,
+        node: (
+          <div className="text-[12pt] leading-[1.5] text-justify text-black">
+            {isFirst && <p className="font-bold underline mb-0.5">Rencana Tindak Lanjut :</p>}
+            <div className="flex items-start gap-2 pl-4">
+              <span className="w-5 shrink-0 font-bold">{idx + 1}.</span>
+              <span className="flex-1">{item}</span>
+            </div>
+          </div>
+        ),
+      });
+    });
+
+    // Break directly to Halaman 6 (Gambar No 5)
+    b.push({ type: 'pageBreak', key: 'm-pb-page5-to-6' });
+
+    // =========================================================================
+    // HALAMAN 6 (SESUAI GAMBAR NO 5): TABEL 2 PHLEBITIS & GRAFIK 3 + TABEL 3 ISK
+    // =========================================================================
+    b.push({
+      type: 'element',
+      key: 'm-page6-tabel2-phleb',
+      keepWithNext: true,
+      gapAfter: 8,
+      node: (
+        <div className="w-full text-black">
+          <p className="font-bold text-[11pt] mb-1">
+            Tabel 2.  Incidence Rate Phlebitis Di UOBK RSUD Al-Mulk bulan {monthName} {reportYear}.
+          </p>
+          <table className="w-full border-collapse border border-black text-center text-[9pt] leading-[1.25]">
+            <thead>
+              <tr className="bg-slate-200 font-bold">
+                <th className="border border-black p-1 w-[28%]">INDIKATOR</th>
+                {chartRoomsPhlebitis.map((r) => (
+                  <th key={r.room} className="border border-black p-1 w-[18%]">{r.room}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="border border-black p-1 text-center">Hari terpasang alat</td>
+                {chartRoomsPhlebitis.map((r) => (
+                  <td key={r.room} className="border border-black p-1">{r.days}</td>
+                ))}
+              </tr>
+              <tr>
+                <td className="border border-black p-1 text-center">Kasus Phlebitis</td>
+                {chartRoomsPhlebitis.map((r) => (
+                  <td key={r.room} className="border border-black p-1 font-semibold">{r.cases}</td>
+                ))}
+              </tr>
+              <tr>
+                <td className="border border-black p-1 text-center">Rate Insiden (‰)</td>
+                {chartRoomsPhlebitis.map((r) => (
+                  <td key={r.room} className="border border-black p-1">{fmtIdNum(r.rate)} ‰</td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      ),
+    });
+
+    // Subheading 3: ISK
+    b.push({
+      type: 'element',
+      key: 'm-page6-isk-heading',
+      keepWithNext: true,
+      gapAfter: 4,
+      node: (
+        <div className="w-full text-black mt-2">
+          <p className="font-bold text-[12pt]">3.  Angka Kejadian (Incidence Rate) Infeksi Saluran Kemih (ISK)</p>
+          <p className="indent-8 text-justify text-[12pt] leading-[1.5]">
+            Angka Kejadian (Incidence Rate) Infeksi Saluran Kemih (ISK) per 1000 hari pemakaian kateter urine menetap (‰) pada bulan {monthName} {reportYear}.
+          </p>
+          <p className="font-bold text-[11pt] mt-1 mb-1">
+            Grafik 3.  Incidence Rate Infeksi Saluran Kemih Di UOBK RSUD Al-Mulk bulan {monthName} {reportYear}.
+          </p>
+        </div>
+      ),
+    });
+
+    // Grafik 3 Line Chart matching Gambar No 5
+    b.push({
+      type: 'element',
+      key: 'm-page6-isk-chart',
+      keepWithNext: true,
+      gapAfter: 6,
+      node: (
+        <WordExcelLineChart
+          title={`Insiden rate HAIs ISK ${reportYear}`}
+          categories={['Ranap Dewasa', 'Ranap Anak', 'Ranap Kebidanan', 'Ranap Bedah']}
+          series={[
+            {
+              name: 'ISK',
+              color: '#2563eb',
+              values: chartRoomsIsk.map((r) => r.cases),
+            },
+            {
+              name: '‰',
+              color: '#f97316',
+              values: chartRoomsIsk.map((r) => r.rate),
+            },
+            {
+              name: 'Target',
+              color: '#64748b',
+              values: [4.7, 4.7, 4.7, 4.7],
+            },
+          ]}
+          height={125}
+        />
+      ),
+    });
+
+    // Analisa Grafik 3 matching Gambar No 5
+    const iskIsZero = roomBreakdown.isk.totalCases === 0;
+    const g3AnalisaText = iskIsZero
+      ? `Berdasarkan grafik diatas menunjukkan bahwa insiden rate ISK bulan ${monthName} ${reportYear} tidak ada kejadian infeksi saluran kemih (0‰) di seluruh ruang rawat inap UOBK RSUD Al-Mulk, sehingga telah memenuhi standar mutu nasional (≤ 4,7‰).`
+      : `Berdasarkan grafik diatas menunjukkan bahwa insiden rate ISK bulan ${monthName} ${reportYear} tercatat sebesar ${fmtIdNum(roomBreakdown.isk.rate)}‰ (${roomBreakdown.isk.totalCases} kasus dari ${roomBreakdown.isk.totalDays} hari pemakaian kateter urine).`;
+
+    b.push({
+      type: 'element',
+      key: 'm-page6-g3-analisa',
+      gapAfter: 6,
+      node: (
+        <div className="w-full text-[12pt] leading-[1.5] text-justify text-black">
+          <p className="font-bold underline mb-0.5">Analisa :</p>
+          <p className="indent-8 text-justify">{g3AnalisaText}</p>
+        </div>
+      ),
+    });
+
+    // Rekomendasi & RTL for Grafik 3
+    narratives.isk.rekomendasi.forEach((item, idx) => {
+      const isFirst = idx === 0;
+      const isLast = idx === narratives.isk.rekomendasi.length - 1;
+      b.push({
+        type: 'element',
+        key: `m-page6-g3-rekom-${idx}`,
+        keepWithNext: !isLast,
+        gapAfter: isLast ? 6 : 3,
+        node: (
+          <div className="text-[12pt] leading-[1.5] text-justify text-black">
+            {isFirst && <p className="font-bold underline mb-0.5">Rekomendasi :</p>}
+            <div className="flex items-start gap-2 pl-4">
+              <span className="w-5 shrink-0 font-bold">{idx + 1}.</span>
+              <span className="flex-1">{item}</span>
+            </div>
+          </div>
+        ),
+      });
+    });
+
+    narratives.isk.tindakLanjut.forEach((item, idx) => {
+      const isFirst = idx === 0;
+      const isLast = idx === narratives.isk.tindakLanjut.length - 1;
+      b.push({
+        type: 'element',
+        key: `m-page6-g3-rtl-${idx}`,
+        keepWithNext: !isLast,
+        gapAfter: isLast ? 8 : 3,
+        node: (
+          <div className="text-[12pt] leading-[1.5] text-justify text-black">
+            {isFirst && <p className="font-bold underline mb-0.5">Rencana Tindak Lanjut :</p>}
+            <div className="flex items-start gap-2 pl-4">
+              <span className="w-5 shrink-0 font-bold">{idx + 1}.</span>
+              <span className="flex-1">{item}</span>
+            </div>
+          </div>
+        ),
+      });
+    });
+
+    // Tabel 3 matching Gambar No 5
+    b.push({
+      type: 'element',
+      key: 'm-page6-tabel3-isk',
+      gapAfter: 0,
+      node: (
+        <div className="w-full text-black">
+          <p className="font-bold text-[11pt] mb-1">
+            Tabel 3.  Infeksi Saluran Kemih (ISK) per 1000 Hari Pemakaian Alat (‰) di UOBK RSUD Al-Mulk bulan {monthName} {reportYear}.
+          </p>
+          <table className="w-full border-collapse border border-black text-center text-[9pt] leading-[1.25]">
+            <thead>
+              <tr className="bg-slate-200 font-bold">
+                <th className="border border-black p-1 w-[28%]">INDIKATOR</th>
+                {chartRoomsIsk.map((r) => (
+                  <th key={r.room} className="border border-black p-1 w-[18%]">{r.room}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="border border-black p-1 text-center">Hari terpasang kateter</td>
+                {chartRoomsIsk.map((r) => (
+                  <td key={r.room} className="border border-black p-1">{r.days}</td>
+                ))}
+              </tr>
+              <tr>
+                <td className="border border-black p-1 text-center">Kasus ISK</td>
+                {chartRoomsIsk.map((r) => (
+                  <td key={r.room} className="border border-black p-1 font-semibold">{r.cases}</td>
+                ))}
+              </tr>
+              <tr>
+                <td className="border border-black p-1 text-center">Rate Insiden (‰)</td>
+                {chartRoomsIsk.map((r) => (
+                  <td key={r.room} className="border border-black p-1">{fmtIdNum(r.rate)} ‰</td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      ),
+    });
+
+    // Break directly to Halaman 7 (Decubitus)
+    b.push({ type: 'pageBreak', key: 'm-pb-page6-to-7' });
+
+    // =========================================================================
+    // HALAMAN 7: DECUBITUS (GRAFIK 4 & TABEL 4 + ANALISA, REKOMENDASI, RTL)
+    // =========================================================================
+    b.push({
+      type: 'element',
+      key: 'm-decub-heading',
+      keepWithNext: true,
+      gapAfter: 4,
+      node: (
+        <div className="w-full text-black">
+          <p className="font-bold text-[12pt]">4.  Angka Kejadian (Incidence Rate) Luka Tekan (Decubitus)</p>
+          <p className="indent-8 text-justify text-[12pt] leading-[1.5]">
+            Angka Kejadian (Incidence Rate) luka tekan (Decubitus) per 1000 hari tirah baring (‰) pada bulan {monthName} {reportYear}.
+          </p>
+          <p className="font-bold text-[11pt] mt-1 mb-1">
+            Grafik 4.  Incidence Rate Decubitus Di UOBK RSUD Al-Mulk bulan {monthName} {reportYear}.
+          </p>
+        </div>
+      ),
+    });
+
+    b.push({
+      type: 'element',
+      key: 'm-decub-chart',
+      keepWithNext: true,
+      gapAfter: 6,
+      node: (
+        <WordExcelLineChart
+          title={`Insiden rate HAIs Decubitus ${reportYear}`}
+          categories={['Ranap Dewasa', 'Ranap Anak', 'Ranap Kebidanan', 'Ranap Bedah']}
+          series={[
+            {
+              name: 'Decubitus',
+              color: '#2563eb',
+              values: chartRoomsDecubitus.map((r) => r.cases),
+            },
+            {
+              name: '‰',
+              color: '#f97316',
+              values: chartRoomsDecubitus.map((r) => r.rate),
+            },
+            {
+              name: 'Target',
+              color: '#64748b',
+              values: [1, 1, 1, 1],
+            },
+          ]}
+          height={125}
+        />
+      ),
+    });
+
+    const decubIsZero = roomBreakdown.decubitus.totalCases === 0;
+    const g4AnalisaText = decubIsZero
+      ? `Berdasarkan grafik diatas menunjukkan bahwa insiden rate Decubitus bulan ${monthName} ${reportYear} tidak ada kejadian decubitus (0‰) di seluruh ruang rawat inap UOBK RSUD Al-Mulk, sehingga telah memenuhi standar mutu nasional (≤ 1‰).`
+      : `Berdasarkan grafik diatas menunjukkan bahwa insiden rate Decubitus bulan ${monthName} ${reportYear} tercatat sebesar ${fmtIdNum(roomBreakdown.decubitus.rate)}‰ (${roomBreakdown.decubitus.totalCases} kasus dari ${roomBreakdown.decubitus.totalDays} hari tirah baring).`;
+
+    b.push({
+      type: 'element',
+      key: 'm-decub-analisa',
+      gapAfter: 6,
+      node: (
+        <div className="w-full text-[12pt] leading-[1.5] text-justify text-black">
+          <p className="font-bold underline mb-0.5">Analisa :</p>
+          <p className="indent-8 text-justify">{g4AnalisaText}</p>
+        </div>
+      ),
+    });
+
+    narratives.decubitus.rekomendasi.forEach((item, idx) => {
+      const isFirst = idx === 0;
+      const isLast = idx === narratives.decubitus.rekomendasi.length - 1;
+      b.push({
+        type: 'element',
+        key: `m-decub-rekom-${idx}`,
+        keepWithNext: !isLast,
+        gapAfter: isLast ? 6 : 3,
+        node: (
+          <div className="text-[12pt] leading-[1.5] text-justify text-black">
+            {isFirst && <p className="font-bold underline mb-0.5">Rekomendasi :</p>}
+            <div className="flex items-start gap-2 pl-4">
+              <span className="w-5 shrink-0 font-bold">{idx + 1}.</span>
+              <span className="flex-1">{item}</span>
+            </div>
+          </div>
+        ),
+      });
+    });
+
+    narratives.decubitus.tindakLanjut.forEach((item, idx) => {
+      const isFirst = idx === 0;
+      const isLast = idx === narratives.decubitus.tindakLanjut.length - 1;
+      b.push({
+        type: 'element',
+        key: `m-decub-rtl-${idx}`,
+        keepWithNext: !isLast,
+        gapAfter: isLast ? 8 : 3,
+        node: (
+          <div className="text-[12pt] leading-[1.5] text-justify text-black">
+            {isFirst && <p className="font-bold underline mb-0.5">Rencana Tindak Lanjut :</p>}
+            <div className="flex items-start gap-2 pl-4">
+              <span className="w-5 shrink-0 font-bold">{idx + 1}.</span>
+              <span className="flex-1">{item}</span>
+            </div>
+          </div>
+        ),
+      });
+    });
+
+    b.push({
+      type: 'element',
+      key: 'm-decub-tabel4',
+      gapAfter: 0,
+      node: (
+        <div className="w-full text-black">
+          <p className="font-bold text-[11pt] mb-1">
+            Tabel 4.  Infeksi Decubitus per 1000 Hari Tirah Baring (‰) di UOBK RSUD Al-Mulk bulan {monthName} {reportYear}.
+          </p>
+          <table className="w-full border-collapse border border-black text-center text-[9pt] leading-[1.25]">
+            <thead>
+              <tr className="bg-slate-200 font-bold">
+                <th className="border border-black p-1 w-[28%]">INDIKATOR</th>
+                {chartRoomsDecubitus.map((r) => (
+                  <th key={r.room} className="border border-black p-1 w-[18%]">{r.room}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="border border-black p-1 text-center">Hari tirah baring</td>
+                {chartRoomsDecubitus.map((r) => (
+                  <td key={r.room} className="border border-black p-1">{r.days}</td>
+                ))}
+              </tr>
+              <tr>
+                <td className="border border-black p-1 text-center">Infeksi Decubitus</td>
+                {chartRoomsDecubitus.map((r) => (
+                  <td key={r.room} className="border border-black p-1 font-semibold">{r.cases}</td>
+                ))}
+              </tr>
+              <tr>
+                <td className="border border-black p-1 text-center">Rate Insiden (‰)</td>
+                {chartRoomsDecubitus.map((r) => (
+                  <td key={r.room} className="border border-black p-1">{fmtIdNum(r.rate)} ‰</td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      ),
+    });
+
+    // Break directly to Halaman 8 (VAP)
+    b.push({ type: 'pageBreak', key: 'm-pb-page7-to-8' });
+
+    // =========================================================================
+    // HALAMAN 8: VAP (GRAFIK 5 & TABEL 5 + ANALISA, REKOMENDASI, RTL)
+    // =========================================================================
+    b.push({
+      type: 'element',
+      key: 'm-vap-heading',
+      keepWithNext: true,
+      gapAfter: 4,
+      node: (
+        <div className="w-full text-black">
+          <p className="font-bold text-[12pt]">5.  Angka Kejadian (Incidence Rate) Ventilator Associated Pneumonia (VAP)</p>
+          <p className="indent-8 text-justify text-[12pt] leading-[1.5]">
+            Angka Kejadian (Incidence Rate) VAP per 1000 hari pemakaian ventilator mekanik (‰) pada bulan {monthName} {reportYear}.
+          </p>
+          <p className="font-bold text-[11pt] mt-1 mb-1">
+            Grafik 5.  Incidence Rate VAP Di UOBK RSUD Al-Mulk bulan {monthName} {reportYear}.
+          </p>
+        </div>
+      ),
+    });
+
+    b.push({
+      type: 'element',
+      key: 'm-vap-chart',
+      keepWithNext: true,
+      gapAfter: 6,
+      node: (
+        <WordExcelLineChart
+          title={`Insiden rate HAIs VAP ${reportYear}`}
+          categories={['Ranap Dewasa', 'Ranap Anak', 'Ranap Kebidanan', 'Ranap Bedah']}
+          series={[
+            {
+              name: 'VAP',
+              color: '#2563eb',
+              values: chartRoomsVap.map((r) => r.cases),
+            },
+            {
+              name: '‰',
+              color: '#f97316',
+              values: chartRoomsVap.map((r) => r.rate),
+            },
+            {
+              name: 'Target',
+              color: '#64748b',
+              values: [5.8, 5.8, 5.8, 5.8],
+            },
+          ]}
+          height={125}
+        />
+      ),
+    });
+
+    const vapIsZero = roomBreakdown.vap.totalCases === 0;
+    const g5AnalisaText = vapIsZero
+      ? `Berdasarkan grafik diatas menunjukkan bahwa insiden rate VAP bulan ${monthName} ${reportYear} tidak ada kejadian infeksi ventilator (0‰), sehingga telah memenuhi standar nasional (≤ 5,8‰).`
+      : `Berdasarkan grafik diatas menunjukkan bahwa insiden rate VAP bulan ${monthName} ${reportYear} tercatat sebesar ${fmtIdNum(roomBreakdown.vap.rate)}‰ (${roomBreakdown.vap.totalCases} kasus dari ${roomBreakdown.vap.totalDays} hari pemakaian ventilator).`;
+
+    b.push({
+      type: 'element',
+      key: 'm-vap-analisa',
+      gapAfter: 6,
+      node: (
+        <div className="w-full text-[12pt] leading-[1.5] text-justify text-black">
+          <p className="font-bold underline mb-0.5">Analisa :</p>
+          <p className="indent-8 text-justify">{g5AnalisaText}</p>
+        </div>
+      ),
+    });
+
+    narratives.vap.rekomendasi.forEach((item, idx) => {
+      const isFirst = idx === 0;
+      const isLast = idx === narratives.vap.rekomendasi.length - 1;
+      b.push({
+        type: 'element',
+        key: `m-vap-rekom-${idx}`,
+        keepWithNext: !isLast,
+        gapAfter: isLast ? 6 : 3,
+        node: (
+          <div className="text-[12pt] leading-[1.5] text-justify text-black">
+            {isFirst && <p className="font-bold underline mb-0.5">Rekomendasi :</p>}
+            <div className="flex items-start gap-2 pl-4">
+              <span className="w-5 shrink-0 font-bold">{idx + 1}.</span>
+              <span className="flex-1">{item}</span>
+            </div>
+          </div>
+        ),
+      });
+    });
+
+    narratives.vap.tindakLanjut.forEach((item, idx) => {
+      const isFirst = idx === 0;
+      const isLast = idx === narratives.vap.tindakLanjut.length - 1;
+      b.push({
+        type: 'element',
+        key: `m-vap-rtl-${idx}`,
+        keepWithNext: !isLast,
+        gapAfter: isLast ? 8 : 3,
+        node: (
+          <div className="text-[12pt] leading-[1.5] text-justify text-black">
+            {isFirst && <p className="font-bold underline mb-0.5">Rencana Tindak Lanjut :</p>}
+            <div className="flex items-start gap-2 pl-4">
+              <span className="w-5 shrink-0 font-bold">{idx + 1}.</span>
+              <span className="flex-1">{item}</span>
+            </div>
+          </div>
+        ),
+      });
+    });
+
+    b.push({
+      type: 'element',
+      key: 'm-vap-tabel5',
+      gapAfter: 0,
+      node: (
+        <div className="w-full text-black">
+          <p className="font-bold text-[11pt] mb-1">
+            Tabel 5.  Ventilator Associated Pneumonia (VAP) per 1000 Hari Pemakaian Alat (‰) di UOBK RSUD Al-Mulk bulan {monthName} {reportYear}.
+          </p>
+          <table className="w-full border-collapse border border-black text-center text-[9pt] leading-[1.25]">
+            <thead>
+              <tr className="bg-slate-200 font-bold">
+                <th className="border border-black p-1 w-[28%]">INDIKATOR</th>
+                {chartRoomsVap.map((r) => (
+                  <th key={r.room} className="border border-black p-1 w-[18%]">{r.room}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="border border-black p-1 text-center">Hari terpasang ventilator</td>
+                {chartRoomsVap.map((r) => (
+                  <td key={r.room} className="border border-black p-1">{r.days}</td>
+                ))}
+              </tr>
+              <tr>
+                <td className="border border-black p-1 text-center">Infeksi VAP</td>
+                {chartRoomsVap.map((r) => (
+                  <td key={r.room} className="border border-black p-1 font-semibold">{r.cases}</td>
+                ))}
+              </tr>
+              <tr>
+                <td className="border border-black p-1 text-center">Rate Insiden (‰)</td>
+                {chartRoomsVap.map((r) => (
+                  <td key={r.room} className="border border-black p-1">{fmtIdNum(r.rate)} ‰</td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      ),
+    });
+
+    // Break directly to Halaman 9 (IDO)
+    b.push({ type: 'pageBreak', key: 'm-pb-page8-to-9' });
+
+    // =========================================================================
+    // HALAMAN 9: IDO (GRAFIK 6 & TABEL 6 + ANALISA, REKOMENDASI, RTL)
+    // =========================================================================
+    b.push({
+      type: 'element',
+      key: 'm-ido-heading',
+      keepWithNext: true,
+      gapAfter: 4,
+      node: (
+        <div className="w-full text-black">
+          <p className="font-bold text-[12pt]">6.  Angka Kejadian (Incidence Rate) Infeksi Daerah Operasi (IDO)</p>
+          <p className="indent-8 text-justify text-[12pt] leading-[1.5]">
+            Angka Kejadian (Incidence Rate) IDO per 100 tindakan pembedahan (%) pada bulan {monthName} {reportYear}.
+          </p>
+          <p className="font-bold text-[11pt] mt-1 mb-1">
+            Grafik 6.  Incidence Rate Infeksi Daerah Operasi (IDO) Di UOBK RSUD Al-Mulk bulan {monthName} {reportYear}.
+          </p>
+        </div>
+      ),
+    });
+
+    b.push({
+      type: 'element',
+      key: 'm-ido-chart',
+      keepWithNext: true,
+      gapAfter: 6,
+      node: (
+        <WordExcelLineChart
+          title={`Insiden rate HAIs IDO ${reportYear}`}
+          categories={['Kamar Operasi']}
+          series={[
+            {
+              name: 'IDO',
+              color: '#2563eb',
+              values: [roomBreakdown.ido.totalCases],
+            },
+            {
+              name: '%',
+              color: '#f97316',
+              values: [roomBreakdown.ido.rate],
+            },
+            {
+              name: 'Target',
+              color: '#64748b',
+              values: [2.0],
+            },
+          ]}
+          height={125}
+        />
+      ),
+    });
+
+    const idoIsZero = roomBreakdown.ido.totalCases === 0;
+    const g6AnalisaText = idoIsZero
+      ? `Berdasarkan grafik diatas menunjukkan bahwa insiden rate IDO bulan ${monthName} ${reportYear} tidak ada kejadian IDO (0%) dari total ${roomBreakdown.ido.totalDays} pasien yang dioperasi di UOBK RSUD Al-Mulk, sehingga telah memenuhi standar nasional (≤ 2%).`
+      : `Berdasarkan grafik diatas menunjukkan bahwa insiden rate IDO bulan ${monthName} ${reportYear} tercatat sebesar ${fmtIdNum(roomBreakdown.ido.rate)}% (${roomBreakdown.ido.totalCases} kasus dari ${roomBreakdown.ido.totalDays} tindakan operasi).`;
+
+    b.push({
+      type: 'element',
+      key: 'm-ido-analisa',
+      gapAfter: 6,
+      node: (
+        <div className="w-full text-[12pt] leading-[1.5] text-justify text-black">
+          <p className="font-bold underline mb-0.5">Analisa :</p>
+          <p className="indent-8 text-justify">{g6AnalisaText}</p>
+        </div>
+      ),
+    });
+
+    narratives.ido.rekomendasi.forEach((item, idx) => {
+      const isFirst = idx === 0;
+      const isLast = idx === narratives.ido.rekomendasi.length - 1;
+      b.push({
+        type: 'element',
+        key: `m-ido-rekom-${idx}`,
+        keepWithNext: !isLast,
+        gapAfter: isLast ? 6 : 3,
+        node: (
+          <div className="text-[12pt] leading-[1.5] text-justify text-black">
+            {isFirst && <p className="font-bold underline mb-0.5">Rekomendasi :</p>}
+            <div className="flex items-start gap-2 pl-4">
+              <span className="w-5 shrink-0 font-bold">{idx + 1}.</span>
+              <span className="flex-1">{item}</span>
+            </div>
+          </div>
+        ),
+      });
+    });
+
+    narratives.ido.tindakLanjut.forEach((item, idx) => {
+      const isFirst = idx === 0;
+      const isLast = idx === narratives.ido.tindakLanjut.length - 1;
+      b.push({
+        type: 'element',
+        key: `m-ido-rtl-${idx}`,
+        keepWithNext: !isLast,
+        gapAfter: isLast ? 8 : 3,
+        node: (
+          <div className="text-[12pt] leading-[1.5] text-justify text-black">
+            {isFirst && <p className="font-bold underline mb-0.5">Rencana Tindak Lanjut :</p>}
+            <div className="flex items-start gap-2 pl-4">
+              <span className="w-5 shrink-0 font-bold">{idx + 1}.</span>
+              <span className="flex-1">{item}</span>
+            </div>
+          </div>
+        ),
+      });
+    });
+
+    b.push({
+      type: 'element',
+      key: 'm-ido-tabel6',
+      gapAfter: 0,
+      node: (
+        <div className="w-full text-black">
+          <p className="font-bold text-[11pt] mb-1">
+            Tabel 6.  Infeksi Daerah Operasi (IDO) di UOBK RSUD Al-Mulk bulan {monthName} {reportYear}.
+          </p>
+          <table className="w-full border-collapse border border-black text-center text-[9pt] leading-[1.25]">
+            <thead>
+              <tr className="bg-slate-200 font-bold">
+                <th className="border border-black p-1 w-[28%]">INDIKATOR</th>
+                <th className="border border-black p-1 w-[72%]">Kamar Operasi Bedah</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="border border-black p-1 text-center">Jumlah Pasien Yang Dioperasi</td>
+                <td className="border border-black p-1">{roomBreakdown.ido.totalDays}</td>
+              </tr>
+              <tr>
+                <td className="border border-black p-1 text-center">Kasus Infeksi IDO</td>
+                <td className="border border-black p-1 font-semibold">{roomBreakdown.ido.totalCases}</td>
+              </tr>
+              <tr>
+                <td className="border border-black p-1 text-center">Rate Insiden (%)</td>
+                <td className="border border-black p-1">{fmtIdNum(roomBreakdown.ido.rate)} %</td>
+              </tr>
+              <tr>
+                <td className="border border-black p-1 text-center">Target Nasional</td>
                 <td className="border border-black p-1">≤ 2%</td>
               </tr>
             </tbody>
@@ -658,569 +1558,99 @@ export default function MonthlyOfficialReport({
       ),
     });
 
-    // 1. Grafik 1 HAIs Overview + Analisa, Rekomendasi, RTL
-    b.push({
-      type: 'element',
-      key: 'm-grafik1-hais',
-      keepWithNext: true,
-      gapAfter: 8,
-      node: (
-        <div className="w-full">
-          <OfficialModernBarChart
-            title={`Grafik 1. Incidence Rate HAIs UOBK RSUD Al-Mulk Bulan ${monthName} ${reportYear}`}
-            data={[
-              {
-                label: 'PHLEBITIS',
-                value: roomBreakdown.phlebitis.rate,
-                formattedValue: `${fmtIdNum(roomBreakdown.phlebitis.rate)}‰`,
-                color: '#f59e0b',
-              },
-              {
-                label: 'ISK',
-                value: roomBreakdown.isk.rate,
-                formattedValue: `${fmtIdNum(roomBreakdown.isk.rate)}‰`,
-                color: '#0f2942',
-              },
-              {
-                label: 'DECUBITUS',
-                value: roomBreakdown.decubitus.rate,
-                formattedValue: `${fmtIdNum(roomBreakdown.decubitus.rate)}‰`,
-                color: '#20b2aa',
-              },
-              {
-                label: 'IDO',
-                value: roomBreakdown.ido.rate,
-                formattedValue: `${fmtIdNum(roomBreakdown.ido.rate)}%`,
-                color: '#10b981',
-              },
-              {
-                label: 'VAP',
-                value: roomBreakdown.vap.rate,
-                formattedValue: `${fmtIdNum(roomBreakdown.vap.rate)}‰`,
-                color: '#3b82f6',
-              },
-            ]}
-            height={135}
-          />
-          <p className="text-[9pt] text-slate-700 text-center font-semibold">
-            Standar Nasional Kemenkes: Phlebitis ≤ 1‰ | ISK ≤ 4,7‰ | Decubitus ≤ 1,5‰ | IDO ≤ 2% | VAP ≤ 5,8‰
-          </p>
-        </div>
-      ),
-    });
-    b.push(...narrativeToFlowBlocks('m-n1-hais', narratives.haisOverview));
+    // Break directly to Halaman 10 (Hand Hygiene)
+    b.push({ type: 'pageBreak', key: 'm-pb-page9-to-10' });
 
-    // 2. Phlebitis per Ruangan: Heading + Grafik 2 + Analisa/Rekomendasi/RTL + Tabel 2
+    // =========================================================================
+    // HALAMAN 10: AUDIT KEBERSIHAN TANGAN (HAND HYGIENE)
+    // =========================================================================
     b.push({
       type: 'element',
-      key: 'm-phleb-heading',
+      key: 'm-audit-heading',
       keepWithNext: true,
       gapAfter: 6,
       node: (
-        <div className="w-full">
-          <p className="font-bold text-[12pt]">1. Angka Kejadian (Incidence Rate) Phlebitis</p>
-          <p className="indent-8 text-justify">
-            Pemantauan angka kejadian Phlebitis per 1.000 hari pemakaian kateter intravena perifer (‰) berdasarkan ruang perawatan pada {periodLabel}:
+        <div className="text-black">
+          <p className="font-bold text-[12pt] uppercase mb-1">B. AUDIT KEPATUHAN KEWASPADAAN STANDAR</p>
+          <p className="font-bold text-[12pt]">1.  Kepatuhan Kebersihan Tangan (Hand Hygiene)</p>
+          <p className="indent-8 text-justify text-[12pt] leading-[1.5]">
+            Hasil audit kepatuhan kebersihan tangan (Hand Hygiene) berdasarkan kelompok profesi di UOBK RSUD Al-Mulk pada bulan {monthName} {reportYear}:
+          </p>
+          <p className="font-bold text-[11pt] mt-1 mb-1">
+            Grafik 7.  Kepatuhan Hand Hygiene Berdasarkan Profesi Bulan {monthName} {reportYear}
           </p>
         </div>
       ),
     });
 
-    const phlebByDisplayOrder = [
-      rPhleb[3], // Ranap Dewasa
-      rPhleb[1], // Ranap Anak
-      rPhleb[2], // Ranap Kebidanan
-      rPhleb[0], // Ranap Bedah
-    ];
-
     b.push({
       type: 'element',
-      key: 'm-grafik2-phleb',
-      keepWithNext: true,
-      gapAfter: 8,
-      node: (
-        <OfficialModernBarChart
-          title={`Grafik 2. Incidence Rate Phlebitis di UOBK RSUD Al-Mulk Bulan ${monthName} ${reportYear}`}
-          data={phlebByDisplayOrder.map((r, i) => ({
-            label: r.room.toUpperCase(),
-            value: r.rate,
-            formattedValue: `${fmtIdNum(r.rate)}‰`,
-            color: ['#f59e0b', '#0f2942', '#20b2aa', '#3b82f6'][i],
-          }))}
-          height={130}
-        />
-      ),
-    });
-    b.push(...narrativeToFlowBlocks('m-n2-phleb', narratives.phlebitis));
-
-    b.push({
-      type: 'element',
-      key: 'm-tabel2-phleb',
-      gapAfter: 14,
-      node: (
-        <div className="w-full">
-          <p className="text-center font-bold text-[11pt] mb-1">
-            Tabel 2. Incidence Rate Phlebitis di UOBK RSUD Al-Mulk Bulan {monthName} {reportYear}
-          </p>
-          <table className="w-full border-collapse border border-black text-center text-[9.5pt] leading-[1.3]">
-            <thead>
-              <tr className="bg-slate-100 font-bold">
-                <th className="border border-black p-1.5 w-[24%]" rowSpan={2}>INDIKATOR</th>
-                <th className="border border-black p-1" colSpan={4}>RUANGAN</th>
-              </tr>
-              <tr className="bg-slate-100 font-bold">
-                {rPhleb.map((r) => (
-                  <th key={r.room} className="border border-black p-1 w-[19%]">{r.room}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="border border-black p-1 text-left font-semibold">Hari terpasang alat</td>
-                {rPhleb.map((r) => (
-                  <td key={r.room} className="border border-black p-1">{r.days}</td>
-                ))}
-              </tr>
-              <tr>
-                <td className="border border-black p-1 text-left font-semibold">Kasus Phlebitis</td>
-                {rPhleb.map((r) => (
-                  <td key={r.room} className="border border-black p-1 font-semibold">{r.cases}</td>
-                ))}
-              </tr>
-              <tr className="bg-slate-50 font-bold">
-                <td className="border border-black p-1 text-left">Rate Insiden (‰)</td>
-                {rPhleb.map((r) => (
-                  <td key={r.room} className="border border-black p-1">{fmtIdNum(r.rate)} ‰</td>
-                ))}
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      ),
-    });
-
-    // 3. ISK per Ruangan: Heading + Grafik 3 + Analisa/Rekomendasi/RTL + Tabel 3
-    const iskByDisplayOrder = [rIsk[3], rIsk[1], rIsk[2], rIsk[0]];
-    b.push({
-      type: 'element',
-      key: 'm-isk-heading',
+      key: 'm-hh-chart',
       keepWithNext: true,
       gapAfter: 6,
       node: (
-        <div className="w-full">
-          <p className="font-bold text-[12pt]">2. Angka Kejadian Infeksi Saluran Kemih (ISK)</p>
-          <p className="indent-8 text-justify">
-            Pemantauan angka kejadian Infeksi Saluran Kemih (ISK) per 1.000 hari pemakaian kateter urin menetap (‰) di UOBK RSUD Al-Mulk pada {periodLabel}:
-          </p>
-        </div>
-      ),
-    });
-
-    b.push({
-      type: 'element',
-      key: 'm-grafik3-isk',
-      keepWithNext: true,
-      gapAfter: 8,
-      node: (
-        <OfficialModernBarChart
-          title={`Grafik 3. Incidence Rate Infeksi Saluran Kemih (ISK) Bulan ${monthName} ${reportYear}`}
-          data={iskByDisplayOrder.map((r, i) => ({
-            label: r.room.toUpperCase(),
-            value: r.rate,
-            formattedValue: `${fmtIdNum(r.rate)}‰`,
-            color: ['#0f2942', '#f59e0b', '#20b2aa', '#3b82f6'][i],
-          }))}
+        <WordExcelBarChart
+          title={`Kepatuhan Hand Hygiene Berdasarkan Profesi Bulan ${monthName} ${reportYear}`}
+          categories={hhProfessions.list.map((p) => p.chartLabel)}
+          series={[
+            {
+              name: 'Capaian (%)',
+              color: '#2563eb',
+              values: hhProfessions.list.map((p) => p.rate),
+            },
+            {
+              name: 'Target (%)',
+              color: '#64748b',
+              values: [85, 85, 85],
+            },
+          ]}
           height={125}
+          forcedMaxY={100}
         />
       ),
     });
-    b.push(...narrativeToFlowBlocks('m-n3-isk', narratives.isk));
+
+    b.push(...narrativeToFlowBlocks('m-hh-narr', narratives.hh));
 
     b.push({
       type: 'element',
-      key: 'm-tabel3-isk',
-      gapAfter: 14,
+      key: 'm-hh-tabel7',
+      gapAfter: 0,
       node: (
-        <div className="w-full">
-          <p className="text-center font-bold text-[11pt] mb-1">
-            Tabel 3. Infeksi Saluran Kemih (ISK) per 1.000 Hari Pemakaian Alat (‰) Bulan {monthName} {reportYear}
+        <div className="w-full text-black">
+          <p className="font-bold text-[11pt] mb-1">
+            Tabel 7.  Kepatuhan Hand Hygiene Berdasarkan Profesi Bulan {monthName} {reportYear}
           </p>
-          <table className="w-full border-collapse border border-black text-center text-[9.5pt] leading-[1.3]">
+          <table className="w-full border-collapse border border-black text-center text-[9pt] leading-[1.25]">
             <thead>
-              <tr className="bg-slate-100 font-bold">
-                <th className="border border-black p-1.5 w-[24%]" rowSpan={2}>INDIKATOR</th>
-                <th className="border border-black p-1" colSpan={4}>RUANGAN</th>
-              </tr>
-              <tr className="bg-slate-100 font-bold">
-                {rIsk.map((r) => (
-                  <th key={r.room} className="border border-black p-1 w-[19%]">{r.room}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="border border-black p-1 text-left font-semibold">Hari terpasang kateter</td>
-                {rIsk.map((r) => (
-                  <td key={r.room} className="border border-black p-1">{r.days}</td>
-                ))}
-              </tr>
-              <tr>
-                <td className="border border-black p-1 text-left font-semibold">Kasus ISK</td>
-                {rIsk.map((r) => (
-                  <td key={r.room} className="border border-black p-1">{r.cases}</td>
-                ))}
-              </tr>
-              <tr className="bg-slate-50 font-bold">
-                <td className="border border-black p-1 text-left">Rate Insiden (‰)</td>
-                {rIsk.map((r) => (
-                  <td key={r.room} className="border border-black p-1">{fmtIdNum(r.rate)} ‰</td>
-                ))}
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      ),
-    });
-
-    // 4. Decubitus per Ruangan: Heading + Grafik 4 + Analisa/Rekomendasi/RTL + Tabel 4
-    const decByDisplayOrder = [rDec[3], rDec[1], rDec[2], rDec[0]];
-    b.push({
-      type: 'element',
-      key: 'm-decub-heading',
-      keepWithNext: true,
-      gapAfter: 6,
-      node: (
-        <div className="w-full">
-          <p className="font-bold text-[12pt]">3. Angka Kejadian Luka Tekan (Decubitus)</p>
-          <p className="indent-8 text-justify">
-            Pemantauan angka kejadian infeksi luka tekan (Decubitus) per 1.000 hari tirah baring (‰) di UOBK RSUD Al-Mulk pada {periodLabel}:
-          </p>
-        </div>
-      ),
-    });
-
-    b.push({
-      type: 'element',
-      key: 'm-grafik4-decub',
-      keepWithNext: true,
-      gapAfter: 8,
-      node: (
-        <OfficialModernBarChart
-          title={`Grafik 4. Incidence Rate Infeksi Decubitus Bulan ${monthName} ${reportYear}`}
-          data={decByDisplayOrder.map((r, i) => ({
-            label: r.room.toUpperCase(),
-            value: r.rate,
-            formattedValue: `${fmtIdNum(r.rate)}‰`,
-            color: ['#20b2aa', '#f59e0b', '#0f2942', '#3b82f6'][i],
-          }))}
-          height={125}
-        />
-      ),
-    });
-    b.push(...narrativeToFlowBlocks('m-n4-decub', narratives.decubitus));
-
-    b.push({
-      type: 'element',
-      key: 'm-tabel4-decub',
-      gapAfter: 14,
-      node: (
-        <div className="w-full">
-          <p className="text-center font-bold text-[11pt] mb-1">
-            Tabel 4. Infeksi Decubitus per 1.000 Hari Tirah Baring (‰) Bulan {monthName} {reportYear}
-          </p>
-          <table className="w-full border-collapse border border-black text-center text-[9.5pt] leading-[1.3]">
-            <thead>
-              <tr className="bg-slate-100 font-bold">
-                <th className="border border-black p-1.5 w-[24%]" rowSpan={2}>INDIKATOR</th>
-                <th className="border border-black p-1" colSpan={4}>RUANGAN</th>
-              </tr>
-              <tr className="bg-slate-100 font-bold">
-                {rDec.map((r) => (
-                  <th key={r.room} className="border border-black p-1 w-[19%]">{r.room}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="border border-black p-1 text-left font-semibold">Hari tirah baring</td>
-                {rDec.map((r) => (
-                  <td key={r.room} className="border border-black p-1">{r.days}</td>
-                ))}
-              </tr>
-              <tr>
-                <td className="border border-black p-1 text-left font-semibold">Kasus Decubitus</td>
-                {rDec.map((r) => (
-                  <td key={r.room} className="border border-black p-1">{r.cases}</td>
-                ))}
-              </tr>
-              <tr className="bg-slate-50 font-bold">
-                <td className="border border-black p-1 text-left">Rate Insiden (‰)</td>
-                {rDec.map((r) => (
-                  <td key={r.room} className="border border-black p-1">{fmtIdNum(r.rate)} ‰</td>
-                ))}
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      ),
-    });
-
-    // 5. VAP per Ruangan: Heading + Grafik 5 + Analisa/Rekomendasi/RTL + Tabel 5
-    const vapByDisplayOrder = [rVap[3], rVap[1], rVap[2], rVap[0]];
-    b.push({
-      type: 'element',
-      key: 'm-vap-heading',
-      keepWithNext: true,
-      gapAfter: 6,
-      node: (
-        <div className="w-full">
-          <p className="font-bold text-[12pt]">4. Angka Kejadian Ventilator Associated Pneumonia (VAP)</p>
-          <p className="indent-8 text-justify">
-            Pemantauan angka kejadian Ventilator Associated Pneumonia (VAP) per 1.000 hari pemakaian ventilator mekanik (‰) di UOBK RSUD Al-Mulk pada {periodLabel}:
-          </p>
-        </div>
-      ),
-    });
-
-    b.push({
-      type: 'element',
-      key: 'm-grafik5-vap',
-      keepWithNext: true,
-      gapAfter: 8,
-      node: (
-        <OfficialModernBarChart
-          title={`Grafik 5. Incidence Rate Ventilator Associated Pneumonia (VAP) Bulan ${monthName} ${reportYear}`}
-          data={vapByDisplayOrder.map((r, i) => ({
-            label: r.room.toUpperCase(),
-            value: r.rate,
-            formattedValue: `${fmtIdNum(r.rate)}‰`,
-            color: ['#3b82f6', '#f59e0b', '#0f2942', '#20b2aa'][i],
-          }))}
-          height={125}
-        />
-      ),
-    });
-    b.push(...narrativeToFlowBlocks('m-n5-vap', narratives.vap));
-
-    b.push({
-      type: 'element',
-      key: 'm-tabel5-vap',
-      gapAfter: 14,
-      node: (
-        <div className="w-full">
-          <p className="text-center font-bold text-[11pt] mb-1">
-            Tabel 5. Infeksi Ventilator Associated Pneumonia (VAP) Bulan {monthName} {reportYear}
-          </p>
-          <table className="w-full border-collapse border border-black text-center text-[9.5pt] leading-[1.3]">
-            <thead>
-              <tr className="bg-slate-100 font-bold">
-                <th className="border border-black p-1.5 w-[24%]" rowSpan={2}>INDIKATOR</th>
-                <th className="border border-black p-1" colSpan={4}>RUANGAN</th>
-              </tr>
-              <tr className="bg-slate-100 font-bold">
-                {rVap.map((r) => (
-                  <th key={r.room} className="border border-black p-1 w-[19%]">{r.room}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="border border-black p-1 text-left font-semibold">Hari pemasangan ETT/Ventilator</td>
-                {rVap.map((r) => (
-                  <td key={r.room} className="border border-black p-1">{r.days}</td>
-                ))}
-              </tr>
-              <tr>
-                <td className="border border-black p-1 text-left font-semibold">Kasus VAP</td>
-                {rVap.map((r) => (
-                  <td key={r.room} className="border border-black p-1">{r.cases}</td>
-                ))}
-              </tr>
-              <tr className="bg-slate-50 font-bold">
-                <td className="border border-black p-1 text-left">Rate Insiden (‰)</td>
-                {rVap.map((r) => (
-                  <td key={r.room} className="border border-black p-1">{fmtIdNum(r.rate)} ‰</td>
-                ))}
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      ),
-    });
-
-    // 6. IDO: Heading + Grafik 6 + Analisa/Rekomendasi/RTL + Tabel 6
-    b.push({
-      type: 'element',
-      key: 'm-ido-heading',
-      keepWithNext: true,
-      gapAfter: 6,
-      node: (
-        <div className="w-full">
-          <p className="font-bold text-[12pt]">5. Angka Kejadian Infeksi Daerah Operasi (IDO)</p>
-          <p className="indent-8 text-justify">
-            Pemantauan angka kejadian Infeksi Daerah Operasi (IDO) berdasarkan jenis tindakan operasi di UOBK RSUD Al-Mulk pada {periodLabel}:
-          </p>
-        </div>
-      ),
-    });
-
-    b.push({
-      type: 'element',
-      key: 'm-grafik6-ido',
-      keepWithNext: true,
-      gapAfter: 8,
-      node: (
-        <OfficialModernBarChart
-          title={`Grafik 6. Incidence Rate Infeksi Daerah Operasi (IDO) Bulan ${monthName} ${reportYear}`}
-          data={idoOperations.map((op, i) => ({
-            label: op.label,
-            value: op.rate,
-            formattedValue: `${fmtIdNum(op.rate)}%`,
-            color: ['#10b981', '#f59e0b', '#0f2942', '#20b2aa'][i],
-          }))}
-          height={125}
-        />
-      ),
-    });
-    b.push(...narrativeToFlowBlocks('m-n6-ido', narratives.ido));
-
-    b.push({
-      type: 'element',
-      key: 'm-tabel6-ido',
-      gapAfter: 16,
-      node: (
-        <div className="w-full">
-          <p className="text-center font-bold text-[11pt] mb-1">
-            Tabel 6. Infeksi Daerah Operasi (IDO) di UOBK RSUD Al-Mulk Bulan {monthName} {reportYear}
-          </p>
-          <table className="w-full border-collapse border border-black text-center text-[9.5pt] leading-[1.3]">
-            <thead>
-              <tr className="bg-slate-100 font-bold">
-                <th className="border border-black p-1.5 w-[28%]">Indikator / Jenis Operasi</th>
-                {idoOperations.map((op) => (
-                  <th key={op.code} className="border border-black p-1.5 w-[18%]">{op.code}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="border border-black p-1 text-left font-semibold">Jumlah Tindakan Operasi</td>
-                {idoOperations.map((op) => (
-                  <td key={op.code} className="border border-black p-1">{op.ops}</td>
-                ))}
-              </tr>
-              <tr>
-                <td className="border border-black p-1 text-left font-semibold">Kasus IDO</td>
-                {idoOperations.map((op) => (
-                  <td key={op.code} className="border border-black p-1">{op.cases}</td>
-                ))}
-              </tr>
-              <tr className="font-semibold">
-                <td className="border border-black p-1 text-left">Persentase (%)</td>
-                {idoOperations.map((op) => (
-                  <td key={op.code} className="border border-black p-1">{fmtIdNum(op.rate)}%</td>
-                ))}
-              </tr>
-              <tr className="bg-slate-50 font-bold">
-                <td className="border border-black p-1 text-left">Target Nasional</td>
-                {idoOperations.map((op) => (
-                  <td key={op.code} className="border border-black p-1">≤ {op.target}%</td>
-                ))}
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      ),
-    });
-
-    // =========================================================
-    // B. AUDIT KEWASPADAAN STANDAR (HAND HYGIENE & APD)
-    // =========================================================
-    b.push({
-      type: 'element',
-      key: 'm-audit-section-header',
-      keepWithNext: true,
-      gapAfter: 8,
-      node: (
-        <div className="w-full">
-          <div className="text-center font-bold uppercase border-b border-black pb-1 mb-2 text-[12pt]">
-            B. AUDIT HAND HYGIENE DAN PENGGUNAAN APD
-          </div>
-          <p className="font-bold text-[12pt]">1. Kepatuhan Kebersihan Tangan (Hand Hygiene)</p>
-        </div>
-      ),
-    });
-
-    b.push({
-      type: 'element',
-      key: 'm-grafik-hh',
-      keepWithNext: true,
-      gapAfter: 8,
-      node: (
-        <div className="w-full">
-          <OfficialModernBarChart
-            title={`Grafik 7. Kepatuhan Hand Hygiene Berdasarkan Profesi Bulan ${monthName} ${reportYear}`}
-            data={hhProfessions.list.map((p, i) => ({
-              label: p.chartLabel,
-              value: p.rate,
-              formattedValue: `${fmtIdNum(p.rate)}%`,
-              color: ['#f59e0b', '#0f2942', '#20b2aa'][i],
-            }))}
-            unit="%"
-            maxValue={100}
-            height={130}
-          />
-          <div className="flex justify-between text-[9.5pt] font-bold text-slate-800 px-1">
-            <span>Target Kemenkes: ≥ 85%</span>
-            <span>Rata-rata RS Bulan {monthName}: {fmtIdNum(hhProfessions.avg)}%</span>
-          </div>
-        </div>
-      ),
-    });
-    b.push(...narrativeToFlowBlocks('m-n7-hh', narratives.hh));
-
-    b.push({
-      type: 'element',
-      key: 'm-tabel-hh',
-      gapAfter: 14,
-      node: (
-        <div className="w-full">
-          <p className="text-center font-bold text-[11pt] mb-1">
-            Tabel 7. Kepatuhan Hand Hygiene Berdasarkan Profesi Bulan {monthName} {reportYear}
-          </p>
-          <table className="w-full border-collapse border border-black text-center text-[9.5pt] leading-[1.3]">
-            <thead>
-              <tr className="bg-slate-100 font-bold">
-                <th className="border border-black p-1.5 w-[25%]" rowSpan={2}>INDIKATOR</th>
-                <th className="border border-black p-1" colSpan={3}>PROFESI</th>
-              </tr>
-              <tr className="bg-slate-100 font-bold">
+              <tr className="bg-slate-200 font-bold">
+                <th className="border border-black p-1 w-[28%]">INDIKATOR</th>
                 {hhProfessions.list.map((p) => (
-                  <th key={p.label} className="border border-black p-1 w-[25%]">{p.label}</th>
+                  <th key={p.label} className="border border-black p-1 w-[24%]">{p.label}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td className="border border-black p-1 text-left font-semibold">Numerator (Patuh)</td>
+                <td className="border border-black p-1 text-center">Numerator (Patuh)</td>
                 {hhProfessions.list.map((p) => (
                   <td key={p.label} className="border border-black p-1">{p.num}</td>
                 ))}
               </tr>
               <tr>
-                <td className="border border-black p-1 text-left font-semibold">Denumerator (Peluang)</td>
+                <td className="border border-black p-1 text-center">Denumerator (Peluang)</td>
                 {hhProfessions.list.map((p) => (
                   <td key={p.label} className="border border-black p-1">{p.denum}</td>
                 ))}
               </tr>
-              <tr className="bg-slate-50 font-bold">
-                <td className="border border-black p-1 text-left">Pencapaian (%)</td>
+              <tr className="bg-slate-100 font-bold">
+                <td className="border border-black p-1 text-center">Pencapaian (%)</td>
                 {hhProfessions.list.map((p) => (
                   <td key={p.label} className="border border-black p-1">{fmtIdNum(p.rate)}%</td>
                 ))}
               </tr>
               <tr className="font-bold">
-                <td className="border border-black p-1 text-left">Target Kemenkes</td>
+                <td className="border border-black p-1 text-center">Target Kemenkes</td>
                 {hhProfessions.list.map((p) => (
                   <td key={p.label} className="border border-black p-1">≥ 85%</td>
                 ))}
@@ -1231,60 +1661,72 @@ export default function MonthlyOfficialReport({
       ),
     });
 
-    // 2. Kepatuhan Penggunaan APD
+    // Break directly to Halaman 11 (APD)
+    b.push({ type: 'pageBreak', key: 'm-pb-page10-to-11' });
+
+    // =========================================================================
+    // HALAMAN 11: AUDIT ALAT PELINDUNG DIRI (APD)
+    // =========================================================================
     b.push({
       type: 'element',
       key: 'm-apd-heading',
       keepWithNext: true,
-      gapAfter: 6,
+      gapAfter: 4,
       node: (
-        <p className="font-bold text-[12pt]">
-          2. Kepatuhan Penggunaan Alat Pelindung Diri (APD)
-        </p>
-      ),
-    });
-
-    b.push({
-      type: 'element',
-      key: 'm-grafik-apd',
-      keepWithNext: true,
-      gapAfter: 8,
-      node: (
-        <div className="w-full">
-          <OfficialModernBarChart
-            title={`Grafik 8. Kepatuhan Penggunaan APD di UOBK RSUD Al-Mulk s/d Bulan ${monthName} ${reportYear}`}
-            data={apdData.active.map((m) => ({
-              label: m.month,
-              value: m.value,
-              formattedValue: `${fmtIdNum(m.value)}%`,
-              color: m.value >= 100 ? '#10b981' : m.value < 98 ? '#f59e0b' : '#0f2942',
-            }))}
-            unit="%"
-            maxValue={100}
-            height={130}
-          />
-          <div className="flex justify-between text-[9.5pt] font-bold text-slate-800 px-1">
-            <span>Standar Target Kemenkes: 100%</span>
-            <span>Capaian Bulan {monthName}: {fmtIdNum(apdData.currentMonthVal)}%</span>
-          </div>
+        <div className="w-full text-black">
+          <p className="font-bold text-[12pt]">2.  Kepatuhan Penggunaan Alat Pelindung Diri (APD)</p>
+          <p className="indent-8 text-justify text-[12pt] leading-[1.5]">
+            Hasil audit kepatuhan penggunaan Alat Pelindung Diri (APD) di UOBK RSUD Al-Mulk periode s/d bulan {monthName} {reportYear}:
+          </p>
+          <p className="font-bold text-[11pt] mt-1 mb-1">
+            Grafik 8.  Kepatuhan Penggunaan APD di UOBK RSUD Al-Mulk s/d Bulan {monthName} {reportYear}
+          </p>
         </div>
       ),
     });
-    b.push(...narrativeToFlowBlocks('m-n8-apd', narratives.apd));
 
     b.push({
       type: 'element',
-      key: 'm-tabel-apd',
-      gapAfter: 16,
+      key: 'm-apd-chart',
+      keepWithNext: true,
+      gapAfter: 6,
       node: (
-        <div className="w-full">
-          <p className="text-center font-bold text-[11pt] mb-1">
-            Tabel 8. Kepatuhan Penggunaan APD Periode Tahun {reportYear}
+        <WordExcelLineChart
+          title={`Kepatuhan Penggunaan APD Periode Tahun ${reportYear}`}
+          categories={apdData.active.map((m) => m.month)}
+          series={[
+            {
+              name: 'Capaian (%)',
+              color: '#2563eb',
+              values: apdData.active.map((m) => m.value),
+            },
+            {
+              name: 'Target (%)',
+              color: '#64748b',
+              values: apdData.active.map(() => 100),
+            },
+          ]}
+          height={125}
+          forcedMaxY={105}
+        />
+      ),
+    });
+
+    b.push(...narrativeToFlowBlocks('m-apd-narr', narratives.apd));
+
+    b.push({
+      type: 'element',
+      key: 'm-apd-tabel8',
+      gapAfter: 0,
+      node: (
+        <div className="w-full text-black">
+          <p className="font-bold text-[11pt] mb-1">
+            Tabel 8.  Kepatuhan Penggunaan APD Periode Tahun {reportYear}
           </p>
-          <table className="table-fixed w-full border-collapse border border-black text-center text-[8.5pt] leading-[1.3]">
+          <table className="table-fixed w-full border-collapse border border-black text-center text-[8pt] leading-[1.25]">
             <thead>
-              <tr className="bg-slate-100 font-bold">
-                <th className="border border-black p-1 w-[14%] text-left">Bulan</th>
+              <tr className="bg-slate-200 font-bold">
+                <th className="border border-black p-1 w-[16%] text-center">Bulan</th>
                 {apdData.full12.map((m) => (
                   <th key={m.month} className="border border-black p-0.5">{m.month}</th>
                 ))}
@@ -1292,15 +1734,15 @@ export default function MonthlyOfficialReport({
             </thead>
             <tbody>
               <tr>
-                <td className="border border-black p-1 text-left font-semibold">Capaian</td>
+                <td className="border border-black p-1 text-center font-semibold">Capaian</td>
                 {apdData.full12.map((m) => (
                   <td key={m.month} className="border border-black p-0.5 font-bold">
                     {m.value !== null ? `${fmtIdNum(m.value)}%` : '-'}
                   </td>
                 ))}
               </tr>
-              <tr className="bg-slate-50 font-bold">
-                <td className="border border-black p-1 text-left">Target</td>
+              <tr className="bg-slate-100 font-bold">
+                <td className="border border-black p-1 text-center">Target</td>
                 {apdData.full12.map((m) => (
                   <td key={m.month} className="border border-black p-0.5">{m.target}%</td>
                 ))}
@@ -1311,17 +1753,21 @@ export default function MonthlyOfficialReport({
       ),
     });
 
-    // =========================================================
-    // BAB III PENUTUP & LEMBAR PENGESAHAN
-    // =========================================================
+    // Break directly to Halaman 12 (Bab III & Tanda Tangan)
+    b.push({ type: 'pageBreak', key: 'm-pb-page11-to-12' });
+
+    // =========================================================================
+    // HALAMAN 12: BAB III KESIMPULAN DAN REKOMENDASI & LEMBAR PENGESAHAN
+    // =========================================================================
     b.push({
       type: 'element',
       key: 'm-bab3-heading',
       keepWithNext: true,
       gapAfter: 8,
       node: (
-        <div className="text-center font-bold uppercase border-b border-black pb-1 text-[12pt]">
-          BAB III KESIMPULAN DAN KOORDINASI PELAPORAN
+        <div className="text-center font-bold text-[12pt] leading-[1.4] mb-3">
+          <p className="uppercase">BAB III</p>
+          <p className="uppercase">KESIMPULAN DAN REKOMENDASI</p>
         </div>
       ),
     });
@@ -1330,14 +1776,17 @@ export default function MonthlyOfficialReport({
       type: 'element',
       key: 'm-bab3-body',
       keepWithNext: true,
-      gapAfter: 14,
+      gapAfter: 12,
       node: (
-        <div className="w-full text-justify space-y-2">
+        <div className="w-full text-justify text-[12pt] leading-[1.5] space-y-3 text-black">
           <p className="indent-8">
-            Berdasarkan hasil surveilans HAIs serta audit kepatuhan kewaspadaan standar pada {periodLabel}, indikator ISK ({fmtIdNum(roomBreakdown.isk.rate)}‰), Decubitus ({fmtIdNum(roomBreakdown.decubitus.rate)}‰), VAP ({fmtIdNum(roomBreakdown.vap.rate)}‰), dan IDO ({fmtIdNum(roomBreakdown.ido.rate)}%) telah terkendali sesuai standar nasional, sedangkan pengendalian Phlebitis ({fmtIdNum(roomBreakdown.phlebitis.rate)}‰), peningkatan kepatuhan Hand Hygiene ({fmtIdNum(hhProfessions.avg)}%), serta optimalisasi kepatuhan APD ({fmtIdNum(apdData.currentMonthVal)}%) menjadi prioritas supervisi dan tindak lanjut perbaikan bersama seluruh kepala ruang perawatan.
+            Berdasarkan hasil pemantauan surveilans Healthcare Associated Infections (HAIs) serta audit kepatuhan kewaspadaan standar pada {periodLabel}, indikator ISK ({fmtIdNum(roomBreakdown.isk.rate)}‰), Decubitus ({fmtIdNum(roomBreakdown.decubitus.rate)}‰), VAP ({fmtIdNum(roomBreakdown.vap.rate)}‰), dan IDO ({fmtIdNum(roomBreakdown.ido.rate)}%) telah terkendali dengan sangat baik dan memenuhi standar baku mutu nasional Kementerian Kesehatan.
           </p>
           <p className="indent-8">
-            Hasil laporan evaluasi bulanan IPCN ini disampaikan kepada Direktur UOBK RSUD Al-Mulk Kota Sukabumi, Ketua Komite Mutu, serta dikoordinasikan dengan seluruh Kepala Instalasi/Kepala Unit sebagai dasar tindak lanjut peningkatan mutu pelayanan dan keselamatan pasien.
+            Sementara itu, insiden rate Phlebitis ({fmtIdNum(roomBreakdown.phlebitis.rate)}‰) dengan kejadian tertinggi di {peakPhlebRoom.room} ({fmtIdNum(peakPhlebRoom.rate)}‰; {peakPhlebRoom.cases} kasus), kepatuhan Hand Hygiene ({fmtIdNum(hhProfessions.avg)}%), dan kepatuhan APD ({fmtIdNum(apdData.currentMonthVal)}%) menjadi prioritas pembinaan teknis, supervisi harian, serta audit kepatuhan bundle PPI secara terpadu.
+          </p>
+          <p className="indent-8">
+            Laporan bulanan IPCN ini disusun dan disampaikan kepada Direktur UOBK RSUD Al-Mulk Kota Sukabumi, Ketua Komite Mutu, dan dikoordinasikan secara lintas unit guna optimalisasi mutu pelayanan medis dan keselamatan pasien.
           </p>
         </div>
       ),
@@ -1348,16 +1797,16 @@ export default function MonthlyOfficialReport({
       key: 'm-signature',
       gapAfter: 0,
       node: (
-        <div className="w-full pt-2">
-          <p className="text-right text-[12pt] mb-4">Sukabumi, {signMonthYear}</p>
+        <div className="w-full pt-4 text-black">
+          <p className="text-right text-[12pt] mb-6">Sukabumi, {signMonthYear}</p>
           <table className="w-full border-none text-[12pt] leading-[1.4]">
             <tbody>
               <tr className="text-center font-bold">
-                <td className="w-1/2 align-top pb-20">
+                <td className="w-1/2 align-top pb-24">
                   Mengetahui,<br />
                   Ketua Tim PPI
                 </td>
-                <td className="w-1/2 align-top pb-20">
+                <td className="w-1/2 align-top pb-24">
                   Penyusun,<br />
                   Infection Prevention Control Nurse
                 </td>
@@ -1379,7 +1828,24 @@ export default function MonthlyOfficialReport({
     });
 
     return b;
-  }, [monthName, reportYear, periodLabel, roomBreakdown, idoOperations, hhProfessions, apdData, narratives, signMonthYear]);
+  }, [
+    monthName,
+    reportYear,
+    periodLabel,
+    prevMonthName,
+    prevYear,
+    prevPhlebRate,
+    roomBreakdown,
+    chartRoomsPhlebitis,
+    chartRoomsIsk,
+    chartRoomsDecubitus,
+    chartRoomsVap,
+    peakPhlebRoom,
+    hhProfessions,
+    apdData,
+    narratives,
+    signMonthYear,
+  ]);
 
   return (
     <AutoPaginatedF4Document
