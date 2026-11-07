@@ -2,8 +2,9 @@ import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase';
 import {
   Activity, BarChart, LineChart, TrendingUp,
-  Calendar, ChevronDown
+  Calendar, ChevronDown, Edit2, CheckCircle2, RefreshCw, AlertCircle, Sparkles
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   ComposedChart, Line, LabelList
@@ -173,6 +174,20 @@ export default function UnifiedSurveilansHaisReport({
   const setSelectedSemester = externalPeriode ? externalPeriode.setSelectedSemester : setLocalSemester;
 
   const [yearlyTrendInd, setYearlyTrendInd] = useState<string>('phlebitis');
+
+  // Interactive Editable Cells State
+  const [editingCell, setEditingCell] = useState<{
+    room: string;
+    indicatorId: string;
+    field: 'n' | 'd';
+  } | null>(null);
+  const [editValue, setEditValue] = useState<string>('');
+  const [saveStatus, setSaveStatus] = useState<{
+    type: 'saving' | 'saved' | 'error';
+    message: string;
+  } | null>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const activeInputRef = useRef<HTMLInputElement | null>(null);
 
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -373,6 +388,147 @@ export default function UnifiedSurveilansHaisReport({
     [roomsToDisplay, getIndicatorDataForRoom]
   );
 
+  // Handler klik cell untuk membuka mode edit
+  const handleCellClick = useCallback(
+    (room: string, indicatorId: string, field: 'n' | 'd', currentValue: number) => {
+      if (periodeType !== 'Bulanan') {
+        setSaveStatus({
+          type: 'error',
+          message: 'Pilih periode "Bulanan" untuk mengedit langsung angka tabel.',
+        });
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = setTimeout(() => setSaveStatus(null), 3500);
+        return;
+      }
+
+      setEditingCell({ room, indicatorId, field });
+      setEditValue(String(currentValue));
+    },
+    [periodeType]
+  );
+
+  // Handler simpan otomatis saat selesai edit (blur / Enter)
+  const handleCommitCell = useCallback(
+    async (room: string, indicatorId: string, field: 'n' | 'd', oldValue: number) => {
+      setEditingCell(null);
+
+      const parsed = parseInt(editValue, 10);
+      const newVal = isNaN(parsed) || parsed < 0 ? 0 : parsed;
+
+      if (newVal === oldValue) {
+        return;
+      }
+
+      const current = getIndicatorDataForRoom(room, indicatorId);
+      const newN = field === 'n' ? newVal : current.n;
+      const newD = field === 'd' ? newVal : current.d;
+
+      const indicatorObj = INDICATORS.find((ind) => ind.id === indicatorId);
+      const multiplier = indicatorObj?.multiplier || 1000;
+      const newRate = newD > 0 ? Number(((newN / newD) * multiplier).toFixed(2)) : 0;
+      const isCompliant = newRate <= (indicatorObj?.target || 1);
+
+      // 1. Update state data lokal secara instan (realtime recalculation di tabel & grafik)
+      const targetMonthStr = `${selectedYear}-${pad2(selectedMonth + 1)}`;
+      const roomSlug = room.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const targetId = `manual-hais-${targetMonthStr}-${roomSlug}-${indicatorId}`;
+
+      setData((prevData) => {
+        const otherData = prevData.filter((d) => {
+          const tgl = (d.tanggal_waktu || d.created_at || '').slice(0, 7);
+          const isThisMonth = tgl === targetMonthStr;
+          const isThisRoom = d.unit === room;
+          const isThisInd = matchesIndicator(d, indicatorId);
+          return !(isThisMonth && isThisRoom && isThisInd);
+        });
+
+        const newRecord = {
+          id: targetId,
+          created_at: new Date().toISOString(),
+          tanggal_waktu: `${targetMonthStr}-15T12:00:00.000Z`,
+          unit: room,
+          unit_kerja: room,
+          indikator_id: indicatorId,
+          nama_indikator: indicatorObj?.name || indicatorId,
+          kategori: 'Surveilans HAIs',
+          jenis_audit: 'HAIs',
+          observer: 'IPCN RSUD Al-Mulk',
+          jumlah_patuh: newN,
+          jumlah_dinilai: newD,
+          numerator: newN,
+          denominator: newD,
+          persentase: newRate,
+          status_kepatuhan: isCompliant ? 'PATUH' : 'TIDAK PATUH',
+          data_indikator: JSON.stringify({
+            numerator: newN,
+            denominator: newD,
+            rate: newRate,
+            target: indicatorObj?.target,
+            unit: indicatorObj?.unit,
+          }),
+        };
+
+        return [...otherData, newRecord];
+      });
+
+      // 2. Tampilkan notifikasi status penyimpanan
+      setSaveStatus({
+        type: 'saving',
+        message: `Menyimpan data ${room} (${indicatorObj?.name || indicatorId})...`,
+      });
+
+      // 3. Simpan permanen ke database via API
+      try {
+        const res = await fetch('/api/simrs/hais?action=update_cell', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'update_cell',
+            year: selectedYear,
+            month: selectedMonth + 1,
+            room,
+            indicatorId,
+            numerator: newN,
+            denominator: newD,
+          }),
+        });
+
+        const json = await res.json();
+        if (json.ok) {
+          setSaveStatus({
+            type: 'saved',
+            message: `Tersimpan otomatis: ${room} - ${indicatorObj?.name} (N: ${newN}, D: ${newD}, Rate: ${newRate.toFixed(2)}${indicatorObj?.unit})`,
+          });
+
+          if (typeof window !== 'undefined') {
+            window.postMessage({ type: 'AUDIT_SUBMITTED' }, '*');
+            try {
+              if ('BroadcastChannel' in window) {
+                const bc = new BroadcastChannel('smart_ppi_channel');
+                bc.postMessage({ table: 'audit_sessions', eventType: 'UPDATE' });
+                bc.close();
+              }
+            } catch {}
+          }
+        } else {
+          throw new Error(json.error || 'Gagal menyimpan ke database');
+        }
+      } catch (err: any) {
+        console.error('Error auto-saving HAIs cell:', err);
+        setSaveStatus({
+          type: 'error',
+          message: `Gagal menyimpan: ${err.message || 'Koneksi error'}`,
+        });
+      }
+
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = setTimeout(() => {
+        setSaveStatus(null);
+      }, 3500);
+    },
+    [editValue, getIndicatorDataForRoom, matchesIndicator, selectedMonth, selectedYear]
+  );
+
   // Indicators to show in Gambar 3 Room Breakdown Charts
   const indicatorsForBreakdown = useMemo(() => {
     return INDICATORS;
@@ -554,21 +710,29 @@ export default function UnifiedSurveilansHaisReport({
 
             {/* Logo, Header Laporan */}
             <div className="p-6 sm:p-8 border-b border-indigo-900/30 bg-[#141532]/60 backdrop-blur-md">
-              <div className="flex flex-col md:flex-row items-center gap-6">
-                {hospitalLogoUrl && (
-                  <img src={hospitalLogoUrl} alt="Logo RS" className="w-20 h-20 object-contain" />
-                )}
-                <div className="text-center md:text-left">
-                  <h2 className="text-xl font-black text-white uppercase tracking-tight">
-                    Laporan Surveilans HAIs
-                  </h2>
-                  <h3 className="text-sm font-bold text-slate-300 uppercase">
-                    UOBK RSUD AL-MULK KOTA SUKABUMI
-                  </h3>
-                  <p className="text-slate-400 font-bold mt-1 uppercase text-xs">
-                    Periode: {periodeType} {selectedYear}{' '}
-                    {periodeType === 'Bulanan' ? `- ${MONTHS_FULL[selectedMonth]}` : ''}
-                  </p>
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                  {hospitalLogoUrl && (
+                    <img src={hospitalLogoUrl} alt="Logo RS" className="w-20 h-20 object-contain" />
+                  )}
+                  <div className="text-center md:text-left">
+                    <h2 className="text-xl font-black text-white uppercase tracking-tight">
+                      Laporan Surveilans HAIs
+                    </h2>
+                    <h3 className="text-sm font-bold text-slate-300 uppercase">
+                      UOBK RSUD AL-MULK KOTA SUKABUMI
+                    </h3>
+                    <p className="text-slate-400 font-bold mt-1 uppercase text-xs">
+                      Periode: {periodeType} {selectedYear}{' '}
+                      {periodeType === 'Bulanan' ? `- ${MONTHS_FULL[selectedMonth]}` : ''}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Badge Penunjuk Fitur Interaktif */}
+                <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-950/60 border border-cyan-500/40 text-[11px] font-bold text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.15)] self-center md:self-auto">
+                  <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse shrink-0" />
+                  <span>Fitur Edit Tabel: Klik angka <strong>N</strong> atau <strong>D</strong> untuk ubah & simpan otomatis</span>
                 </div>
               </div>
             </div>
@@ -611,8 +775,8 @@ export default function UnifiedSurveilansHaisReport({
                   <tr className="bg-[#0e0f24] text-[9px] font-black uppercase tracking-wider text-slate-400 border-b border-indigo-900/30">
                     {INDICATORS.map((ind) => (
                       <React.Fragment key={`${ind.id}-sub`}>
-                        <th className="py-1.5 px-1 text-center font-black w-[4%] border-r border-indigo-950/60">N</th>
-                        <th className="py-1.5 px-1 text-center font-black w-[4%] border-r border-indigo-950/60">D</th>
+                        <th className="py-1.5 px-1 text-center font-black w-[4%] border-r border-indigo-950/60" title="Numerator (Jumlah Kasus Infeksi)">N</th>
+                        <th className="py-1.5 px-1 text-center font-black w-[4%] border-r border-indigo-950/60" title="Denominator (Hari Pasang Alat / Pasien / Operasi)">D</th>
                         <th className="py-1.5 px-1.5 text-center font-black w-[6%] border-r border-indigo-950/60">{ind.unit}</th>
                         <th className="py-1.5 px-1.5 text-center font-black w-[6%] border-r-2 border-indigo-900/40 bg-indigo-950/20">Target</th>
                       </React.Fragment>
@@ -636,18 +800,106 @@ export default function UnifiedSurveilansHaisReport({
                           ? 'text-emerald-400 font-black'
                           : 'text-red-400 font-black';
 
+                        const isEditingN =
+                          editingCell?.room === room &&
+                          editingCell?.indicatorId === ind.id &&
+                          editingCell?.field === 'n';
+
+                        const isEditingD =
+                          editingCell?.room === room &&
+                          editingCell?.indicatorId === ind.id &&
+                          editingCell?.field === 'd';
+
                         return (
                           <React.Fragment key={`${room}-${ind.id}`}>
-                            <td className="py-2 px-1 text-center font-semibold font-mono text-slate-300 border-r border-indigo-950/40">
-                              {n}
+                            {/* Kolom N (Numerator / Kasus) - Editable */}
+                            <td className="py-1 px-1 text-center font-semibold font-mono border-r border-indigo-950/40 relative">
+                              {isEditingN ? (
+                                <input
+                                  ref={(el) => {
+                                    if (el) {
+                                      activeInputRef.current = el;
+                                      el.focus();
+                                      el.select();
+                                    }
+                                  }}
+                                  type="number"
+                                  min="0"
+                                  value={editValue}
+                                  onChange={(e) => setEditValue(e.target.value)}
+                                  onBlur={() => handleCommitCell(room, ind.id, 'n', n)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.currentTarget.blur();
+                                    } else if (e.key === 'Escape') {
+                                      setEditingCell(null);
+                                    }
+                                  }}
+                                  className="w-12 sm:w-14 px-1 py-0.5 text-center font-mono font-black text-cyan-200 bg-[#0c0d22] border-2 border-cyan-400 rounded outline-none shadow-[0_0_12px_rgba(6,182,212,0.6)] text-xs mx-auto block"
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleCellClick(room, ind.id, 'n', n)}
+                                  title="Klik untuk mengubah nilai N (Kasus) - Tersimpan otomatis"
+                                  className="w-full py-1 px-1 rounded flex items-center justify-center gap-0.5 group/btn hover:bg-cyan-500/20 hover:ring-1 hover:ring-cyan-400/50 transition-all cursor-pointer text-slate-200 font-mono"
+                                >
+                                  <span className="font-semibold text-slate-200 group-hover/btn:text-cyan-300 group-hover/btn:font-black">
+                                    {n}
+                                  </span>
+                                  <Edit2 className="w-2.5 h-2.5 text-cyan-400 opacity-0 group-hover/btn:opacity-100 transition-opacity shrink-0" />
+                                </button>
+                              )}
                             </td>
-                            <td className="py-2 px-1 text-center font-semibold font-mono text-slate-300 border-r border-indigo-950/40">
-                              {d}
+
+                            {/* Kolom D (Denominator) - Editable */}
+                            <td className="py-1 px-1 text-center font-semibold font-mono border-r border-indigo-950/40 relative">
+                              {isEditingD ? (
+                                <input
+                                  ref={(el) => {
+                                    if (el) {
+                                      activeInputRef.current = el;
+                                      el.focus();
+                                      el.select();
+                                    }
+                                  }}
+                                  type="number"
+                                  min="0"
+                                  value={editValue}
+                                  onChange={(e) => setEditValue(e.target.value)}
+                                  onBlur={() => handleCommitCell(room, ind.id, 'd', d)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.currentTarget.blur();
+                                    } else if (e.key === 'Escape') {
+                                      setEditingCell(null);
+                                    }
+                                  }}
+                                  className="w-12 sm:w-14 px-1 py-0.5 text-center font-mono font-black text-cyan-200 bg-[#0c0d22] border-2 border-cyan-400 rounded outline-none shadow-[0_0_12px_rgba(6,182,212,0.6)] text-xs mx-auto block"
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleCellClick(room, ind.id, 'd', d)}
+                                  title="Klik untuk mengubah nilai D (Denominator) - Tersimpan otomatis"
+                                  className="w-full py-1 px-1 rounded flex items-center justify-center gap-0.5 group/btn hover:bg-cyan-500/20 hover:ring-1 hover:ring-cyan-400/50 transition-all cursor-pointer text-slate-200 font-mono"
+                                >
+                                  <span className="font-semibold text-slate-200 group-hover/btn:text-cyan-300 group-hover/btn:font-black">
+                                    {d}
+                                  </span>
+                                  <Edit2 className="w-2.5 h-2.5 text-cyan-400 opacity-0 group-hover/btn:opacity-100 transition-opacity shrink-0" />
+                                </button>
+                              )}
                             </td>
+
+                            {/* Kolom Rate (% / ‰) - Terkalkulasi Otomatis */}
                             <td
                               className={`py-2 px-1.5 text-center font-mono font-bold border-r border-indigo-950/40 transition-colors ${
                                 d > 0 ? (isCompliant ? 'bg-emerald-500/10' : 'bg-red-500/10') : ''
                               }`}
+                              title="Dihitung otomatis: (N / D) × Pengali"
                             >
                               {d > 0 ? (
                                 <span className={badgeColorText}>
@@ -658,6 +910,8 @@ export default function UnifiedSurveilansHaisReport({
                                 <span className="text-slate-600 font-mono">0.00{ind.unit}</span>
                               )}
                             </td>
+
+                            {/* Kolom Target */}
                             <td className="py-2 px-1 text-center font-mono font-bold text-[10px] text-slate-400 bg-indigo-950/20 border-r-2 border-indigo-900/40">
                               {ind.targetLabel}
                             </td>
@@ -1263,6 +1517,36 @@ export default function UnifiedSurveilansHaisReport({
               );
             })}
           </div>
+
+          {/* Toast Notifikasi Status Simpan Otomatis */}
+          <AnimatePresence>
+            {saveStatus && (
+              <motion.div
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl border backdrop-blur-md text-xs sm:text-sm font-bold ${
+                  saveStatus.type === 'saved'
+                    ? 'bg-[#0f2e22]/95 text-emerald-200 border-emerald-500/60 shadow-[0_10px_30px_rgba(16,185,129,0.3)]'
+                    : saveStatus.type === 'saving'
+                    ? 'bg-[#101c38]/95 text-cyan-200 border-cyan-500/60 shadow-[0_10px_30px_rgba(6,182,212,0.3)]'
+                    : 'bg-[#351218]/95 text-rose-200 border-rose-500/60 shadow-[0_10px_30px_rgba(244,63,94,0.3)]'
+                }`}
+              >
+                {saveStatus.type === 'saved' && (
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                )}
+                {saveStatus.type === 'saving' && (
+                  <RefreshCw className="w-5 h-5 text-cyan-400 animate-spin shrink-0" />
+                )}
+                {saveStatus.type === 'error' && (
+                  <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+                )}
+                <span>{saveStatus.message}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </>
       )}
     </div>

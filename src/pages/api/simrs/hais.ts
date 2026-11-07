@@ -67,6 +67,122 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'POST') {
+      const action = req.query.action || req.body?.action;
+
+      // Fitur Update Cell Langsung dari Tabel Laporan Surveilans HAIs
+      if (action === 'update_cell') {
+        const { year, month, room, indicatorId, numerator, denominator } = req.body;
+        const y = Number(year) || new Date().getFullYear();
+        const m = Number(month);
+        if (!m || m < 1 || m > 12) {
+          return res.status(400).json({ ok: false, error: 'Bulan tidak valid (1-12)' });
+        }
+        if (!room || !indicatorId) {
+          return res.status(400).json({ ok: false, error: 'Room dan indicatorId wajib diisi' });
+        }
+
+        const nVal = Math.max(0, parseInt(numerator, 10) || 0);
+        const dVal = Math.max(0, parseInt(denominator, 10) || 0);
+        const mStr = String(m).padStart(2, '0');
+
+        const roomSlugs: Record<string, string> = {
+          'Ranap Dewasa': 'dewasa',
+          'Ranap Anak': 'anak',
+          'Ranap Kebidanan': 'kebidanan',
+          'Ranap Bedah': 'bedah',
+        };
+        const rSlug = roomSlugs[room] || room.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+        const indConfigs: Record<string, { name: string; target: number; isPercent: boolean; unit: string; mult: number }> = {
+          phlebitis: { name: 'Phlebitis', target: 1.0, isPercent: false, unit: '‰', mult: 1000 },
+          isk: { name: 'ISK', target: 4.7, isPercent: false, unit: '‰', mult: 1000 },
+          decubitus: { name: 'Decubitus', target: 1.5, isPercent: false, unit: '‰', mult: 1000 },
+          ido: { name: 'IDO', target: 2.0, isPercent: true, unit: '%', mult: 100 },
+          vap: { name: 'VAP', target: 5.8, isPercent: false, unit: '‰', mult: 1000 },
+        };
+
+        const cfg = indConfigs[indicatorId.toLowerCase()] || {
+          name: indicatorId.toUpperCase(),
+          target: 1.0,
+          isPercent: false,
+          unit: '‰',
+          mult: 1000,
+        };
+
+        const rate = dVal > 0 ? Number(((nVal / dVal) * cfg.mult).toFixed(2)) : 0;
+        const irPercent = dVal > 0 ? Number(((nVal / dVal) * 100).toFixed(2)) : 0;
+        const isCompliant = rate <= cfg.target;
+
+        const rowId = `manual-hais-${y}-${mStr}-${rSlug}-${indicatorId.toLowerCase()}`;
+        const sessionDate = `${y}-${mStr}-15T12:00:00.000Z`;
+        const nowIso = new Date().toISOString();
+
+        const dataIndikatorJson = JSON.stringify({
+          numerator: nVal,
+          denominator: dVal,
+          rate,
+          target: cfg.target,
+          unit: cfg.unit,
+          isPercent: cfg.isPercent,
+          irPercent,
+        });
+
+        // Hapus seluruh baris lama (scraper / duplikat) untuk indikator, ruangan, dan bulan ini
+        await runSql(
+          `DELETE FROM "audit_sessions" 
+           WHERE "kategori" = 'Surveilans HAIs' 
+             AND "unit" = ? 
+             AND ("indikator_id" = ? OR "nama_indikator" LIKE ?)
+             AND substr("tanggal_waktu", 1, 7) = ?`,
+          [room, indicatorId.toLowerCase(), `%${indicatorId}%`, `${y}-${mStr}`]
+        );
+
+        // Masukkan data tunggal yang valid dan authoritative
+        await runSql(
+          `INSERT INTO "audit_sessions" (
+            id, created_at, indikator_id, nama_indikator, kategori, tanggal_waktu,
+            observer, unit, unit_kerja, jenis_audit, jumlah_dinilai, jumlah_patuh,
+            numerator, denominator, persentase, status_kepatuhan, data_indikator, catatan
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            rowId,
+            nowIso,
+            indicatorId.toLowerCase(),
+            cfg.name,
+            'Surveilans HAIs',
+            sessionDate,
+            'IPCN RSUD Al-Mulk',
+            room,
+            room,
+            'HAIs',
+            String(dVal),
+            String(nVal),
+            String(nVal),
+            String(dVal),
+            String(rate),
+            isCompliant ? 'PATUH' : 'TIDAK PATUH',
+            dataIndikatorJson,
+            `Diedit langsung via Tabel Laporan Surveilans HAIs (${room} - ${cfg.name} Periode ${mStr}/${y})`,
+          ]
+        );
+
+        clearQueryCache('audit_sessions');
+
+        return res.status(200).json({
+          ok: true,
+          message: `Data ${cfg.name} (${room}) periode ${mStr}/${y} berhasil disimpan otomatis.`,
+          record: {
+            id: rowId,
+            unit: room,
+            indikator_id: indicatorId.toLowerCase(),
+            numerator: nVal,
+            denominator: dVal,
+            rate,
+            status_kepatuhan: isCompliant ? 'PATUH' : 'TIDAK PATUH',
+          },
+        });
+      }
+
       // Manual trigger sinkronisasi
       const { startDate, endDate } = req.body;
       const start = startDate || new Date().toISOString().slice(0, 10);
@@ -131,6 +247,24 @@ async function syncHaisToSmartPpi(webData: any, startDate: string, endDate: stri
   const nowIso = new Date().toISOString();
   const rowsToInsert: any[] = [];
 
+  // Protect all months and indicators that have manual edits or official excel imports
+  const protectedKeys = new Set<string>();
+  try {
+    const protectedRows = await allSql(
+      `SELECT DISTINCT substr(tanggal_waktu, 1, 7) as ym, unit, lower(indikator_id) as ind_id 
+       FROM "audit_sessions" 
+       WHERE "kategori" = 'Surveilans HAIs' 
+         AND ("id" LIKE 'manual-hais%' OR "id" LIKE 'excel-hais%')`
+    );
+    (protectedRows || []).forEach((row: any) => {
+      if (row.ym && row.unit && row.ind_id) {
+        protectedKeys.add(`${row.ym}|${row.unit}|${row.ind_id}`);
+      }
+    });
+  } catch (e) {
+    console.warn('Error fetching protected HAIs keys:', e);
+  }
+
   for (const r of rooms) {
     const tab = webData.tabs?.[r.key];
     if (!tab || !Array.isArray(tab.rows)) continue;
@@ -171,10 +305,11 @@ async function syncHaisToSmartPpi(webData: any, startDate: string, endDate: stri
       // Protect official verified Excel historical data for 2026-01 to 2026-09
       if (tgl >= '2026-01-01' && tgl <= '2026-09-30') continue;
 
+      const ym = tgl.slice(0, 7);
       const sessionDate = `${tgl}T12:00:00.000Z`;
 
       // 1. Phlebitis
-      if (t.ivl > 0 || t.pleb > 0) {
+      if (!protectedKeys.has(`${ym}|${r.unit}|phlebitis`) && (t.ivl > 0 || t.pleb > 0)) {
         const rate = t.ivl > 0 ? Number(((t.pleb / t.ivl) * 1000).toFixed(2)) : 0;
         const irPercent = t.ivl > 0 ? Number(((t.pleb / t.ivl) * 100).toFixed(2)) : 0;
         rowsToInsert.push({
@@ -205,7 +340,7 @@ async function syncHaisToSmartPpi(webData: any, startDate: string, endDate: stri
       }
 
       // 2. ISK
-      if (t.uc > 0 || t.isk > 0) {
+      if (!protectedKeys.has(`${ym}|${r.unit}|isk`) && (t.uc > 0 || t.isk > 0)) {
         const rate = t.uc > 0 ? Number(((t.isk / t.uc) * 1000).toFixed(2)) : 0;
         const irPercent = t.uc > 0 ? Number(((t.isk / t.uc) * 100).toFixed(2)) : 0;
         rowsToInsert.push({
@@ -236,7 +371,7 @@ async function syncHaisToSmartPpi(webData: any, startDate: string, endDate: stri
       }
 
       // 3. VAP
-      if (t.ett > 0 || t.vap > 0) {
+      if (!protectedKeys.has(`${ym}|${r.unit}|vap`) && (t.ett > 0 || t.vap > 0)) {
         const rate = t.ett > 0 ? Number(((t.vap / t.ett) * 1000).toFixed(2)) : 0;
         rowsToInsert.push({
           id: `simrs-vap-${r.key}-${tgl}`,
@@ -260,7 +395,7 @@ async function syncHaisToSmartPpi(webData: any, startDate: string, endDate: stri
       }
 
       // 4. IADP
-      if (t.cvl > 0 || t.iad > 0) {
+      if (!protectedKeys.has(`${ym}|${r.unit}|iadp`) && (t.cvl > 0 || t.iad > 0)) {
         const rate = t.cvl > 0 ? Number(((t.iad / t.cvl) * 1000).toFixed(2)) : 0;
         rowsToInsert.push({
           id: `simrs-iadp-${r.key}-${tgl}`,
@@ -284,7 +419,7 @@ async function syncHaisToSmartPpi(webData: any, startDate: string, endDate: stri
       }
 
       // 5. Decubitus
-      if (t.totalPasien > 0 || t.deku > 0) {
+      if (!protectedKeys.has(`${ym}|${r.unit}|decubitus`) && (t.totalPasien > 0 || t.deku > 0)) {
         const den = t.totalPasien > 0 ? t.totalPasien : 1;
         const rate = Number(((t.deku / den) * 1000).toFixed(2));
         rowsToInsert.push({
@@ -309,7 +444,7 @@ async function syncHaisToSmartPpi(webData: any, startDate: string, endDate: stri
       }
 
       // 6. IDO
-      if (t.ilo > 0) {
+      if (!protectedKeys.has(`${ym}|${r.unit}|ido`) && t.ilo > 0) {
         const den = t.totalPasien > 0 ? t.totalPasien : t.ilo;
         const rate = Number(((t.ilo / den) * 100).toFixed(2));
         rowsToInsert.push({
@@ -335,14 +470,12 @@ async function syncHaisToSmartPpi(webData: any, startDate: string, endDate: stri
     }
   }
 
-  // Clean up any existing HAIs rows in [startDate..endDate] and any legacy non-daily HAIs rows before upserting
+  // Clean up any existing SIMRS daily rows in [startDate..endDate] before upserting
   try {
     await runSql(
-      `DELETE FROM "audit_sessions" WHERE "kategori" = 'Surveilans HAIs' AND (
-        ("tanggal_waktu" >= ? AND "tanggal_waktu" <= ?)
-        OR "id" NOT LIKE 'simrs-%'
-        OR LENGTH("id") > 32
-      )`,
+      `DELETE FROM "audit_sessions" WHERE "kategori" = 'Surveilans HAIs' 
+       AND "id" LIKE 'simrs-%'
+       AND ("tanggal_waktu" >= ? AND "tanggal_waktu" <= ?)`,
       [`${startDate}T00:00:00.000Z`, `${endDate}T23:59:59.999Z`]
     );
     clearQueryCache('audit_sessions');
