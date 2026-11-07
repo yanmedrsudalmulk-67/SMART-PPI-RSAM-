@@ -381,6 +381,17 @@ export function injectPrintStyles(clonedDoc: Document, isLandscape: boolean = fa
       font-family: Arial, Helvetica, sans-serif !important;
     }
 
+    .f4-page.f4-page-landscape,
+    .f4-page[data-orientation="landscape"] {
+      width: 330mm !important;
+      min-width: 330mm !important;
+      max-width: 330mm !important;
+      min-height: 215mm !important;
+      height: 215mm !important;
+      max-height: 215mm !important;
+      padding: 25mm !important;
+    }
+
     .f4-page[data-is-cover="true"],
     .f4-page.is-cover {
       padding: 0 !important;
@@ -539,13 +550,14 @@ export async function exportElementToA4Pdf(
   }
 
   const isF4 = options.paperSize !== 'a4';
+  const hasMultipleF4Pages = element.querySelectorAll('.f4-page').length > 1;
   const isLandscape =
     options.orientation === 'landscape' ||
     element.getAttribute('data-orientation') === 'landscape' ||
     element.classList.contains('landscape') ||
     element.id === 'hand-hygiene-official-report' ||
     element.id === 'apd-official-report' ||
-    Boolean(element.querySelector?.('#hand-hygiene-official-report, #apd-official-report, [data-orientation="landscape"]'));
+    (!hasMultipleF4Pages && Boolean(element.querySelector?.('#hand-hygiene-official-report, #apd-official-report, [data-orientation="landscape"]')));
 
   const pdfOrientation: 'portrait' | 'landscape' = isLandscape ? 'landscape' : 'portrait';
   const pdfFormat: string | [number, number] = isF4
@@ -558,9 +570,9 @@ export async function exportElementToA4Pdf(
 
   if (zoomStage) {
     zoomStage.style.transform = 'none';
-    zoomStage.style.width = `${targetWidthPx}px`;
-    zoomStage.style.minWidth = `${targetWidthPx}px`;
-    zoomStage.style.maxWidth = `${targetWidthPx}px`;
+    zoomStage.style.width = hasMultipleF4Pages ? 'auto' : `${targetWidthPx}px`;
+    zoomStage.style.minWidth = hasMultipleF4Pages ? '813px' : `${targetWidthPx}px`;
+    zoomStage.style.maxWidth = hasMultipleF4Pages ? 'none' : `${targetWidthPx}px`;
     zoomStage.style.margin = '0 auto';
     zoomStage.style.position = 'relative';
   }
@@ -594,15 +606,23 @@ export async function exportElementToA4Pdf(
     // Used when explicit page containers are provided
     // =========================================================================
     if (pageElements.length > 1) {
+      const firstPageIsLandscape =
+        options.orientation === 'landscape' ||
+        pageElements[0].getAttribute('data-orientation') === 'landscape' ||
+        pageElements[0].classList.contains('f4-page-landscape') ||
+        pageElements[0].classList.contains('landscape');
+
+      const firstOrientation: 'portrait' | 'landscape' = firstPageIsLandscape ? 'landscape' : 'portrait';
+      const firstFormat: string | [number, number] = isF4
+        ? (firstPageIsLandscape ? [330, 215] : [215, 330])
+        : 'a4';
+
       const pdf = new jsPDF({
-        orientation: pdfOrientation,
+        orientation: firstOrientation,
         unit: 'mm',
-        format: pdfFormat,
+        format: firstFormat,
         compress: true,
       });
-
-      const pageWidthMm = pdf.internal.pageSize.getWidth();
-      const pageHeightMm = pdf.internal.pageSize.getHeight();
 
       // Strict 2.5 cm (25 mm) margins on all 4 sides (atas, bawah, kiri, kanan)
       const marginTopMm = margin ?? 25;
@@ -610,11 +630,22 @@ export async function exportElementToA4Pdf(
       const marginLeftMm = margin ?? 25;
       const marginRightMm = margin ?? 25;
 
-      const printableWidthMm = pageWidthMm - marginLeftMm - marginRightMm;
       const runningHeaderHeightMm = 18;
 
       for (let i = 0; i < pageElements.length; i++) {
         const pageEl = pageElements[i];
+        const pageIsLandscape =
+          options.orientation === 'landscape' ||
+          pageEl.getAttribute('data-orientation') === 'landscape' ||
+          pageEl.classList.contains('f4-page-landscape') ||
+          pageEl.classList.contains('landscape');
+        const pageOrientation: 'portrait' | 'landscape' = pageIsLandscape ? 'landscape' : 'portrait';
+        const pageFormat: string | [number, number] = isF4
+          ? (pageIsLandscape ? [330, 215] : [215, 330])
+          : 'a4';
+        const pageTargetWidthPx = pageIsLandscape
+          ? (isF4 ? 1248 : 1123)
+          : (isF4 ? 813 : 794);
 
         // Ensure all images in this page are loaded (with safety timeout so PDF never hangs)
         const pageImagesInElement = Array.from(pageEl.querySelectorAll('img'));
@@ -644,9 +675,9 @@ export async function exportElementToA4Pdf(
           backgroundColor: '#ffffff',
           scrollX: 0,
           scrollY: 0,
-          windowWidth: targetWidthPx,
+          windowWidth: pageTargetWidthPx,
           onclone: async (clonedDoc) => {
-            injectPrintStyles(clonedDoc, isLandscape, isF4 ? 'f4' : 'a4');
+            injectPrintStyles(clonedDoc, pageIsLandscape, isF4 ? 'f4' : 'a4');
             
             const pageId = pageEl.id;
             let targetClonedPage: HTMLElement | null = pageId ? clonedDoc.getElementById(pageId) : null;
@@ -656,9 +687,9 @@ export async function exportElementToA4Pdf(
             }
 
             if (targetClonedPage) {
-              targetClonedPage.style.width = `${targetWidthPx}px`;
-              targetClonedPage.style.minWidth = `${targetWidthPx}px`;
-              targetClonedPage.style.maxWidth = `${targetWidthPx}px`;
+              targetClonedPage.style.width = `${pageTargetWidthPx}px`;
+              targetClonedPage.style.minWidth = `${pageTargetWidthPx}px`;
+              targetClonedPage.style.maxWidth = `${pageTargetWidthPx}px`;
               targetClonedPage.style.margin = '0 auto';
               targetClonedPage.style.position = 'relative';
               targetClonedPage.style.transform = 'none';
@@ -727,18 +758,22 @@ export async function exportElementToA4Pdf(
         const isSelfContainedF4Page = pageEl.classList.contains('f4-page');
         const hasKopSurat = isSelfContainedF4Page || i === 0 || pageEl.querySelector('#kop-surat, .kop-surat, [data-kop-surat]') !== null;
         if (i > 0) {
-          pdf.addPage();
-          if (!hasKopSurat) {
-            drawHospitalRunningHeader(
-              pdf,
-              i + 1,
-              pageWidthMm,
-              marginLeftMm,
-              marginRightMm,
-              marginTopMm,
-              isLandscape
-            );
-          }
+          pdf.addPage(pageFormat, pageOrientation);
+        }
+
+        const pageWidthMm = pdf.internal.pageSize.getWidth();
+        const pageHeightMm = pdf.internal.pageSize.getHeight();
+
+        if (i > 0 && !hasKopSurat) {
+          drawHospitalRunningHeader(
+            pdf,
+            i + 1,
+            pageWidthMm,
+            marginLeftMm,
+            marginRightMm,
+            marginTopMm,
+            pageIsLandscape
+          );
         }
 
         const imgData = canvas.toDataURL('image/png');

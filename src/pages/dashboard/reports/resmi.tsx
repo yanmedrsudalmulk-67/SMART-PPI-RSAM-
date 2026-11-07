@@ -573,6 +573,7 @@ export default function LaporanResmiPage() {
                   className="w-full"
                 >
                   <SemesterOfficialReport
+                    reportData={reportData}
                     semester={selectedSemester}
                     year={selectedYear}
                   />

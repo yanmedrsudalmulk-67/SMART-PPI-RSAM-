@@ -86,8 +86,11 @@ export default function ZoomableReportViewer({
       setContainerWidth(cWidth);
 
       const isMulti = zoom < 0.50;
+      const hasLandscape = Boolean(
+        contentRef.current?.querySelector('.f4-page-landscape, [data-orientation="landscape"]')
+      );
       // 3 pages side-by-side with 28px gaps: 813 * 3 + 28 * 2 = 2495px ~ 2520px
-      const pWidth = isMulti ? 2520 : 813;
+      const pWidth = isMulti ? 2520 : hasLandscape ? 1248 : 813;
 
       let pHeight = 1247;
       if (contentRef.current) {
@@ -105,7 +108,7 @@ export default function ZoomableReportViewer({
               const el = p as HTMLElement;
               totalH += (el.offsetHeight || 1247) + 36;
             });
-            pHeight = Math.max(totalH, contentRef.current.scrollHeight || 1247);
+            pHeight = totalH + 20;
           }
         } else {
           pHeight = contentRef.current.scrollHeight || 1247;
@@ -229,7 +232,7 @@ export default function ZoomableReportViewer({
     }
   };
 
-  const paperWidth = isMultiPage ? 2520 : 813;
+  const paperWidth = isMultiPage ? 2520 : (contentDimensions.width || 813);
   const paperHeight = contentDimensions.height || 1247;
   const scaledWidth = Math.round(paperWidth * zoom);
   const scaledHeight = Math.round(paperHeight * zoom);
@@ -259,8 +262,8 @@ export default function ZoomableReportViewer({
           display: flex !important;
           flex-direction: column !important;
           align-items: center !important;
-          width: 813px !important;
-          max-width: 813px !important;
+          width: 100% !important;
+          max-width: 100% !important;
         }
         /* Range slider glowing styling */
         .report-zoom-slider::-webkit-slider-thumb {

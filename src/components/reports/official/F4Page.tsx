@@ -57,35 +57,44 @@ export default function F4Page({
     >
       {/* Printable page styling container */}
       <div
-        className="w-full h-full flex flex-col justify-between"
+        className="w-full h-full flex flex-col justify-start"
         style={{ backgroundColor: '#ffffff', color: isCover ? 'inherit' : '#000000', fontFamily: 'Arial, Helvetica, sans-serif' }}
       >
-        {/* Page Main Content Area */}
+        {/* Page Main Content Area (strictly bounded by 25mm = 2.5cm margins on all 4 sides) */}
         <div
-          className={`w-full flex-1 flex flex-col text-[12pt] leading-[1.5] text-justify ${isCover ? '' : 'text-black'} ${
-            contentClassName || 'overflow-hidden'
+          className={`w-full flex-1 flex flex-col justify-start text-[12pt] leading-[1.5] text-justify ${isCover ? '' : 'text-black'} ${
+            contentClassName || 'overflow-visible'
           }`}
           style={{ color: isCover ? 'inherit' : '#000000', fontFamily: 'Arial, Helvetica, sans-serif', lineHeight: '1.5' }}
         >
           {children}
         </div>
-
-        {/* Bottom Page Numbering Footer - Clean Right-aligned like official PDF */}
-        {!isCover && displayPageNum !== undefined && (
-          <div className="w-full pt-2 flex items-center justify-end text-[10pt] text-black font-sans flex-shrink-0">
-            {showFooterMeta ? (
-              <div className="w-full flex items-center justify-between border-t border-slate-300 pt-1 text-[9pt] text-slate-600">
-                <span className="italic">Tim PPI - UOBK RSUD Al-Mulk Kota Sukabumi</span>
-                <span className="font-semibold text-slate-800">
-                  {totalPages ? `Halaman ${displayPageNum} dari ${totalPages}` : `${displayPageNum}`}
-                </span>
-              </div>
-            ) : (
-              <span className="font-normal pr-1">{displayPageNum}</span>
-            )}
-          </div>
-        )}
       </div>
+
+      {/* Bottom Page Numbering Footer inside bottom margin zone (MS Word F4 standard) */}
+      {!isCover && displayPageNum !== undefined && (
+        <div
+          className="flex items-center justify-end text-[10pt] text-black font-sans pointer-events-none select-none"
+          style={{
+            position: 'absolute',
+            left: '25mm',
+            right: '25mm',
+            bottom: '11mm',
+            fontFamily: 'Arial, Helvetica, sans-serif',
+          }}
+        >
+          {showFooterMeta ? (
+            <div className="w-full flex items-center justify-between border-t border-slate-300 pt-1 text-[9pt] text-slate-600">
+              <span className="italic">Tim PPI - UOBK RSUD Al-Mulk Kota Sukabumi</span>
+              <span className="font-semibold text-slate-800">
+                {totalPages ? `Halaman ${displayPageNum} dari ${totalPages}` : `${displayPageNum}`}
+              </span>
+            </div>
+          ) : (
+            <span className="font-normal">{displayPageNum}</span>
+          )}
+        </div>
+      )}
     </div>
   );
 }
