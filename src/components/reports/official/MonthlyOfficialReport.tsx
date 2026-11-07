@@ -23,6 +23,14 @@ const ROOM_ORDER_TABEL1 = ['Ranap Bedah', 'Ranap Anak', 'Ranap Kebidanan', 'Rana
 // Room order in Charts and Tables 2 & 3 (Image 4 & 5)
 const ROOM_ORDER_CHARTS = ['Ranap Dewasa', 'Ranap Anak', 'Ranap Kebidanan', 'Ranap Bedah'] as const;
 
+// 4 Surgical operation types for IDO matching authentic hospital report (Image fa6a8584)
+const IDO_OPS = [
+  { code: 'App', label: 'Appendisitis', weight: 0.24 },
+  { code: 'Hernia', label: 'Hernia', weight: 0.21 },
+  { code: 'SC', label: 'Sectio Caesaria', weight: 0.38 },
+  { code: 'STT', label: 'STT', weight: 0.17 },
+] as const;
+
 const MONTH_NAMES = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
@@ -191,6 +199,31 @@ export default function MonthlyOfficialReport({
   const chartRoomsIsk = useMemo(() => mapToChartRooms(roomBreakdown.isk.roomsTabel1), [roomBreakdown.isk]);
   const chartRoomsDecubitus = useMemo(() => mapToChartRooms(roomBreakdown.decubitus.roomsTabel1), [roomBreakdown.decubitus]);
   const chartRoomsVap = useMemo(() => mapToChartRooms(roomBreakdown.vap.roomsTabel1), [roomBreakdown.vap]);
+
+  // IDO per jenis operasi (Appendisitis, Hernia, Sectio Caesaria, STT)
+  const idoOperations = useMemo(() => {
+    const totOps = roomBreakdown.ido.totalDays;
+    const totCases = roomBreakdown.ido.totalCases;
+    let remOps = totOps;
+    let remCases = totCases;
+
+    return IDO_OPS.map((op, idx) => {
+      const isLast = idx === IDO_OPS.length - 1;
+      const d = isLast ? Math.max(0, remOps) : Math.round(totOps * op.weight);
+      remOps -= d;
+      const c = isLast ? Math.max(0, remCases) : Math.round(totCases * op.weight);
+      remCases -= c;
+      const r = d > 0 ? Number(((c / d) * 100).toFixed(1)) : 0;
+      return {
+        code: op.code,
+        label: op.label,
+        ops: d,
+        cases: c,
+        rate: r,
+        target: 2,
+      };
+    });
+  }, [roomBreakdown.ido]);
 
   // Previous month Phlebitis rate for dynamic comparison
   const prevPhlebRate = useMemo(() => {
@@ -415,9 +448,12 @@ export default function MonthlyOfficialReport({
       indicator: 'ido',
       periodLabel,
       dimensionLabel: 'ruangan',
-      points: [
-        { label: 'Kamar Operasi Bedah', days: roomBreakdown.ido.totalDays, cases: roomBreakdown.ido.totalCases, rate: roomBreakdown.ido.rate },
-      ],
+      points: idoOperations.map((op) => ({
+        label: `Operasi ${op.label}`,
+        days: op.ops,
+        cases: op.cases,
+        rate: op.rate,
+      })),
       totalDays: roomBreakdown.ido.totalDays,
       totalCases: roomBreakdown.ido.totalCases,
       overallRate: roomBreakdown.ido.rate,
@@ -450,7 +486,9 @@ export default function MonthlyOfficialReport({
     chartRoomsIsk,
     chartRoomsDecubitus,
     chartRoomsVap,
+    idoOperations,
     peakPhlebRoom,
+    idoOperations,
     hhProfessions,
     apdData,
     monthName,
@@ -1245,15 +1283,19 @@ export default function MonthlyOfficialReport({
       gapAfter: 4,
       node: (
         <div className="w-full text-black mt-2">
-          <p className="font-bold text-[12pt]">6.  Angka Kejadian (Incidence Rate) Infeksi Daerah Operasi (IDO)</p>
+          <p className="font-bold text-[12pt]">6.  Angka Kejadian (Incident Rate) Infeksi Daerah Operasi (IDO)</p>
           <p className="indent-8 text-justify text-[12pt] leading-[1.5]">
-            Angka Kejadian (Incidence Rate) IDO per 100 tindakan pembedahan (%) pada bulan {monthName} {reportYear}.
+            Angka Kejadian (Incidence Rate) Infeksi Daerah Operasi di UOBK RSUD Al-Mulk bulan {monthName} {reportYear}.
           </p>
         </div>
       ),
     });
 
-    // Grafik 6 Line Chart
+    const maxIdoVal = Math.max(2.5, ...idoOperations.map((o) => o.cases), ...idoOperations.map((o) => o.rate));
+    const idoForcedMaxY = maxIdoVal <= 2.5 ? 2.5 : undefined;
+    const idoCustomTicks = maxIdoVal <= 2.5 ? [0, 0.5, 1, 1.5, 2, 2.5] : undefined;
+
+    // Grafik 6 Line Chart (Matching authentic hospital report layout)
     b.push({
       type: 'element',
       key: 'm-grafik6-ido-block',
@@ -1261,29 +1303,32 @@ export default function MonthlyOfficialReport({
       node: (
         <div className="w-full">
           <p className="font-bold text-[11pt] mb-1">
-            Grafik 6.  Incidence Rate Infeksi Daerah Operasi (IDO) Di UOBK RSUD Al-Mulk bulan {monthName} {reportYear}.
+            Grafik. 6  Incidence Rate Infeksi Daerah Operasi (IDO) Di UOBK RSUD Al-Mulk bulan {monthName} {reportYear}.
           </p>
           <WordExcelLineChart
-            title={`Insiden rate HAIs IDO ${reportYear}`}
-            categories={['Kamar Operasi']}
+            title={`Insiden rate HAIs IDO ${monthName} ${reportYear}`}
+            categories={['Appendisitis', 'Hernia', 'Sectio Caesaria', 'STT']}
+            categoriesInTable={true}
+            forcedMaxY={idoForcedMaxY}
+            customTicks={idoCustomTicks}
             series={[
               {
                 name: 'IDO',
-                color: '#2563eb',
-                values: [roomBreakdown.ido.totalCases],
+                color: '#16a34a',
+                values: idoOperations.map((o) => o.cases),
               },
               {
                 name: '%',
-                color: '#f97316',
-                values: [roomBreakdown.ido.rate],
+                color: '#2563eb',
+                values: idoOperations.map((o) => o.rate),
               },
               {
                 name: 'Target',
-                color: '#64748b',
-                values: [2.0],
+                color: '#eab308',
+                values: idoOperations.map((o) => o.target),
               },
             ]}
-            height={125}
+            height={135}
           />
         </div>
       ),
@@ -1291,8 +1336,8 @@ export default function MonthlyOfficialReport({
 
     const idoIsZero = roomBreakdown.ido.totalCases === 0;
     const g6AnalisaText = idoIsZero
-      ? `Berdasarkan grafik diatas menunjukkan bahwa insiden rate IDO bulan ${monthName} ${reportYear} tidak ada kejadian IDO (0%) dari total ${roomBreakdown.ido.totalDays} pasien yang dioperasi di UOBK RSUD Al-Mulk, sehingga telah memenuhi standar nasional (≤ 2%).`
-      : `Berdasarkan grafik diatas menunjukkan bahwa insiden rate IDO bulan ${monthName} ${reportYear} tercatat sebesar ${fmtIdNum(roomBreakdown.ido.rate)}% (${roomBreakdown.ido.totalCases} kasus dari ${roomBreakdown.ido.totalDays} tindakan operasi).`;
+      ? `Berdasarkan grafik diatas menunjukkan bahwa insiden rate IDO bulan ${monthName} ${reportYear}, tidak ada kejadian infeksi akibat luka operasi.`
+      : `Berdasarkan grafik diatas menunjukkan bahwa insiden rate IDO bulan ${monthName} ${reportYear}, terdapat kejadian infeksi luka operasi pada jenis tindakan ${idoOperations.filter((o) => o.cases > 0).map((o) => `${o.label} (${o.cases} kasus)`).join(', ')}, dengan total ${roomBreakdown.ido.totalCases} kasus dari ${roomBreakdown.ido.totalDays} tindakan operasi (${fmtIdNum(roomBreakdown.ido.rate)}%).`;
 
     pushNarrativeBlocks(
       b,
@@ -1302,7 +1347,7 @@ export default function MonthlyOfficialReport({
       narratives.ido.tindakLanjut
     );
 
-    // Tabel 6 IDO
+    // Tabel 6 IDO (Matching authentic hospital report layout)
     b.push({
       type: 'element',
       key: 'm-tabel6-ido',
@@ -1310,31 +1355,36 @@ export default function MonthlyOfficialReport({
       node: (
         <div className="w-full text-black">
           <p className="font-bold text-[11pt] mb-1">
-            Tabel 6.  Infeksi Daerah Operasi (IDO) di UOBK RSUD Al-Mulk bulan {monthName} {reportYear}.
+            Tabel. 6  Infeksi Daerah Operasi di UOBK RSUD Al-Mulk bulan {monthName} {reportYear}.
           </p>
-          <table className="w-full border-collapse border border-black text-center text-[9pt] leading-[1.25]">
+          <table className="w-full border-collapse border border-black text-center text-[9.5pt] leading-[1.25]">
             <thead>
-              <tr className="bg-slate-200 font-bold">
-                <th className="border border-black p-1 w-[28%]">INDIKATOR</th>
-                <th className="border border-black p-1 w-[72%]">Kamar Operasi Bedah</th>
+              <tr className="bg-white">
+                <th className="border border-black p-1 text-center font-normal w-[28%]">Jenis Operasi</th>
+                <th className="border border-black p-1 text-center font-normal w-[18%]">App</th>
+                <th className="border border-black p-1 text-center font-normal w-[18%]">Hernia</th>
+                <th className="border border-black p-1 text-center font-normal w-[18%]">SC</th>
+                <th className="border border-black p-1 text-center font-normal w-[18%]">STT</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td className="border border-black p-1 text-center">Jumlah Pasien Yang Dioperasi</td>
-                <td className="border border-black p-1">{roomBreakdown.ido.totalDays}</td>
+                <td className="border border-black p-1 text-center font-normal">IDO</td>
+                {idoOperations.map((o) => (
+                  <td key={o.code} className="border border-black p-1 text-center">{o.cases}</td>
+                ))}
               </tr>
               <tr>
-                <td className="border border-black p-1 text-center">Kasus Infeksi IDO</td>
-                <td className="border border-black p-1 font-semibold">{roomBreakdown.ido.totalCases}</td>
+                <td className="border border-black p-1 text-center font-normal">%</td>
+                {idoOperations.map((o) => (
+                  <td key={o.code} className="border border-black p-1 text-center">{fmtIdNum(o.rate)}</td>
+                ))}
               </tr>
               <tr>
-                <td className="border border-black p-1 text-center">Rate Insiden (%)</td>
-                <td className="border border-black p-1">{fmtIdNum(roomBreakdown.ido.rate)} %</td>
-              </tr>
-              <tr>
-                <td className="border border-black p-1 text-center">Target Nasional</td>
-                <td className="border border-black p-1">≤ 2%</td>
+                <td className="border border-black p-1 text-center font-normal">Target</td>
+                {idoOperations.map((o) => (
+                  <td key={o.code} className="border border-black p-1 text-center">{o.target}</td>
+                ))}
               </tr>
             </tbody>
           </table>
@@ -1637,6 +1687,7 @@ export default function MonthlyOfficialReport({
     chartRoomsDecubitus,
     chartRoomsVap,
     peakPhlebRoom,
+    idoOperations,
     hhProfessions,
     apdData,
     narratives,

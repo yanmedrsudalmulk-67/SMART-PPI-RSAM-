@@ -194,6 +194,8 @@ interface WordExcelLineChartProps {
   height?: number;
   className?: string;
   forcedMaxY?: number;
+  customTicks?: number[];
+  categoriesInTable?: boolean;
 }
 
 export function WordExcelLineChart({
@@ -203,24 +205,31 @@ export function WordExcelLineChart({
   height = 135,
   className = '',
   forcedMaxY,
+  customTicks,
+  categoriesInTable = false,
 }: WordExcelLineChartProps) {
   const allVals = series.flatMap((s) => s.values);
   const rawMax = Math.max(...allVals, 4);
   const maxY = forcedMaxY || (rawMax <= 18 ? (rawMax <= 6 ? 6 : 18) : Math.ceil(rawMax / 5) * 5);
-  const step = maxY <= 6 ? 1 : maxY <= 18 ? 2 : Math.ceil(maxY / 6);
-  const ticks: number[] = [];
-  for (let t = 0; t <= maxY; t += step) {
-    ticks.push(t);
-  }
-  if (ticks[ticks.length - 1] < maxY) {
-    ticks.push(maxY);
+  
+  let ticks: number[] = [];
+  if (customTicks && customTicks.length > 0) {
+    ticks = customTicks;
+  } else {
+    const step = maxY <= 6 ? 1 : maxY <= 18 ? 2 : Math.ceil(maxY / 6);
+    for (let t = 0; t <= maxY; t += step) {
+      ticks.push(t);
+    }
+    if (ticks[ticks.length - 1] < maxY) {
+      ticks.push(maxY);
+    }
   }
 
   const chartWidth = 560;
   const paddingLeft = 32;
   const paddingRight = 16;
   const paddingTop = 14;
-  const paddingBottom = 16;
+  const paddingBottom = categoriesInTable ? 8 : 16;
   const plotWidth = chartWidth - paddingLeft - paddingRight;
   const plotHeight = height - paddingTop - paddingBottom;
 
@@ -269,7 +278,7 @@ export function WordExcelLineChart({
                   fill="#475569"
                   fontFamily="sans-serif"
                 >
-                  {t}
+                  {fmtIdNum(t)}
                 </text>
               </g>
             );
@@ -292,9 +301,10 @@ export function WordExcelLineChart({
                 {s.values.map((val, i) => {
                   const cx = getX(i);
                   const cy = getY(val);
-                  // Stagger label position to avoid overlapping:
-                  // sIdx 0: above, sIdx 1: slightly higher or below, sIdx 2: target
-                  const labelY = sIdx === 0 ? cy - 5 : sIdx === 1 ? cy - 6 : cy + 9;
+                  
+                  // Avoid overlapping duplicate numbers if series 1 has identical value as series 0
+                  const isDuplicateZero = sIdx === 1 && series[0]?.values[i] === val;
+                  const labelY = sIdx === 0 ? cy - 5 : sIdx === 1 ? cy - 8 : cy - 5;
 
                   return (
                     <g key={i}>
@@ -306,17 +316,19 @@ export function WordExcelLineChart({
                         stroke="#ffffff"
                         strokeWidth="1"
                       />
-                      <text
-                        x={cx}
-                        y={labelY}
-                        textAnchor="middle"
-                        fontSize="6.5"
-                        fontWeight="bold"
-                        fill={s.color}
-                        fontFamily="sans-serif"
-                      >
-                        {fmtIdNum(val)}
-                      </text>
+                      {!isDuplicateZero && (
+                        <text
+                          x={cx}
+                          y={labelY}
+                          textAnchor="middle"
+                          fontSize="6.5"
+                          fontWeight="bold"
+                          fill={s.color}
+                          fontFamily="sans-serif"
+                        >
+                          {fmtIdNum(val)}
+                        </text>
+                      )}
                     </g>
                   );
                 })}
@@ -324,8 +336,8 @@ export function WordExcelLineChart({
             );
           })}
 
-          {/* X Axis Category Labels */}
-          {categories.map((cat, i) => (
+          {/* X Axis Category Labels (only if not rendered in table) */}
+          {!categoriesInTable && categories.map((cat, i) => (
             <text
               key={i}
               x={getX(i)}
@@ -351,15 +363,27 @@ export function WordExcelLineChart({
               <col key={i} style={{ width: `${(100 - 22) / categories.length}%` }} />
             ))}
           </colgroup>
+          {categoriesInTable && (
+            <thead>
+              <tr className="bg-white">
+                <th className="border border-slate-400 p-0.5"></th>
+                {categories.map((c, i) => (
+                  <th key={i} className="border border-slate-400 p-0.5 font-bold text-slate-800 text-center">
+                    {c}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+          )}
           <tbody>
             {series.map((s, sIdx) => (
               <tr key={sIdx} className={sIdx % 2 === 1 ? 'bg-slate-50' : 'bg-white'}>
                 <td className="border border-slate-400 p-0.5 text-left pl-1.5 font-bold align-middle">
                   <div className="flex items-center gap-1.5 whitespace-nowrap overflow-hidden">
-                    <span
-                      className="inline-block w-2.5 h-2.5 shrink-0 border border-slate-600"
-                      style={{ backgroundColor: s.color }}
-                    />
+                    <span className="relative inline-flex items-center justify-center w-3 h-2 shrink-0">
+                      <span className="w-full h-[1.5px]" style={{ backgroundColor: s.color }} />
+                      <span className="absolute w-1.5 h-1.5 rounded-full" style={{ backgroundColor: s.color }} />
+                    </span>
                     <span className="truncate">{s.name}</span>
                   </div>
                 </td>
