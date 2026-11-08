@@ -1477,12 +1477,37 @@ export default function MonthlyOfficialReport({
           </p>
           <table className="w-full border-collapse border border-black text-center text-[9.5pt] leading-[1.25]">
             <thead>
-              <tr className="bg-white">
-                <th className="border border-black p-1 text-center font-normal w-[28%]">Jenis Operasi</th>
-                <th className="border border-black p-1 text-center font-normal w-[18%]">App</th>
-                <th className="border border-black p-1 text-center font-normal w-[18%]">Hernia</th>
-                <th className="border border-black p-1 text-center font-normal w-[18%]">SC</th>
-                <th className="border border-black p-1 text-center font-normal w-[18%]">STT</th>
+              <tr className="font-bold">
+                <th
+                  className="border border-black p-1 text-center font-bold text-black w-[28%]"
+                  style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                >
+                  Jenis Operasi
+                </th>
+                <th
+                  className="border border-black p-1 text-center font-bold text-black w-[18%]"
+                  style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                >
+                  App
+                </th>
+                <th
+                  className="border border-black p-1 text-center font-bold text-black w-[18%]"
+                  style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                >
+                  Hernia
+                </th>
+                <th
+                  className="border border-black p-1 text-center font-bold text-black w-[18%]"
+                  style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                >
+                  SC
+                </th>
+                <th
+                  className="border border-black p-1 text-center font-bold text-black w-[18%]"
+                  style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                >
+                  STT
+                </th>
               </tr>
             </thead>
             <tbody>

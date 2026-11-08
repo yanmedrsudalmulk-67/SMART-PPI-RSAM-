@@ -579,17 +579,23 @@ export function sanitizeTableStylesForPdf(rootEl: HTMLElement, clonedDoc: Docume
           effectiveBg.toLowerCase().includes('00a651') ||
           cell.classList.contains('bg-[#00a651]');
 
-        const isWhiteText =
+        const hasDarkBg =
+          isGreenCell ||
+          (effectiveBg &&
+            !effectiveBg.includes('255, 255, 255') &&
+            !effectiveBg.toLowerCase().includes('ffffff') &&
+            !effectiveBg.includes('241, 245, 249') && // slate-100
+            !effectiveBg.includes('226, 232, 240') && // slate-200
+            !effectiveBg.includes('248, 250, 252') && // slate-50
+            effectiveBg !== 'transparent' &&
+            effectiveBg !== 'rgba(0, 0, 0, 0)');
+
+        const isExplicitWhiteText =
           cell.classList.contains('text-white') ||
           cellClassAttr.includes('text-white') ||
-          trEl.classList.contains('text-white') ||
           cellStyleAttr.toLowerCase().includes('color: #ffffff') ||
           cellStyleAttr.toLowerCase().includes('color:#ffffff') ||
-          cellStyleAttr.includes('color: rgb(255, 255, 255)') ||
-          rowColor === 'rgb(255, 255, 255)' ||
-          rowColor === '#ffffff' ||
-          cell.style.color === 'rgb(255, 255, 255)' ||
-          cell.style.color === '#ffffff';
+          cellStyleAttr.includes('color: rgb(255, 255, 255)');
 
         if (isGreenCell) {
           cell.style.setProperty('background-color', '#00a651', 'important');
@@ -599,21 +605,26 @@ export function sanitizeTableStylesForPdf(rootEl: HTMLElement, clonedDoc: Docume
             child.style.setProperty('color', '#ffffff', 'important');
             child.style.setProperty('-webkit-text-fill-color', '#ffffff', 'important');
           });
-        } else if (isWhiteText) {
+        } else if (isExplicitWhiteText && hasDarkBg) {
           cell.style.setProperty('color', '#ffffff', 'important');
           cell.style.setProperty('-webkit-text-fill-color', '#ffffff', 'important');
           cell.querySelectorAll<HTMLElement>('*').forEach((child) => {
             child.style.setProperty('color', '#ffffff', 'important');
             child.style.setProperty('-webkit-text-fill-color', '#ffffff', 'important');
           });
-        } else if (cellBg && cellBg !== 'transparent' && cellBg !== 'rgba(0, 0, 0, 0)') {
-          cell.style.setProperty('background-color', cellBg, 'important');
-        } else if (hasBg) {
-          cell.style.setProperty('background-color', rowBg, 'important');
-        } else if (rowColor && rowColor !== 'inherit' && rowColor !== 'initial') {
-          if (!cell.style.color || cell.style.color === 'inherit') {
-            cell.style.color = rowColor;
+        } else {
+          // Standard document table cell on light or white background -> ALWAYS BLACK TEXT
+          if (cellBg && cellBg !== 'transparent' && cellBg !== 'rgba(0, 0, 0, 0)') {
+            cell.style.setProperty('background-color', cellBg, 'important');
+          } else if (hasBg) {
+            cell.style.setProperty('background-color', rowBg, 'important');
           }
+          cell.style.setProperty('color', '#000000', 'important');
+          cell.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
+          cell.querySelectorAll<HTMLElement>('*').forEach((child) => {
+            child.style.setProperty('color', '#000000', 'important');
+            child.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
+          });
         }
       });
 
