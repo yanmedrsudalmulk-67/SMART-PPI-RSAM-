@@ -562,56 +562,46 @@ export default function QuarterlyOfficialReport({
           </p>
         ),
       },
+
+      // Pindahkan 2. Tujuan Umum dan Khusus ke Halaman 3 secara rapi dan utuh
+      { type: 'pageBreak', key: 'q-break-bab1-tujuan' },
       {
         type: 'element',
-        key: 'q-bab1-tujuan-h',
-        keepWithNext: true,
-        gapAfter: 6,
+        key: 'q-bab1-tujuan-block',
+        gapAfter: 16,
         node: (
-          <div className="flex items-start font-bold">
-            <span className="w-6 flex-shrink-0">2.</span>
-            <span>Tujuan Umum dan Khusus</span>
-          </div>
-        ),
-      },
-      {
-        type: 'element',
-        key: 'q-bab1-tujuan-umum',
-        gapAfter: 10,
-        node: (
-          <div className="pl-6">
-            <div className="flex items-start font-bold mb-1">
-              <span className="w-6 flex-shrink-0">a.</span>
-              <span>Tujuan Umum</span>
+          <div className="w-full text-justify text-[11pt] leading-[1.6]">
+            <div className="flex items-start font-bold mb-2">
+              <span className="w-6 flex-shrink-0">2.</span>
+              <span>Tujuan Umum dan Khusus</span>
             </div>
-            <p className="pl-6 text-justify">
-              Mengetahui angka kepatuhan pelaksanaan kewaspadaan standar, dan surveilans Rumah Sakit.
-            </p>
-          </div>
-        ),
-      },
-      {
-        type: 'element',
-        key: 'q-bab1-tujuan-khusus',
-        gapAfter: 12,
-        node: (
-          <div className="pl-6">
-            <div className="flex items-start font-bold mb-1">
-              <span className="w-6 flex-shrink-0">b.</span>
-              <span>Tujuan Khusus</span>
+            <div className="pl-6 mb-3">
+              <div className="flex items-start font-bold mb-1">
+                <span className="w-6 flex-shrink-0">a.</span>
+                <span>Tujuan Umum</span>
+              </div>
+              <p className="pl-6 text-justify">
+                Mengetahui angka kepatuhan pelaksanaan kewaspadaan standar, dan surveilans Rumah Sakit.
+              </p>
             </div>
-            <div className="pl-6 space-y-1">
-              <div className="flex items-start">
-                <span className="w-6 flex-shrink-0">1.</span>
-                <span>Mendapatkan data dasar infeksi di UOBK RSUD Al-Mulk.</span>
+            <div className="pl-6">
+              <div className="flex items-start font-bold mb-1">
+                <span className="w-6 flex-shrink-0">b.</span>
+                <span>Tujuan Khusus</span>
               </div>
-              <div className="flex items-start">
-                <span className="w-6 flex-shrink-0">2.</span>
-                <span>Mengukur dan menilai keberhasilan suatu Program PPI di RSUD Al-Mulk.</span>
-              </div>
-              <div className="flex items-start">
-                <span className="w-6 flex-shrink-0">3.</span>
-                <span>Mengetahui permasalahan tentang kesehatan yang memerlukan penanggulangan.</span>
+              <div className="pl-6 space-y-1.5">
+                <div className="flex items-start">
+                  <span className="w-6 flex-shrink-0">1.</span>
+                  <span>Mendapatkan data dasar infeksi di UOBK RSUD Al-Mulk.</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="w-6 flex-shrink-0">2.</span>
+                  <span>Mengukur dan menilai keberhasilan suatu Program PPI di RSUD Al-Mulk.</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="w-6 flex-shrink-0">3.</span>
+                  <span>Mengetahui permasalahan tentang kesehatan yang memerlukan penanggulangan.</span>
+                </div>
               </div>
             </div>
           </div>
@@ -685,9 +675,10 @@ export default function QuarterlyOfficialReport({
         gapAfter: 14,
         node: (
           <div className="w-full">
-            <p className="text-center font-bold text-[12pt] mb-2">
-              Tabel 1. Incident Rate HAIs UOBK RSUD Al-Mulk {qData.periodLabel}
-            </p>
+            <div className="text-center font-bold text-[12pt] mb-2 leading-snug">
+              <p>Tabel 1. Incident Rate HAIs UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
+              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
+            </div>
             <table className="w-full border-collapse border border-black text-center text-[10.5pt] leading-[1.25]">
               <thead>
                 <tr className="font-bold bg-slate-50">
@@ -835,9 +826,10 @@ export default function QuarterlyOfficialReport({
         gapAfter: 10,
         node: (
           <div className="w-full">
-            <p className="text-center font-bold text-[12pt] mb-1">
-              Grafik 1. Incident Rate HAIs UOBK RSUD Al-Mulk {qData.periodLabel}
-            </p>
+            <div className="text-center font-bold text-[12pt] mb-1.5 leading-snug">
+              <p>Grafik 1. Incident Rate HAIs UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
+              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
+            </div>
             <WordStyleGroupedBarChart
               categories={['Phlebitis', 'ISK', 'Decubitus', 'VAP', 'IDO']}
               series={[
@@ -888,9 +880,10 @@ export default function QuarterlyOfficialReport({
         gapAfter: 10,
         node: (
           <div className="w-full">
-            <p className="text-center font-bold text-[12pt] mb-1">
-              Grafik 2. Incidence Rate Phlebitis di UOBK RSUD Al-Mulk {qData.periodLabel}
-            </p>
+            <div className="text-center font-bold text-[12pt] mb-1.5 leading-snug">
+              <p>Grafik 2. Incidence Rate Phlebitis di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
+              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
+            </div>
             <WordStyleLineChart
               categories={chartMonthLabels}
               series={[
@@ -922,9 +915,10 @@ export default function QuarterlyOfficialReport({
         gapAfter: 16,
         node: (
           <div className="w-full">
-            <p className="text-center font-bold text-[12pt] mb-1.5">
-              Tabel 2. Incidence Rate Phlebitis di UOBK RSUD Al-Mulk {qData.periodLabel}
-            </p>
+            <div className="text-center font-bold text-[12pt] mb-2 leading-snug">
+              <p>Tabel 2. Incidence Rate Phlebitis di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
+              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
+            </div>
             <table className="w-full border-collapse border border-black text-center text-[10.5pt] leading-[1.3]">
               <thead>
                 <tr className="font-bold bg-slate-50">
@@ -997,9 +991,10 @@ export default function QuarterlyOfficialReport({
         gapAfter: 10,
         node: (
           <div className="w-full">
-            <p className="text-center font-bold text-[12pt] mb-1">
-              Grafik 3. Incidence Rate Infeksi Saluran Kemih di UOBK RSUD Al-Mulk {qData.periodLabel}
-            </p>
+            <div className="text-center font-bold text-[12pt] mb-1.5 leading-snug">
+              <p>Grafik 3. Incidence Rate Infeksi Saluran Kemih di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
+              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
+            </div>
             <WordStyleLineChart
               categories={chartMonthLabels}
               series={[
@@ -1020,9 +1015,10 @@ export default function QuarterlyOfficialReport({
         gapAfter: 16,
         node: (
           <div className="w-full">
-            <p className="text-center font-bold text-[12pt] mb-1.5">
-              Tabel 3. Infeksi Saluran Kemih (ISK) per 1000 Hari Pemakaian Alat (‰) di UOBK RSUD Al-Mulk {qData.periodLabel}
-            </p>
+            <div className="text-center font-bold text-[12pt] mb-2 leading-snug">
+              <p>Tabel 3. Infeksi Saluran Kemih (ISK) per 1000 Hari Pemakaian Alat (‰) di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
+              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
+            </div>
             <table className="w-full border-collapse border border-black text-center text-[10.5pt] leading-[1.3]">
               <thead>
                 <tr className="font-bold bg-slate-50">
@@ -1095,9 +1091,10 @@ export default function QuarterlyOfficialReport({
         gapAfter: 10,
         node: (
           <div className="w-full">
-            <p className="text-center font-bold text-[12pt] mb-1">
-              Grafik 4. Incidence Rate Infeksi Decubitus di UOBK RSUD Al-Mulk {qData.periodLabel}
-            </p>
+            <div className="text-center font-bold text-[12pt] mb-1.5 leading-snug">
+              <p>Grafik 4. Incidence Rate Infeksi Decubitus di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
+              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
+            </div>
             <WordStyleLineChart
               categories={chartMonthLabels}
               series={[
@@ -1118,9 +1115,10 @@ export default function QuarterlyOfficialReport({
         gapAfter: 16,
         node: (
           <div className="w-full">
-            <p className="text-center font-bold text-[12pt] mb-1.5">
-              Tabel 4. Infeksi Decubitus per 1000 Hari Tirah Baring (‰) di UOBK RSUD Al-Mulk {qData.periodLabel}
-            </p>
+            <div className="text-center font-bold text-[12pt] mb-2 leading-snug">
+              <p>Tabel 4. Infeksi Decubitus per 1000 Hari Tirah Baring (‰) di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
+              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
+            </div>
             <table className="w-full border-collapse border border-black text-center text-[10.5pt] leading-[1.3]">
               <thead>
                 <tr className="font-bold bg-slate-50">
@@ -1193,9 +1191,10 @@ export default function QuarterlyOfficialReport({
         gapAfter: 10,
         node: (
           <div className="w-full">
-            <p className="text-center font-bold text-[12pt] mb-1">
-              Grafik 5. Incidence Rate Ventilator Associated Pneumonia (VAP) di UOBK RSUD Al-Mulk {qData.periodLabel}
-            </p>
+            <div className="text-center font-bold text-[12pt] mb-1.5 leading-snug">
+              <p>Grafik 5. Incidence Rate Ventilator Associated Pneumonia (VAP) di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
+              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
+            </div>
             <WordStyleLineChart
               categories={chartMonthLabels}
               series={[
@@ -1216,9 +1215,10 @@ export default function QuarterlyOfficialReport({
         gapAfter: 16,
         node: (
           <div className="w-full">
-            <p className="text-center font-bold text-[12pt] mb-1.5">
-              Tabel 5. Infeksi Ventilator Associated Pneumonia (VAP) di UOBK RSUD Al-Mulk {qData.periodLabel}
-            </p>
+            <div className="text-center font-bold text-[12pt] mb-2 leading-snug">
+              <p>Tabel 5. Infeksi Ventilator Associated Pneumonia (VAP) di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
+              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
+            </div>
             <table className="w-full border-collapse border border-black text-center text-[10.5pt] leading-[1.3]">
               <thead>
                 <tr className="font-bold bg-slate-50">
@@ -1291,9 +1291,10 @@ export default function QuarterlyOfficialReport({
         gapAfter: 10,
         node: (
           <div className="w-full">
-            <p className="text-center font-bold text-[12pt] mb-1">
-              Grafik 6. Incidence Rate Infeksi Daerah Operasi (IDO) di UOBK RSUD Al-Mulk {qData.periodLabel}
-            </p>
+            <div className="text-center font-bold text-[12pt] mb-1.5 leading-snug">
+              <p>Grafik 6. Incidence Rate Infeksi Daerah Operasi (IDO) di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
+              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
+            </div>
             <WordStyleLineChart
               categories={chartMonthLabels}
               series={[
@@ -1314,9 +1315,10 @@ export default function QuarterlyOfficialReport({
         gapAfter: 16,
         node: (
           <div className="w-full">
-            <p className="text-center font-bold text-[12pt] mb-1.5">
-              Tabel 6. Infeksi Daerah Operasi (IDO) di UOBK RSUD Al-Mulk {qData.periodLabel}
-            </p>
+            <div className="text-center font-bold text-[12pt] mb-2 leading-snug">
+              <p>Tabel 6. Infeksi Daerah Operasi (IDO) di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
+              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
+            </div>
             <table className="w-full border-collapse border border-black text-center text-[10.5pt] leading-[1.3]">
               <thead>
                 <tr className="font-bold bg-slate-50">
@@ -1390,9 +1392,10 @@ export default function QuarterlyOfficialReport({
         gapAfter: 10,
         node: (
           <div className="w-full">
-            <p className="text-center font-bold text-[12pt] mb-1">
-              Grafik 1. Kepatuhan Hand Hygiene di UOBK RSUD Al-Mulk {qData.periodLabel}
-            </p>
+            <div className="text-center font-bold text-[12pt] mb-1.5 leading-snug">
+              <p>Grafik 1. Kepatuhan Hand Hygiene di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
+              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
+            </div>
             <WordStyleGroupedBarChart
               categories={chartMonthLabels}
               series={[
@@ -1428,9 +1431,10 @@ export default function QuarterlyOfficialReport({
         gapAfter: 16,
         node: (
           <div className="w-full">
-            <p className="text-center font-bold text-[12pt] mb-1.5">
-              Tabel 1. Kepatuhan Hand Hygiene {qData.periodLabel} Berdasarkan Profesi
-            </p>
+            <div className="text-center font-bold text-[12pt] mb-2 leading-snug">
+              <p>Tabel 1. Kepatuhan Hand Hygiene Triwulan {qData.quarterRoman} Berdasarkan Profesi</p>
+              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
+            </div>
             <table className="w-full border-collapse border border-black text-center text-[10pt] leading-[1.3]">
               <thead>
                 <tr className="font-bold bg-slate-50">
@@ -1500,9 +1504,10 @@ export default function QuarterlyOfficialReport({
         gapAfter: 10,
         node: (
           <div className="w-full">
-            <p className="text-center font-bold text-[12pt] mb-1">
-              Grafik 2. Kepatuhan Penggunaan APD di UOBK RSUD Al-Mulk {qData.periodLabel}
-            </p>
+            <div className="text-center font-bold text-[12pt] mb-1.5 leading-snug">
+              <p>Grafik 2. Kepatuhan Penggunaan APD di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
+              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
+            </div>
             <WordStyleGroupedBarChart
               categories={[
                 m1.monthName,
@@ -1536,9 +1541,10 @@ export default function QuarterlyOfficialReport({
         gapAfter: 16,
         node: (
           <div className="w-full">
-            <p className="text-center font-bold text-[12pt] mb-1.5">
-              Tabel 2. Kepatuhan Penggunaan APD {qData.periodLabel}
-            </p>
+            <div className="text-center font-bold text-[12pt] mb-2 leading-snug">
+              <p>Tabel 2. Kepatuhan Penggunaan APD Triwulan {qData.quarterRoman}</p>
+              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
+            </div>
             <table className="w-full border-collapse border border-black text-center text-[10.5pt] leading-[1.3]">
               <thead>
                 <tr className="font-bold bg-slate-50">
