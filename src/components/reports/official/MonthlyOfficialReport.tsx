@@ -640,6 +640,58 @@ export default function MonthlyOfficialReport({
       ),
     });
 
+    // Grafik 1 Bar Chart (HAIs Overview)
+    b.push({
+      type: 'element',
+      key: 'm-grafik1-block',
+      gapAfter: 6,
+      node: (
+        <div className="w-full">
+          <p className="font-bold text-[11pt] mb-1">
+            Grafik.1 Incident Rate HAIs UOBK RSUD Al-Mulk Bulan {monthName} {reportYear}
+          </p>
+          <WordExcelBarChart
+            title={`Insiden Rate HAIs ${monthName} ${reportYear}`}
+            categories={['Phlebitis', 'ISK', 'Decubitus', 'IDO', 'VAP']}
+            series={[
+              {
+                name: 'Rate In',
+                color: '#4472c4',
+                values: [
+                  roomBreakdown.phlebitis.totalCases,
+                  roomBreakdown.isk.totalCases,
+                  roomBreakdown.decubitus.totalCases,
+                  roomBreakdown.ido.totalCases,
+                  roomBreakdown.vap.totalCases,
+                ],
+              },
+              {
+                name: '‰ & %',
+                color: '#ed7d31',
+                values: [
+                  roomBreakdown.phlebitis.rate,
+                  roomBreakdown.isk.rate,
+                  roomBreakdown.decubitus.rate,
+                  roomBreakdown.ido.rate,
+                  roomBreakdown.vap.rate,
+                ],
+              },
+              {
+                name: 'Target',
+                color: '#a5a5a5',
+                values: [1, 4.7, 1, 2, 5.8],
+              },
+            ]}
+            height={145}
+            forcedMinY={0}
+            forcedMaxY={14}
+            customTicks={[0, 2, 4, 6, 8, 10, 12, 14]}
+            showTable={true}
+          />
+        </div>
+      ),
+    });
+
     // Tabel 1 & IDO Subtabel (Gambar No 3)
     const rT1Phleb = roomBreakdown.phlebitis.roomsTabel1;
     const rT1Isk = roomBreakdown.isk.roomsTabel1;
@@ -863,58 +915,6 @@ export default function MonthlyOfficialReport({
       ),
     });
 
-    // Grafik 1 Bar Chart (HAIs Overview)
-    b.push({
-      type: 'element',
-      key: 'm-grafik1-block',
-      gapAfter: 6,
-      node: (
-        <div className="w-full">
-          <p className="font-bold text-[11pt] mb-1">
-            Grafik.1 Incident Rate HAIs UOBK RSUD Al-Mulk Bulan {monthName} {reportYear}
-          </p>
-          <WordExcelBarChart
-            title={`Insiden Rate HAIs ${monthName} ${reportYear}`}
-            categories={['Phlebitis', 'ISK', 'Decubitus', 'IDO', 'VAP']}
-            series={[
-              {
-                name: 'Rate In',
-                color: '#4472c4',
-                values: [
-                  roomBreakdown.phlebitis.totalCases,
-                  roomBreakdown.isk.totalCases,
-                  roomBreakdown.decubitus.totalCases,
-                  roomBreakdown.ido.totalCases,
-                  roomBreakdown.vap.totalCases,
-                ],
-              },
-              {
-                name: '‰ & %',
-                color: '#ed7d31',
-                values: [
-                  roomBreakdown.phlebitis.rate,
-                  roomBreakdown.isk.rate,
-                  roomBreakdown.decubitus.rate,
-                  roomBreakdown.ido.rate,
-                  roomBreakdown.vap.rate,
-                ],
-              },
-              {
-                name: 'Target',
-                color: '#a5a5a5',
-                values: [1, 4.7, 1, 2, 5.8],
-              },
-            ]}
-            height={145}
-            forcedMinY={0}
-            forcedMaxY={14}
-            customTicks={[0, 2, 4, 6, 8, 10, 12, 14]}
-            showTable={true}
-          />
-        </div>
-      ),
-    });
-
     // Analisa Grafik 1
     const phlebTrend =
       roomBreakdown.phlebitis.rate > prevPhlebRate
@@ -991,17 +991,7 @@ export default function MonthlyOfficialReport({
       ),
     });
 
-    const g2AnalisaText = `Berdasarkan grafik diatas menunjukkan bahwa insiden rate phlebitis bulan ${monthName} ${reportYear} paling banyak di ruang rawat inap ${peakPhlebRoom.room.replace('Ranap ', '')} yaitu ${fmtIdNum(peakPhlebRoom.rate)}‰ dengan jumlah sebanyak ${peakPhlebRoom.cases} orang.`;
-
-    pushNarrativeBlocks(
-      b,
-      'm-g2',
-      g2AnalisaText,
-      narratives.phlebitis.rekomendasi,
-      narratives.phlebitis.tindakLanjut
-    );
-
-    // Tabel 2 Phlebitis
+    // Tabel 2 Phlebitis (Dipindahkan tepat di bawah grafik)
     b.push({
       type: 'element',
       key: 'm-tabel2-phleb',
@@ -1056,6 +1046,16 @@ export default function MonthlyOfficialReport({
       ),
     });
 
+    const g2AnalisaText = `Berdasarkan grafik diatas menunjukkan bahwa insiden rate phlebitis bulan ${monthName} ${reportYear} paling banyak di ruang rawat inap ${peakPhlebRoom.room.replace('Ranap ', '')} yaitu ${fmtIdNum(peakPhlebRoom.rate)}‰ dengan jumlah sebanyak ${peakPhlebRoom.cases} orang.`;
+
+    pushNarrativeBlocks(
+      b,
+      'm-g2',
+      g2AnalisaText,
+      narratives.phlebitis.rekomendasi,
+      narratives.phlebitis.tindakLanjut
+    );
+
     // 3. ISK
     b.push({
       type: 'element',
@@ -1108,20 +1108,7 @@ export default function MonthlyOfficialReport({
       ),
     });
 
-    const iskIsZero = roomBreakdown.isk.totalCases === 0;
-    const g3AnalisaText = iskIsZero
-      ? `Berdasarkan grafik diatas menunjukkan bahwa insiden rate ISK bulan ${monthName} ${reportYear} tidak ada kejadian infeksi saluran kemih (0‰) di seluruh ruang rawat inap UOBK RSUD Al-Mulk, sehingga telah memenuhi standar mutu nasional (≤ 4,7‰).`
-      : `Berdasarkan grafik diatas menunjukkan bahwa insiden rate ISK bulan ${monthName} ${reportYear} tercatat sebesar ${fmtIdNum(roomBreakdown.isk.rate)}‰ (${roomBreakdown.isk.totalCases} kasus dari ${roomBreakdown.isk.totalDays} hari pemakaian kateter urine).`;
-
-    pushNarrativeBlocks(
-      b,
-      'm-g3',
-      g3AnalisaText,
-      narratives.isk.rekomendasi,
-      narratives.isk.tindakLanjut
-    );
-
-    // Tabel 3 ISK
+    // Tabel 3 ISK (Dipindahkan tepat di bawah grafik)
     b.push({
       type: 'element',
       key: 'm-tabel3-isk',
@@ -1176,6 +1163,19 @@ export default function MonthlyOfficialReport({
       ),
     });
 
+    const iskIsZero = roomBreakdown.isk.totalCases === 0;
+    const g3AnalisaText = iskIsZero
+      ? `Berdasarkan grafik diatas menunjukkan bahwa insiden rate ISK bulan ${monthName} ${reportYear} tidak ada kejadian infeksi saluran kemih (0‰) di seluruh ruang rawat inap UOBK RSUD Al-Mulk, sehingga telah memenuhi standar mutu nasional (≤ 4,7‰).`
+      : `Berdasarkan grafik diatas menunjukkan bahwa insiden rate ISK bulan ${monthName} ${reportYear} tercatat sebesar ${fmtIdNum(roomBreakdown.isk.rate)}‰ (${roomBreakdown.isk.totalCases} kasus dari ${roomBreakdown.isk.totalDays} hari pemakaian kateter urine).`;
+
+    pushNarrativeBlocks(
+      b,
+      'm-g3',
+      g3AnalisaText,
+      narratives.isk.rekomendasi,
+      narratives.isk.tindakLanjut
+    );
+
     // 4. Decubitus
     b.push({
       type: 'element',
@@ -1228,20 +1228,7 @@ export default function MonthlyOfficialReport({
       ),
     });
 
-    const decubIsZero = roomBreakdown.decubitus.totalCases === 0;
-    const g4AnalisaText = decubIsZero
-      ? `Berdasarkan grafik diatas menunjukkan bahwa insiden rate Decubitus bulan ${monthName} ${reportYear} tidak ada kejadian decubitus (0‰) di seluruh ruang rawat inap UOBK RSUD Al-Mulk, sehingga telah memenuhi standar mutu nasional (≤ 1‰).`
-      : `Berdasarkan grafik diatas menunjukkan bahwa insiden rate Decubitus bulan ${monthName} ${reportYear} tercatat sebesar ${fmtIdNum(roomBreakdown.decubitus.rate)}‰ (${roomBreakdown.decubitus.totalCases} kasus dari ${roomBreakdown.decubitus.totalDays} hari tirah baring).`;
-
-    pushNarrativeBlocks(
-      b,
-      'm-g4',
-      g4AnalisaText,
-      narratives.decubitus.rekomendasi,
-      narratives.decubitus.tindakLanjut
-    );
-
-    // Tabel 4 Decubitus
+    // Tabel 4 Decubitus (Dipindahkan tepat di bawah grafik)
     b.push({
       type: 'element',
       key: 'm-tabel4-decub',
@@ -1296,6 +1283,19 @@ export default function MonthlyOfficialReport({
       ),
     });
 
+    const decubIsZero = roomBreakdown.decubitus.totalCases === 0;
+    const g4AnalisaText = decubIsZero
+      ? `Berdasarkan grafik diatas menunjukkan bahwa insiden rate Decubitus bulan ${monthName} ${reportYear} tidak ada kejadian decubitus (0‰) di seluruh ruang rawat inap UOBK RSUD Al-Mulk, sehingga telah memenuhi standar mutu nasional (≤ 1‰).`
+      : `Berdasarkan grafik diatas menunjukkan bahwa insiden rate Decubitus bulan ${monthName} ${reportYear} tercatat sebesar ${fmtIdNum(roomBreakdown.decubitus.rate)}‰ (${roomBreakdown.decubitus.totalCases} kasus dari ${roomBreakdown.decubitus.totalDays} hari tirah baring).`;
+
+    pushNarrativeBlocks(
+      b,
+      'm-g4',
+      g4AnalisaText,
+      narratives.decubitus.rekomendasi,
+      narratives.decubitus.tindakLanjut
+    );
+
     // 5. VAP
     b.push({
       type: 'element',
@@ -1348,20 +1348,7 @@ export default function MonthlyOfficialReport({
       ),
     });
 
-    const vapIsZero = roomBreakdown.vap.totalCases === 0;
-    const g5AnalisaText = vapIsZero
-      ? `Berdasarkan grafik diatas menunjukkan bahwa insiden rate VAP bulan ${monthName} ${reportYear} tidak ada kejadian infeksi ventilator (0‰), sehingga telah memenuhi standar nasional (≤ 5,8‰).`
-      : `Berdasarkan grafik diatas menunjukkan bahwa insiden rate VAP bulan ${monthName} ${reportYear} tercatat sebesar ${fmtIdNum(roomBreakdown.vap.rate)}‰ (${roomBreakdown.vap.totalCases} kasus dari ${roomBreakdown.vap.totalDays} hari pemakaian ventilator).`;
-
-    pushNarrativeBlocks(
-      b,
-      'm-g5',
-      g5AnalisaText,
-      narratives.vap.rekomendasi,
-      narratives.vap.tindakLanjut
-    );
-
-    // Tabel 5 VAP
+    // Tabel 5 VAP (Dipindahkan tepat di bawah grafik)
     b.push({
       type: 'element',
       key: 'm-tabel5-vap',
@@ -1415,6 +1402,19 @@ export default function MonthlyOfficialReport({
         </div>
       ),
     });
+
+    const vapIsZero = roomBreakdown.vap.totalCases === 0;
+    const g5AnalisaText = vapIsZero
+      ? `Berdasarkan grafik diatas menunjukkan bahwa insiden rate VAP bulan ${monthName} ${reportYear} tidak ada kejadian infeksi ventilator (0‰), sehingga telah memenuhi standar nasional (≤ 5,8‰).`
+      : `Berdasarkan grafik diatas menunjukkan bahwa insiden rate VAP bulan ${monthName} ${reportYear} tercatat sebesar ${fmtIdNum(roomBreakdown.vap.rate)}‰ (${roomBreakdown.vap.totalCases} kasus dari ${roomBreakdown.vap.totalDays} hari pemakaian ventilator).`;
+
+    pushNarrativeBlocks(
+      b,
+      'm-g5',
+      g5AnalisaText,
+      narratives.vap.rekomendasi,
+      narratives.vap.tindakLanjut
+    );
 
     // 6. IDO
     b.push({
@@ -1475,20 +1475,7 @@ export default function MonthlyOfficialReport({
       ),
     });
 
-    const idoIsZero = roomBreakdown.ido.totalCases === 0;
-    const g6AnalisaText = idoIsZero
-      ? `Berdasarkan grafik diatas menunjukkan bahwa insiden rate IDO bulan ${monthName} ${reportYear}, tidak ada kejadian infeksi akibat luka operasi.`
-      : `Berdasarkan grafik diatas menunjukkan bahwa insiden rate IDO bulan ${monthName} ${reportYear}, terdapat kejadian infeksi luka operasi pada jenis tindakan ${idoOperations.filter((o) => o.cases > 0).map((o) => `${o.label} (${o.cases} kasus)`).join(', ')}, dengan total ${roomBreakdown.ido.totalCases} kasus dari ${roomBreakdown.ido.totalDays} tindakan operasi (${fmtIdNum(roomBreakdown.ido.rate)}%).`;
-
-    pushNarrativeBlocks(
-      b,
-      'm-g6',
-      g6AnalisaText,
-      narratives.ido.rekomendasi,
-      narratives.ido.tindakLanjut
-    );
-
-    // Tabel 6 IDO (Matching authentic hospital report layout)
+    // Tabel 6 IDO (Dipindahkan tepat di bawah grafik)
     b.push({
       type: 'element',
       key: 'm-tabel6-ido',
@@ -1557,6 +1544,19 @@ export default function MonthlyOfficialReport({
         </div>
       ),
     });
+
+    const idoIsZero = roomBreakdown.ido.totalCases === 0;
+    const g6AnalisaText = idoIsZero
+      ? `Berdasarkan grafik diatas menunjukkan bahwa insiden rate IDO bulan ${monthName} ${reportYear}, tidak ada kejadian infeksi akibat luka operasi.`
+      : `Berdasarkan grafik diatas menunjukkan bahwa insiden rate IDO bulan ${monthName} ${reportYear}, terdapat kejadian infeksi luka operasi pada jenis tindakan ${idoOperations.filter((o) => o.cases > 0).map((o) => `${o.label} (${o.cases} kasus)`).join(', ')}, dengan total ${roomBreakdown.ido.totalCases} kasus dari ${roomBreakdown.ido.totalDays} tindakan operasi (${fmtIdNum(roomBreakdown.ido.rate)}%).`;
+
+    pushNarrativeBlocks(
+      b,
+      'm-g6',
+      g6AnalisaText,
+      narratives.ido.rekomendasi,
+      narratives.ido.tindakLanjut
+    );
 
     // =========================================================================
     // PINDAH KE HALAMAN BARU: B. AUDIT HAND HYGIENE DAN APD (Image 1)
@@ -1845,20 +1845,7 @@ export default function MonthlyOfficialReport({
       ),
     });
 
-    const apdMeetsTarget = apdVal >= 100;
-    const apdAnalisaText = apdMeetsTarget
-      ? `Berdasarkan grafik, capaian kepatuhan penggunaan Alat Pelindung Diri (APD) pada bulan ${monthName} ${reportYear} mencapai 100%, sehingga telah memenuhi target standar Kementerian Kesehatan yaitu 100%. Capaian optimal ini menunjukkan konsistensi dan kesadaran tinggi seluruh petugas medis dalam menggunakan APD sesuai indikasi pada setiap tindakan pelayanan.`
-      : `Berdasarkan grafik, capaian kepatuhan penggunaan Alat Pelindung Diri (APD) pada bulan ${monthName} ${reportYear} mencapai ${fmtIdNum(apdVal)}%, sehingga masih belum memenuhi target standar Kementerian Kesehatan yaitu 100%. Ketidaktercapaian ini dapat disebabkan oleh beberapa faktor, seperti masih adanya petugas yang belum konsisten menggunakan APD sesuai indikasi, keterbatasan pengawasan di area pelayanan tertentu, kurangnya kepatuhan pada waktu sibuk pelayanan, serta kemungkinan ketersediaan APD yang belum optimal di beberapa unit.`;
-
-    pushNarrativeBlocks(
-      b,
-      'm-apd',
-      apdAnalisaText,
-      narratives.apd.rekomendasi,
-      narratives.apd.tindakLanjut
-    );
-
-    // Tabel 2 APD (12-Month Summary Table)
+    // Tabel 2 APD (12-Month Summary Table - Dipindahkan tepat di bawah grafik & rekapitulasi)
     b.push({
       type: 'element',
       key: 'm-tabel2-apd',
@@ -1908,6 +1895,19 @@ export default function MonthlyOfficialReport({
         </div>
       ),
     });
+
+    const apdMeetsTarget = apdVal >= 100;
+    const apdAnalisaText = apdMeetsTarget
+      ? `Berdasarkan grafik, capaian kepatuhan penggunaan Alat Pelindung Diri (APD) pada bulan ${monthName} ${reportYear} mencapai 100%, sehingga telah memenuhi target standar Kementerian Kesehatan yaitu 100%. Capaian optimal ini menunjukkan konsistensi dan kesadaran tinggi seluruh petugas medis dalam menggunakan APD sesuai indikasi pada setiap tindakan pelayanan.`
+      : `Berdasarkan grafik, capaian kepatuhan penggunaan Alat Pelindung Diri (APD) pada bulan ${monthName} ${reportYear} mencapai ${fmtIdNum(apdVal)}%, sehingga masih belum memenuhi target standar Kementerian Kesehatan yaitu 100%. Ketidaktercapaian ini dapat disebabkan oleh beberapa faktor, seperti masih adanya petugas yang belum konsisten menggunakan APD sesuai indikasi, keterbatasan pengawasan di area pelayanan tertentu, kurangnya kepatuhan pada waktu sibuk pelayanan, serta kemungkinan ketersediaan APD yang belum optimal di beberapa unit.`;
+
+    pushNarrativeBlocks(
+      b,
+      'm-apd',
+      apdAnalisaText,
+      narratives.apd.rekomendasi,
+      narratives.apd.tindakLanjut
+    );
 
     // =========================================================================
     // REKOMENDASI DAN TINDAK LANJUT (Granular Atomic Blocks for Natural Pagination)
