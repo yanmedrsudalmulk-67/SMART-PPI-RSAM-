@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { FileText, BarChart2, ShieldCheck, ChevronRight, X } from 'lucide-react';
 
 export interface MobileNavItem {
   id: string;
@@ -10,6 +11,38 @@ export interface MobileNavItem {
   shortName: string;
   href: string;
 }
+
+export interface ReportSubItem {
+  name: string;
+  desc: string;
+  href: string;
+  icon: any;
+  badge: string;
+}
+
+export const REPORT_SUB_ITEMS: ReportSubItem[] = [
+  {
+    name: 'Rekap Laporan PPI',
+    desc: 'Ringkasan capaian seluruh indikator',
+    href: '/dashboard/reports',
+    icon: BarChart2,
+    badge: 'Rekap',
+  },
+  {
+    name: 'Laporan PPI',
+    desc: 'Laporan resmi format F4 akreditasi',
+    href: '/dashboard/reports/resmi',
+    icon: FileText,
+    badge: 'Resmi F4',
+  },
+  {
+    name: 'Bukti Supervisi',
+    desc: 'Dokumentasi & bukti tindak lanjut',
+    href: '/dashboard/reports/supervisi',
+    icon: ShieldCheck,
+    badge: 'Bukti Fisik',
+  },
+];
 
 export const MOBILE_NAV_ITEMS: MobileNavItem[] = [
   { 
@@ -220,23 +253,143 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
   // Optimistic index for instantaneous response on tap, eliminating route transition lag
   const [optimisticIndex, setOptimisticIndex] = useState<number | null>(null);
 
+  // Floating sub-menu state for Laporan on mobile/tablet portrait
+  const [isReportsMenuOpen, setIsReportsMenuOpen] = useState(false);
+
   const rawActiveIndex = optimisticIndex !== null ? optimisticIndex : routeIndex;
   const activeIndex = Math.min(rawActiveIndex, itemCount - 1);
 
-  // Sync back with router when navigation finishes
+  // Sync back with router when navigation finishes and close popup
   useEffect(() => {
     setOptimisticIndex(null);
+    setIsReportsMenuOpen(false);
   }, [currentPath]);
 
   const svgPath = useMemo(() => getNavContourPath(activeIndex, itemCount), [activeIndex, itemCount]);
 
   return (
     <div className="fixed bottom-3 sm:bottom-4 inset-x-3 sm:inset-x-6 z-50 flex justify-center landscape:hidden portrait:flex pb-[env(safe-area-inset-bottom)] pointer-events-none overflow-visible">
+      {/* Fullscreen Backdrop when Laporan Sub-Menu is open */}
+      <AnimatePresence>
+        {isReportsMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            onClick={() => setIsReportsMenuOpen(false)}
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-40 pointer-events-auto"
+          />
+        )}
+      </AnimatePresence>
+
       <nav 
         aria-label="Mobile Navigation Bar"
         className="w-full max-w-md h-[86px] relative pointer-events-auto select-none nav-dock-120fps transform-gpu overflow-visible"
         style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
       >
+        {/* Floating Sub-Menu Pop-up for Laporan */}
+        <AnimatePresence>
+          {isReportsMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 14, scale: 0.94 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 14, scale: 0.94 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="absolute bottom-[96px] left-1/2 -translate-x-1/2 w-[calc(100%-12px)] max-w-sm z-50 pointer-events-auto"
+            >
+              <div className="w-full bg-[#131535]/95 backdrop-blur-2xl border border-indigo-400/40 rounded-3xl p-3 shadow-[0_24px_60px_rgba(0,0,0,0.92),0_0_24px_rgba(99,102,241,0.25)] ring-1 ring-white/10 flex flex-col gap-2">
+                {/* Pop-up Header */}
+                <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-indigo-900/50">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
+                    <span className="text-[11px] font-black uppercase tracking-wider bg-gradient-to-r from-white via-indigo-100 to-cyan-300 bg-clip-text text-transparent">
+                      PILIHAN LAPORAN PPI
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsReportsMenuOpen(false)}
+                    className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+                    aria-label="Tutup Menu"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Sub-Menu List */}
+                <div className="space-y-1.5">
+                  {REPORT_SUB_ITEMS.map((sub) => {
+                    const isSubActive =
+                      sub.href === '/dashboard/reports'
+                        ? currentPath === '/dashboard/reports'
+                        : currentPath.startsWith(sub.href);
+                    const Icon = sub.icon;
+
+                    return (
+                      <Link
+                        key={sub.href}
+                        href={sub.href}
+                        prefetch={true}
+                        scroll={false}
+                        onClick={() => setIsReportsMenuOpen(false)}
+                        className={`flex items-center justify-between p-2.5 rounded-2xl transition-all duration-200 group active:scale-[0.98] ${
+                          isSubActive
+                            ? 'bg-gradient-to-r from-indigo-600/40 via-cyan-600/30 to-blue-600/40 border border-cyan-400/60 text-white shadow-lg shadow-cyan-950/40'
+                            : 'bg-[#181a3d]/80 hover:bg-[#1e224e] border border-indigo-900/40 text-slate-300 hover:text-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border transition-transform duration-200 group-hover:scale-105 ${
+                              isSubActive
+                                ? 'bg-cyan-500/25 text-cyan-300 border-cyan-400/50 shadow-[0_0_12px_rgba(6,182,212,0.5)]'
+                                : 'bg-[#141634] text-slate-400 border-slate-700/60 group-hover:text-cyan-300 group-hover:border-indigo-500/40'
+                            }`}
+                          >
+                            <Icon className="w-4.5 h-4.5" />
+                          </div>
+                          <div className="flex flex-col text-left truncate">
+                            <span
+                              className={`text-[12px] font-black tracking-wide truncate ${
+                                isSubActive ? 'text-white' : 'text-slate-200 group-hover:text-white'
+                              }`}
+                            >
+                              {sub.name}
+                            </span>
+                            <span className="text-[10px] text-indigo-300/80 truncate leading-tight mt-0.5">
+                              {sub.desc}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0 pl-2">
+                          <span
+                            className={`text-[9.5px] px-2 py-0.5 rounded-full font-bold border ${
+                              isSubActive
+                                ? 'bg-cyan-500/25 text-cyan-200 border-cyan-400/50 shadow-sm'
+                                : 'bg-slate-800/90 text-slate-400 border-slate-700/60'
+                            }`}
+                          >
+                            {sub.badge}
+                          </span>
+                          <ChevronRight
+                            className={`w-4 h-4 transition-transform duration-200 ${
+                              isSubActive
+                                ? 'text-cyan-300 translate-x-0.5'
+                                : 'text-slate-400 group-hover:text-white group-hover:translate-x-0.5'
+                            }`}
+                          />
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* SVG Background Contour: Fluidly morphs without snapping */}
         <svg 
           className="absolute inset-0 w-full h-full pointer-events-none overflow-visible drop-shadow-[0_16px_36px_rgba(0,0,0,0.85)] drop-shadow-[0_4px_14px_rgba(0,0,0,0.7)]" 
@@ -305,13 +458,58 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
           {navItems.map((item, idx) => {
             const isActive = activeIndex === idx;
 
+            if (item.id === 'reports') {
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    setOptimisticIndex(idx);
+                    setIsReportsMenuOpen((prev) => !prev);
+                  }}
+                  className="relative h-full flex flex-col items-center justify-end pb-3 pt-1 outline-none group select-none cursor-pointer touch-manipulation active:scale-95 transition-transform duration-100 will-change-transform"
+                  style={{ width: itemWidth, WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+                >
+                  {/* Inactive Icon: Smoothly fades out when active squircle glides over it */}
+                  <div className="relative flex items-center justify-center mb-1.5 h-6">
+                    <motion.div
+                      animate={{ 
+                        opacity: isActive ? 0 : 1,
+                        scale: isActive ? 0.6 : 1,
+                      }}
+                      transition={{ duration: 0.16, ease: "easeOut" }}
+                    >
+                      <NavIcon3D id={item.id} isActive={false} />
+                    </motion.div>
+                  </div>
+
+                  {/* Tab Label */}
+                  <motion.span 
+                    animate={{
+                      color: isActive ? '#ddd6fe' : '#94a3b8',
+                      scale: isActive ? 1.04 : 1,
+                    }}
+                    transition={{ duration: 0.18 }}
+                    className={`text-[11px] tracking-tight text-center leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] transition-colors duration-200 ${
+                      isActive ? 'font-black' : 'font-semibold group-hover:text-violet-200'
+                    }`}
+                  >
+                    {item.shortName}
+                  </motion.span>
+                </button>
+              );
+            }
+
             return (
               <Link 
                 key={item.id} 
                 href={item.href}
                 prefetch={true}
                 scroll={false}
-                onClick={() => setOptimisticIndex(idx)}
+                onClick={() => {
+                  setOptimisticIndex(idx);
+                  setIsReportsMenuOpen(false);
+                }}
                 className="relative h-full flex flex-col items-center justify-end pb-3 pt-1 outline-none group select-none cursor-pointer touch-manipulation active:scale-95 transition-transform duration-100 will-change-transform"
                 style={{ width: itemWidth, WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
               >

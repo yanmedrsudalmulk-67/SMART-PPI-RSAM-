@@ -65,18 +65,16 @@ export default function ZoomableReportViewer({
     return 1.0;
   });
 
-  // Multi-page mode is triggered whenever zoom is under 50% (< 0.50)
-  const isMultiPage = zoom < 0.50;
+  // Multi-page mode (explicit state, only supported on wide desktop screens)
+  const [isMultiPage, setIsMultiPage] = useState(false);
 
   // Touch tracking for pinch-to-zoom
   const touchStateRef = useRef<{
     initialDist: number;
     initialZoom: number;
-    lastTap: number;
   }>({
     initialDist: 0,
     initialZoom: 1,
-    lastTap: 0,
   });
 
   // Measure content & container dimensions
@@ -85,7 +83,8 @@ export default function ZoomableReportViewer({
       const cWidth = containerRef.current.clientWidth;
       setContainerWidth(cWidth);
 
-      const isMulti = zoom < 0.50;
+      // Multi-page (3-column side-by-side) is strictly for large desktop screens (>= 1024px) when explicitly turned on
+      const isMulti = isMultiPage && typeof window !== 'undefined' && window.innerWidth >= 1024;
       const hasLandscape = Boolean(
         contentRef.current?.querySelector('.f4-page-landscape, [data-orientation="landscape"]')
       );
@@ -123,7 +122,7 @@ export default function ZoomableReportViewer({
         setZoom(optimal);
       }
     }
-  }, [zoom, calculateFitZoom]);
+  }, [isMultiPage, calculateFitZoom]);
 
   useEffect(() => {
     updateDimensions();
@@ -168,12 +167,14 @@ export default function ZoomableReportViewer({
   // Handle Reset to 100%
   const handleResetZoom = () => {
     hasUserInteractedRef.current = true;
+    setIsMultiPage(false);
     setZoom(1.0);
   };
 
   // Handle Fit to Screen Width (Pas Layar)
   const handleFitWidth = () => {
     hasUserInteractedRef.current = true;
+    setIsMultiPage(false);
     if (containerRef.current) {
       const cWidth = containerRef.current.clientWidth;
       const optimal = calculateFitZoom(cWidth, 813);
@@ -181,12 +182,14 @@ export default function ZoomableReportViewer({
     }
   };
 
-  // Toggle between 100% and 45% (Multi-page view)
+  // Toggle between 100% and 45% (Multi-page view - desktop only)
   const handleToggleMultiPage = () => {
     hasUserInteractedRef.current = true;
-    if (zoom < 0.50) {
+    if (isMultiPage) {
+      setIsMultiPage(false);
       setZoom(1.0);
     } else {
+      setIsMultiPage(true);
       setZoom(0.45);
     }
   };
@@ -201,14 +204,8 @@ export default function ZoomableReportViewer({
       );
       touchStateRef.current.initialDist = dist;
       touchStateRef.current.initialZoom = zoom;
-    } else if (e.touches.length === 1) {
-      const now = Date.now();
-      const timeSinceLastTap = now - touchStateRef.current.lastTap;
-      if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
-        handleToggleMultiPage();
-      }
-      touchStateRef.current.lastTap = now;
     }
+    // Single touch is strictly for scrolling - never trigger mode switches on tap or scroll
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -232,7 +229,8 @@ export default function ZoomableReportViewer({
     }
   };
 
-  const paperWidth = isMultiPage ? 2520 : (contentDimensions.width || 813);
+  const isMulti = isMultiPage && typeof window !== 'undefined' && window.innerWidth >= 1024;
+  const paperWidth = isMulti ? 2520 : (contentDimensions.width || 813);
   const paperHeight = contentDimensions.height || 1247;
   const scaledWidth = Math.round(paperWidth * zoom);
   const scaledHeight = Math.round(paperHeight * zoom);
@@ -384,7 +382,7 @@ export default function ZoomableReportViewer({
           <div
             ref={contentRef}
             id={reportId}
-            className={`report-zoom-stage origin-top-left ${isMultiPage ? 'report-multipage-view' : 'report-singlepage-view'}`}
+            className={`report-zoom-stage origin-top-left ${isMulti ? 'report-multipage-view' : 'report-singlepage-view'}`}
             style={{
               width: `${paperWidth}px`,
               minWidth: `${paperWidth}px`,
@@ -415,19 +413,20 @@ export default function ZoomableReportViewer({
             
             {/* 3 View Mode Icons (Ultra compact 14px) */}
             <div className="flex items-center gap-0.5">
-              {/* Multi-Page Mode (< 50%) */}
+              {/* Multi-Page Mode (Desktop only, hidden on mobile/tablet) */}
               <button
                 type="button"
                 onClick={() => {
                   hasUserInteractedRef.current = true;
+                  setIsMultiPage(true);
                   setZoom(0.45);
                 }}
-                className={`p-1 rounded transition-colors ${
+                className={`p-1 rounded transition-colors hidden md:block ${
                   isMultiPage
                     ? 'text-cyan-300 bg-white/10'
                     : 'text-slate-400 hover:text-white'
                 }`}
-                title="Mode Multi-Halaman Samping (< 50%)"
+                title="Mode Multi-Halaman Samping (Desktop)"
                 aria-label="Mode Multi-Halaman"
               >
                 <Columns3 className="w-3.5 h-3.5" />
