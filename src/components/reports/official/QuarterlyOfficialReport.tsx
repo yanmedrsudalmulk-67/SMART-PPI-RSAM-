@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState, useLayoutEffect, useEffect } from 'react';
 import ReportCover from './ReportCover';
 import AutoPaginatedF4Document, { FlowBlock } from './AutoPaginatedF4Document';
 import { OfficialReportData, useOfficialReportData } from '@/hooks/useOfficialReportData';
@@ -299,6 +299,76 @@ export function WordStyleLineChart({
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+export function TwoLineReportTitle({
+  line1,
+  line2,
+  className = 'mb-2',
+}: {
+  line1: string;
+  line2: string;
+  className?: string;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const line1Ref = useRef<HTMLParagraphElement>(null);
+
+  // Compute a safe initial font size based on character count so that SSR and initial
+  // synchronous pagination measurement in AutoPaginatedF4Document are accurate immediately.
+  // Content width on F4 page with 25mm padding is 165mm (~624px / 468pt).
+  const initialSizePt = useMemo(() => {
+    const len = line1.length;
+    if (len > 82) return 9.2;
+    if (len > 70) return 10;
+    if (len > 58) return 11;
+    return 12;
+  }, [line1]);
+
+  const [sizePt, setSizePt] = useState<number>(initialSizePt);
+
+  useEffect(() => {
+    setSizePt(initialSizePt);
+  }, [initialSizePt]);
+
+  useLayoutEffect(() => {
+    const el = line1Ref.current;
+    const container = containerRef.current;
+    if (!el || !container) return;
+
+    const availableWidth = container.clientWidth;
+    if (!availableWidth) return;
+
+    let current = sizePt;
+    // If text still overflows container, automatically step down font size until it fits cleanly on 1 line
+    while (el.scrollWidth > availableWidth && current > 7.5) {
+      current -= 0.3;
+      el.style.fontSize = `${current}pt`;
+    }
+    if (Math.abs(current - sizePt) > 0.05) {
+      setSizePt(current);
+    }
+  }, [line1, sizePt]);
+
+  return (
+    <div
+      ref={containerRef}
+      className={`w-full text-center font-bold leading-tight ${className}`}
+    >
+      <p
+        ref={line1Ref}
+        style={{ fontSize: `${sizePt}pt` }}
+        className="whitespace-nowrap tracking-tight"
+      >
+        {line1}
+      </p>
+      <p
+        style={{ fontSize: '11pt' }}
+        className="whitespace-nowrap tracking-tight mt-0.5"
+      >
+        {line2}
+      </p>
     </div>
   );
 }
@@ -675,11 +745,11 @@ export default function QuarterlyOfficialReport({
         gapAfter: 14,
         node: (
           <div className="w-full">
-            <div className="text-center font-bold text-[12pt] mb-2 leading-snug">
-              <p>Tabel 1. Incident Rate HAIs</p>
-              <p>di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
-              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
-            </div>
+            <TwoLineReportTitle
+              line1="Tabel 1. Incident Rate HAIs di UOBK RSUD Al-Mulk"
+              line2={`Triwulan ${qData.quarterRoman} Periode ${m1.monthName} - ${m3.monthName} ${reportYear}`}
+              className="mb-2"
+            />
             <table className="w-full border-collapse border border-black text-center text-[10.5pt] leading-[1.25]">
               <thead>
                 <tr className="font-bold bg-slate-50">
@@ -827,11 +897,11 @@ export default function QuarterlyOfficialReport({
         gapAfter: 10,
         node: (
           <div className="w-full">
-            <div className="text-center font-bold text-[12pt] mb-1.5 leading-snug">
-              <p>Grafik 1. Incident Rate HAIs</p>
-              <p>di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
-              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
-            </div>
+            <TwoLineReportTitle
+              line1="Grafik 1. Incident Rate HAIs di UOBK RSUD Al-Mulk"
+              line2={`Triwulan ${qData.quarterRoman} Periode ${m1.monthName} - ${m3.monthName} ${reportYear}`}
+              className="mb-1.5"
+            />
             <WordStyleGroupedBarChart
               categories={['Phlebitis', 'ISK', 'Decubitus', 'VAP', 'IDO']}
               series={[
@@ -882,11 +952,11 @@ export default function QuarterlyOfficialReport({
         gapAfter: 10,
         node: (
           <div className="w-full">
-            <div className="text-center font-bold text-[12pt] mb-1.5 leading-snug">
-              <p>Grafik 2. Incidence Rate Phlebitis</p>
-              <p>di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
-              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
-            </div>
+            <TwoLineReportTitle
+              line1="Grafik 2. Incidence Rate Phlebitis di UOBK RSUD Al-Mulk"
+              line2={`Triwulan ${qData.quarterRoman} Periode ${m1.monthName} - ${m3.monthName} ${reportYear}`}
+              className="mb-1.5"
+            />
             <WordStyleLineChart
               categories={chartMonthLabels}
               series={[
@@ -918,11 +988,11 @@ export default function QuarterlyOfficialReport({
         gapAfter: 16,
         node: (
           <div className="w-full">
-            <div className="text-center font-bold text-[12pt] mb-2 leading-snug">
-              <p>Tabel 2. Incidence Rate Phlebitis</p>
-              <p>di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
-              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
-            </div>
+            <TwoLineReportTitle
+              line1="Tabel 2. Incidence Rate Phlebitis di UOBK RSUD Al-Mulk"
+              line2={`Triwulan ${qData.quarterRoman} Periode ${m1.monthName} - ${m3.monthName} ${reportYear}`}
+              className="mb-2"
+            />
             <table className="w-full border-collapse border border-black text-center text-[10.5pt] leading-[1.3]">
               <thead>
                 <tr className="font-bold bg-slate-50">
@@ -995,11 +1065,11 @@ export default function QuarterlyOfficialReport({
         gapAfter: 10,
         node: (
           <div className="w-full">
-            <div className="text-center font-bold text-[12pt] mb-1.5 leading-snug">
-              <p>Grafik 3. Incidence Rate Infeksi Saluran Kemih (ISK)</p>
-              <p>di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
-              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
-            </div>
+            <TwoLineReportTitle
+              line1="Grafik 3. Incidence Rate Infeksi Saluran Kemih (ISK) di UOBK RSUD Al-Mulk"
+              line2={`Triwulan ${qData.quarterRoman} Periode ${m1.monthName} - ${m3.monthName} ${reportYear}`}
+              className="mb-1.5"
+            />
             <WordStyleLineChart
               categories={chartMonthLabels}
               series={[
@@ -1020,11 +1090,11 @@ export default function QuarterlyOfficialReport({
         gapAfter: 16,
         node: (
           <div className="w-full">
-            <div className="text-center font-bold text-[12pt] mb-2 leading-snug">
-              <p>Tabel 3. Infeksi Saluran Kemih (ISK) per 1000 Hari Pemakaian Alat (‰)</p>
-              <p>di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
-              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
-            </div>
+            <TwoLineReportTitle
+              line1="Tabel 3. Infeksi Saluran Kemih (ISK) per 1000 Hari Pemakaian Alat (‰) di UOBK RSUD Al-Mulk"
+              line2={`Triwulan ${qData.quarterRoman} Periode ${m1.monthName} - ${m3.monthName} ${reportYear}`}
+              className="mb-2"
+            />
             <table className="w-full border-collapse border border-black text-center text-[10.5pt] leading-[1.3]">
               <thead>
                 <tr className="font-bold bg-slate-50">
@@ -1097,11 +1167,11 @@ export default function QuarterlyOfficialReport({
         gapAfter: 10,
         node: (
           <div className="w-full">
-            <div className="text-center font-bold text-[12pt] mb-1.5 leading-snug">
-              <p>Grafik 4. Incidence Rate Infeksi Decubitus</p>
-              <p>di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
-              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
-            </div>
+            <TwoLineReportTitle
+              line1="Grafik 4. Incidence Rate Infeksi Decubitus di UOBK RSUD Al-Mulk"
+              line2={`Triwulan ${qData.quarterRoman} Periode ${m1.monthName} - ${m3.monthName} ${reportYear}`}
+              className="mb-1.5"
+            />
             <WordStyleLineChart
               categories={chartMonthLabels}
               series={[
@@ -1122,11 +1192,11 @@ export default function QuarterlyOfficialReport({
         gapAfter: 16,
         node: (
           <div className="w-full">
-            <div className="text-center font-bold text-[12pt] mb-2 leading-snug">
-              <p>Tabel 4. Infeksi Decubitus per 1000 Hari Tirah Baring (‰)</p>
-              <p>di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
-              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
-            </div>
+            <TwoLineReportTitle
+              line1="Tabel 4. Infeksi Decubitus per 1000 Hari Tirah Baring (‰) di UOBK RSUD Al-Mulk"
+              line2={`Triwulan ${qData.quarterRoman} Periode ${m1.monthName} - ${m3.monthName} ${reportYear}`}
+              className="mb-2"
+            />
             <table className="w-full border-collapse border border-black text-center text-[10.5pt] leading-[1.3]">
               <thead>
                 <tr className="font-bold bg-slate-50">
@@ -1199,11 +1269,11 @@ export default function QuarterlyOfficialReport({
         gapAfter: 10,
         node: (
           <div className="w-full">
-            <div className="text-center font-bold text-[12pt] mb-1.5 leading-snug">
-              <p>Grafik 5. Incidence Rate Ventilator Associated Pneumonia (VAP)</p>
-              <p>di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
-              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
-            </div>
+            <TwoLineReportTitle
+              line1="Grafik 5. Incidence Rate Ventilator Associated Pneumonia (VAP) di UOBK RSUD Al-Mulk"
+              line2={`Triwulan ${qData.quarterRoman} Periode ${m1.monthName} - ${m3.monthName} ${reportYear}`}
+              className="mb-1.5"
+            />
             <WordStyleLineChart
               categories={chartMonthLabels}
               series={[
@@ -1224,11 +1294,11 @@ export default function QuarterlyOfficialReport({
         gapAfter: 16,
         node: (
           <div className="w-full">
-            <div className="text-center font-bold text-[12pt] mb-2 leading-snug">
-              <p>Tabel 5. Infeksi Ventilator Associated Pneumonia (VAP)</p>
-              <p>di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
-              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
-            </div>
+            <TwoLineReportTitle
+              line1="Tabel 5. Infeksi Ventilator Associated Pneumonia (VAP) di UOBK RSUD Al-Mulk"
+              line2={`Triwulan ${qData.quarterRoman} Periode ${m1.monthName} - ${m3.monthName} ${reportYear}`}
+              className="mb-2"
+            />
             <table className="w-full border-collapse border border-black text-center text-[10.5pt] leading-[1.3]">
               <thead>
                 <tr className="font-bold bg-slate-50">
@@ -1301,11 +1371,11 @@ export default function QuarterlyOfficialReport({
         gapAfter: 10,
         node: (
           <div className="w-full">
-            <div className="text-center font-bold text-[12pt] mb-1.5 leading-snug">
-              <p>Grafik 6. Incidence Rate Infeksi Daerah Operasi (IDO)</p>
-              <p>di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
-              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
-            </div>
+            <TwoLineReportTitle
+              line1="Grafik 6. Incidence Rate Infeksi Daerah Operasi (IDO) di UOBK RSUD Al-Mulk"
+              line2={`Triwulan ${qData.quarterRoman} Periode ${m1.monthName} - ${m3.monthName} ${reportYear}`}
+              className="mb-1.5"
+            />
             <WordStyleLineChart
               categories={chartMonthLabels}
               series={[
@@ -1326,11 +1396,11 @@ export default function QuarterlyOfficialReport({
         gapAfter: 16,
         node: (
           <div className="w-full">
-            <div className="text-center font-bold text-[12pt] mb-2 leading-snug">
-              <p>Tabel 6. Infeksi Daerah Operasi (IDO)</p>
-              <p>di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
-              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
-            </div>
+            <TwoLineReportTitle
+              line1="Tabel 6. Infeksi Daerah Operasi (IDO) di UOBK RSUD Al-Mulk"
+              line2={`Triwulan ${qData.quarterRoman} Periode ${m1.monthName} - ${m3.monthName} ${reportYear}`}
+              className="mb-2"
+            />
             <table className="w-full border-collapse border border-black text-center text-[10.5pt] leading-[1.3]">
               <thead>
                 <tr className="font-bold bg-slate-50">
@@ -1404,11 +1474,11 @@ export default function QuarterlyOfficialReport({
         gapAfter: 10,
         node: (
           <div className="w-full">
-            <div className="text-center font-bold text-[12pt] mb-1.5 leading-snug">
-              <p>Grafik 1. Kepatuhan Hand Hygiene Berdasarkan Profesi</p>
-              <p>di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
-              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
-            </div>
+            <TwoLineReportTitle
+              line1="Grafik 1. Kepatuhan Hand Hygiene Berdasarkan Profesi di UOBK RSUD Al-Mulk"
+              line2={`Triwulan ${qData.quarterRoman} Periode ${m1.monthName} - ${m3.monthName} ${reportYear}`}
+              className="mb-1.5"
+            />
             <WordStyleGroupedBarChart
               categories={chartMonthLabels}
               series={[
@@ -1444,11 +1514,11 @@ export default function QuarterlyOfficialReport({
         gapAfter: 16,
         node: (
           <div className="w-full">
-            <div className="text-center font-bold text-[12pt] mb-2 leading-snug">
-              <p>Tabel 1. Kepatuhan Hand Hygiene Berdasarkan Profesi</p>
-              <p>di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
-              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
-            </div>
+            <TwoLineReportTitle
+              line1="Tabel 1. Kepatuhan Hand Hygiene Berdasarkan Profesi di UOBK RSUD Al-Mulk"
+              line2={`Triwulan ${qData.quarterRoman} Periode ${m1.monthName} - ${m3.monthName} ${reportYear}`}
+              className="mb-2"
+            />
             <table className="w-full border-collapse border border-black text-center text-[10pt] leading-[1.3]">
               <thead>
                 <tr className="font-bold bg-slate-50">
@@ -1518,11 +1588,11 @@ export default function QuarterlyOfficialReport({
         gapAfter: 10,
         node: (
           <div className="w-full">
-            <div className="text-center font-bold text-[12pt] mb-1.5 leading-snug">
-              <p>Grafik 2. Kepatuhan Penggunaan APD</p>
-              <p>di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
-              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
-            </div>
+            <TwoLineReportTitle
+              line1="Grafik 2. Kepatuhan Penggunaan APD di UOBK RSUD Al-Mulk"
+              line2={`Triwulan ${qData.quarterRoman} Periode ${m1.monthName} - ${m3.monthName} ${reportYear}`}
+              className="mb-1.5"
+            />
             <WordStyleGroupedBarChart
               categories={[
                 m1.monthName,
@@ -1556,11 +1626,11 @@ export default function QuarterlyOfficialReport({
         gapAfter: 16,
         node: (
           <div className="w-full">
-            <div className="text-center font-bold text-[12pt] mb-2 leading-snug">
-              <p>Tabel 2. Kepatuhan Penggunaan APD</p>
-              <p>di UOBK RSUD Al-Mulk Triwulan {qData.quarterRoman}</p>
-              <p>Periode {m1.monthName} - {m3.monthName} {reportYear}</p>
-            </div>
+            <TwoLineReportTitle
+              line1="Tabel 2. Kepatuhan Penggunaan APD di UOBK RSUD Al-Mulk"
+              line2={`Triwulan ${qData.quarterRoman} Periode ${m1.monthName} - ${m3.monthName} ${reportYear}`}
+              className="mb-2"
+            />
             <table className="w-full border-collapse border border-black text-center text-[10.5pt] leading-[1.3]">
               <thead>
                 <tr className="font-bold bg-slate-50">
