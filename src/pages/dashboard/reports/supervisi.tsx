@@ -755,19 +755,12 @@ export default function BuktiSupervisiPage() {
         {/* Header Title Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                <ClipboardCheck className="w-6 h-6" />
-              </div>
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-                  Bukti Supervisi & Tindak Lanjut
-                </h1>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                  Rekapitulasi kegiatan supervisi lapangan, temuan ketidaksesuaian, rekomendasi PPI, serta dokumentasi fisik bukti perbaikan.
-                </p>
-              </div>
-            </div>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase">
+              Bukti Supervisi & Tindak Lanjut
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+              Rekapitulasi kegiatan supervisi lapangan, temuan ketidaksesuaian, rekomendasi PPI, serta dokumentasi fisik bukti perbaikan.
+            </p>
           </div>
 
           {/* Action Icon Buttons (Pojok Kanan Atas) */}
@@ -918,20 +911,20 @@ export default function BuktiSupervisiPage() {
         {/* Main Accreditation Table */}
         <div className="bg-white dark:bg-[#10132b]/95 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-xl overflow-hidden w-full">
           <div className="overflow-x-auto w-full">
-            <table className="w-full text-center border-collapse text-[10px]">
+            <table className="w-full text-center border-collapse text-[12px]">
               <thead>
-                <tr className="bg-slate-100 dark:bg-[#161938] border-b border-slate-200 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 font-extrabold uppercase tracking-wider text-[10px]">
-                  <th className="px-1 py-3 text-center align-middle w-7 min-w-[28px]">No</th>
-                  <th className="px-1 py-3 text-center align-middle w-20 min-w-[78px]">Tanggal & Waktu</th>
-                  <th className="px-1.5 py-3 text-center align-middle w-28 min-w-[105px]">Kegiatan Supervisi</th>
-                  <th className="px-1 py-3 text-center align-middle w-16 min-w-[65px]">Ruangan</th>
-                  <th className="px-2 py-3 text-center align-middle w-32 min-w-[125px]">Temuan Lapangan</th>
-                  <th className="px-2 py-3 text-center align-middle w-64 min-w-[250px] lg:w-72 lg:min-w-[280px]">Foto Temuan (Before)</th>
-                  <th className="px-2 py-3 text-center align-middle w-32 min-w-[125px]">Rekomendasi PPI</th>
-                  <th className="px-2 py-3 text-center align-middle w-32 min-w-[125px]">Tindak Lanjut & Perbaikan</th>
-                  <th className="px-2 py-3 text-center align-middle w-64 min-w-[250px] lg:w-72 lg:min-w-[280px]">Foto Perbaikan (After)</th>
-                  <th className="px-1 py-3 text-center align-middle w-20 min-w-[75px]">Status</th>
-                  <th className="px-1 py-3 text-center align-middle w-16 min-w-[70px]">Aksi</th>
+                <tr className="bg-slate-100 dark:bg-[#161938] border-b border-slate-200 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 font-extrabold uppercase tracking-wider text-[12px]">
+                  <th className="px-1 py-3 text-center align-middle w-7 min-w-[32px] border-r border-slate-200 dark:border-slate-700/80">No</th>
+                  <th className="px-1.5 py-3 text-center align-middle w-24 min-w-[90px] border-r border-slate-200 dark:border-slate-700/80">Tanggal & Waktu</th>
+                  <th className="px-2 py-3 text-center align-middle w-32 min-w-[120px] border-r border-slate-200 dark:border-slate-700/80">Kegiatan Supervisi</th>
+                  <th className="px-1.5 py-3 text-center align-middle w-20 min-w-[75px] border-r border-slate-200 dark:border-slate-700/80">Ruangan</th>
+                  <th className="px-2.5 py-3 text-center align-middle w-36 min-w-[135px] border-r border-slate-200 dark:border-slate-700/80">Temuan Lapangan</th>
+                  <th className="px-2.5 py-3 text-center align-middle w-64 min-w-[250px] lg:w-72 lg:min-w-[280px] border-r border-slate-200 dark:border-slate-700/80">Foto Temuan (Before)</th>
+                  <th className="px-2.5 py-3 text-center align-middle w-36 min-w-[135px] border-r border-slate-200 dark:border-slate-700/80">Rekomendasi PPI</th>
+                  <th className="px-2.5 py-3 text-center align-middle w-36 min-w-[135px] border-r border-slate-200 dark:border-slate-700/80">Tindak Lanjut & Perbaikan</th>
+                  <th className="px-2.5 py-3 text-center align-middle w-64 min-w-[250px] lg:w-72 lg:min-w-[280px] border-r border-slate-200 dark:border-slate-700/80">Foto Perbaikan (After)</th>
+                  <th className="px-1.5 py-3 text-center align-middle w-24 min-w-[85px] border-r border-slate-200 dark:border-slate-700/80">Status</th>
+                  <th className="px-1.5 py-3 text-center align-middle w-20 min-w-[75px]">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
@@ -951,7 +944,7 @@ export default function BuktiSupervisiPage() {
                       <p className="font-semibold text-slate-700 dark:text-slate-300">
                         Tidak ada data supervisi yang sesuai filter.
                       </p>
-                      <p className="text-[10px] text-slate-500 mt-1">
+                      <p className="text-[11px] text-slate-500 mt-1">
                         Coba sesuaikan kata kunci pencarian atau ubah filter ruangan/bulan di atas.
                       </p>
                     </td>
@@ -970,55 +963,55 @@ export default function BuktiSupervisiPage() {
                         className="border-b border-slate-100 dark:border-slate-800/80 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors"
                       >
                         {/* No */}
-                        <td className="px-1 py-3 text-center align-top font-bold text-slate-500 dark:text-slate-400 text-[10px]">
+                        <td className="px-1 py-3 text-center align-top font-bold text-slate-500 dark:text-slate-400 text-[12px] border-r border-slate-200 dark:border-slate-700/80">
                           {idx + 1}
                         </td>
 
                         {/* Tanggal & Waktu */}
-                        <td className="px-1 py-3 text-center align-top text-[10px]">
-                          <span className="font-bold text-slate-800 dark:text-slate-200 block">
+                        <td className="px-1.5 py-3 text-center align-top text-[12px] border-r border-slate-200 dark:border-slate-700/80">
+                          <span className="font-bold text-slate-800 dark:text-slate-200 block text-[12px]">
                             {dateFormatted.split(",")[0]}
                           </span>
-                          <span className="text-[9px] text-slate-500 dark:text-slate-400 block font-mono mt-0.5">
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-mono mt-0.5">
                             {dateFormatted.split(",")[1]}
                           </span>
-                          <span className="text-[8.5px] text-slate-400 dark:text-slate-500 block mt-0.5 truncate" title={`Observer: ${item.observer}`}>
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 block mt-0.5 truncate" title={`Observer: ${item.observer}`}>
                             Obs: {item.observer}
                           </span>
                         </td>
 
                         {/* Kegiatan / Indikator */}
-                        <td className="px-1.5 py-3 text-center align-top text-[10px]">
-                          <span className="font-bold text-slate-900 dark:text-white block leading-tight text-[10px]">
+                        <td className="px-2 py-3 text-center align-top text-[12px] border-r border-slate-200 dark:border-slate-700/80">
+                          <span className="font-bold text-slate-900 dark:text-white block leading-snug text-[12px]">
                             {item.nama_kegiatan}
                           </span>
-                          <span className="inline-block mt-1 text-[8.5px] uppercase font-bold px-1 py-0.5 rounded bg-slate-100 dark:bg-[#1b2044] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700/60">
+                          <span className="inline-block mt-1 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#1b2044] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700/60">
                             {item.indikator_id.replace(/_/g, " ")}
                           </span>
                         </td>
 
                         {/* Ruangan - Cukup Nama Saja Tanpa Icon & Tanpa Garis Card */}
-                        <td className="px-1 py-3 text-center align-top text-[10px]">
-                          <span className="font-bold text-slate-800 dark:text-slate-200 block text-[10px]">
+                        <td className="px-1.5 py-3 text-center align-top text-[12px] border-r border-slate-200 dark:border-slate-700/80">
+                          <span className="font-bold text-slate-800 dark:text-slate-200 block text-[12px]">
                             {item.unit}
                           </span>
                         </td>
 
                         {/* Temuan */}
-                        <td className="px-2 py-3 text-center align-top text-[10px]">
+                        <td className="px-2.5 py-3 text-center align-top text-[12px] border-r border-slate-200 dark:border-slate-700/80">
                           {item.temuan ? (
-                            <p className="text-slate-800 dark:text-slate-200 leading-snug font-medium whitespace-pre-wrap text-[10px]">
+                            <p className="text-slate-800 dark:text-slate-200 leading-relaxed font-medium whitespace-pre-wrap text-[12px]">
                               {item.temuan}
                             </p>
                           ) : (
-                            <span className="text-slate-400 dark:text-slate-500 italic text-[9px]">
+                            <span className="text-slate-400 dark:text-slate-500 italic text-[11px]">
                               Tidak ada temuan khusus
                             </span>
                           )}
                         </td>
 
-                        {/* Foto Temuan (Before) - Tinggi Dikurangi 3 Baris, Lebar Tetap & Top Align */}
-                        <td className="px-2 py-3 text-center align-top">
+                        {/* Foto Temuan (Before) - Tinggi Dikurangi Lagi 1 Baris, Lebar Tetap, Sekat Kolom & Top Align */}
+                        <td className="px-2.5 py-3 text-center align-top border-r border-slate-200 dark:border-slate-700/80">
                           {item.foto_temuan.length > 0 ? (
                             <div className="flex flex-col items-center justify-start gap-1 mx-auto">
                               <button
@@ -1033,7 +1026,7 @@ export default function BuktiSupervisiPage() {
                                   })
                                 }
                                 title="Klik untuk memperbesar foto temuan"
-                                className="relative group w-48 h-36 sm:w-56 sm:h-40 lg:w-64 lg:h-48 rounded-2xl overflow-hidden border-2 border-amber-400/90 shadow-md hover:scale-[1.02] hover:shadow-amber-500/20 hover:brightness-105 transition-all bg-slate-900 cursor-pointer block mx-auto shrink-0"
+                                className="relative group w-48 h-32 sm:w-56 sm:h-36 lg:w-64 lg:h-44 rounded-2xl overflow-hidden border-2 border-amber-400/90 shadow-md hover:scale-[1.02] hover:shadow-amber-500/20 hover:brightness-105 transition-all bg-slate-900 cursor-pointer block mx-auto shrink-0"
                               >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
@@ -1043,57 +1036,57 @@ export default function BuktiSupervisiPage() {
                                 />
                               </button>
                               {item.foto_temuan.length > 1 && (
-                                <span className="text-[9px] font-bold text-amber-500 dark:text-amber-400">
+                                <span className="text-[10px] font-bold text-amber-500 dark:text-amber-400">
                                   +{item.foto_temuan.length - 1} foto lainnya
                                 </span>
                               )}
-                              <span className="text-[9.5px] font-black uppercase text-amber-500 dark:text-amber-400 tracking-wider mt-0.5 block">
+                              <span className="text-[10.5px] font-black uppercase text-amber-500 dark:text-amber-400 tracking-wider mt-0.5 block">
                                 Before
                               </span>
                             </div>
                           ) : (
-                            <span className="text-[9px] text-slate-400 dark:text-slate-500 italic block pt-1">
+                            <span className="text-[11px] text-slate-400 dark:text-slate-500 italic block pt-1">
                               Tidak ada foto
                             </span>
                           )}
                         </td>
 
                         {/* Rekomendasi PPI */}
-                        <td className="px-2 py-3 text-center align-top text-[10px]">
+                        <td className="px-2.5 py-3 text-center align-top text-[12px] border-r border-slate-200 dark:border-slate-700/80">
                           {item.rekomendasi ? (
-                            <p className="text-slate-700 dark:text-slate-300 leading-snug font-medium whitespace-pre-wrap text-[10px]">
+                            <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium whitespace-pre-wrap text-[12px]">
                               {item.rekomendasi}
                             </p>
                           ) : (
-                            <span className="text-slate-400 dark:text-slate-500 italic text-[9px]">
+                            <span className="text-slate-400 dark:text-slate-500 italic text-[11px]">
                               Pertahankan kepatuhan
                             </span>
                           )}
                         </td>
 
                         {/* Tindak Lanjut & Upaya Perbaikan */}
-                        <td className="px-2 py-3 text-center align-top text-[10px]">
+                        <td className="px-2.5 py-3 text-center align-top text-[12px] border-r border-slate-200 dark:border-slate-700/80">
                           {item.upaya_perbaikan ? (
                             <div>
-                              <p className="text-emerald-800 dark:text-emerald-300 leading-snug font-medium whitespace-pre-wrap text-[10px]">
+                              <p className="text-emerald-800 dark:text-emerald-300 leading-relaxed font-medium whitespace-pre-wrap text-[12px]">
                                 {item.upaya_perbaikan}
                               </p>
                               {item.waktu_perbaikan && (
-                                <span className="text-[8.5px] font-mono text-slate-500 dark:text-slate-400 block mt-1">
+                                <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 block mt-1">
                                   Realisasi: {format(new Date(item.waktu_perbaikan), "dd/MM/yyyy")}
                                 </span>
                               )}
                             </div>
                           ) : (
-                            <span className="text-amber-600 dark:text-amber-400 font-semibold text-[9px] italic flex items-center justify-center gap-1">
-                              <Clock className="w-3 h-3 shrink-0" />
+                            <span className="text-amber-600 dark:text-amber-400 font-semibold text-[11px] italic flex items-center justify-center gap-1">
+                              <Clock className="w-3.5 h-3.5 shrink-0" />
                               Menunggu tindak lanjut
                             </span>
                           )}
                         </td>
 
-                        {/* Foto Perbaikan (After) - Tinggi Dikurangi 3 Baris, Lebar Tetap & Top Align */}
-                        <td className="px-2 py-3 text-center align-top">
+                        {/* Foto Perbaikan (After) - Tinggi Dikurangi Lagi 1 Baris, Lebar Tetap, Sekat Kolom & Top Align */}
+                        <td className="px-2.5 py-3 text-center align-top border-r border-slate-200 dark:border-slate-700/80">
                           {item.foto_perbaikan.length > 0 ? (
                             <div className="flex flex-col items-center justify-start gap-1 mx-auto">
                               <button
@@ -1108,7 +1101,7 @@ export default function BuktiSupervisiPage() {
                                   })
                                 }
                                 title="Klik untuk memperbesar foto perbaikan"
-                                className="relative group w-48 h-36 sm:w-56 sm:h-40 lg:w-64 lg:h-48 rounded-2xl overflow-hidden border-2 border-emerald-400/90 shadow-md hover:scale-[1.02] hover:shadow-emerald-500/20 hover:brightness-105 transition-all bg-slate-900 cursor-pointer block mx-auto shrink-0"
+                                className="relative group w-48 h-32 sm:w-56 sm:h-36 lg:w-64 lg:h-44 rounded-2xl overflow-hidden border-2 border-emerald-400/90 shadow-md hover:scale-[1.02] hover:shadow-emerald-500/20 hover:brightness-105 transition-all bg-slate-900 cursor-pointer block mx-auto shrink-0"
                               >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
@@ -1118,53 +1111,53 @@ export default function BuktiSupervisiPage() {
                                 />
                               </button>
                               {item.foto_perbaikan.length > 1 && (
-                                <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+                                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
                                   +{item.foto_perbaikan.length - 1} foto lainnya
                                 </span>
                               )}
-                              <span className="text-[9.5px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-wider mt-0.5 block">
+                              <span className="text-[10.5px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-wider mt-0.5 block">
                                 After
                               </span>
                             </div>
                           ) : (
-                            <span className="text-[9px] text-slate-400 dark:text-slate-500 italic block pt-1">
+                            <span className="text-[11px] text-slate-400 dark:text-slate-500 italic block pt-1">
                               Belum ada bukti foto
                             </span>
                           )}
                         </td>
 
                         {/* Status */}
-                        <td className="px-1 py-3 text-center align-top text-[10px]">
+                        <td className="px-1.5 py-3 text-center align-top text-[12px] border-r border-slate-200 dark:border-slate-700/80">
                           {item.status === "Selesai" ? (
-                            <span className="inline-flex items-center justify-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30">
-                              <CheckCircle2 className="w-3 h-3 shrink-0" />
+                            <span className="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30">
+                              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                               Selesai
                             </span>
                           ) : (
-                            <span className="inline-flex items-center justify-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300 border border-amber-300 dark:border-amber-500/30">
-                              <Clock className="w-3 h-3 shrink-0" />
+                            <span className="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300 border border-amber-300 dark:border-amber-500/30">
+                              <Clock className="w-3.5 h-3.5 shrink-0" />
                               Dalam Proses
                             </span>
                           )}
                         </td>
 
                         {/* Aksi */}
-                        <td className="px-1 py-3 text-center align-top text-[10px]">
-                          <div className="flex flex-col gap-1 items-center justify-center">
+                        <td className="px-1.5 py-3 text-center align-top text-[12px]">
+                          <div className="flex flex-col gap-1.5 items-center justify-center">
                             <button
                               type="button"
                               onClick={() => handleOpenFollowUp(item)}
-                              className="w-full inline-flex items-center justify-center gap-1 px-1.5 py-1 rounded-lg text-[9px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-colors cursor-pointer"
+                              className="w-full inline-flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-colors cursor-pointer"
                               title="Update Tindak Lanjut & Upload Foto Perbaikan"
                             >
-                              <Edit className="w-2.5 h-2.5" />
+                              <Edit className="w-3 h-3" />
                               <span>Tindak Lanjut</span>
                             </button>
 
                             {item.form_path && (
                               <Link
                                 href={item.form_path}
-                                className="w-full inline-flex items-center justify-center gap-0.5 px-1 py-0.5 rounded text-[8.5px] font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+                                className="w-full inline-flex items-center justify-center gap-0.5 px-1 py-0.5 rounded text-[9.5px] font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
                                 title="Buka form audit awal"
                               >
                                 <ExternalLink className="w-2.5 h-2.5" />
@@ -1178,7 +1171,7 @@ export default function BuktiSupervisiPage() {
                               className="text-slate-400 hover:text-rose-500 p-0.5 transition-colors cursor-pointer"
                               title="Hapus data supervisi ini"
                             >
-                              <Trash2 className="w-3 h-3" />
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </td>
