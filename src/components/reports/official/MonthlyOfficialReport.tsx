@@ -640,58 +640,6 @@ export default function MonthlyOfficialReport({
       ),
     });
 
-    // Grafik 1 Bar Chart (HAIs Overview)
-    b.push({
-      type: 'element',
-      key: 'm-grafik1-block',
-      gapAfter: 6,
-      node: (
-        <div className="w-full">
-          <p className="font-bold text-[11pt] mb-1">
-            Grafik.1 Incident Rate HAIs UOBK RSUD Al-Mulk Bulan {monthName} {reportYear}
-          </p>
-          <WordExcelBarChart
-            title={`Insiden Rate HAIs ${monthName} ${reportYear}`}
-            categories={['Phlebitis', 'ISK', 'Decubitus', 'IDO', 'VAP']}
-            series={[
-              {
-                name: 'Rate In',
-                color: '#4472c4',
-                values: [
-                  roomBreakdown.phlebitis.totalCases,
-                  roomBreakdown.isk.totalCases,
-                  roomBreakdown.decubitus.totalCases,
-                  roomBreakdown.ido.totalCases,
-                  roomBreakdown.vap.totalCases,
-                ],
-              },
-              {
-                name: '‰ & %',
-                color: '#ed7d31',
-                values: [
-                  roomBreakdown.phlebitis.rate,
-                  roomBreakdown.isk.rate,
-                  roomBreakdown.decubitus.rate,
-                  roomBreakdown.ido.rate,
-                  roomBreakdown.vap.rate,
-                ],
-              },
-              {
-                name: 'Target',
-                color: '#a5a5a5',
-                values: [1, 4.7, 1, 2, 5.8],
-              },
-            ]}
-            height={145}
-            forcedMinY={0}
-            forcedMaxY={14}
-            customTicks={[0, 2, 4, 6, 8, 10, 12, 14]}
-            showTable={true}
-          />
-        </div>
-      ),
-    });
-
     // Tabel 1 & IDO Subtabel (Gambar No 3)
     const rT1Phleb = roomBreakdown.phlebitis.roomsTabel1;
     const rT1Isk = roomBreakdown.isk.roomsTabel1;
@@ -915,6 +863,58 @@ export default function MonthlyOfficialReport({
       ),
     });
 
+    // Grafik 1 Bar Chart (HAIs Overview)
+    b.push({
+      type: 'element',
+      key: 'm-grafik1-block',
+      gapAfter: 6,
+      node: (
+        <div className="w-full">
+          <p className="font-bold text-[11pt] mb-1">
+            Grafik.1 Incident Rate HAIs UOBK RSUD Al-Mulk Bulan {monthName} {reportYear}
+          </p>
+          <WordExcelBarChart
+            title={`Insiden Rate HAIs ${monthName} ${reportYear}`}
+            categories={['Phlebitis', 'ISK', 'Decubitus', 'IDO', 'VAP']}
+            series={[
+              {
+                name: 'Rate In',
+                color: '#4472c4',
+                values: [
+                  roomBreakdown.phlebitis.totalCases,
+                  roomBreakdown.isk.totalCases,
+                  roomBreakdown.decubitus.totalCases,
+                  roomBreakdown.ido.totalCases,
+                  roomBreakdown.vap.totalCases,
+                ],
+              },
+              {
+                name: '‰ & %',
+                color: '#ed7d31',
+                values: [
+                  roomBreakdown.phlebitis.rate,
+                  roomBreakdown.isk.rate,
+                  roomBreakdown.decubitus.rate,
+                  roomBreakdown.ido.rate,
+                  roomBreakdown.vap.rate,
+                ],
+              },
+              {
+                name: 'Target',
+                color: '#a5a5a5',
+                values: [1, 4.7, 1, 2, 5.8],
+              },
+            ]}
+            height={145}
+            forcedMinY={0}
+            forcedMaxY={14}
+            customTicks={[0, 2, 4, 6, 8, 10, 12, 14]}
+            showTable={true}
+          />
+        </div>
+      ),
+    });
+
     // Analisa Grafik 1
     const phlebTrend =
       roomBreakdown.phlebitis.rate > prevPhlebRate
@@ -955,43 +955,7 @@ export default function MonthlyOfficialReport({
       ),
     });
 
-    // Grafik 2 Line Chart
-    b.push({
-      type: 'element',
-      key: 'm-grafik2-phleb-block',
-      gapAfter: 6,
-      node: (
-        <div className="w-full">
-          <p className="font-bold text-[11pt] mb-1">
-            Grafik.2  Incidence Rate Phlebitis Di RSUD Al-Mulk bulan {monthName} {reportYear}
-          </p>
-          <WordExcelLineChart
-            title={`Insiden rate HAIs Phlebitis ${reportYear}`}
-            categories={['Ranap Dewasa', 'Ranap Anak', 'Ranap Kebidanan', 'Ranap Bedah']}
-            series={[
-              {
-                name: 'Phlebitis',
-                color: '#2563eb',
-                values: chartRoomsPhlebitis.map((r) => r.cases),
-              },
-              {
-                name: '‰',
-                color: '#f97316',
-                values: chartRoomsPhlebitis.map((r) => r.rate),
-              },
-              {
-                name: 'Target',
-                color: '#64748b',
-                values: [1, 1, 1, 1],
-              },
-            ]}
-            height={130}
-          />
-        </div>
-      ),
-    });
-
-    // Tabel 2 Phlebitis (Dipindahkan tepat di bawah grafik)
+    // Tabel 2 Phlebitis (Diposisikan di atas grafik sesuai urutan: Judul -> Tabel -> Grafik -> Narasi)
     b.push({
       type: 'element',
       key: 'm-tabel2-phleb',
@@ -1046,6 +1010,42 @@ export default function MonthlyOfficialReport({
       ),
     });
 
+    // Grafik 2 Line Chart
+    b.push({
+      type: 'element',
+      key: 'm-grafik2-phleb-block',
+      gapAfter: 6,
+      node: (
+        <div className="w-full">
+          <p className="font-bold text-[11pt] mb-1">
+            Grafik.2  Incidence Rate Phlebitis Di RSUD Al-Mulk bulan {monthName} {reportYear}
+          </p>
+          <WordExcelLineChart
+            title={`Insiden rate HAIs Phlebitis ${reportYear}`}
+            categories={['Ranap Dewasa', 'Ranap Anak', 'Ranap Kebidanan', 'Ranap Bedah']}
+            series={[
+              {
+                name: 'Phlebitis',
+                color: '#2563eb',
+                values: chartRoomsPhlebitis.map((r) => r.cases),
+              },
+              {
+                name: '‰',
+                color: '#f97316',
+                values: chartRoomsPhlebitis.map((r) => r.rate),
+              },
+              {
+                name: 'Target',
+                color: '#64748b',
+                values: [1, 1, 1, 1],
+              },
+            ]}
+            height={130}
+          />
+        </div>
+      ),
+    });
+
     const g2AnalisaText = `Berdasarkan grafik diatas menunjukkan bahwa insiden rate phlebitis bulan ${monthName} ${reportYear} paling banyak di ruang rawat inap ${peakPhlebRoom.room.replace('Ranap ', '')} yaitu ${fmtIdNum(peakPhlebRoom.rate)}‰ dengan jumlah sebanyak ${peakPhlebRoom.cases} orang.`;
 
     pushNarrativeBlocks(
@@ -1072,43 +1072,7 @@ export default function MonthlyOfficialReport({
       ),
     });
 
-    // Grafik 3 Line Chart
-    b.push({
-      type: 'element',
-      key: 'm-grafik3-isk-block',
-      gapAfter: 6,
-      node: (
-        <div className="w-full">
-          <p className="font-bold text-[11pt] mb-1">
-            Grafik 3.  Incidence Rate Infeksi Saluran Kemih Di UOBK RSUD Al-Mulk bulan {monthName} {reportYear}.
-          </p>
-          <WordExcelLineChart
-            title={`Insiden rate HAIs ISK ${reportYear}`}
-            categories={['Ranap Dewasa', 'Ranap Anak', 'Ranap Kebidanan', 'Ranap Bedah']}
-            series={[
-              {
-                name: 'ISK',
-                color: '#2563eb',
-                values: chartRoomsIsk.map((r) => r.cases),
-              },
-              {
-                name: '‰',
-                color: '#f97316',
-                values: chartRoomsIsk.map((r) => r.rate),
-              },
-              {
-                name: 'Target',
-                color: '#64748b',
-                values: [4.7, 4.7, 4.7, 4.7],
-              },
-            ]}
-            height={125}
-          />
-        </div>
-      ),
-    });
-
-    // Tabel 3 ISK (Dipindahkan tepat di bawah grafik)
+    // Tabel 3 ISK (Diposisikan di atas grafik sesuai urutan: Judul -> Tabel -> Grafik -> Narasi)
     b.push({
       type: 'element',
       key: 'm-tabel3-isk',
@@ -1163,6 +1127,42 @@ export default function MonthlyOfficialReport({
       ),
     });
 
+    // Grafik 3 Line Chart
+    b.push({
+      type: 'element',
+      key: 'm-grafik3-isk-block',
+      gapAfter: 6,
+      node: (
+        <div className="w-full">
+          <p className="font-bold text-[11pt] mb-1">
+            Grafik 3.  Incidence Rate Infeksi Saluran Kemih Di UOBK RSUD Al-Mulk bulan {monthName} {reportYear}.
+          </p>
+          <WordExcelLineChart
+            title={`Insiden rate HAIs ISK ${reportYear}`}
+            categories={['Ranap Dewasa', 'Ranap Anak', 'Ranap Kebidanan', 'Ranap Bedah']}
+            series={[
+              {
+                name: 'ISK',
+                color: '#2563eb',
+                values: chartRoomsIsk.map((r) => r.cases),
+              },
+              {
+                name: '‰',
+                color: '#f97316',
+                values: chartRoomsIsk.map((r) => r.rate),
+              },
+              {
+                name: 'Target',
+                color: '#64748b',
+                values: [4.7, 4.7, 4.7, 4.7],
+              },
+            ]}
+            height={125}
+          />
+        </div>
+      ),
+    });
+
     const iskIsZero = roomBreakdown.isk.totalCases === 0;
     const g3AnalisaText = iskIsZero
       ? `Berdasarkan grafik diatas menunjukkan bahwa insiden rate ISK bulan ${monthName} ${reportYear} tidak ada kejadian infeksi saluran kemih (0‰) di seluruh ruang rawat inap UOBK RSUD Al-Mulk, sehingga telah memenuhi standar mutu nasional (≤ 4,7‰).`
@@ -1192,43 +1192,7 @@ export default function MonthlyOfficialReport({
       ),
     });
 
-    // Grafik 4 Line Chart
-    b.push({
-      type: 'element',
-      key: 'm-grafik4-decub-block',
-      gapAfter: 6,
-      node: (
-        <div className="w-full">
-          <p className="font-bold text-[11pt] mb-1">
-            Grafik 4.  Incidence Rate Decubitus Di UOBK RSUD Al-Mulk bulan {monthName} {reportYear}.
-          </p>
-          <WordExcelLineChart
-            title={`Insiden rate HAIs Decubitus ${reportYear}`}
-            categories={['Ranap Dewasa', 'Ranap Anak', 'Ranap Kebidanan', 'Ranap Bedah']}
-            series={[
-              {
-                name: 'Decubitus',
-                color: '#2563eb',
-                values: chartRoomsDecubitus.map((r) => r.cases),
-              },
-              {
-                name: '‰',
-                color: '#f97316',
-                values: chartRoomsDecubitus.map((r) => r.rate),
-              },
-              {
-                name: 'Target',
-                color: '#64748b',
-                values: [1, 1, 1, 1],
-              },
-            ]}
-            height={125}
-          />
-        </div>
-      ),
-    });
-
-    // Tabel 4 Decubitus (Dipindahkan tepat di bawah grafik)
+    // Tabel 4 Decubitus (Diposisikan di atas grafik sesuai urutan: Judul -> Tabel -> Grafik -> Narasi)
     b.push({
       type: 'element',
       key: 'm-tabel4-decub',
@@ -1283,6 +1247,42 @@ export default function MonthlyOfficialReport({
       ),
     });
 
+    // Grafik 4 Line Chart
+    b.push({
+      type: 'element',
+      key: 'm-grafik4-decub-block',
+      gapAfter: 6,
+      node: (
+        <div className="w-full">
+          <p className="font-bold text-[11pt] mb-1">
+            Grafik 4.  Incidence Rate Decubitus Di UOBK RSUD Al-Mulk bulan {monthName} {reportYear}.
+          </p>
+          <WordExcelLineChart
+            title={`Insiden rate HAIs Decubitus ${reportYear}`}
+            categories={['Ranap Dewasa', 'Ranap Anak', 'Ranap Kebidanan', 'Ranap Bedah']}
+            series={[
+              {
+                name: 'Decubitus',
+                color: '#2563eb',
+                values: chartRoomsDecubitus.map((r) => r.cases),
+              },
+              {
+                name: '‰',
+                color: '#f97316',
+                values: chartRoomsDecubitus.map((r) => r.rate),
+              },
+              {
+                name: 'Target',
+                color: '#64748b',
+                values: [1, 1, 1, 1],
+              },
+            ]}
+            height={125}
+          />
+        </div>
+      ),
+    });
+
     const decubIsZero = roomBreakdown.decubitus.totalCases === 0;
     const g4AnalisaText = decubIsZero
       ? `Berdasarkan grafik diatas menunjukkan bahwa insiden rate Decubitus bulan ${monthName} ${reportYear} tidak ada kejadian decubitus (0‰) di seluruh ruang rawat inap UOBK RSUD Al-Mulk, sehingga telah memenuhi standar mutu nasional (≤ 1‰).`
@@ -1312,43 +1312,7 @@ export default function MonthlyOfficialReport({
       ),
     });
 
-    // Grafik 5 Line Chart
-    b.push({
-      type: 'element',
-      key: 'm-grafik5-vap-block',
-      gapAfter: 6,
-      node: (
-        <div className="w-full">
-          <p className="font-bold text-[11pt] mb-1">
-            Grafik 5.  Incidence Rate VAP Di UOBK RSUD Al-Mulk bulan {monthName} {reportYear}.
-          </p>
-          <WordExcelLineChart
-            title={`Insiden rate HAIs VAP ${reportYear}`}
-            categories={['Ranap Dewasa', 'Ranap Anak', 'Ranap Kebidanan', 'Ranap Bedah']}
-            series={[
-              {
-                name: 'VAP',
-                color: '#2563eb',
-                values: chartRoomsVap.map((r) => r.cases),
-              },
-              {
-                name: '‰',
-                color: '#f97316',
-                values: chartRoomsVap.map((r) => r.rate),
-              },
-              {
-                name: 'Target',
-                color: '#64748b',
-                values: [5.8, 5.8, 5.8, 5.8],
-              },
-            ]}
-            height={125}
-          />
-        </div>
-      ),
-    });
-
-    // Tabel 5 VAP (Dipindahkan tepat di bawah grafik)
+    // Tabel 5 VAP (Diposisikan di atas grafik sesuai urutan: Judul -> Tabel -> Grafik -> Narasi)
     b.push({
       type: 'element',
       key: 'm-tabel5-vap',
@@ -1403,6 +1367,42 @@ export default function MonthlyOfficialReport({
       ),
     });
 
+    // Grafik 5 Line Chart
+    b.push({
+      type: 'element',
+      key: 'm-grafik5-vap-block',
+      gapAfter: 6,
+      node: (
+        <div className="w-full">
+          <p className="font-bold text-[11pt] mb-1">
+            Grafik 5.  Incidence Rate VAP Di UOBK RSUD Al-Mulk bulan {monthName} {reportYear}.
+          </p>
+          <WordExcelLineChart
+            title={`Insiden rate HAIs VAP ${reportYear}`}
+            categories={['Ranap Dewasa', 'Ranap Anak', 'Ranap Kebidanan', 'Ranap Bedah']}
+            series={[
+              {
+                name: 'VAP',
+                color: '#2563eb',
+                values: chartRoomsVap.map((r) => r.cases),
+              },
+              {
+                name: '‰',
+                color: '#f97316',
+                values: chartRoomsVap.map((r) => r.rate),
+              },
+              {
+                name: 'Target',
+                color: '#64748b',
+                values: [5.8, 5.8, 5.8, 5.8],
+              },
+            ]}
+            height={125}
+          />
+        </div>
+      ),
+    });
+
     const vapIsZero = roomBreakdown.vap.totalCases === 0;
     const g5AnalisaText = vapIsZero
       ? `Berdasarkan grafik diatas menunjukkan bahwa insiden rate VAP bulan ${monthName} ${reportYear} tidak ada kejadian infeksi ventilator (0‰), sehingga telah memenuhi standar nasional (≤ 5,8‰).`
@@ -1432,50 +1432,7 @@ export default function MonthlyOfficialReport({
       ),
     });
 
-    const maxIdoVal = Math.max(2.5, ...idoOperations.map((o) => o.cases), ...idoOperations.map((o) => o.rate));
-    const idoForcedMaxY = maxIdoVal <= 2.5 ? 2.5 : undefined;
-    const idoCustomTicks = maxIdoVal <= 2.5 ? [0, 0.5, 1, 1.5, 2, 2.5] : undefined;
-
-    // Grafik 6 Line Chart (Matching authentic hospital report layout)
-    b.push({
-      type: 'element',
-      key: 'm-grafik6-ido-block',
-      gapAfter: 6,
-      node: (
-        <div className="w-full">
-          <p className="font-bold text-[11pt] mb-1">
-            Grafik. 6  Incidence Rate Infeksi Daerah Operasi (IDO) Di UOBK RSUD Al-Mulk bulan {monthName} {reportYear}.
-          </p>
-          <WordExcelLineChart
-            title={`Insiden rate HAIs IDO ${monthName} ${reportYear}`}
-            categories={['Appendisitis', 'Hernia', 'Sectio Caesaria', 'STT']}
-            categoriesInTable={true}
-            forcedMaxY={idoForcedMaxY}
-            customTicks={idoCustomTicks}
-            series={[
-              {
-                name: 'IDO',
-                color: '#16a34a',
-                values: idoOperations.map((o) => o.cases),
-              },
-              {
-                name: '%',
-                color: '#2563eb',
-                values: idoOperations.map((o) => o.rate),
-              },
-              {
-                name: 'Target',
-                color: '#eab308',
-                values: idoOperations.map((o) => o.target),
-              },
-            ]}
-            height={135}
-          />
-        </div>
-      ),
-    });
-
-    // Tabel 6 IDO (Dipindahkan tepat di bawah grafik)
+    // Tabel 6 IDO (Diposisikan di atas grafik sesuai urutan: Judul -> Tabel -> Grafik -> Narasi)
     b.push({
       type: 'element',
       key: 'm-tabel6-ido',
@@ -1541,6 +1498,49 @@ export default function MonthlyOfficialReport({
               </tr>
             </tbody>
           </table>
+        </div>
+      ),
+    });
+
+    const maxIdoVal = Math.max(2.5, ...idoOperations.map((o) => o.cases), ...idoOperations.map((o) => o.rate));
+    const idoForcedMaxY = maxIdoVal <= 2.5 ? 2.5 : undefined;
+    const idoCustomTicks = maxIdoVal <= 2.5 ? [0, 0.5, 1, 1.5, 2, 2.5] : undefined;
+
+    // Grafik 6 Line Chart (Matching authentic hospital report layout)
+    b.push({
+      type: 'element',
+      key: 'm-grafik6-ido-block',
+      gapAfter: 6,
+      node: (
+        <div className="w-full">
+          <p className="font-bold text-[11pt] mb-1">
+            Grafik. 6  Incidence Rate Infeksi Daerah Operasi (IDO) Di UOBK RSUD Al-Mulk bulan {monthName} {reportYear}.
+          </p>
+          <WordExcelLineChart
+            title={`Insiden rate HAIs IDO ${monthName} ${reportYear}`}
+            categories={['Appendisitis', 'Hernia', 'Sectio Caesaria', 'STT']}
+            categoriesInTable={true}
+            forcedMaxY={idoForcedMaxY}
+            customTicks={idoCustomTicks}
+            series={[
+              {
+                name: 'IDO',
+                color: '#16a34a',
+                values: idoOperations.map((o) => o.cases),
+              },
+              {
+                name: '%',
+                color: '#2563eb',
+                values: idoOperations.map((o) => o.rate),
+              },
+              {
+                name: 'Target',
+                color: '#eab308',
+                values: idoOperations.map((o) => o.target),
+              },
+            ]}
+            height={135}
+          />
         </div>
       ),
     });
