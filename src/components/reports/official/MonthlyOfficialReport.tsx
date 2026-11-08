@@ -1612,14 +1612,14 @@ export default function MonthlyOfficialReport({
               <tr>
                 <th
                   rowSpan={2}
-                  className="border border-black p-1.5 w-[25%] font-bold text-center align-middle text-white"
+                  className="border border-black p-1.5 w-[25%] font-bold text-center align-middle text-white bg-[#00a651]"
                   style={{ backgroundColor: '#00a651', color: '#ffffff' }}
                 >
                   Indikator
                 </th>
                 <th
                   colSpan={3}
-                  className="border border-black p-1.5 font-bold text-center align-middle text-white"
+                  className="border border-black p-1.5 font-bold text-center align-middle text-white bg-[#00a651]"
                   style={{ backgroundColor: '#00a651', color: '#ffffff' }}
                 >
                   Profesi
@@ -1629,7 +1629,7 @@ export default function MonthlyOfficialReport({
                 {hhProfessions.list.map((p) => (
                   <th
                     key={p.label}
-                    className="border border-black p-1.5 w-[25%] font-bold text-center align-middle text-white"
+                    className="border border-black p-1.5 w-[25%] font-bold text-center align-middle text-white bg-[#00a651]"
                     style={{ backgroundColor: '#00a651', color: '#ffffff' }}
                   >
                     {p.label === 'Perawat / Bidan' ? 'Perawat /Bidan' : p.label}

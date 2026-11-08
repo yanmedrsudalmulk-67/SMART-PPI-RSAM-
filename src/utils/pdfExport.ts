@@ -432,14 +432,35 @@ export function injectPrintStyles(clonedDoc: Document, isLandscape: boolean = fa
       background: none !important;
     }
 
+    /* Green table header rules */
+    .bg-\[\#00a651\],
+    [class*="bg-[#00a651]"],
+    th.bg-\[\#00a651\],
+    td.bg-\[\#00a651\],
+    th[style*="00a651"],
+    th[style*="166, 81"],
+    td[style*="00a651"],
+    td[style*="166, 81"],
+    .f4-page th.bg-\[\#00a651\],
+    .f4-page td.bg-\[\#00a651\],
+    .f4-page th[style*="00a651"],
+    .f4-page th[style*="166, 81"] {
+      background-color: #00a651 !important;
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+    }
+
     .text-white,
     [class*="text-white"],
     th.text-white,
     td.text-white,
+    .f4-page th.text-white,
+    .f4-page td.text-white,
     th[style*="background-color: rgb(0, 166, 81)"],
     th[style*="background-color: #00a651"],
     th[style*="background-color:#00a651"] {
       color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
     }
 
     th:not(.align-top):not([class*="align-top"]),
@@ -545,25 +566,51 @@ export function sanitizeTableStylesForPdf(rootEl: HTMLElement, clonedDoc: Docume
         }
 
         // Check if cell is green header (Hand Hygiene, etc.) or has white text
+        const cellStyleAttr = cell.getAttribute('style') || '';
+        const cellClassAttr = cell.getAttribute('class') || '';
+
         const effectiveBg = cell.style.backgroundColor || (hasBg ? rowBg : '');
         const isGreenCell =
           isGreenRow ||
+          cellClassAttr.includes('bg-[#00a651]') ||
+          cellStyleAttr.toLowerCase().includes('00a651') ||
+          cellStyleAttr.includes('166, 81') ||
           effectiveBg.includes('166, 81') ||
           effectiveBg.toLowerCase().includes('00a651') ||
           cell.classList.contains('bg-[#00a651]');
 
         const isWhiteText =
           cell.classList.contains('text-white') ||
+          cellClassAttr.includes('text-white') ||
           trEl.classList.contains('text-white') ||
+          cellStyleAttr.toLowerCase().includes('color: #ffffff') ||
+          cellStyleAttr.toLowerCase().includes('color:#ffffff') ||
+          cellStyleAttr.includes('color: rgb(255, 255, 255)') ||
           rowColor === 'rgb(255, 255, 255)' ||
           rowColor === '#ffffff' ||
           cell.style.color === 'rgb(255, 255, 255)' ||
           cell.style.color === '#ffffff';
 
-        if (isGreenCell || isWhiteText) {
-          cell.style.color = '#ffffff';
+        if (isGreenCell) {
+          cell.style.setProperty('background-color', '#00a651', 'important');
           cell.style.setProperty('color', '#ffffff', 'important');
-        } else if (hasBg && rowColor && rowColor !== 'inherit' && rowColor !== 'initial') {
+          cell.style.setProperty('-webkit-text-fill-color', '#ffffff', 'important');
+          cell.querySelectorAll<HTMLElement>('*').forEach((child) => {
+            child.style.setProperty('color', '#ffffff', 'important');
+            child.style.setProperty('-webkit-text-fill-color', '#ffffff', 'important');
+          });
+        } else if (isWhiteText) {
+          cell.style.setProperty('color', '#ffffff', 'important');
+          cell.style.setProperty('-webkit-text-fill-color', '#ffffff', 'important');
+          cell.querySelectorAll<HTMLElement>('*').forEach((child) => {
+            child.style.setProperty('color', '#ffffff', 'important');
+            child.style.setProperty('-webkit-text-fill-color', '#ffffff', 'important');
+          });
+        } else if (cellBg && cellBg !== 'transparent' && cellBg !== 'rgba(0, 0, 0, 0)') {
+          cell.style.setProperty('background-color', cellBg, 'important');
+        } else if (hasBg) {
+          cell.style.setProperty('background-color', rowBg, 'important');
+        } else if (rowColor && rowColor !== 'inherit' && rowColor !== 'initial') {
           if (!cell.style.color || cell.style.color === 'inherit') {
             cell.style.color = rowColor;
           }
