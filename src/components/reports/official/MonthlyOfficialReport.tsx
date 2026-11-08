@@ -2054,6 +2054,9 @@ export default function MonthlyOfficialReport({
       ),
     });
 
+    // Pindah ke halaman baru agar "2. Rekomendasi dari hasil audit Hand Hygiene dan APD" berada di halaman berikutnya (rapi & tidak nanggung)
+    b.push({ type: 'pageBreak', key: 'm-pb-rtl-sec2' });
+
     // 2. Rekomendasi dari hasil audit Hand Hygiene dan APD
     b.push({
       type: 'element',
