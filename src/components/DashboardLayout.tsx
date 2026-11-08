@@ -63,6 +63,7 @@ const navItems: NavItemData[] = [
     subItems: [
       { name: 'Rekap Laporan PPI', href: '/dashboard/reports' },
       { name: 'Laporan PPI', href: '/dashboard/reports/resmi' },
+      { name: 'Bukti Supervisi', href: '/dashboard/reports/supervisi' },
     ]
   },
   { 
