@@ -498,7 +498,7 @@ export default function SurveilansFormPage() {
               {activeTotals.deku} <span className="text-xs font-normal text-slate-400">kasus</span>
             </div>
             <div className="text-[11px] text-slate-400 mt-1">
-              Dari {activeTotals.totalPasien} total pasien
+              Dari {activeTotals.hap} hari tirah baring
             </div>
             <div className="text-[9px] font-bold text-amber-400 mt-0.5">Standar &lt; 1.5 ‰</div>
           </div>

@@ -418,10 +418,11 @@ async function syncHaisToSmartPpi(webData: any, startDate: string, endDate: stri
         });
       }
 
-      // 5. Decubitus
-      if (!protectedKeys.has(`${ym}|${r.unit}|decubitus`) && (t.totalPasien > 0 || t.deku > 0)) {
-        const den = t.totalPasien > 0 ? t.totalPasien : 1;
-        const rate = Number(((t.deku / den) * 1000).toFixed(2));
+      // 5. Decubitus (Tirah Baring)
+      if (!protectedKeys.has(`${ym}|${r.unit}|decubitus`)) {
+        const den = Number(t.hap) || 0; // Menggunakan hari tirah baring dari SIMRS (bukan total pasien / hari rawat)
+        const rate = den > 0 ? Number(((t.deku / den) * 1000).toFixed(2)) : 0;
+        const irPercent = den > 0 ? Number(((t.deku / den) * 100).toFixed(2)) : 0;
         rowsToInsert.push({
           id: `simrs-deku-${r.key}-${tgl}`,
           unit_kerja: r.unit,
@@ -435,10 +436,16 @@ async function syncHaisToSmartPpi(webData: any, startDate: string, endDate: stri
           jumlah_patuh: t.deku,
           jumlah_dinilai: den,
           persentase: rate,
-          data_indikator: JSON.stringify({ numerator: t.deku, denominator: den, rate, isPercent: false }),
+          data_indikator: JSON.stringify({
+            numerator: t.deku,
+            denominator: den,
+            rate,
+            isPercent: false,
+            irPercent,
+          }),
           tanggal_waktu: sessionDate,
           observer: 'SIMRS Khanza Realtime',
-          catatan: `Sinkronisasi otomatis dari SIMRS Khanza (${tgl})`,
+          catatan: `Sinkronisasi otomatis dari SIMRS Khanza (${tgl}) - Tirah Baring: ${den}, Kasus Deku: ${t.deku}`,
           created_at: nowIso,
         });
       }
@@ -728,7 +735,7 @@ async function getOfflineFallbackHaisData(startDate: string, endDate: string): P
         d.cvl += den;
         d.iad += num;
       } else if (ind.includes('deku') || ind.includes('decu')) {
-        d.totalPasien += den;
+        d.hap += den;
         d.deku += num;
       } else if (ind.includes('ido') || ind.includes('ilo')) {
         d.ilo += num;
