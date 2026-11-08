@@ -129,9 +129,15 @@ export default function InputIndexPage() {
   const fetchSessions = async () => {
     try {
       const [sessionsRes, hhRes, apdRes] = await Promise.all([
-        supabase.from("audit_sessions").select("*"),
-        supabase.from("audit_hand_hygiene").select("*"),
-        supabase.from("audit_apd").select("*"),
+        supabase
+          .from("audit_sessions")
+          .select("id, created_at, tanggal_waktu, indikator_id, nama_indikator, kategori, persentase, jumlah_patuh, jumlah_dinilai, unit, observer, profesi"),
+        supabase
+          .from("audit_hand_hygiene")
+          .select("id, created_at, start_time, patuh, peluang, persentase, unit, observer, profesi"),
+        supabase
+          .from("audit_apd")
+          .select("id, created_at, tanggal_waktu, jumlah_patuh, jumlah_dinilai, persentase, unit_ruangan, unit, observer, profesi"),
       ]);
 
       const sessionList: any[] = sessionsRes.data
@@ -598,14 +604,14 @@ export default function InputIndexPage() {
   ];
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-6 pb-20 transform-gpu">
       <Head>
         <title>Input Data - SMART PPI</title>
       </Head>
 
       <div className="mb-2 flex flex-col items-center justify-center gap-4 landscape:lg:flex-row landscape:lg:justify-between landscape:lg:text-left">
         <div className="text-center landscape:lg:text-left w-full landscape:lg:w-auto shrink-0">
-          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase">
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-200 to-cyan-300 uppercase drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
             Input Data SMART PPI
           </h1>
           <p className="text-sm text-slate-300 mt-1 font-medium text-center landscape:lg:text-left">
@@ -719,25 +725,22 @@ export default function InputIndexPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-        {modules.map((mod, i) => (
-          <motion.div
+        {modules.map((mod) => (
+          <div
             key={mod.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1, duration: 0.5 }}
-            className="flex h-full w-full"
+            className="flex h-full w-full [content-visibility:auto] [contain-intrinsic-size:0_360px]"
           >
             <Link
               href={mod.href}
               prefetch={false}
-              className="relative group p-6 sm:p-7 rounded-[30px] bg-gradient-to-br from-[#241e4a]/85 via-[#1b1c3e]/80 to-[#12132d]/90 backdrop-blur-2xl border border-indigo-200/15 flex flex-col overflow-hidden shadow-[-8px_-8px_24px_rgba(130,145,230,0.07),14px_14px_32px_rgba(0,0,0,0.65),inset_1.5px_1.5px_2px_rgba(255,255,255,0.12),inset_-1.5px_-1.5px_2px_rgba(0,0,0,0.35)] hover:-translate-y-2 hover:border-indigo-200/30 hover:shadow-[-12px_-12px_28px_rgba(130,145,230,0.12),20px_20px_42px_rgba(0,0,0,0.75),inset_1.5px_1.5px_2.5px_rgba(255,255,255,0.18)] transition-all duration-300 ease-out transform-gpu w-full"
+              className="relative group p-6 sm:p-7 rounded-[30px] bg-gradient-to-br from-[#1e1c3e] via-[#161733] to-[#0f1026] border border-indigo-300/15 flex flex-col overflow-hidden shadow-[-6px_-6px_20px_rgba(130,145,230,0.06),12px_12px_28px_rgba(0,0,0,0.65),inset_1px_1px_1.5px_rgba(255,255,255,0.12),inset_-1px_-1px_1.5px_rgba(0,0,0,0.35)] hover:-translate-y-1 hover:border-indigo-300/30 hover:shadow-[-8px_-8px_24px_rgba(130,145,230,0.1),16px_16px_36px_rgba(0,0,0,0.75)] transition-all duration-200 ease-out transform-gpu w-full"
             >
               {/* Top Neumorphic Specular Highlight Bevel */}
-              <div className="absolute top-0 inset-x-8 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
+              <div className="absolute top-0 inset-x-8 h-[1px] bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
 
-              {/* Background gradient hint */}
+              {/* Hardware-friendly corner radial glow without heavy blur filters */}
               <div
-                className={`absolute top-0 right-0 w-64 h-64 opacity-10 pointer-events-none rounded-bl-full filter blur-3xl transition-opacity duration-700 group-hover:opacity-25 ${mod.colorTheme.bgActive}`}
+                className="absolute top-0 right-0 w-48 h-48 pointer-events-none rounded-bl-full opacity-15 transition-opacity duration-300 group-hover:opacity-30 bg-[radial-gradient(ellipse_at_top_right,rgba(99,102,241,0.25),transparent_70%)]"
               />
 
               <div className="flex justify-between items-start gap-4 mb-6 relative z-10 flex-1">
@@ -792,9 +795,9 @@ export default function InputIndexPage() {
                     {Number(mod.computed.progress).toFixed(2)}%
                   </span>
                 </div>
-                <div className="h-2.5 w-full bg-[#0d0f22] rounded-full overflow-hidden p-[1px] border border-white/5 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.85),inset_-1px_-1px_2px_rgba(255,255,255,0.06)]">
+                <div className="h-2.5 w-full bg-[#0d0f22] rounded-full overflow-hidden p-[1px] border border-white/5 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.85)]">
                   <div
-                    className={`h-full rounded-full transition-all duration-[1200ms] shadow-[0_0_12px_currentColor,inset_0_1px_1px_rgba(255,255,255,0.4)] ${mod.computed.progressColor}`}
+                    className={`h-full rounded-full transition-[width] duration-700 ease-out shadow-[0_0_10px_currentColor] ${mod.computed.progressColor}`}
                     style={{ width: `${Math.max(mod.computed.progress, 2)}%` }}
                   />
                 </div>
@@ -805,7 +808,7 @@ export default function InputIndexPage() {
                 {mod.computed.subStats.map((stat, idx) => (
                   <div
                     key={idx}
-                    className={`flex flex-col items-center bg-gradient-to-b from-[#13152c]/90 to-[#181a38]/90 rounded-2xl py-3 px-2 border border-indigo-300/10 shadow-[inset_2.5px_2.5px_6px_rgba(0,0,0,0.7),inset_-2px_-2px_5px_rgba(140,150,230,0.06),0_2px_4px_rgba(0,0,0,0.2)] group-hover:border-indigo-300/25 transition-all duration-200`}
+                    className="flex flex-col items-center bg-gradient-to-b from-[#13152c] to-[#181a38] rounded-2xl py-3 px-2 border border-indigo-300/10 shadow-[inset_1.5px_1.5px_4px_rgba(0,0,0,0.6),inset_-1px_-1px_3px_rgba(140,150,230,0.04)] group-hover:border-indigo-300/25 transition-colors duration-200"
                   >
                     <div
                       className={`w-8 h-8 flex items-center justify-center rounded-xl ${stat.iconColor} mb-2 shadow-[inset_1px_1px_1px_rgba(255,255,255,0.15),2px_2px_6px_rgba(0,0,0,0.4)]`}
@@ -825,14 +828,14 @@ export default function InputIndexPage() {
               {/* Action Button - Neumorphic Tactile CTA */}
               <div className="mt-0 pt-2 shrink-0">
                 <div
-                  className={`w-full py-3.5 rounded-full flex items-center justify-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.2em] transition-all duration-300 ${mod.colorTheme.bgActive} text-white shadow-[-3px_-3px_8px_rgba(130,150,255,0.2),6px_8px_20px_rgba(0,0,0,0.5),inset_1px_1px_2px_rgba(255,255,255,0.35),inset_-1px_-1px_2px_rgba(0,0,0,0.3)] hover:brightness-110 active:translate-y-0.5 active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.6),inset_-2px_-2px_4px_rgba(255,255,255,0.2)] ${mod.colorTheme.shadowActive}`}
+                  className={`w-full py-3.5 rounded-full flex items-center justify-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.2em] transition-all duration-200 ${mod.colorTheme.bgActive} text-white shadow-[-3px_-3px_8px_rgba(130,150,255,0.2),6px_8px_20px_rgba(0,0,0,0.5),inset_1px_1px_2px_rgba(255,255,255,0.35),inset_-1px_-1px_2px_rgba(0,0,0,0.3)] hover:brightness-110 active:translate-y-0.5 ${mod.colorTheme.shadowActive}`}
                 >
                   <span>INPUT SEKARANG</span>
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                 </div>
               </div>
             </Link>
-          </motion.div>
+          </div>
         ))}
       </div>
     </div>

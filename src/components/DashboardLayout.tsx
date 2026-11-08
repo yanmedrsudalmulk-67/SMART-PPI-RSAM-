@@ -464,24 +464,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         initial={false}
         animate={{ 
           x: isMobile ? (isSidebarOpen ? 0 : -360) : 0,
-          width: isMobile ? 280 : (isSidebarOpen ? 280 : 80),
           opacity: (isSidebarOpen || !isMobile) ? 1 : 0
         }}
         transition={{ 
-          duration: 0.24,
+          duration: 0.28,
           ease: [0.16, 1, 0.3, 1]
         }}
-        className={`fixed inset-y-4 left-4 z-50 print:hidden sidebar-layer-gpu fps-optimized pointer-events-auto select-none portrait:hidden landscape:block ${
+        className={`fixed inset-y-4 left-4 z-50 print:hidden pointer-events-auto select-none portrait:hidden landscape:block transition-[width] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[width,transform] ${
           isMobile ? 'w-[280px]' : (isSidebarOpen ? 'w-[280px]' : 'w-[80px]')
         }`}
       >
-        {/* Main Inner Card with Glass/Border/Shadow & overflow-hidden */}
-        <div className="flex flex-col h-full w-full rounded-[30px] transition-colors duration-300 backdrop-blur-md bg-gradient-to-b from-[#1c183a]/95 via-[#14172f]/95 to-[#0c0e1e] border border-[#2b2d56] shadow-[-6px_-6px_20px_rgba(140,165,255,0.08),12px_14px_36px_rgba(0,0,0,0.75),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] overflow-hidden relative">
+        {/* Main Inner Card with Solid Opaque Background & Hardware Layer */}
+        <div className="flex flex-col h-full w-full rounded-[30px] bg-gradient-to-b from-[#1c183a] via-[#14172f] to-[#0c0e1e] border border-[#2b2d56] shadow-[-6px_-6px_20px_rgba(140,165,255,0.08),12px_14px_36px_rgba(0,0,0,0.75),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] overflow-hidden relative">
           {/* Top Bevel Highlight */}
           <div className="absolute top-0 inset-x-6 h-[1.5px] bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none z-20" />
 
           {/* Logo Section */}
-          <div className={`flex flex-col items-center justify-center border-b shrink-0 relative border-indigo-900/40 bg-[#141532]/70 backdrop-blur-md rounded-t-[29px] transition-all duration-300 ${
+          <div className={`flex flex-col items-center justify-center border-b shrink-0 relative border-indigo-900/40 bg-[#141532] rounded-t-[29px] transition-all duration-300 ${
             !isSidebarOpen && !isMobile ? 'pt-4 pb-4 px-2' : 'pt-6 pb-5 px-4'
           }`}>
             {/* 3D Neumorphic Floating SMART PPI Logo */}
@@ -569,7 +568,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </motion.aside>
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col h-full min-w-0 overflow-hidden transition-[margin-left] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[margin-left] print:ml-0 ${
+      <div className={`flex-1 flex flex-col h-full min-w-0 overflow-hidden transition-[margin-left] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[margin-left] print:ml-0 ${
         !isMobile ? (isSidebarOpen ? 'ml-[312px]' : 'ml-[112px]') : 'ml-0'
       }`}>
         {/* Page Content */}
