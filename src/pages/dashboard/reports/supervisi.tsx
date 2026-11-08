@@ -970,12 +970,12 @@ export default function BuktiSupervisiPage() {
                         className="border-b border-slate-100 dark:border-slate-800/80 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors"
                       >
                         {/* No */}
-                        <td className="px-1 py-3 text-center align-middle font-bold text-slate-500 dark:text-slate-400 text-[10px]">
+                        <td className="px-1 py-3 text-center align-top font-bold text-slate-500 dark:text-slate-400 text-[10px]">
                           {idx + 1}
                         </td>
 
                         {/* Tanggal & Waktu */}
-                        <td className="px-1 py-3 text-center align-middle text-[10px]">
+                        <td className="px-1 py-3 text-center align-top text-[10px]">
                           <span className="font-bold text-slate-800 dark:text-slate-200 block">
                             {dateFormatted.split(",")[0]}
                           </span>
@@ -988,24 +988,24 @@ export default function BuktiSupervisiPage() {
                         </td>
 
                         {/* Kegiatan / Indikator */}
-                        <td className="px-1.5 py-3 text-center align-middle text-[10px]">
+                        <td className="px-1.5 py-3 text-center align-top text-[10px]">
                           <span className="font-bold text-slate-900 dark:text-white block leading-tight text-[10px]">
                             {item.nama_kegiatan}
                           </span>
-                          <span className="inline-block mt-0.5 text-[8.5px] uppercase font-bold px-1 py-0.5 rounded bg-slate-100 dark:bg-[#1b2044] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700/60">
+                          <span className="inline-block mt-1 text-[8.5px] uppercase font-bold px-1 py-0.5 rounded bg-slate-100 dark:bg-[#1b2044] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700/60">
                             {item.indikator_id.replace(/_/g, " ")}
                           </span>
                         </td>
 
                         {/* Ruangan - Cukup Nama Saja Tanpa Icon & Tanpa Garis Card */}
-                        <td className="px-1 py-3 text-center align-middle text-[10px]">
+                        <td className="px-1 py-3 text-center align-top text-[10px]">
                           <span className="font-bold text-slate-800 dark:text-slate-200 block text-[10px]">
                             {item.unit}
                           </span>
                         </td>
 
                         {/* Temuan */}
-                        <td className="px-2 py-3 text-center align-middle text-[10px]">
+                        <td className="px-2 py-3 text-center align-top text-[10px]">
                           {item.temuan ? (
                             <p className="text-slate-800 dark:text-slate-200 leading-snug font-medium whitespace-pre-wrap text-[10px]">
                               {item.temuan}
@@ -1017,10 +1017,10 @@ export default function BuktiSupervisiPage() {
                           )}
                         </td>
 
-                        {/* Foto Temuan (Before) - Diperbesar Selebar Foto & Tanpa Ikon Mata */}
-                        <td className="px-2 py-3 text-center align-middle">
+                        {/* Foto Temuan (Before) - Tinggi Dikurangi 3 Baris, Lebar Tetap & Top Align */}
+                        <td className="px-2 py-3 text-center align-top">
                           {item.foto_temuan.length > 0 ? (
-                            <div className="flex flex-col items-center justify-center gap-1 mx-auto">
+                            <div className="flex flex-col items-center justify-start gap-1 mx-auto">
                               <button
                                 type="button"
                                 onClick={() =>
@@ -1033,7 +1033,7 @@ export default function BuktiSupervisiPage() {
                                   })
                                 }
                                 title="Klik untuk memperbesar foto temuan"
-                                className="relative group w-48 h-48 sm:w-56 sm:h-56 lg:w-64 lg:h-64 rounded-2xl overflow-hidden border-2 border-amber-400/90 shadow-md hover:scale-[1.02] hover:shadow-amber-500/20 hover:brightness-105 transition-all bg-slate-900 cursor-pointer block mx-auto"
+                                className="relative group w-48 h-36 sm:w-56 sm:h-40 lg:w-64 lg:h-48 rounded-2xl overflow-hidden border-2 border-amber-400/90 shadow-md hover:scale-[1.02] hover:shadow-amber-500/20 hover:brightness-105 transition-all bg-slate-900 cursor-pointer block mx-auto shrink-0"
                               >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
@@ -1052,14 +1052,14 @@ export default function BuktiSupervisiPage() {
                               </span>
                             </div>
                           ) : (
-                            <span className="text-[9px] text-slate-400 dark:text-slate-500 italic block">
+                            <span className="text-[9px] text-slate-400 dark:text-slate-500 italic block pt-1">
                               Tidak ada foto
                             </span>
                           )}
                         </td>
 
                         {/* Rekomendasi PPI */}
-                        <td className="px-2 py-3 text-center align-middle text-[10px]">
+                        <td className="px-2 py-3 text-center align-top text-[10px]">
                           {item.rekomendasi ? (
                             <p className="text-slate-700 dark:text-slate-300 leading-snug font-medium whitespace-pre-wrap text-[10px]">
                               {item.rekomendasi}
@@ -1072,7 +1072,7 @@ export default function BuktiSupervisiPage() {
                         </td>
 
                         {/* Tindak Lanjut & Upaya Perbaikan */}
-                        <td className="px-2 py-3 text-center align-middle text-[10px]">
+                        <td className="px-2 py-3 text-center align-top text-[10px]">
                           {item.upaya_perbaikan ? (
                             <div>
                               <p className="text-emerald-800 dark:text-emerald-300 leading-snug font-medium whitespace-pre-wrap text-[10px]">
@@ -1092,10 +1092,10 @@ export default function BuktiSupervisiPage() {
                           )}
                         </td>
 
-                        {/* Foto Perbaikan (After) - Diperbesar Selebar Foto & Tanpa Ikon Mata */}
-                        <td className="px-2 py-3 text-center align-middle">
+                        {/* Foto Perbaikan (After) - Tinggi Dikurangi 3 Baris, Lebar Tetap & Top Align */}
+                        <td className="px-2 py-3 text-center align-top">
                           {item.foto_perbaikan.length > 0 ? (
-                            <div className="flex flex-col items-center justify-center gap-1 mx-auto">
+                            <div className="flex flex-col items-center justify-start gap-1 mx-auto">
                               <button
                                 type="button"
                                 onClick={() =>
@@ -1108,7 +1108,7 @@ export default function BuktiSupervisiPage() {
                                   })
                                 }
                                 title="Klik untuk memperbesar foto perbaikan"
-                                className="relative group w-48 h-48 sm:w-56 sm:h-56 lg:w-64 lg:h-64 rounded-2xl overflow-hidden border-2 border-emerald-400/90 shadow-md hover:scale-[1.02] hover:shadow-emerald-500/20 hover:brightness-105 transition-all bg-slate-900 cursor-pointer block mx-auto"
+                                className="relative group w-48 h-36 sm:w-56 sm:h-40 lg:w-64 lg:h-48 rounded-2xl overflow-hidden border-2 border-emerald-400/90 shadow-md hover:scale-[1.02] hover:shadow-emerald-500/20 hover:brightness-105 transition-all bg-slate-900 cursor-pointer block mx-auto shrink-0"
                               >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
@@ -1127,14 +1127,14 @@ export default function BuktiSupervisiPage() {
                               </span>
                             </div>
                           ) : (
-                            <span className="text-[9px] text-slate-400 dark:text-slate-500 italic block">
+                            <span className="text-[9px] text-slate-400 dark:text-slate-500 italic block pt-1">
                               Belum ada bukti foto
                             </span>
                           )}
                         </td>
 
                         {/* Status */}
-                        <td className="px-1 py-3 text-center align-middle text-[10px]">
+                        <td className="px-1 py-3 text-center align-top text-[10px]">
                           {item.status === "Selesai" ? (
                             <span className="inline-flex items-center justify-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30">
                               <CheckCircle2 className="w-3 h-3 shrink-0" />
@@ -1149,7 +1149,7 @@ export default function BuktiSupervisiPage() {
                         </td>
 
                         {/* Aksi */}
-                        <td className="px-1 py-3 text-center align-middle text-[10px]">
+                        <td className="px-1 py-3 text-center align-top text-[10px]">
                           <div className="flex flex-col gap-1 items-center justify-center">
                             <button
                               type="button"
