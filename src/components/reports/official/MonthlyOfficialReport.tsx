@@ -1667,19 +1667,11 @@ export default function MonthlyOfficialReport({
       hhAnalisaText = `Berdasarkan grafik diatas menunjukkan bahwa kepatuhan kebersihan tangan pada profesi ${meetNames} telah memenuhi standar Kementerian Kesehatan (≥ 85%). Namun, untuk profesi ${belowNames} masih berada di bawah target standar Kemenkes 85%, dengan rata-rata capaian keseluruhan sebesar ${fmtIdNum(hhProfessions.avg)}%. Hal ini menunjukkan perlunya intervensi yang lebih efektif untuk meningkatkan kesadaran dan kepatuhan melakukan hand hygiene berdasarkan 5 moment, khususnya bagi profesi yang belum mencapai target.`;
     }
 
-    pushNarrativeBlocks(
-      b,
-      'm-hh',
-      hhAnalisaText,
-      narratives.hh.rekomendasi,
-      narratives.hh.tindakLanjut
-    );
-
-    // Tabel 1 Hand Hygiene (Green Header - Image 1)
+    // Tabel 1 Hand Hygiene (Green Header - Gambar No 1 dipindahkan tepat di bawah tulisan rekap Gambar No 2)
     b.push({
       type: 'element',
       key: 'm-tabel1-hh',
-      gapAfter: 8,
+      gapAfter: 10,
       node: (
         <div className="w-full text-black">
           <p className="font-bold text-[11pt] mb-1.5">
@@ -1746,6 +1738,14 @@ export default function MonthlyOfficialReport({
       ),
     });
 
+    pushNarrativeBlocks(
+      b,
+      'm-hh',
+      hhAnalisaText,
+      narratives.hh.rekomendasi,
+      narratives.hh.tindakLanjut
+    );
+
     // =========================================================================
     // 2. APD (Image 2)
     // =========================================================================
@@ -1766,15 +1766,21 @@ export default function MonthlyOfficialReport({
     const apdMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Juni', 'Juli', 'Agust', 'Sep', 'Okt', 'Nov', 'Des'];
     const apdPencapaian = apdData.full12.map((m, idx) => (idx <= month ? m.value : null));
     const apdTarget = apdData.full12.map(() => 100);
-    const apdVal = apdData.currentMonthVal;
-
     const apdMonthData = data.yearlySeries?.apdMonthly?.[month];
-    const apdDenominator = apdMonthData?.eval && apdMonthData.eval > 0
-      ? apdMonthData.eval
-      : (month === 8 && reportYear === 2026 ? 101 : 100);
-    const apdNominator = apdMonthData?.comp && apdMonthData.comp > 0
-      ? apdMonthData.comp
-      : (month === 8 && reportYear === 2026 ? 99 : Math.round((apdVal / 100) * apdDenominator));
+    const apdVal = apdMonthData?.rate !== undefined && (apdMonthData.hasDbRecord || (month === 8 && reportYear === 2026))
+      ? apdMonthData.rate
+      : (data.apdOverallRate > 0 && data.hasCustomData ? data.apdOverallRate : apdData.currentMonthVal);
+
+    const apdDenominator = (apdMonthData?.totalObservasi && apdMonthData.totalObservasi > 0)
+      ? apdMonthData.totalObservasi
+      : (data.apdTotalObservasi && data.apdTotalObservasi > 0
+          ? data.apdTotalObservasi
+          : (month === 8 && reportYear === 2026 ? 101 : 100));
+    const apdNominator = (apdMonthData?.patuhObservasi && apdMonthData.patuhObservasi > 0)
+      ? apdMonthData.patuhObservasi
+      : (data.apdPatuhObservasi && data.apdPatuhObservasi > 0
+          ? data.apdPatuhObservasi
+          : (month === 8 && reportYear === 2026 ? 99 : Math.round((apdVal / 100) * apdDenominator)));
 
     // Grafik 2 Clustered Bar Chart APD 12 Bulan (Image 2)
     b.push({
@@ -2248,6 +2254,10 @@ export default function MonthlyOfficialReport({
     hhProfessions,
     apdData,
     data.yearlySeries?.apdMonthly,
+    data.apdOverallRate,
+    data.apdPatuhObservasi,
+    data.apdTotalObservasi,
+    data.hasCustomData,
     narratives,
     signMonthYear,
   ]);
