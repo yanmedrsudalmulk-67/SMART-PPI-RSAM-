@@ -54,10 +54,10 @@ export function WordExcelBarChart({
   }
 
   const chartWidth = 560;
-  const paddingLeft = 38;
-  const paddingRight = 16;
+  const paddingLeft = showTable && !legendBottom ? 65 : 38;
+  const paddingRight = showTable && !legendBottom ? 12 : 16;
   const paddingTop = 14;
-  const paddingBottom = 16;
+  const paddingBottom = showTable && !legendBottom ? 8 : 16;
   const plotWidth = chartWidth - paddingLeft - paddingRight;
   const plotHeight = height - paddingTop - paddingBottom;
   const yRange = maxY - effectiveMinY || 1;
@@ -69,18 +69,19 @@ export function WordExcelBarChart({
 
   const baselineY = getY(effectiveMinY);
   const groupWidth = plotWidth / categories.length;
-  const barWidth = Math.min(13, (groupWidth * 0.72) / series.length);
+  const maxBarW = categories.length <= 6 ? 20 : 13;
+  const barWidth = Math.min(maxBarW, (groupWidth * 0.75) / series.length);
 
   return (
     <div className={`w-full border border-slate-400 bg-white text-black font-sans p-2 ${className}`}>
-      <div className="text-center font-bold text-[9pt] leading-tight mb-1 text-slate-800">
+      <div className="text-center font-bold text-[10.5pt] leading-tight mb-1.5 text-slate-900">
         {title}
       </div>
 
       <div className="w-full flex justify-center">
         <svg
           viewBox={`0 0 ${chartWidth} ${height}`}
-          className="w-full h-auto max-h-[145px]"
+          className="w-full h-auto max-h-[155px]"
           style={{ overflow: 'visible' }}
         >
           {/* Horizontal Gridlines */}
@@ -120,13 +121,55 @@ export function WordExcelBarChart({
               <g key={catIdx}>
                 {series.map((s, sIdx) => {
                   const rawVal = s.values[catIdx];
-                  if (rawVal === null || rawVal === undefined || rawVal <= 0) {
+                  if (rawVal === null || rawVal === undefined) {
                     return null;
                   }
                   const val = rawVal;
+                  const x = startX + sIdx * barWidth;
+
+                  // Zero value handling: if showTable (e.g. Gambar 4), show '0' above baseline
+                  if (val === 0) {
+                    if (showTable) {
+                      return (
+                        <g key={sIdx}>
+                          <text
+                            x={x + (barWidth - 1) / 2}
+                            y={baselineY - 3}
+                            textAnchor="middle"
+                            fontSize="7"
+                            fontWeight="bold"
+                            fill="#1e293b"
+                            fontFamily="sans-serif"
+                          >
+                            0
+                          </text>
+                        </g>
+                      );
+                    }
+                    return null;
+                  }
+
                   const barY = getY(val);
                   const barH = Math.max(0, baselineY - barY);
-                  const x = startX + sIdx * barWidth;
+
+                  // Data label positioning: prevent collision when bars are narrow & close (e.g. APD in Gambar 5)
+                  let labelY = barY - 3;
+                  let labelFill = '#0f172a';
+                  let labelFontSize = categories.length <= 6 ? '7.5' : '6';
+
+                  if (legendBottom && categories.length >= 10 && series.length >= 2) {
+                    if (sIdx === 0) {
+                      // Series 0 (Pencapaian): placed above the bar
+                      labelY = barY - 3;
+                      labelFill = '#1e3a8a';
+                      labelFontSize = '5.5';
+                    } else {
+                      // Series 1 (Target): placed INSIDE top of bar in white text
+                      labelY = barY + 8;
+                      labelFill = '#ffffff';
+                      labelFontSize = '5.5';
+                    }
+                  }
 
                   return (
                     <g key={sIdx}>
@@ -138,15 +181,17 @@ export function WordExcelBarChart({
                         fill={s.color}
                         stroke="#475569"
                         strokeWidth="0.5"
+                        rx="1"
+                        ry="1"
                       />
                       {/* Number label on bar */}
                       <text
                         x={x + (barWidth - 1) / 2}
-                        y={barY > paddingTop + 8 ? barY - 2 : barY + 6}
+                        y={labelY}
                         textAnchor="middle"
-                        fontSize="6"
+                        fontSize={labelFontSize}
                         fontWeight="bold"
-                        fill="#0f172a"
+                        fill={labelFill}
                         fontFamily="sans-serif"
                       >
                         {fmtIdNum(val)}{unit}
@@ -155,18 +200,20 @@ export function WordExcelBarChart({
                   );
                 })}
 
-                {/* Category Label below X-axis */}
-                <text
-                  x={groupCenterX}
-                  y={baselineY + 11}
-                  textAnchor="middle"
-                  fontSize="6.5"
-                  fontWeight="bold"
-                  fill="#1e293b"
-                  fontFamily="sans-serif"
-                >
-                  {cat}
-                </text>
+                {/* Category Label below X-axis (only if table is not shown) */}
+                {!showTable && (
+                  <text
+                    x={groupCenterX}
+                    y={baselineY + 11}
+                    textAnchor="middle"
+                    fontSize="6.5"
+                    fontWeight="bold"
+                    fill="#1e293b"
+                    fontFamily="sans-serif"
+                  >
+                    {cat}
+                  </text>
+                )}
               </g>
             );
           })}
@@ -185,19 +232,31 @@ export function WordExcelBarChart({
         </div>
       )}
 
-      {/* Integrated Data Table attached to chart */}
+      {/* Integrated Data Table attached to chart (Gambar No 4) */}
       {showTable && !legendBottom && (
         <div className="w-full mt-1">
           <table className="w-full table-fixed border-collapse border border-slate-500 text-center text-[7pt] sm:text-[7.5pt] leading-tight">
             <colgroup>
-              <col style={{ width: '22%' }} />
+              <col style={{ width: `${(paddingLeft / chartWidth) * 100}%` }} />
               {categories.map((_, i) => (
-                <col key={i} style={{ width: `${(100 - 22) / categories.length}%` }} />
+                <col key={i} style={{ width: `${((plotWidth / categories.length) / chartWidth) * 100}%` }} />
               ))}
+              {paddingRight > 0 && <col style={{ width: `${(paddingRight / chartWidth) * 100}%` }} />}
             </colgroup>
+            <thead>
+              <tr className="bg-white font-bold">
+                <th className="border border-slate-400 p-0.5"></th>
+                {categories.map((cat, i) => (
+                  <th key={i} className="border border-slate-400 p-0.5 text-slate-800 font-bold">
+                    {cat}
+                  </th>
+                ))}
+                {paddingRight > 0 && <th className="border-0 p-0"></th>}
+              </tr>
+            </thead>
             <tbody>
               {series.map((s, sIdx) => (
-                <tr key={sIdx} className={sIdx % 2 === 1 ? 'bg-slate-50' : 'bg-white'}>
+                <tr key={sIdx} className="bg-white">
                   <td className="border border-slate-400 p-0.5 text-left pl-1.5 font-bold align-middle">
                     <div className="flex items-center gap-1.5 whitespace-nowrap overflow-hidden">
                       <span
@@ -209,9 +268,10 @@ export function WordExcelBarChart({
                   </td>
                   {s.values.map((v, i) => (
                     <td key={i} className="border border-slate-400 p-0.5 font-medium align-middle">
-                      {v !== null ? `${fmtIdNum(v)}${unit}` : '-'}
+                      {v !== null && v !== undefined ? `${fmtIdNum(v)}${unit}` : '-'}
                     </td>
                   ))}
+                  {paddingRight > 0 && <td className="border-0 p-0"></td>}
                 </tr>
               ))}
             </tbody>

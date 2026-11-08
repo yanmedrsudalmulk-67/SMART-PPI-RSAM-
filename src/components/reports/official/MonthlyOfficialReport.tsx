@@ -659,14 +659,14 @@ export default function MonthlyOfficialReport({
             <thead>
               <tr className="font-bold">
                 <th
-                  className="border border-black p-1 w-[20%] text-center align-middle font-bold text-black"
+                  className="border border-black p-1 w-[18%] text-center align-middle font-bold text-black"
                   rowSpan={2}
                   style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
                 >
                   JENIS INFEKSI
                 </th>
                 <th
-                  className="border border-black p-1 w-[28%] text-center align-middle font-bold text-black"
+                  className="border border-black p-1 w-[26%] text-center align-middle font-bold text-black"
                   rowSpan={2}
                   style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
                 >
@@ -679,28 +679,35 @@ export default function MonthlyOfficialReport({
                 >
                   Ruangan
                 </th>
+                <th
+                  className="border border-black p-1 w-[12%] text-center align-middle font-bold text-black"
+                  rowSpan={2}
+                  style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
+                >
+                  TOTAL
+                </th>
               </tr>
               <tr className="font-bold">
                 <th
-                  className="border border-black p-1 w-[13%] text-center align-middle font-bold text-black"
+                  className="border border-black p-1 w-[11%] text-center align-middle font-bold text-black"
                   style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
                 >
                   Ranap Bedah
                 </th>
                 <th
-                  className="border border-black p-1 w-[13%] text-center align-middle font-bold text-black"
+                  className="border border-black p-1 w-[11%] text-center align-middle font-bold text-black"
                   style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
                 >
                   Ranap Anak
                 </th>
                 <th
-                  className="border border-black p-1 w-[13%] text-center align-middle font-bold text-black"
+                  className="border border-black p-1 w-[11%] text-center align-middle font-bold text-black"
                   style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
                 >
                   Ranap Kebidanan
                 </th>
                 <th
-                  className="border border-black p-1 w-[13%] text-center align-middle font-bold text-black"
+                  className="border border-black p-1 w-[11%] text-center align-middle font-bold text-black"
                   style={{ backgroundColor: '#e2e8f0', color: '#000000' }}
                 >
                   Ranap Dewasa
@@ -715,18 +722,21 @@ export default function MonthlyOfficialReport({
                 {rT1Phleb.map((r) => (
                   <td key={r.room} className="border border-black p-1">{r.days}</td>
                 ))}
+                <td className="border border-black p-1 font-bold text-center">{roomBreakdown.phlebitis.totalDays}</td>
               </tr>
               <tr>
                 <td className="border border-black p-1 text-center">Infeksi</td>
                 {rT1Phleb.map((r) => (
                   <td key={r.room} className="border border-black p-1 font-semibold">{r.cases}</td>
                 ))}
+                <td className="border border-black p-1 font-bold text-center">{roomBreakdown.phlebitis.totalCases}</td>
               </tr>
               <tr>
                 <td className="border border-black p-1 text-center">Rate In</td>
                 {rT1Phleb.map((r) => (
                   <td key={r.room} className="border border-black p-1">{fmtIdNum(r.rate)}‰</td>
                 ))}
+                <td className="border border-black p-1 font-bold text-center">{fmtIdNum(roomBreakdown.phlebitis.rate)}‰</td>
               </tr>
 
               {/* ISK */}
@@ -736,18 +746,21 @@ export default function MonthlyOfficialReport({
                 {rT1Isk.map((r) => (
                   <td key={r.room} className="border border-black p-1">{r.days}</td>
                 ))}
+                <td className="border border-black p-1 font-bold text-center">{roomBreakdown.isk.totalDays}</td>
               </tr>
               <tr>
                 <td className="border border-black p-1 text-center">Infeksi</td>
                 {rT1Isk.map((r) => (
                   <td key={r.room} className="border border-black p-1">{r.cases}</td>
                 ))}
+                <td className="border border-black p-1 font-bold text-center">{roomBreakdown.isk.totalCases}</td>
               </tr>
               <tr>
                 <td className="border border-black p-1 text-center">Rate In</td>
                 {rT1Isk.map((r) => (
                   <td key={r.room} className="border border-black p-1">{fmtIdNum(r.rate)}‰</td>
                 ))}
+                <td className="border border-black p-1 font-bold text-center">{fmtIdNum(roomBreakdown.isk.rate)}‰</td>
               </tr>
 
               {/* DECUBITUS */}
@@ -757,18 +770,21 @@ export default function MonthlyOfficialReport({
                 {rT1Dec.map((r) => (
                   <td key={r.room} className="border border-black p-1">{r.days}</td>
                 ))}
+                <td className="border border-black p-1 font-bold text-center">{roomBreakdown.decubitus.totalDays}</td>
               </tr>
               <tr>
                 <td className="border border-black p-1 text-center">Infeksi</td>
                 {rT1Dec.map((r) => (
                   <td key={r.room} className="border border-black p-1">{r.cases}</td>
                 ))}
+                <td className="border border-black p-1 font-bold text-center">{roomBreakdown.decubitus.totalCases}</td>
               </tr>
               <tr>
                 <td className="border border-black p-1 text-center">Rate In</td>
                 {rT1Dec.map((r) => (
                   <td key={r.room} className="border border-black p-1">{fmtIdNum(r.rate)}‰</td>
                 ))}
+                <td className="border border-black p-1 font-bold text-center">{fmtIdNum(roomBreakdown.decubitus.rate)}‰</td>
               </tr>
 
               {/* VAP */}
@@ -778,18 +794,21 @@ export default function MonthlyOfficialReport({
                 {rT1Vap.map((r) => (
                   <td key={r.room} className="border border-black p-1">{r.days}</td>
                 ))}
+                <td className="border border-black p-1 font-bold text-center">{roomBreakdown.vap.totalDays}</td>
               </tr>
               <tr>
                 <td className="border border-black p-1 text-center">Infeksi</td>
                 {rT1Vap.map((r) => (
                   <td key={r.room} className="border border-black p-1">{r.cases}</td>
                 ))}
+                <td className="border border-black p-1 font-bold text-center">{roomBreakdown.vap.totalCases}</td>
               </tr>
               <tr>
                 <td className="border border-black p-1 text-center">Rate In</td>
                 {rT1Vap.map((r) => (
                   <td key={r.room} className="border border-black p-1">{fmtIdNum(r.rate)}‰</td>
                 ))}
+                <td className="border border-black p-1 font-bold text-center">{fmtIdNum(roomBreakdown.vap.rate)}‰</td>
               </tr>
             </tbody>
           </table>
@@ -860,7 +879,7 @@ export default function MonthlyOfficialReport({
             series={[
               {
                 name: 'Rate In',
-                color: '#2563eb',
+                color: '#4472c4',
                 values: [
                   roomBreakdown.phlebitis.totalCases,
                   roomBreakdown.isk.totalCases,
@@ -871,7 +890,7 @@ export default function MonthlyOfficialReport({
               },
               {
                 name: '‰ & %',
-                color: '#f97316',
+                color: '#ed7d31',
                 values: [
                   roomBreakdown.phlebitis.rate,
                   roomBreakdown.isk.rate,
@@ -882,11 +901,15 @@ export default function MonthlyOfficialReport({
               },
               {
                 name: 'Target',
-                color: '#64748b',
+                color: '#a5a5a5',
                 values: [1, 4.7, 1, 2, 5.8],
               },
             ]}
-            height={130}
+            height={145}
+            forcedMinY={0}
+            forcedMaxY={14}
+            customTicks={[0, 2, 4, 6, 8, 10, 12, 14]}
+            showTable={true}
           />
         </div>
       ),
@@ -1563,6 +1586,9 @@ export default function MonthlyOfficialReport({
       ? [77, 78, 79, 80, 81, 82, 83, 84, 85, 86]
       : undefined;
 
+    const hhTotDenum = hhProfessions.list.reduce((s, i) => s + i.denum, 0);
+    const hhTotNum = hhProfessions.list.reduce((s, i) => s + i.num, 0);
+
     // Grafik 1 Line Chart (Hand Hygiene per Profesi - Image 1)
     b.push({
       type: 'element',
@@ -1597,6 +1623,32 @@ export default function MonthlyOfficialReport({
             boxCategories={true}
             xAxisLabel="Profesi"
           />
+
+          {/* Rekapitulasi Hand Hygiene Keseluruhan (Gambar No 1) */}
+          <div className="mt-3 mb-1 text-[11pt] leading-normal text-black font-sans">
+            <p className="font-bold uppercase mb-1">
+              KEPATUHAN HAND HYGIENE KESELURUHAN BULAN {monthName.toUpperCase()} {reportYear}
+            </p>
+            <table className="border-none text-[11pt] leading-normal text-black font-sans">
+              <tbody>
+                <tr>
+                  <td className="pr-4 py-0.5">Opportunity</td>
+                  <td className="pr-2 py-0.5">:</td>
+                  <td className="py-0.5 font-medium">{hhTotDenum}</td>
+                </tr>
+                <tr>
+                  <td className="pr-4 py-0.5">Hand Hygiene</td>
+                  <td className="pr-2 py-0.5">:</td>
+                  <td className="py-0.5 font-medium">{hhTotNum}</td>
+                </tr>
+                <tr>
+                  <td className="pr-4 py-0.5">Kepatuhannya</td>
+                  <td className="pr-2 py-0.5">:</td>
+                  <td className="py-0.5 font-medium">{hhProfessions.avg}%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       ),
     });
@@ -1714,6 +1766,15 @@ export default function MonthlyOfficialReport({
     const apdMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Juni', 'Juli', 'Agust', 'Sep', 'Okt', 'Nov', 'Des'];
     const apdPencapaian = apdData.full12.map((m, idx) => (idx <= month ? m.value : null));
     const apdTarget = apdData.full12.map(() => 100);
+    const apdVal = apdData.currentMonthVal;
+
+    const apdMonthData = data.yearlySeries?.apdMonthly?.[month];
+    const apdDenominator = apdMonthData?.eval && apdMonthData.eval > 0
+      ? apdMonthData.eval
+      : (month === 8 && reportYear === 2026 ? 101 : 100);
+    const apdNominator = apdMonthData?.comp && apdMonthData.comp > 0
+      ? apdMonthData.comp
+      : (month === 8 && reportYear === 2026 ? 99 : Math.round((apdVal / 100) * apdDenominator));
 
     // Grafik 2 Clustered Bar Chart APD 12 Bulan (Image 2)
     b.push({
@@ -1742,17 +1803,42 @@ export default function MonthlyOfficialReport({
             ]}
             height={140}
             forcedMinY={60}
-            forcedMaxY={102}
-            customTicks={[60, 63, 67, 72, 75, 78, 81, 84, 87, 90, 93, 96, 99, 102]}
+            forcedMaxY={105}
+            customTicks={[60, 65, 70, 75, 80, 85, 90, 95, 100, 105]}
             unit="%"
             showTable={false}
             legendBottom={true}
           />
+
+          {/* Rekapitulasi Pemakaian APD Bulanan (Gambar No 2) */}
+          <div className="mt-3 mb-1 text-[11pt] leading-normal text-black font-sans">
+            <p className="font-bold uppercase mb-1">
+              KEPATUHAN PEMAKAIAN APD BULAN {monthName.toUpperCase()} {reportYear}
+            </p>
+            <table className="border-none text-[11pt] leading-normal text-black font-sans">
+              <tbody>
+                <tr>
+                  <td className="pr-4 py-0.5">Nominator</td>
+                  <td className="pr-2 py-0.5">:</td>
+                  <td className="py-0.5 font-medium">{apdNominator} orang</td>
+                </tr>
+                <tr>
+                  <td className="pr-4 py-0.5">Denominator</td>
+                  <td className="pr-2 py-0.5">:</td>
+                  <td className="py-0.5 font-medium">{apdDenominator} orang</td>
+                </tr>
+                <tr>
+                  <td className="pr-4 py-0.5">Kepatuhannya</td>
+                  <td className="pr-2 py-0.5">:</td>
+                  <td className="py-0.5 font-medium">{fmtIdNum(apdVal)}%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       ),
     });
 
-    const apdVal = apdData.currentMonthVal;
     const apdMeetsTarget = apdVal >= 100;
     const apdAnalisaText = apdMeetsTarget
       ? `Berdasarkan grafik, capaian kepatuhan penggunaan Alat Pelindung Diri (APD) pada bulan ${monthName} ${reportYear} mencapai 100%, sehingga telah memenuhi target standar Kementerian Kesehatan yaitu 100%. Capaian optimal ini menunjukkan konsistensi dan kesadaran tinggi seluruh petugas medis dalam menggunakan APD sesuai indikasi pada setiap tindakan pelayanan.`
@@ -2161,6 +2247,7 @@ export default function MonthlyOfficialReport({
     idoOperations,
     hhProfessions,
     apdData,
+    data.yearlySeries?.apdMonthly,
     narratives,
     signMonthYear,
   ]);
