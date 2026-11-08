@@ -1629,22 +1629,26 @@ export default function MonthlyOfficialReport({
             <p className="font-bold uppercase mb-1">
               KEPATUHAN HAND HYGIENE KESELURUHAN BULAN {monthName.toUpperCase()} {reportYear}
             </p>
-            <table className="border-none text-[11pt] leading-normal text-black font-sans">
+            <table
+              data-auto-width="true"
+              className="recap-table w-auto border-none text-[11pt] leading-normal text-black font-sans"
+              style={{ width: 'auto', maxWidth: '300px' }}
+            >
               <tbody>
                 <tr>
-                  <td className="pr-4 py-0.5">Opportunity</td>
-                  <td className="pr-2 py-0.5">:</td>
-                  <td className="py-0.5 font-medium">{hhTotDenum}</td>
+                  <td className="pr-3 py-0.5 whitespace-nowrap" style={{ width: '130px', whiteSpace: 'nowrap' }}>Opportunity</td>
+                  <td className="px-1 py-0.5 text-center whitespace-nowrap" style={{ width: '15px', textAlign: 'center', whiteSpace: 'nowrap' }}>:</td>
+                  <td className="pl-2 py-0.5 font-medium whitespace-nowrap" style={{ whiteSpace: 'nowrap' }}>{hhTotDenum}</td>
                 </tr>
                 <tr>
-                  <td className="pr-4 py-0.5">Hand Hygiene</td>
-                  <td className="pr-2 py-0.5">:</td>
-                  <td className="py-0.5 font-medium">{hhTotNum}</td>
+                  <td className="pr-3 py-0.5 whitespace-nowrap" style={{ width: '130px', whiteSpace: 'nowrap' }}>Hand Hygiene</td>
+                  <td className="px-1 py-0.5 text-center whitespace-nowrap" style={{ width: '15px', textAlign: 'center', whiteSpace: 'nowrap' }}>:</td>
+                  <td className="pl-2 py-0.5 font-medium whitespace-nowrap" style={{ whiteSpace: 'nowrap' }}>{hhTotNum}</td>
                 </tr>
                 <tr>
-                  <td className="pr-4 py-0.5">Kepatuhannya</td>
-                  <td className="pr-2 py-0.5">:</td>
-                  <td className="py-0.5 font-medium">{hhProfessions.avg}%</td>
+                  <td className="pr-3 py-0.5 whitespace-nowrap" style={{ width: '130px', whiteSpace: 'nowrap' }}>Kepatuhannya</td>
+                  <td className="px-1 py-0.5 text-center whitespace-nowrap" style={{ width: '15px', textAlign: 'center', whiteSpace: 'nowrap' }}>:</td>
+                  <td className="pl-2 py-0.5 font-medium whitespace-nowrap" style={{ whiteSpace: 'nowrap' }}>{hhProfessions.avg}%</td>
                 </tr>
               </tbody>
             </table>
@@ -1821,22 +1825,26 @@ export default function MonthlyOfficialReport({
             <p className="font-bold uppercase mb-1">
               KEPATUHAN PEMAKAIAN APD BULAN {monthName.toUpperCase()} {reportYear}
             </p>
-            <table className="border-none text-[11pt] leading-normal text-black font-sans">
+            <table
+              data-auto-width="true"
+              className="recap-table w-auto border-none text-[11pt] leading-normal text-black font-sans"
+              style={{ width: 'auto', maxWidth: '300px' }}
+            >
               <tbody>
                 <tr>
-                  <td className="pr-4 py-0.5">Nominator</td>
-                  <td className="pr-2 py-0.5">:</td>
-                  <td className="py-0.5 font-medium">{apdNominator} orang</td>
+                  <td className="pr-3 py-0.5 whitespace-nowrap" style={{ width: '130px', whiteSpace: 'nowrap' }}>Nominator</td>
+                  <td className="px-1 py-0.5 text-center whitespace-nowrap" style={{ width: '15px', textAlign: 'center', whiteSpace: 'nowrap' }}>:</td>
+                  <td className="pl-2 py-0.5 font-medium whitespace-nowrap" style={{ whiteSpace: 'nowrap' }}>{apdNominator} orang</td>
                 </tr>
                 <tr>
-                  <td className="pr-4 py-0.5">Denominator</td>
-                  <td className="pr-2 py-0.5">:</td>
-                  <td className="py-0.5 font-medium">{apdDenominator} orang</td>
+                  <td className="pr-3 py-0.5 whitespace-nowrap" style={{ width: '130px', whiteSpace: 'nowrap' }}>Denominator</td>
+                  <td className="px-1 py-0.5 text-center whitespace-nowrap" style={{ width: '15px', textAlign: 'center', whiteSpace: 'nowrap' }}>:</td>
+                  <td className="pl-2 py-0.5 font-medium whitespace-nowrap" style={{ whiteSpace: 'nowrap' }}>{apdDenominator} orang</td>
                 </tr>
                 <tr>
-                  <td className="pr-4 py-0.5">Kepatuhannya</td>
-                  <td className="pr-2 py-0.5">:</td>
-                  <td className="py-0.5 font-medium">{fmtIdNum(apdVal)}%</td>
+                  <td className="pr-3 py-0.5 whitespace-nowrap" style={{ width: '130px', whiteSpace: 'nowrap' }}>Kepatuhannya</td>
+                  <td className="px-1 py-0.5 text-center whitespace-nowrap" style={{ width: '15px', textAlign: 'center', whiteSpace: 'nowrap' }}>:</td>
+                  <td className="pl-2 py-0.5 font-medium whitespace-nowrap" style={{ whiteSpace: 'nowrap' }}>{fmtIdNum(apdVal)}%</td>
                 </tr>
               </tbody>
             </table>

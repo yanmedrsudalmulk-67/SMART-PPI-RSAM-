@@ -401,8 +401,19 @@ export function injectPrintStyles(clonedDoc: Document, isLandscape: boolean = fa
       flex-direction: row !important;
     }
 
-    table {
+    table:not(.recap-table):not(.w-auto):not([data-auto-width="true"]):not([class*="recap-table"]) {
       width: 100% !important;
+      border-collapse: collapse !important;
+      border-spacing: 0 !important;
+      table-layout: auto !important;
+    }
+
+    table.recap-table,
+    table.w-auto,
+    table[data-auto-width="true"],
+    table[class*="recap-table"] {
+      width: auto !important;
+      max-width: 320px !important;
       border-collapse: collapse !important;
       border-spacing: 0 !important;
       table-layout: auto !important;
@@ -523,7 +534,20 @@ export function sanitizeTableStylesForPdf(rootEl: HTMLElement, clonedDoc: Docume
   const tables = rootEl.querySelectorAll('table');
   tables.forEach((tbl) => {
     const tableEl = tbl as HTMLElement;
-    tableEl.style.width = '100%';
+    const isAutoWidth =
+      tableEl.classList.contains('w-auto') ||
+      tableEl.classList.contains('recap-table') ||
+      tableEl.getAttribute('data-auto-width') === 'true' ||
+      tableEl.style.width === 'auto' ||
+      (tableEl.getAttribute('class') || '').includes('recap-table') ||
+      (tableEl.getAttribute('class') || '').includes('w-auto');
+
+    if (!isAutoWidth) {
+      tableEl.style.width = '100%';
+    } else {
+      tableEl.style.width = 'auto';
+      tableEl.style.maxWidth = '320px';
+    }
     tableEl.style.borderCollapse = 'collapse';
 
     const rows = tableEl.querySelectorAll('tr');
