@@ -48,7 +48,7 @@ const IPAL_OUTLET_ROWS = [
 ];
 
 export default function AnnualOfficialReport({
-  year = 2026,
+  year = new Date().getFullYear(),
   reportData,
 }: AnnualReportProps) {
   const internalData = useOfficialReportData({

@@ -49,7 +49,8 @@ const SEMESTER_OPTIONS = [
   { value: 1, label: 'Semester II (Jul - Des)' },
 ];
 
-const YEAR_OPTIONS = [2024, 2025, 2026, 2027];
+const CURRENT_YEAR = new Date().getFullYear();
+const YEAR_OPTIONS = Array.from(new Set([2024, 2025, 2026, 2027, CURRENT_YEAR])).sort((a, b) => a - b);
 
 /** Quick touch-scrubber scrollbar for mobile screens */
 function MobileQuickScroller() {
@@ -133,11 +134,11 @@ function MobileQuickScroller() {
 export default function LaporanResmiPage() {
   const [activeSheet, setActiveSheet] = useState<SheetType>('monthly');
 
-  // Selected period state
-  const [selectedMonth, setSelectedMonth] = useState<number>(8); // September
-  const [selectedYear, setSelectedYear] = useState<number>(2026);
-  const [selectedQuarter, setSelectedQuarter] = useState<number>(2); // Triwulan III (Juli - September)
-  const [selectedSemester, setSelectedSemester] = useState<number>(0); // Semester I
+  // Selected period state - initialized to realtime current date
+  const [selectedMonth, setSelectedMonth] = useState<number>(() => new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState<number>(() => new Date().getFullYear());
+  const [selectedQuarter, setSelectedQuarter] = useState<number>(() => Math.floor(new Date().getMonth() / 3));
+  const [selectedSemester, setSelectedSemester] = useState<number>(() => Math.floor(new Date().getMonth() / 6));
 
   // Dynamic Report Data Hook connected to SQLite / Supabase tables
   const reportData = useOfficialReportData({

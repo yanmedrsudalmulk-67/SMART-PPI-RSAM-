@@ -298,10 +298,10 @@ function normalizeApdItem(item: any) {
 
 export function useOfficialReportData({
   periodType = 'monthly',
-  year = 2026,
-  month = 8, // September (0-indexed: 8)
-  quarter = 2, // Triwulan III default (0-indexed: 2)
-  semester = 0, // Semester I (0-indexed: 0)
+  year = new Date().getFullYear(),
+  month = new Date().getMonth(),
+  quarter = Math.floor(new Date().getMonth() / 3),
+  semester = Math.floor(new Date().getMonth() / 6),
 }: {
   periodType?: 'monthly' | 'quarterly' | 'semester' | 'annual';
   year?: number;
@@ -366,8 +366,8 @@ export function useOfficialReportData({
 
   const fetchData = useCallback(async () => {
     try {
-      const yearStart = `${year}-01-01T00:00:00.000Z`;
-      const yearEnd = `${year}-12-31T23:59:59.999Z`;
+      const yearStart = `${year}-01-01`;
+      const yearEnd = `${year}-12-31~`;
 
       const [haisRes, hhTableRes, hhSessRes, apdTableRes, apdSessRes] = await Promise.all([
         supabase
@@ -542,14 +542,21 @@ export function useOfficialReportData({
       .subscribe();
 
     const onFocus = () => fetchData();
+    const onMsg = (ev: MessageEvent) => {
+      if (ev.data?.type === 'AUDIT_SUBMITTED' || ev.data?.table === 'audit_sessions' || ev.data?.table === 'audit_hand_hygiene' || ev.data?.table === 'audit_apd') {
+        fetchData();
+      }
+    };
     if (typeof window !== 'undefined') {
       window.addEventListener('focus', onFocus);
+      window.addEventListener('message', onMsg);
     }
 
     return () => {
       supabase.removeChannel(ch);
       if (typeof window !== 'undefined') {
         window.removeEventListener('focus', onFocus);
+        window.removeEventListener('message', onMsg);
       }
     };
   }, [fetchData, startDateStr, endDateStr]);
@@ -661,7 +668,7 @@ export function useOfficialReportData({
       let days = haisByIndicator[cfg.id].days;
       let roomMap = haisByIndicator[cfg.id].byRoom;
 
-      if (!hasDbHais && defaultMonthlyHais[cfg.id]) {
+      if (!hasDbHais && month === 8 && year === 2026 && defaultMonthlyHais[cfg.id]) {
         cases = defaultMonthlyHais[cfg.id].totalCases;
         days = defaultMonthlyHais[cfg.id].totalDays;
         roomMap = defaultMonthlyHais[cfg.id].rooms;
@@ -728,14 +735,21 @@ export function useOfficialReportData({
         profession: k,
         opportunity: hhProfMap[k].opp,
         compliance: hhProfMap[k].hh,
-        rate: hhProfMap[k].opp > 0 ? Number(((hhProfMap[k].hh / hhProfMap[k].opp) * 100).toFixed(1)) : 80,
+        rate: hhProfMap[k].opp > 0 ? Number(((hhProfMap[k].hh / hhProfMap[k].opp) * 100).toFixed(1)) : 0,
       }));
-    } else {
+    } else if (month === 8 && year === 2026) {
       hhOverallRate = 80.9;
       hhProfessions = [
         { profession: 'Dokter', opportunity: 171, compliance: 140, rate: 81.9 },
         { profession: 'Perawat / Bidan', opportunity: 1000, compliance: 809, rate: 80.9 },
         { profession: 'Tenaga Kesehatan Lainnya', opportunity: 213, compliance: 171, rate: 80.3 },
+      ];
+    } else {
+      hhOverallRate = 0;
+      hhProfessions = [
+        { profession: 'Dokter', opportunity: 0, compliance: 0, rate: 0 },
+        { profession: 'Perawat / Bidan', opportunity: 0, compliance: 0, rate: 0 },
+        { profession: 'Tenaga Kesehatan Lainnya', opportunity: 0, compliance: 0, rate: 0 },
       ];
     }
 
@@ -805,9 +819,9 @@ export function useOfficialReportData({
         room: r,
         evaluated: apdRoomMap[r].eval,
         compliant: apdRoomMap[r].comp,
-        rate: apdRoomMap[r].eval > 0 ? Number(((apdRoomMap[r].comp / apdRoomMap[r].eval) * 100).toFixed(1)) : 100,
+        rate: apdRoomMap[r].eval > 0 ? Number(((apdRoomMap[r].comp / apdRoomMap[r].eval) * 100).toFixed(1)) : 0,
       }));
-    } else {
+    } else if (month === 8 && year === 2026) {
       apdOverallRate = 99.6;
       apdRooms = [
         { room: 'Ranap Bedah', evaluated: 110, compliant: 110, rate: 100 },
@@ -815,6 +829,14 @@ export function useOfficialReportData({
         { room: 'Ranap Kebidanan', evaluated: 80, compliant: 80, rate: 100 },
         { room: 'Ranap Dewasa', evaluated: 130, compliant: 129, rate: 99.2 },
       ];
+    } else {
+      apdOverallRate = 0;
+      apdRooms = ROOMS.map(r => ({
+        room: r,
+        evaluated: 0,
+        compliant: 0,
+        rate: 0,
+      }));
     }
 
     // 4. DETAILED QUARTERLY DATA (Monthly breakdown for the 3 months in the quarter)
@@ -889,9 +911,10 @@ export function useOfficialReportData({
       const dbM2 = monthlyHaisByMonth[qMonths[1].monthIndex][ind];
       const dbM3 = monthlyHaisByMonth[qMonths[2].monthIndex][ind];
 
-      const m1Data = dbM1.hasRecord ? dbM1 : defaultQuarterBaseline[ind].m1;
-      const m2Data = dbM2.hasRecord ? dbM2 : defaultQuarterBaseline[ind].m2;
-      const m3Data = dbM3.hasRecord ? dbM3 : defaultQuarterBaseline[ind].m3;
+      const isQ3_2026 = qIndex === 2 && year === 2026;
+      const m1Data = dbM1.hasRecord ? dbM1 : (isQ3_2026 ? defaultQuarterBaseline[ind].m1 : { days: 0, cases: 0 });
+      const m2Data = dbM2.hasRecord ? dbM2 : (isQ3_2026 ? defaultQuarterBaseline[ind].m2 : { days: 0, cases: 0 });
+      const m3Data = dbM3.hasRecord ? dbM3 : (isQ3_2026 ? defaultQuarterBaseline[ind].m3 : { days: 0, cases: 0 });
 
       const m1Rate = m1Data.days > 0 ? Number(((m1Data.cases / m1Data.days) * cfg.multiplier).toFixed(1)) : 0;
       const m2Rate = m2Data.days > 0 ? Number(((m2Data.cases / m2Data.days) * cfg.multiplier).toFixed(1)) : 0;
@@ -960,13 +983,14 @@ export function useOfficialReportData({
       const dbM2 = monthlyHhByMonth[qMonths[1].monthIndex][prof];
       const dbM3 = monthlyHhByMonth[qMonths[2].monthIndex][prof];
 
+      const isQ3_2026 = qIndex === 2 && year === 2026;
       const m1 = dbM1 && dbM1.opp > 0
         ? {
             opp: dbM1.opp,
             hh: dbM1.hh,
             rate: Math.round((dbM1.hh / dbM1.opp) * 100),
           }
-        : (defaultQuarterHhBaseline as any)[prof].m1;
+        : (isQ3_2026 ? (defaultQuarterHhBaseline as any)[prof].m1 : { opp: 0, hh: 0, rate: 0 });
 
       const m2 = dbM2 && dbM2.opp > 0
         ? {
@@ -974,7 +998,7 @@ export function useOfficialReportData({
             hh: dbM2.hh,
             rate: Math.round((dbM2.hh / dbM2.opp) * 100),
           }
-        : (defaultQuarterHhBaseline as any)[prof].m2;
+        : (isQ3_2026 ? (defaultQuarterHhBaseline as any)[prof].m2 : { opp: 0, hh: 0, rate: 0 });
 
       const m3 = dbM3 && dbM3.opp > 0
         ? {
@@ -982,7 +1006,7 @@ export function useOfficialReportData({
             hh: dbM3.hh,
             rate: Math.round((dbM3.hh / dbM3.opp) * 100),
           }
-        : (defaultQuarterHhBaseline as any)[prof].m3;
+        : (isQ3_2026 ? (defaultQuarterHhBaseline as any)[prof].m3 : { opp: 0, hh: 0, rate: 0 });
 
       const totOpp = m1.opp + m2.opp + m3.opp;
       const totHh = m1.hh + m2.hh + m3.hh;
@@ -1017,11 +1041,12 @@ export function useOfficialReportData({
     }
 
     const defaultApdRates = [100, 100, 99];
+    const isQ3_2026 = qIndex === 2 && year === 2026;
     const apdMonthly = qMonths.map((qm, idx) => {
       const mApd = monthlyApdByMonth[qm.monthIndex];
       const rate = mApd && mApd.eval > 0
         ? Number(((mApd.comp / mApd.eval) * 100).toFixed(1))
-        : defaultApdRates[idx];
+        : (isQ3_2026 ? defaultApdRates[idx] : 0);
       return {
         shortName: qm.shortName,
         rate,
@@ -1032,7 +1057,7 @@ export function useOfficialReportData({
     const totalQuarterApdComp = Object.values(monthlyApdByMonth).reduce((s, v) => s + v.comp, 0);
     const quarterApdOverallRate = totalQuarterApdEval > 0
       ? Number(((totalQuarterApdComp / totalQuarterApdEval) * 100).toFixed(1))
-      : 99.6;
+      : (isQ3_2026 ? 99.6 : 0);
 
     const quarterData: QuarterData = {
       quarterIndex: qIndex,

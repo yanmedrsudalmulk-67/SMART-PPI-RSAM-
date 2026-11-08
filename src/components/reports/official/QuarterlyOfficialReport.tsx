@@ -305,8 +305,8 @@ export function WordStyleLineChart({
 
 export default function QuarterlyOfficialReport({
   reportData,
-  quarter = 2, // Default: Triwulan III (index 2)
-  year = 2026,
+  quarter = Math.floor(new Date().getMonth() / 3),
+  year = new Date().getFullYear(),
 }: QuarterlyReportProps) {
   const internalData = useOfficialReportData({
     periodType: 'quarterly',

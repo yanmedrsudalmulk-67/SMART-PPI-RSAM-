@@ -23,8 +23,8 @@ const MONTH_COLORS = ['#2563eb', '#ea580c', '#64748b', '#ca8a04', '#0891b2', '#1
 
 export default function SemesterOfficialReport({
   reportData,
-  semester = 0,
-  year = 2026,
+  semester = Math.floor(new Date().getMonth() / 6),
+  year = new Date().getFullYear(),
 }: SemesterReportProps) {
   const internalData = useOfficialReportData({
     periodType: 'semester',

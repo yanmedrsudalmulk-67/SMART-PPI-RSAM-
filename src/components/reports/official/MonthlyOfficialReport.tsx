@@ -117,8 +117,8 @@ function pushNarrativeBlocks(
 
 export default function MonthlyOfficialReport({
   reportData,
-  month = 8, // Default: September (index 8)
-  year = 2026,
+  month = new Date().getMonth(),
+  year = new Date().getFullYear(),
 }: MonthlyReportProps) {
   const internalData = useOfficialReportData({
     periodType: 'monthly',
@@ -127,7 +127,7 @@ export default function MonthlyOfficialReport({
   });
 
   const data = reportData || internalData;
-  const monthName = MONTH_NAMES[month] || data.monthName || 'September';
+  const monthName = MONTH_NAMES[month] || data.monthName || MONTH_NAMES[new Date().getMonth()];
   const reportYear = data.year || year;
   const periodLabel = `Bulan ${monthName} ${reportYear}`;
 
@@ -228,7 +228,7 @@ export default function MonthlyOfficialReport({
   // Previous month Phlebitis rate for dynamic comparison
   const prevPhlebRate = useMemo(() => {
     const prevPt = data.yearlySeries?.hais?.phlebitis?.monthly?.[prevMonthIdx];
-    return prevPt?.rate ?? (month === 8 ? 5.9 : 0);
+    return prevPt?.rate ?? (month === 8 && reportYear === 2026 ? 5.9 : 0);
   }, [data.yearlySeries, prevMonthIdx, month]);
 
   // Peak Phlebitis room
@@ -266,12 +266,12 @@ export default function MonthlyOfficialReport({
       const pPer = ysProfs.find((p) => p.profession.toLowerCase().includes('perawat')) || ysProfs[1];
       const pNak = ysProfs.find((p) => p.profession.toLowerCase().includes('lain')) || ysProfs[2];
 
-      const dOpp = pDoc.monthlyOpp?.[month] ?? (month === 8 ? 63 : 0);
-      const dHh = pDoc.monthlyHh?.[month] ?? (month === 8 ? 51 : 0);
-      const pOpp = pPer.monthlyOpp?.[month] ?? (month === 8 ? 310 : 0);
-      const pHh = pPer.monthlyHh?.[month] ?? (month === 8 ? 250 : 0);
-      const nOpp = pNak.monthlyOpp?.[month] ?? (month === 8 ? 67 : 0);
-      const nHh = pNak.monthlyHh?.[month] ?? (month === 8 ? 54 : 0);
+      const dOpp = pDoc.monthlyOpp?.[month] ?? (month === 8 && reportYear === 2026 ? 63 : 0);
+      const dHh = pDoc.monthlyHh?.[month] ?? (month === 8 && reportYear === 2026 ? 51 : 0);
+      const pOpp = pPer.monthlyOpp?.[month] ?? (month === 8 && reportYear === 2026 ? 310 : 0);
+      const pHh = pPer.monthlyHh?.[month] ?? (month === 8 && reportYear === 2026 ? 250 : 0);
+      const nOpp = pNak.monthlyOpp?.[month] ?? (month === 8 && reportYear === 2026 ? 67 : 0);
+      const nHh = pNak.monthlyHh?.[month] ?? (month === 8 && reportYear === 2026 ? 54 : 0);
 
       const list = [
         {
@@ -279,30 +279,30 @@ export default function MonthlyOfficialReport({
           chartLabel: 'PERAWAT/BIDAN',
           num: pHh,
           denum: pOpp,
-          rate: pOpp > 0 ? Math.round((pHh / pOpp) * 100) : (month === 8 ? 81 : 0),
+          rate: pOpp > 0 ? Math.round((pHh / pOpp) * 100) : (month === 8 && reportYear === 2026 ? 81 : 0),
         },
         {
           label: 'Dokter',
           chartLabel: 'DOKTER',
           num: dHh,
           denum: dOpp,
-          rate: dOpp > 0 ? Math.round((dHh / dOpp) * 100) : (month === 8 ? 81 : 0),
+          rate: dOpp > 0 ? Math.round((dHh / dOpp) * 100) : (month === 8 && reportYear === 2026 ? 81 : 0),
         },
         {
           label: 'Nakes Lain',
           chartLabel: 'NAKES LAIN',
           num: nHh,
           denum: nOpp,
-          rate: nOpp > 0 ? Math.floor((nHh / nOpp) * 100) : (month === 8 ? 80 : 0),
+          rate: nOpp > 0 ? Math.floor((nHh / nOpp) * 100) : (month === 8 && reportYear === 2026 ? 80 : 0),
         },
       ];
       const totNum = list.reduce((s, i) => s + i.num, 0);
       const totDenum = list.reduce((s, i) => s + i.denum, 0);
-      const avg = totDenum > 0 ? Math.round((totNum / totDenum) * 100) : 81;
+      const avg = totDenum > 0 ? Math.round((totNum / totDenum) * 100) : (month === 8 && reportYear === 2026 ? 81 : 0);
       return { list, avg };
     }
 
-    if (month === 8) {
+    if (month === 8 && reportYear === 2026) {
       return {
         list: [
           { label: 'Perawat / Bidan', chartLabel: 'PERAWAT/BIDAN', num: 250, denum: 310, rate: 81 },
