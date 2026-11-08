@@ -41,9 +41,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const setIsSidebarOpen = useCallback((openOrFn: boolean | ((prev: boolean) => boolean)) => {
     setIsSidebarOpenState((prev) => {
       const next = typeof openOrFn === 'function' ? openOrFn(prev) : openOrFn;
-      try {
-        localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next));
-      } catch (e) {}
+      if (typeof window !== 'undefined') {
+        setTimeout(() => {
+          try {
+            localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next));
+          } catch (e) {}
+        }, 0);
+      }
       return next;
     });
   }, []);

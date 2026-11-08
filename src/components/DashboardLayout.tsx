@@ -151,15 +151,15 @@ const NavItem = memo(({
               />
             </motion.div>
 
-            {!isCollapsed && (
-              <span className={`text-[14px] tracking-wide relative z-10 transition-colors duration-200 truncate ${
-                isActive || isAnySubActive 
-                  ? 'font-black text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]' 
-                  : 'font-bold text-slate-300/80 group-hover:text-white'
-              }`}>
-                {item.name}
-              </span>
-            )}
+            <span className={`text-[14px] tracking-wide relative z-10 transition-all duration-200 overflow-hidden whitespace-nowrap truncate ${
+              isCollapsed ? 'opacity-0 max-w-0 pointer-events-none' : 'opacity-100 max-w-[180px]'
+            } ${
+              isActive || isAnySubActive 
+                ? 'font-black text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]' 
+                : 'font-bold text-slate-300/80 group-hover:text-white'
+            }`}>
+              {item.name}
+            </span>
           </div>
         </button>
       ) : (
@@ -191,15 +191,15 @@ const NavItem = memo(({
               />
             </motion.div>
 
-            {!isCollapsed && (
-              <span className={`text-[14px] tracking-wide relative z-10 transition-colors duration-200 truncate ${
-                isActive 
-                  ? 'font-black text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]' 
-                  : 'font-bold text-slate-300/80 group-hover:text-white'
-              }`}>
-                {item.name}
-              </span>
-            )}
+            <span className={`text-[14px] tracking-wide relative z-10 transition-all duration-200 overflow-hidden whitespace-nowrap truncate ${
+              isCollapsed ? 'opacity-0 max-w-0 pointer-events-none' : 'opacity-100 max-w-[180px]'
+            } ${
+              isActive 
+                ? 'font-black text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]' 
+                : 'font-bold text-slate-300/80 group-hover:text-white'
+            }`}>
+              {item.name}
+            </span>
           </div>
         </Link>
       )}
@@ -460,18 +460,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </AnimatePresence>
 
       {/* Desktop & Landscape Sidebar Drawer (Collapsible to Mini Icon Sidebar) */}
-      <motion.aside 
-        initial={false}
-        animate={{ 
-          x: isMobile ? (isSidebarOpen ? 0 : -360) : 0,
-          opacity: (isSidebarOpen || !isMobile) ? 1 : 0
-        }}
-        transition={{ 
-          duration: 0.28,
-          ease: [0.16, 1, 0.3, 1]
-        }}
-        className={`fixed inset-y-4 left-4 z-50 print:hidden pointer-events-auto select-none portrait:hidden landscape:block transition-[width] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[width,transform] ${
-          isMobile ? 'w-[280px]' : (isSidebarOpen ? 'w-[280px]' : 'w-[80px]')
+      <aside 
+        className={`fixed inset-y-4 left-4 z-50 print:hidden pointer-events-auto select-none portrait:hidden landscape:block transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu will-change-[width,transform] ${
+          isMobile 
+            ? (isSidebarOpen ? 'translate-x-0 w-[280px] opacity-100' : '-translate-x-[360px] w-[280px] opacity-0 pointer-events-none') 
+            : (isSidebarOpen ? 'translate-x-0 w-[280px] opacity-100' : 'translate-x-0 w-[80px] opacity-100')
         }`}
       >
         {/* Main Inner Card with Solid Opaque Background & Hardware Layer */}
@@ -480,42 +473,40 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="absolute top-0 inset-x-6 h-[1.5px] bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none z-20" />
 
           {/* Logo Section */}
-          <div className={`flex flex-col items-center justify-center border-b shrink-0 relative border-indigo-900/40 bg-[#141532] rounded-t-[29px] transition-all duration-300 ${
+          <div className={`flex flex-col items-center justify-center border-b shrink-0 relative border-indigo-900/40 bg-[#141532] rounded-t-[29px] transition-all duration-200 ${
             !isSidebarOpen && !isMobile ? 'pt-4 pb-4 px-2' : 'pt-6 pb-5 px-4'
           }`}>
             {/* 3D Neumorphic Floating SMART PPI Logo */}
-            <div className={`relative flex items-center justify-center transition-transform duration-300 hover:scale-105 ${
+            <div className={`relative flex items-center justify-center transition-all duration-200 hover:scale-105 ${
               !isSidebarOpen && !isMobile ? 'mb-0' : 'mb-3'
             }`}>
               <AppLogo 
-                className={`${!isSidebarOpen && !isMobile ? 'w-11 h-11' : 'w-14 h-14 md:w-[68px] md:h-[68px]'} drop-shadow-[-3px_-3px_8px_rgba(140,165,255,0.2)] drop-shadow-[5px_8px_16px_rgba(0,0,0,0.85)] filter transition-all duration-300`} 
+                className={`${!isSidebarOpen && !isMobile ? 'w-11 h-11' : 'w-14 h-14 md:w-[68px] md:h-[68px]'} drop-shadow-[-3px_-3px_8px_rgba(140,165,255,0.2)] drop-shadow-[5px_8px_16px_rgba(0,0,0,0.85)] filter transition-all duration-200`} 
                 iconClassName={`${!isSidebarOpen && !isMobile ? 'w-8 h-8' : 'w-11 h-11 md:w-[54px] md:h-[54px]'} text-cyan-400 drop-shadow-[-2px_-2px_6px_rgba(140,165,255,0.25)] drop-shadow-[4px_7px_14px_rgba(0,0,0,0.9)]`}
                 imageClassName="drop-shadow-[-3px_-3px_8px_rgba(140,165,255,0.2)] drop-shadow-[5px_8px_16px_rgba(0,0,0,0.85)]"
               />
             </div>
-            {(isSidebarOpen || isMobile) && (
-              <div className="flex flex-col items-center text-center">
-                <span className="font-heading font-[800] text-[18px] tracking-[1.5px] transition-all antialiased text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]">
-                  SMART PPI
-                </span>
-                <span className="text-[8.5px] whitespace-nowrap leading-[1.4] text-center mt-1 transition-all antialiased text-indigo-200/80 font-bold uppercase tracking-wider">
-                  Sistem Monitoring & Audit Terpadu
-                </span>
-              </div>
-            )}
+            <div className={`flex flex-col items-center text-center overflow-hidden transition-all duration-200 ${
+              !isSidebarOpen && !isMobile ? 'opacity-0 max-h-0 pointer-events-none' : 'opacity-100 max-h-16'
+            }`}>
+              <span className="font-heading font-[800] text-[18px] tracking-[1.5px] whitespace-nowrap antialiased text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]">
+                SMART PPI
+              </span>
+              <span className="text-[8.5px] whitespace-nowrap leading-[1.4] text-center mt-1 antialiased text-indigo-200/80 font-bold uppercase tracking-wider">
+                Sistem Monitoring & Audit Terpadu
+              </span>
+            </div>
           </div>
           
           {/* Navigation Items */}
           <div className={`flex-1 overflow-y-auto py-5 space-y-2.5 custom-sidebar-scrollbar ${
             !isSidebarOpen && !isMobile ? 'px-2' : 'px-3.5'
           }`}>
-            {(isSidebarOpen || isMobile) ? (
-              <div className="mb-4 px-2">
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] antialiased text-indigo-300/80">Menu Utama</p>
-              </div>
-            ) : (
-              <div className="mb-3 mx-auto w-6 h-[1.5px] bg-indigo-500/25 rounded-full" />
-            )}
+            <div className={`overflow-hidden transition-all duration-200 ${
+              !isSidebarOpen && !isMobile ? 'opacity-0 max-h-0 pointer-events-none' : 'opacity-100 max-h-8 mb-4 px-2'
+            }`}>
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] antialiased text-indigo-300/80 whitespace-nowrap">Menu Utama</p>
+            </div>
             {visibleNavItems.map((item) => (
               <NavItem 
                 key={item.name} 
@@ -540,14 +531,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 router.push('/');
               }}
               title="Keluar"
-              className={`flex items-center justify-center transition-all duration-300 group bg-gradient-to-r from-red-600/25 via-rose-600/20 to-red-700/25 hover:from-red-600/40 hover:to-rose-600/40 text-red-200 border border-red-500/35 shadow-[-2px_-2px_6px_rgba(255,100,100,0.08),4px_6px_16px_rgba(0,0,0,0.5),inset_1px_1px_1.5px_rgba(255,255,255,0.15)] hover:scale-[1.02] active:scale-[0.98] ${
+              className={`flex items-center justify-center transition-all duration-200 group bg-gradient-to-r from-red-600/25 via-rose-600/20 to-red-700/25 hover:from-red-600/40 hover:to-rose-600/40 text-red-200 border border-red-500/35 shadow-[-2px_-2px_6px_rgba(255,100,100,0.08),4px_6px_16px_rgba(0,0,0,0.5),inset_1px_1px_1.5px_rgba(255,255,255,0.15)] hover:scale-[1.02] active:scale-[0.98] ${
                 !isSidebarOpen && !isMobile 
                   ? 'w-12 h-12 mx-auto rounded-[18px] p-0' 
                   : 'gap-3 w-full py-3.5 px-4 rounded-2xl font-black text-[12px] uppercase tracking-wider'
               }`}
             >
-              <LogOut className={`transition-transform duration-300 group-hover:-translate-x-0.5 ${!isSidebarOpen && !isMobile ? 'w-5 h-5' : 'w-4 h-4'}`} strokeWidth={2.5} />
-              {(isSidebarOpen || isMobile) && <span>Keluar</span>}
+              <LogOut className={`transition-transform duration-200 group-hover:-translate-x-0.5 ${!isSidebarOpen && !isMobile ? 'w-5 h-5' : 'w-4 h-4'}`} strokeWidth={2.5} />
+              <span className={`overflow-hidden whitespace-nowrap transition-all duration-200 ${
+                !isSidebarOpen && !isMobile ? 'opacity-0 max-w-0 pointer-events-none' : 'opacity-100 max-w-xs'
+              }`}>
+                Keluar
+              </span>
             </button>
           </div>
         </div>
@@ -565,10 +560,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {/* Chevron Indicator */}
           <ChevronLeft className={`w-4 h-4 sm:w-4.5 sm:h-4.5 text-cyan-300 group-hover:text-cyan-100 transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] ${isSidebarOpen ? 'rotate-0' : 'rotate-180'}`} strokeWidth={2.5} />
         </button>
-      </motion.aside>
+      </aside>
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col h-full min-w-0 overflow-hidden transition-[margin-left] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[margin-left] print:ml-0 ${
+      <div className={`flex-1 flex flex-col h-full min-w-0 overflow-hidden transition-[margin-left] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[margin-left] print:ml-0 ${
         !isMobile ? (isSidebarOpen ? 'ml-[312px]' : 'ml-[112px]') : 'ml-0'
       }`}>
         {/* Page Content */}
