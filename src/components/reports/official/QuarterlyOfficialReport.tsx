@@ -750,111 +750,119 @@ export default function QuarterlyOfficialReport({
               line2={`Triwulan ${qData.quarterRoman} Periode ${m1.monthName} - ${m3.monthName} ${reportYear}`}
               className="mb-2"
             />
-            <table className="w-full border-collapse border border-black text-center text-[10.5pt] leading-[1.25]">
+            <table className="w-full border-collapse border border-black text-center text-[10.5pt] leading-[1.25] table-fixed">
+              <colgroup>
+                <col className="w-[17%]" />
+                <col className="w-[29%]" />
+                <col className="w-[13.5%]" />
+                <col className="w-[13.5%]" />
+                <col className="w-[13.5%]" />
+                <col className="w-[13.5%]" />
+              </colgroup>
               <thead>
                 <tr className="font-bold bg-slate-50">
-                  <th className="border border-black py-1 px-1.5 w-[22%]" rowSpan={2}>JENIS INFEKSI</th>
-                  <th className="border border-black py-1 px-1.5 w-[28%]" rowSpan={2}>ALAT INVASIF</th>
-                  <th className="border border-black py-1 px-1.5" colSpan={3}>BULAN</th>
-                  <th className="border border-black py-1 px-1.5 w-[13%]" rowSpan={2}>TOTAL</th>
+                  <th className="border border-black py-1 px-1.5 w-[17%]" rowSpan={2}>JENIS INFEKSI</th>
+                  <th className="border border-black py-1 px-1.5 w-[29%]" rowSpan={2}>ALAT INVASIF</th>
+                  <th className="border border-black py-1 px-1.5 w-[40.5%]" colSpan={3}>BULAN</th>
+                  <th className="border border-black py-1 px-1.5 w-[13.5%]" rowSpan={2}>TOTAL</th>
                 </tr>
                 <tr className="font-bold bg-slate-50">
-                  <th className="border border-black py-1 px-1.5">{m1.monthName.toUpperCase()}</th>
-                  <th className="border border-black py-1 px-1.5">{m2.monthName.toUpperCase()}</th>
-                  <th className="border border-black py-1 px-1.5">{m3.monthName.toUpperCase()}</th>
+                  <th className="border border-black py-1 px-1.5 w-[13.5%]">{m1.shortName}</th>
+                  <th className="border border-black py-1 px-1.5 w-[13.5%]">{m2.shortName}</th>
+                  <th className="border border-black py-1 px-1.5 w-[13.5%]">{m3.shortName}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td className="border border-black py-0.5 px-1.5 font-bold text-left align-middle" rowSpan={3}>PHLEBITIS</td>
-                  <td className="border border-black py-0.5 px-1.5 text-left">Total hari pemasangan</td>
-                  <td className="border border-black py-0.5 px-1.5">{phlebitis.m1.days}</td>
-                  <td className="border border-black py-0.5 px-1.5">{phlebitis.m2.days}</td>
-                  <td className="border border-black py-0.5 px-1.5">{phlebitis.m3.days}</td>
-                  <td className="border border-black py-0.5 px-1.5 font-semibold">{phlebitis.total.days}</td>
+                  <td className="border border-black py-0.5 px-1.5 text-left whitespace-nowrap">Total hari pemasangan</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{phlebitis.m1.days}</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{phlebitis.m2.days}</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{phlebitis.m3.days}</td>
+                  <td className="border border-black py-0.5 px-1.5 font-semibold whitespace-nowrap">{phlebitis.total.days}</td>
                 </tr>
                 <tr>
-                  <td className="border border-black py-0.5 px-1.5 text-left">Infeksi</td>
-                  <td className="border border-black py-0.5 px-1.5">{phlebitis.m1.cases}</td>
-                  <td className="border border-black py-0.5 px-1.5">{phlebitis.m2.cases}</td>
-                  <td className="border border-black py-0.5 px-1.5">{phlebitis.m3.cases}</td>
-                  <td className="border border-black py-0.5 px-1.5 font-semibold">{phlebitis.total.cases}</td>
+                  <td className="border border-black py-0.5 px-1.5 text-left whitespace-nowrap">Infeksi</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{phlebitis.m1.cases}</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{phlebitis.m2.cases}</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{phlebitis.m3.cases}</td>
+                  <td className="border border-black py-0.5 px-1.5 font-semibold whitespace-nowrap">{phlebitis.total.cases}</td>
                 </tr>
                 <tr>
-                  <td className="border border-black py-0.5 px-1.5 text-left">Rate In ‰</td>
-                  <td className="border border-black py-0.5 px-1.5">{fmtIdNum(phlebitis.m1.rate)} ‰</td>
-                  <td className="border border-black py-0.5 px-1.5">{fmtIdNum(phlebitis.m2.rate)} ‰</td>
-                  <td className="border border-black py-0.5 px-1.5">{fmtIdNum(phlebitis.m3.rate)} ‰</td>
-                  <td className="border border-black py-0.5 px-1.5 font-bold">{fmtIdNum(phlebitis.total.rate)} ‰</td>
+                  <td className="border border-black py-0.5 px-1.5 text-left whitespace-nowrap">Rate In ‰</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{fmtIdNum(phlebitis.m1.rate)} ‰</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{fmtIdNum(phlebitis.m2.rate)} ‰</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{fmtIdNum(phlebitis.m3.rate)} ‰</td>
+                  <td className="border border-black py-0.5 px-1.5 font-bold whitespace-nowrap">{fmtIdNum(phlebitis.total.rate)} ‰</td>
                 </tr>
 
                 <tr>
                   <td className="border border-black py-0.5 px-1.5 font-bold text-left align-middle" rowSpan={3}>ISK</td>
-                  <td className="border border-black py-0.5 px-1.5 text-left">Total hari pemasangan</td>
-                  <td className="border border-black py-0.5 px-1.5">{isk.m1.days}</td>
-                  <td className="border border-black py-0.5 px-1.5">{isk.m2.days}</td>
-                  <td className="border border-black py-0.5 px-1.5">{isk.m3.days}</td>
-                  <td className="border border-black py-0.5 px-1.5 font-semibold">{isk.total.days}</td>
+                  <td className="border border-black py-0.5 px-1.5 text-left whitespace-nowrap">Total hari pemasangan</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{isk.m1.days}</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{isk.m2.days}</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{isk.m3.days}</td>
+                  <td className="border border-black py-0.5 px-1.5 font-semibold whitespace-nowrap">{isk.total.days}</td>
                 </tr>
                 <tr>
-                  <td className="border border-black py-0.5 px-1.5 text-left">Infeksi</td>
-                  <td className="border border-black py-0.5 px-1.5">{isk.m1.cases}</td>
-                  <td className="border border-black py-0.5 px-1.5">{isk.m2.cases}</td>
-                  <td className="border border-black py-0.5 px-1.5">{isk.m3.cases}</td>
-                  <td className="border border-black py-0.5 px-1.5 font-semibold">{isk.total.cases}</td>
+                  <td className="border border-black py-0.5 px-1.5 text-left whitespace-nowrap">Infeksi</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{isk.m1.cases}</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{isk.m2.cases}</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{isk.m3.cases}</td>
+                  <td className="border border-black py-0.5 px-1.5 font-semibold whitespace-nowrap">{isk.total.cases}</td>
                 </tr>
                 <tr>
-                  <td className="border border-black py-0.5 px-1.5 text-left">Rate In ‰</td>
-                  <td className="border border-black py-0.5 px-1.5">{fmtIdNum(isk.m1.rate)} ‰</td>
-                  <td className="border border-black py-0.5 px-1.5">{fmtIdNum(isk.m2.rate)} ‰</td>
-                  <td className="border border-black py-0.5 px-1.5">{fmtIdNum(isk.m3.rate)} ‰</td>
-                  <td className="border border-black py-0.5 px-1.5 font-bold">{fmtIdNum(isk.total.rate)} ‰</td>
+                  <td className="border border-black py-0.5 px-1.5 text-left whitespace-nowrap">Rate In ‰</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{fmtIdNum(isk.m1.rate)} ‰</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{fmtIdNum(isk.m2.rate)} ‰</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{fmtIdNum(isk.m3.rate)} ‰</td>
+                  <td className="border border-black py-0.5 px-1.5 font-bold whitespace-nowrap">{fmtIdNum(isk.total.rate)} ‰</td>
                 </tr>
 
                 <tr>
                   <td className="border border-black py-0.5 px-1.5 font-bold text-left align-middle" rowSpan={3}>Decubitus</td>
-                  <td className="border border-black py-0.5 px-1.5 text-left">Total hari tirah baring</td>
-                  <td className="border border-black py-0.5 px-1.5">{decubitus.m1.days}</td>
-                  <td className="border border-black py-0.5 px-1.5">{decubitus.m2.days}</td>
-                  <td className="border border-black py-0.5 px-1.5">{decubitus.m3.days}</td>
-                  <td className="border border-black py-0.5 px-1.5 font-semibold">{decubitus.total.days}</td>
+                  <td className="border border-black py-0.5 px-1.5 text-left whitespace-nowrap">Total hari tirah baring</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{decubitus.m1.days}</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{decubitus.m2.days}</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{decubitus.m3.days}</td>
+                  <td className="border border-black py-0.5 px-1.5 font-semibold whitespace-nowrap">{decubitus.total.days}</td>
                 </tr>
                 <tr>
-                  <td className="border border-black py-0.5 px-1.5 text-left">Infeksi</td>
-                  <td className="border border-black py-0.5 px-1.5">{decubitus.m1.cases}</td>
-                  <td className="border border-black py-0.5 px-1.5">{decubitus.m2.cases}</td>
-                  <td className="border border-black py-0.5 px-1.5">{decubitus.m3.cases}</td>
-                  <td className="border border-black py-0.5 px-1.5 font-semibold">{decubitus.total.cases}</td>
+                  <td className="border border-black py-0.5 px-1.5 text-left whitespace-nowrap">Infeksi</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{decubitus.m1.cases}</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{decubitus.m2.cases}</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{decubitus.m3.cases}</td>
+                  <td className="border border-black py-0.5 px-1.5 font-semibold whitespace-nowrap">{decubitus.total.cases}</td>
                 </tr>
                 <tr>
-                  <td className="border border-black py-0.5 px-1.5 text-left">Rate In ‰</td>
-                  <td className="border border-black py-0.5 px-1.5">{fmtIdNum(decubitus.m1.rate)} ‰</td>
-                  <td className="border border-black py-0.5 px-1.5">{fmtIdNum(decubitus.m2.rate)} ‰</td>
-                  <td className="border border-black py-0.5 px-1.5">{fmtIdNum(decubitus.m3.rate)} ‰</td>
-                  <td className="border border-black py-0.5 px-1.5 font-bold">{fmtIdNum(decubitus.total.rate)} ‰</td>
+                  <td className="border border-black py-0.5 px-1.5 text-left whitespace-nowrap">Rate In ‰</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{fmtIdNum(decubitus.m1.rate)} ‰</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{fmtIdNum(decubitus.m2.rate)} ‰</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{fmtIdNum(decubitus.m3.rate)} ‰</td>
+                  <td className="border border-black py-0.5 px-1.5 font-bold whitespace-nowrap">{fmtIdNum(decubitus.total.rate)} ‰</td>
                 </tr>
 
                 <tr>
                   <td className="border border-black py-0.5 px-1.5 font-bold text-left align-middle" rowSpan={3}>VAP</td>
-                  <td className="border border-black py-0.5 px-1.5 text-left">Total hari pemasangan</td>
-                  <td className="border border-black py-0.5 px-1.5">{vap.m1.days}</td>
-                  <td className="border border-black py-0.5 px-1.5">{vap.m2.days}</td>
-                  <td className="border border-black py-0.5 px-1.5">{vap.m3.days}</td>
-                  <td className="border border-black py-0.5 px-1.5 font-semibold">{vap.total.days}</td>
+                  <td className="border border-black py-0.5 px-1.5 text-left whitespace-nowrap">Total hari pemasangan</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{vap.m1.days}</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{vap.m2.days}</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{vap.m3.days}</td>
+                  <td className="border border-black py-0.5 px-1.5 font-semibold whitespace-nowrap">{vap.total.days}</td>
                 </tr>
                 <tr>
-                  <td className="border border-black py-0.5 px-1.5 text-left">Infeksi</td>
-                  <td className="border border-black py-0.5 px-1.5">{vap.m1.cases}</td>
-                  <td className="border border-black py-0.5 px-1.5">{vap.m2.cases}</td>
-                  <td className="border border-black py-0.5 px-1.5">{vap.m3.cases}</td>
-                  <td className="border border-black py-0.5 px-1.5 font-semibold">{vap.total.cases}</td>
+                  <td className="border border-black py-0.5 px-1.5 text-left whitespace-nowrap">Infeksi</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{vap.m1.cases}</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{vap.m2.cases}</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{vap.m3.cases}</td>
+                  <td className="border border-black py-0.5 px-1.5 font-semibold whitespace-nowrap">{vap.total.cases}</td>
                 </tr>
                 <tr>
-                  <td className="border border-black py-0.5 px-1.5 text-left">Rate In ‰</td>
-                  <td className="border border-black py-0.5 px-1.5">{fmtIdNum(vap.m1.rate)} ‰</td>
-                  <td className="border border-black py-0.5 px-1.5">{fmtIdNum(vap.m2.rate)} ‰</td>
-                  <td className="border border-black py-0.5 px-1.5">{fmtIdNum(vap.m3.rate)} ‰</td>
-                  <td className="border border-black py-0.5 px-1.5 font-bold">{fmtIdNum(vap.total.rate)} ‰</td>
+                  <td className="border border-black py-0.5 px-1.5 text-left whitespace-nowrap">Rate In ‰</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{fmtIdNum(vap.m1.rate)} ‰</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{fmtIdNum(vap.m2.rate)} ‰</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{fmtIdNum(vap.m3.rate)} ‰</td>
+                  <td className="border border-black py-0.5 px-1.5 font-bold whitespace-nowrap">{fmtIdNum(vap.total.rate)} ‰</td>
                 </tr>
 
                 <tr>
@@ -864,25 +872,25 @@ export default function QuarterlyOfficialReport({
                   </td>
                 </tr>
                 <tr>
-                  <td className="border border-black py-0.5 px-1.5 text-left">Total Operasi</td>
-                  <td className="border border-black py-0.5 px-1.5">{ido.m1.days}</td>
-                  <td className="border border-black py-0.5 px-1.5">{ido.m2.days}</td>
-                  <td className="border border-black py-0.5 px-1.5">{ido.m3.days}</td>
-                  <td className="border border-black py-0.5 px-1.5 font-semibold">{ido.total.days}</td>
+                  <td className="border border-black py-0.5 px-1.5 text-left whitespace-nowrap">Total Operasi</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{ido.m1.days}</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{ido.m2.days}</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{ido.m3.days}</td>
+                  <td className="border border-black py-0.5 px-1.5 font-semibold whitespace-nowrap">{ido.total.days}</td>
                 </tr>
                 <tr>
-                  <td className="border border-black py-0.5 px-1.5 text-left">Infeksi</td>
-                  <td className="border border-black py-0.5 px-1.5">{ido.m1.cases}</td>
-                  <td className="border border-black py-0.5 px-1.5">{ido.m2.cases}</td>
-                  <td className="border border-black py-0.5 px-1.5">{ido.m3.cases}</td>
-                  <td className="border border-black py-0.5 px-1.5 font-semibold">{ido.total.cases}</td>
+                  <td className="border border-black py-0.5 px-1.5 text-left whitespace-nowrap">Infeksi</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{ido.m1.cases}</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{ido.m2.cases}</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{ido.m3.cases}</td>
+                  <td className="border border-black py-0.5 px-1.5 font-semibold whitespace-nowrap">{ido.total.cases}</td>
                 </tr>
                 <tr>
-                  <td className="border border-black py-0.5 px-1.5 text-left">Rate In %</td>
-                  <td className="border border-black py-0.5 px-1.5">{fmtIdNum(ido.m1.rate)} %</td>
-                  <td className="border border-black py-0.5 px-1.5">{fmtIdNum(ido.m2.rate)} %</td>
-                  <td className="border border-black py-0.5 px-1.5">{fmtIdNum(ido.m3.rate)} %</td>
-                  <td className="border border-black py-0.5 px-1.5 font-bold">{fmtIdNum(ido.total.rate)} %</td>
+                  <td className="border border-black py-0.5 px-1.5 text-left whitespace-nowrap">Rate In %</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{fmtIdNum(ido.m1.rate)} %</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{fmtIdNum(ido.m2.rate)} %</td>
+                  <td className="border border-black py-0.5 px-1.5 whitespace-nowrap">{fmtIdNum(ido.m3.rate)} %</td>
+                  <td className="border border-black py-0.5 px-1.5 font-bold whitespace-nowrap">{fmtIdNum(ido.total.rate)} %</td>
                 </tr>
               </tbody>
             </table>
