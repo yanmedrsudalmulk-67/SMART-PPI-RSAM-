@@ -23,6 +23,7 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   Filter,
   Check,
   ShieldCheck,
@@ -211,10 +212,13 @@ export default function BuktiSupervisiPage() {
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<{
+    images: string[];
+    currentIndex: number;
     url: string;
     title: string;
     subtitle?: string;
     type: "before" | "after";
+    compareImages?: string[];
     compareUrl?: string;
   } | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -247,6 +251,30 @@ export default function BuktiSupervisiPage() {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
+
+  // Lightbox keyboard navigation (ArrowLeft, ArrowRight, Escape)
+  useEffect(() => {
+    if (!lightboxImage) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") {
+        setLightboxImage((prev) => {
+          if (!prev || prev.images.length <= 1) return prev;
+          const newIdx = (prev.currentIndex - 1 + prev.images.length) % prev.images.length;
+          return { ...prev, currentIndex: newIdx, url: prev.images[newIdx] };
+        });
+      } else if (e.key === "ArrowRight") {
+        setLightboxImage((prev) => {
+          if (!prev || prev.images.length <= 1) return prev;
+          const newIdx = (prev.currentIndex + 1) % prev.images.length;
+          return { ...prev, currentIndex: newIdx, url: prev.images[newIdx] };
+        });
+      } else if (e.key === "Escape") {
+        setLightboxImage(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [lightboxImage]);
 
   // 1. Fetch Realtime Data from audit_sessions
   useEffect(() => {
@@ -1018,10 +1046,13 @@ export default function BuktiSupervisiPage() {
                                 type="button"
                                 onClick={() =>
                                   setLightboxImage({
+                                    images: item.foto_temuan,
+                                    currentIndex: 0,
                                     url: item.foto_temuan[0],
                                     title: `Foto Temuan (Before) - ${item.unit}`,
                                     subtitle: item.temuan,
                                     type: "before",
+                                    compareImages: item.foto_perbaikan,
                                     compareUrl: item.foto_perbaikan[0],
                                   })
                                 }
@@ -1036,9 +1067,25 @@ export default function BuktiSupervisiPage() {
                                 />
                               </button>
                               {item.foto_temuan.length > 1 && (
-                                <span className="text-[10px] font-bold text-amber-500 dark:text-amber-400">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setLightboxImage({
+                                      images: item.foto_temuan,
+                                      currentIndex: 1,
+                                      url: item.foto_temuan[1],
+                                      title: `Foto Temuan (Before) - ${item.unit}`,
+                                      subtitle: item.temuan,
+                                      type: "before",
+                                      compareImages: item.foto_perbaikan,
+                                      compareUrl: item.foto_perbaikan[0],
+                                    })
+                                  }
+                                  className="text-[10px] font-bold text-amber-500 dark:text-amber-400 hover:underline cursor-pointer"
+                                  title="Buka slider semua foto temuan"
+                                >
                                   +{item.foto_temuan.length - 1} foto lainnya
-                                </span>
+                                </button>
                               )}
                               <span className="text-[10.5px] font-black uppercase text-amber-500 dark:text-amber-400 tracking-wider mt-0.5 block">
                                 Before
@@ -1093,10 +1140,13 @@ export default function BuktiSupervisiPage() {
                                 type="button"
                                 onClick={() =>
                                   setLightboxImage({
+                                    images: item.foto_perbaikan,
+                                    currentIndex: 0,
                                     url: item.foto_perbaikan[0],
                                     title: `Foto Bukti Perbaikan (After) - ${item.unit}`,
                                     subtitle: item.upaya_perbaikan,
                                     type: "after",
+                                    compareImages: item.foto_temuan,
                                     compareUrl: item.foto_temuan[0],
                                   })
                                 }
@@ -1111,9 +1161,25 @@ export default function BuktiSupervisiPage() {
                                 />
                               </button>
                               {item.foto_perbaikan.length > 1 && (
-                                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setLightboxImage({
+                                      images: item.foto_perbaikan,
+                                      currentIndex: 1,
+                                      url: item.foto_perbaikan[1],
+                                      title: `Foto Bukti Perbaikan (After) - ${item.unit}`,
+                                      subtitle: item.upaya_perbaikan,
+                                      type: "after",
+                                      compareImages: item.foto_temuan,
+                                      compareUrl: item.foto_temuan[0],
+                                    })
+                                  }
+                                  className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+                                  title="Buka slider semua foto perbaikan"
+                                >
                                   +{item.foto_perbaikan.length - 1} foto lainnya
-                                </span>
+                                </button>
                               )}
                               <span className="text-[10.5px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-wider mt-0.5 block">
                                 After
@@ -1260,7 +1326,20 @@ export default function BuktiSupervisiPage() {
                               key={i}
                               src={img}
                               alt="Before"
-                              className="w-16 h-16 rounded-xl object-cover border-2 border-amber-400/90 shadow-md shrink-0"
+                              onClick={() =>
+                                setLightboxImage({
+                                  images: editingRecord.foto_temuan,
+                                  currentIndex: i,
+                                  url: img,
+                                  title: `Foto Temuan (Before) - ${editingRecord.unit}`,
+                                  subtitle: editingRecord.temuan,
+                                  type: "before",
+                                  compareImages: editingRecord.foto_perbaikan,
+                                  compareUrl: editingRecord.foto_perbaikan[0],
+                                })
+                              }
+                              className="w-16 h-16 rounded-xl object-cover border-2 border-amber-400/90 shadow-md shrink-0 cursor-pointer hover:scale-105 hover:ring-2 hover:ring-amber-400 transition-all"
+                              title={`Klik untuk memperbesar / slider foto ke-${i + 1}`}
                             />
                           ))}
                         </div>
@@ -1730,10 +1809,10 @@ export default function BuktiSupervisiPage() {
           )}
         </AnimatePresence>
 
-        {/* MODAL 3: LIGHTBOX IMAGE VIEWER WITH BEFORE-AFTER COMPARISON */}
+        {/* MODAL 3: LIGHTBOX IMAGE VIEWER WITH BEFORE-AFTER COMPARISON & SLIDER */}
         <AnimatePresence>
           {lightboxImage && (
-            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-xl">
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-xl">
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -1742,61 +1821,153 @@ export default function BuktiSupervisiPage() {
               >
                 {/* Header */}
                 <div className="flex items-center justify-between pb-3 border-b border-indigo-900/50">
-                  <div>
-                    <h4 className="text-base font-bold text-white flex items-center gap-2">
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full font-black uppercase ${
-                          lightboxImage.type === "before"
-                            ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                            : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                        }`}
-                      >
-                        {lightboxImage.type === "before" ? "Temuan (Before)" : "Perbaikan (After)"}
-                      </span>
-                      {lightboxImage.title}
-                    </h4>
-                    {lightboxImage.subtitle && (
-                      <p className="text-xs text-slate-300 mt-1 line-clamp-2">
-                        {lightboxImage.subtitle}
-                      </p>
-                    )}
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`text-xs px-2.5 py-1 rounded-full font-black uppercase shrink-0 ${
+                        lightboxImage.type === "before"
+                          ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                          : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                      }`}
+                    >
+                      {lightboxImage.type === "before" ? "Temuan (Before)" : "Perbaikan (After)"}
+                    </span>
+                    <div>
+                      <h4 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                        <span>{lightboxImage.title}</span>
+                        {lightboxImage.images && lightboxImage.images.length > 1 && (
+                          <span className="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 shrink-0">
+                            Foto {lightboxImage.currentIndex + 1} dari {lightboxImage.images.length}
+                          </span>
+                        )}
+                      </h4>
+                      {lightboxImage.subtitle && (
+                        <p className="text-xs text-slate-300 mt-0.5 line-clamp-2">
+                          {lightboxImage.subtitle}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <button
                     onClick={() => setLightboxImage(null)}
-                    className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors"
+                    className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+                    title="Tutup (Esc)"
                   >
                     <X className="w-6 h-6" />
                   </button>
                 </div>
 
-                {/* Body Image */}
-                <div className="flex-1 overflow-auto flex items-center justify-center py-4">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={lightboxImage.url}
-                    alt="Preview"
-                    className="max-h-[65vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl border border-slate-700/80"
-                  />
+                {/* Body Image with Slider Arrows */}
+                <div className="relative flex-1 overflow-hidden flex items-center justify-center py-4 min-h-[300px]">
+                  {/* Prev Button */}
+                  {lightboxImage.images && lightboxImage.images.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setLightboxImage((prev) => {
+                          if (!prev || !prev.images || prev.images.length <= 1) return prev;
+                          const newIdx =
+                            (prev.currentIndex - 1 + prev.images.length) % prev.images.length;
+                          return { ...prev, currentIndex: newIdx, url: prev.images[newIdx] };
+                        })
+                      }
+                      title="Foto Sebelumnya (Panah Kiri ◀)"
+                      className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-slate-900/85 hover:bg-slate-800 border border-slate-700/80 text-white flex items-center justify-center shadow-2xl backdrop-blur-md transition-all hover:scale-110 active:scale-95 z-20 cursor-pointer"
+                    >
+                      <ChevronLeft className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                    </button>
+                  )}
+
+                  {/* Active Photo */}
+                  <div className="w-full h-full flex items-center justify-center">
+                    <AnimatePresence mode="wait">
+                      <motion.img
+                        key={`${lightboxImage.type}-${lightboxImage.currentIndex}`}
+                        src={
+                          (lightboxImage.images && lightboxImage.images[lightboxImage.currentIndex]) ||
+                          lightboxImage.url
+                        }
+                        alt={`Dokumentasi ${lightboxImage.currentIndex + 1}`}
+                        initial={{ opacity: 0, scale: 0.96 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.96 }}
+                        transition={{ duration: 0.18 }}
+                        className="max-h-[62vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl border border-slate-700/80 select-none"
+                      />
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Next Button */}
+                  {lightboxImage.images && lightboxImage.images.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setLightboxImage((prev) => {
+                          if (!prev || !prev.images || prev.images.length <= 1) return prev;
+                          const newIdx = (prev.currentIndex + 1) % prev.images.length;
+                          return { ...prev, currentIndex: newIdx, url: prev.images[newIdx] };
+                        })
+                      }
+                      title="Foto Berikutnya (Panah Kanan ▶)"
+                      className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-slate-900/85 hover:bg-slate-800 border border-slate-700/80 text-white flex items-center justify-center shadow-2xl backdrop-blur-md transition-all hover:scale-110 active:scale-95 z-20 cursor-pointer"
+                    >
+                      <ChevronRight className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                    </button>
+                  )}
                 </div>
 
+                {/* Dot Pagination for multiple photos */}
+                {lightboxImage.images && lightboxImage.images.length > 1 && (
+                  <div className="flex items-center justify-center gap-2 pb-2">
+                    {lightboxImage.images.map((_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() =>
+                          setLightboxImage((prev) =>
+                            prev ? { ...prev, currentIndex: i, url: prev.images[i] } : null
+                          )
+                        }
+                        className={`h-2.5 rounded-full transition-all duration-200 cursor-pointer ${
+                          i === lightboxImage.currentIndex
+                            ? lightboxImage.type === "before"
+                              ? "w-8 bg-amber-400 shadow-md shadow-amber-400/50"
+                              : "w-8 bg-emerald-400 shadow-md shadow-emerald-400/50"
+                            : "w-2.5 bg-slate-600 hover:bg-slate-400"
+                        }`}
+                        title={`Buka foto ke-${i + 1}`}
+                      />
+                    ))}
+                  </div>
+                )}
+
                 {/* Compare Button if the counter-part image exists */}
-                {lightboxImage.compareUrl && (
+                {((lightboxImage.compareImages && lightboxImage.compareImages.length > 0) ||
+                  lightboxImage.compareUrl) && (
                   <div className="pt-3 border-t border-indigo-900/50 flex items-center justify-between">
                     <span className="text-xs text-slate-400">
-                      Tersedia foto perbandingan pasangan
+                      Tersedia dokumentasi{" "}
+                      {lightboxImage.type === "before" ? "Perbaikan (After)" : "Temuan (Before)"}
                     </span>
                     <button
                       onClick={() =>
                         setLightboxImage((prev) =>
                           prev
                             ? {
-                                url: prev.compareUrl!,
+                                images:
+                                  prev.compareImages && prev.compareImages.length > 0
+                                    ? prev.compareImages
+                                    : [prev.compareUrl!],
+                                currentIndex: 0,
+                                url:
+                                  (prev.compareImages && prev.compareImages[0]) ||
+                                  prev.compareUrl!,
                                 title:
                                   prev.type === "before"
                                     ? `Foto Bukti Perbaikan (After)`
                                     : `Foto Temuan (Before)`,
                                 subtitle: prev.subtitle,
                                 type: prev.type === "before" ? "after" : "before",
+                                compareImages: prev.images,
                                 compareUrl: prev.url,
                               }
                             : null
