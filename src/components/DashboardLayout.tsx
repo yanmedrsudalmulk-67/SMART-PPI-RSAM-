@@ -134,18 +134,11 @@ const NavItem = memo(({
           <div className="flex items-center gap-3.5 min-w-0">
             <motion.div 
               animate={isActive || isAnySubActive ? { 
-                y: [0, -4, 0, -2, 0],
-                scale: [1, 1.08, 1, 1.04, 1],
+                scale: 1.06,
               } : { 
-                y: 0,
                 scale: 1,
               }}
-              transition={isActive || isAnySubActive ? { 
-                duration: 0.8,
-                repeat: Infinity,
-                repeatDelay: 4.2,
-                ease: "easeInOut"
-              } : { duration: 0.2 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
               className="relative z-10 flex items-center justify-center flex-shrink-0 w-8 h-8"
             >
               <item.icon 
@@ -181,18 +174,11 @@ const NavItem = memo(({
           <div className="flex items-center gap-3.5 min-w-0">
             <motion.div 
               animate={isActive ? { 
-                y: [0, -4, 0, -2, 0],
-                scale: [1, 1.08, 1, 1.04, 1],
+                scale: 1.06,
               } : { 
-                y: 0,
                 scale: 1,
               }}
-              transition={isActive ? { 
-                duration: 0.8,
-                repeat: Infinity,
-                repeatDelay: 4.2,
-                ease: "easeInOut"
-              } : { duration: 0.2 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
               className="relative z-10 flex items-center justify-center flex-shrink-0 w-8 h-8"
             >
               <item.icon 
@@ -490,7 +476,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }`}
       >
         {/* Main Inner Card with Glass/Border/Shadow & overflow-hidden */}
-        <div className="flex flex-col h-full w-full rounded-[30px] transition-colors duration-300 backdrop-blur-2xl bg-gradient-to-b from-[#1c183a] via-[#14172f] to-[#0c0e1e] border border-[#2b2d56] shadow-[-6px_-6px_20px_rgba(140,165,255,0.08),12px_14px_36px_rgba(0,0,0,0.75),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] overflow-hidden relative">
+        <div className="flex flex-col h-full w-full rounded-[30px] transition-colors duration-300 backdrop-blur-md bg-gradient-to-b from-[#1c183a]/95 via-[#14172f]/95 to-[#0c0e1e] border border-[#2b2d56] shadow-[-6px_-6px_20px_rgba(140,165,255,0.08),12px_14px_36px_rgba(0,0,0,0.75),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] overflow-hidden relative">
           {/* Top Bevel Highlight */}
           <div className="absolute top-0 inset-x-6 h-[1.5px] bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none z-20" />
 

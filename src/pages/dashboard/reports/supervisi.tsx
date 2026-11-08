@@ -207,6 +207,14 @@ export default function BuktiSupervisiPage() {
   const [selectedStatus, setSelectedStatus] = useState<"all" | "Selesai" | "Dalam Proses">("all");
   const [onlyWithFindings, setOnlyWithFindings] = useState(true);
 
+  // Pagination State for tablet & mobile performance
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number | "all">(15);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedUnit, selectedMonth, selectedYear, selectedStatus, onlyWithFindings]);
+
   // Modals
   const [editingRecord, setEditingRecord] = useState<SupervisiRecord | null>(null);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
@@ -519,6 +527,15 @@ export default function BuktiSupervisiPage() {
 
     return { total, selesai, dalamProses, percentSelesai, totalFoto };
   }, [filteredRecords]);
+
+  // Paginated records for smooth 60-120fps scrolling on tablet & phone
+  const totalItems = filteredRecords.length;
+  const totalPages = itemsPerPage === "all" ? 1 : Math.ceil(totalItems / itemsPerPage) || 1;
+  const paginatedRecords = useMemo(() => {
+    if (itemsPerPage === "all") return filteredRecords;
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredRecords.slice(start, start + itemsPerPage);
+  }, [filteredRecords, currentPage, itemsPerPage]);
 
   // Open Edit Follow-Up Modal
   const handleOpenFollowUp = (rec: SupervisiRecord) => {
@@ -978,7 +995,12 @@ export default function BuktiSupervisiPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredRecords.map((item, idx) => {
+                  paginatedRecords.map((item, idx) => {
+                    const rowNumber =
+                      itemsPerPage === "all"
+                        ? idx + 1
+                        : (currentPage - 1) * itemsPerPage + idx + 1;
+
                     const dateFormatted = item.tanggal_waktu
                       ? format(new Date(item.tanggal_waktu), "dd MMM yyyy, HH:mm", {
                           locale: idLocale,
@@ -992,7 +1014,7 @@ export default function BuktiSupervisiPage() {
                       >
                         {/* No */}
                         <td className="px-1 py-3 text-center align-top font-bold text-slate-500 dark:text-slate-400 text-[12px] border-r border-slate-200 dark:border-slate-700/80">
-                          {idx + 1}
+                          {rowNumber}
                         </td>
 
                         {/* Tanggal & Waktu */}
@@ -1063,6 +1085,8 @@ export default function BuktiSupervisiPage() {
                                 <img
                                   src={item.foto_temuan[0]}
                                   alt="Temuan Before"
+                                  loading="lazy"
+                                  decoding="async"
                                   className="w-full h-full object-cover rounded-2xl"
                                 />
                               </button>
@@ -1157,6 +1181,8 @@ export default function BuktiSupervisiPage() {
                                 <img
                                   src={item.foto_perbaikan[0]}
                                   alt="Perbaikan After"
+                                  loading="lazy"
+                                  decoding="async"
                                   className="w-full h-full object-cover rounded-2xl"
                                 />
                               </button>
@@ -1248,6 +1274,125 @@ export default function BuktiSupervisiPage() {
               </tbody>
             </table>
           </div>
+
+          {/* PAGINATION BAR FOR TABLET & MOBILE PERFORMANCE */}
+          {totalItems > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3.5 bg-slate-50/60 dark:bg-[#0c0e22]/90 border-t border-slate-200 dark:border-slate-800 text-xs">
+              {/* Info Text */}
+              <div className="text-slate-500 dark:text-slate-400 font-medium text-center sm:text-left">
+                Menampilkan{" "}
+                <span className="font-bold text-slate-800 dark:text-slate-200">
+                  {itemsPerPage === "all" ? 1 : (currentPage - 1) * itemsPerPage + 1}
+                </span>{" "}
+                –{" "}
+                <span className="font-bold text-slate-800 dark:text-slate-200">
+                  {itemsPerPage === "all"
+                    ? totalItems
+                    : Math.min(currentPage * itemsPerPage, totalItems)}
+                </span>{" "}
+                dari{" "}
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                  {totalItems}
+                </span>{" "}
+                kegiatan supervisi
+              </div>
+
+              {/* Controls (Page Size + Buttons) */}
+              <div className="flex items-center flex-wrap justify-center gap-3">
+                {/* Page Size Selector */}
+                <div className="flex items-center gap-1.5 text-slate-400">
+                  <span className="text-[11px]">Tampilkan:</span>
+                  <div className="flex items-center bg-slate-200/60 dark:bg-slate-800/80 p-0.5 rounded-lg border border-slate-300 dark:border-slate-700/60">
+                    {[15, 30, "all"].map((size) => (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => {
+                          setItemsPerPage(size as number | "all");
+                          setCurrentPage(1);
+                        }}
+                        className={`px-2 py-0.5 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                          itemsPerPage === size
+                            ? "bg-emerald-600 text-white shadow-sm"
+                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        }`}
+                      >
+                        {size === "all" ? "Semua" : size}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Page Navigation Buttons */}
+                {itemsPerPage !== "all" && totalPages > 1 && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg font-bold text-xs bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                      title="Halaman Sebelumnya"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Sebelumnya</span>
+                    </button>
+
+                    <div className="flex items-center gap-1 px-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
+                        if (
+                          pageNum === 1 ||
+                          pageNum === totalPages ||
+                          (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                        ) {
+                          return (
+                            <button
+                              key={pageNum}
+                              type="button"
+                              onClick={() => setCurrentPage(pageNum)}
+                              className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                currentPage === pageNum
+                                  ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30 ring-1 ring-emerald-400/50"
+                                  : "bg-slate-200/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700"
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        }
+                        if (
+                          pageNum === currentPage - 2 ||
+                          pageNum === currentPage + 2
+                        ) {
+                          return (
+                            <span
+                              key={pageNum}
+                              className="px-1 text-slate-400 text-xs"
+                            >
+                              ...
+                            </span>
+                          );
+                        }
+                        return null;
+                      })}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCurrentPage((p) => Math.min(totalPages, p + 1))
+                      }
+                      disabled={currentPage === totalPages}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg font-bold text-xs bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                      title="Halaman Berikutnya"
+                    >
+                      <span className="hidden sm:inline">Berikutnya</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* MODAL 1: UPDATE TINDAK LANJUT & BUKTI FOTO PERBAIKAN (BLUR GLASSMORPHISM) */}

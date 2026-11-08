@@ -247,19 +247,14 @@ const SliderImage = ({
 
   return (
     <>
-      <div
-        className="absolute inset-0 w-full h-full bg-cover bg-center blur-[32px] saturate-150 scale-110 opacity-30 pointer-events-none"
-        style={{
-          backgroundImage: `url(${imgSrc})`,
-        }}
-      />
+      <div className="absolute inset-0 w-full h-full bg-[#0c0d22] pointer-events-none" />
       <div className="absolute inset-0 w-full h-full bg-slate-950/20" />
       <img
         src={imgSrc}
         alt={slide.title || "Slider"}
         loading="eager"
         decoding="async"
-        className="absolute inset-0 w-full h-full object-cover drop-shadow-2xl scale-100 group-[.swiper-slide-active]:scale-105 transition-transform duration-1000 ease-out"
+        className="absolute inset-0 w-full h-full object-cover drop-shadow-2xl scale-100 group-[.swiper-slide-active]:scale-105 transition-transform duration-700 ease-out"
         referrerPolicy="no-referrer"
         onError={() => {
           if (imgSrc !== "/uploads/public/slider/slider_1787961366248.png") {
@@ -612,7 +607,8 @@ export default function DashboardPage() {
       }
     };
 
-    if (!isDashboardLoadedRef.current) {
+    // Only trigger fetchFresh on mount if data is not loaded and Layout is not already loading it
+    if (!isDashboardLoadedRef.current && !useDashboardStore.getState().isGlobalLoading) {
       fetchFresh();
     }
 

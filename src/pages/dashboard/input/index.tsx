@@ -199,9 +199,7 @@ export default function InputIndexPage() {
   useEffect(() => {
     fetchSessions();
     const todayStr = new Date().toISOString().slice(0, 10);
-    fetch(`/api/simrs/hais?startDate=2026-01-01&endDate=${todayStr}&autoSync=true`)
-      .then(() => fetchSessions())
-      .catch(() => {});
+    fetch(`/api/simrs/hais?startDate=2026-01-01&endDate=${todayStr}&autoSync=true`).catch(() => {});
 
     const chanSessions = supabase
       .channel("audit_sessions_changes_input")
