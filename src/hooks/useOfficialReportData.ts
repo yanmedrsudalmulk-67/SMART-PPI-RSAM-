@@ -302,24 +302,22 @@ export function useOfficialReportData({
   month = new Date().getMonth(),
   quarter = Math.floor(new Date().getMonth() / 3),
   semester = Math.floor(new Date().getMonth() / 6),
+  enabled = true,
 }: {
   periodType?: 'monthly' | 'quarterly' | 'semester' | 'annual';
   year?: number;
   month?: number;
   quarter?: number;
   semester?: number;
+  enabled?: boolean;
 }) {
   const [loading, setLoading] = useState(true);
-  const [hasCustomData, setHasCustomData] = useState(false);
 
-  const [rawHaisSessions, setRawHaisSessions] = useState<any[]>([]);
-  const [rawHh, setRawHh] = useState<any[]>([]);
-  const [rawApd, setRawApd] = useState<any[]>([]);
   const [rawYearHais, setRawYearHais] = useState<any[]>([]);
   const [rawYearHh, setRawYearHh] = useState<any[]>([]);
   const [rawPrevYearHh, setRawPrevYearHh] = useState<any[]>([]);
   const [rawYearApd, setRawYearApd] = useState<any[]>([]);
-  const syncedRangesRef = useRef<Set<string>>(new Set());
+  const [loadedYear, setLoadedYear] = useState<number | null>(null);
 
   // Compute timezone-safe YYYY-MM-DD start & end dates
   const { startDateStr, endDateStr, periodLabel, quarterLabel } = useMemo(() => {
@@ -364,7 +362,34 @@ export function useOfficialReportData({
     };
   }, [periodType, year, month, quarter, semester]);
 
+  // Synchronous filtering by current period (0ms latency, zero stale cross-month data)
+  const rawHaisSessions = useMemo(() => {
+    return rawYearHais.filter((r: any) => {
+      const ymd = extractDateYMD(r.tanggal_waktu || r.created_at);
+      return ymd >= startDateStr && ymd <= endDateStr;
+    });
+  }, [rawYearHais, startDateStr, endDateStr]);
+
+  const rawHh = useMemo(() => {
+    return rawYearHh.filter((h: any) => {
+      const ymd = extractDateYMD(h.start_time || h.tanggal_waktu || h.created_at);
+      return ymd >= startDateStr && ymd <= endDateStr;
+    });
+  }, [rawYearHh, startDateStr, endDateStr]);
+
+  const rawApd = useMemo(() => {
+    return rawYearApd.filter((a: any) => {
+      const ymd = extractDateYMD(a.tanggal_waktu || a.created_at);
+      return ymd >= startDateStr && ymd <= endDateStr;
+    });
+  }, [rawYearApd, startDateStr, endDateStr]);
+
+  const hasCustomData = useMemo(() => {
+    return rawHaisSessions.length + rawHh.length + rawApd.length > 0;
+  }, [rawHaisSessions, rawHh, rawApd]);
+
   const fetchData = useCallback(async () => {
+    if (!enabled) return;
     try {
       const yearStart = `${year}-01-01`;
       const yearEnd = `${year}-12-31~`;
@@ -392,13 +417,7 @@ export function useOfficialReportData({
           .in('indikator_id', ['audit_apd', 'apd']),
       ]);
 
-      // 1. Filter HAIs sessions by YYYY-MM-DD range
-      const haisFiltered = (haisRes.data || []).filter((r: any) => {
-        const ymd = extractDateYMD(r.tanggal_waktu || r.created_at);
-        return ymd >= startDateStr && ymd <= endDateStr;
-      });
-
-      // 2. Merge & deduplicate Hand Hygiene (audit_sessions + audit_hand_hygiene)
+      // 1. Merge & deduplicate Hand Hygiene (audit_sessions + audit_hand_hygiene)
       const rawHhSessions = hhSessRes.data || [];
       const rawHhTable = hhTableRes.data || [];
       const hhById = new Map<string, any>();
@@ -465,12 +484,7 @@ export function useOfficialReportData({
         });
       }
 
-      const hhFiltered = mergedHh.filter((h: any) => {
-        const ymd = extractDateYMD(h.start_time || h.tanggal_waktu || h.created_at);
-        return ymd >= startDateStr && ymd <= endDateStr;
-      });
-
-      // 3. Merge & deduplicate APD (audit_sessions + audit_apd)
+      // 2. Merge & deduplicate APD (audit_sessions + audit_apd)
       const mergedApd: any[] = [];
       const seenApdIds = new Set<string>();
       for (const item of [...(apdSessRes.data || []), ...(apdTableRes.data || [])]) {
@@ -478,11 +492,6 @@ export function useOfficialReportData({
         seenApdIds.add(item.id);
         mergedApd.push(normalizeApdItem(item));
       }
-
-      const apdFiltered = mergedApd.filter((a: any) => {
-        const ymd = extractDateYMD(a.tanggal_waktu || a.created_at);
-        return ymd >= startDateStr && ymd <= endDateStr;
-      });
 
       const yearStartYmd = `${year}-01-01`;
       const yearEndYmd = `${year}-12-31`;
@@ -506,36 +515,26 @@ export function useOfficialReportData({
         return ymd >= yearStartYmd && ymd <= yearEndYmd;
       });
 
-      setRawHaisSessions(haisFiltered);
-      setRawHh(hhFiltered);
-      setRawApd(apdFiltered);
       setRawYearHais(haisWholeYear);
       setRawYearHh(hhWholeYear);
       setRawPrevYearHh(hhPrevYear);
       setRawYearApd(apdWholeYear);
-      setHasCustomData(haisFiltered.length + hhFiltered.length + apdFiltered.length > 0);
+      setLoadedYear(year);
     } catch (e) {
       console.error('Error fetching official report data:', e);
     } finally {
       setLoading(false);
     }
-  }, [year, startDateStr, endDateStr]);
+  }, [year, enabled]);
 
-  // Auto-sync SIMRS HAIs data & subscribe to realtime updates
+  // Subscribe to realtime updates for the active year
   useEffect(() => {
+    if (!enabled) return;
     setLoading(true);
     fetchData();
 
-    const rangeKey = `${startDateStr}_${endDateStr}`;
-    if (!syncedRangesRef.current.has(rangeKey)) {
-      syncedRangesRef.current.add(rangeKey);
-      fetch(`/api/simrs/hais?startDate=${startDateStr}&endDate=${endDateStr}&autoSync=true`)
-        .then(() => fetchData())
-        .catch(() => {});
-    }
-
     const ch = supabase
-      .channel(`official_report_sync_${rangeKey}`)
+      .channel(`official_report_sync_${year}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_sessions' }, () => fetchData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_hand_hygiene' }, () => fetchData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_apd' }, () => fetchData())
@@ -559,7 +558,7 @@ export function useOfficialReportData({
         window.removeEventListener('message', onMsg);
       }
     };
-  }, [fetchData, startDateStr, endDateStr]);
+  }, [fetchData, enabled, year]);
 
   // Aggregate Data with Fallback to Verified Official Baseline
   const reportData = useMemo(() => {

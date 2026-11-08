@@ -54,6 +54,7 @@ export default function AnnualOfficialReport({
   const internalData = useOfficialReportData({
     periodType: 'annual',
     year,
+    enabled: !reportData,
   });
 
   const data = reportData || internalData;

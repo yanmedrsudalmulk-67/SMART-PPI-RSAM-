@@ -312,6 +312,7 @@ export default function QuarterlyOfficialReport({
     periodType: 'quarterly',
     quarter,
     year,
+    enabled: !reportData,
   });
 
   const data = reportData || internalData;

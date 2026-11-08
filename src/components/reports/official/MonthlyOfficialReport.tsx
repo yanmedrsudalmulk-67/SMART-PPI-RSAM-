@@ -124,6 +124,7 @@ export default function MonthlyOfficialReport({
     periodType: 'monthly',
     month,
     year,
+    enabled: !reportData,
   });
 
   const data = reportData || internalData;

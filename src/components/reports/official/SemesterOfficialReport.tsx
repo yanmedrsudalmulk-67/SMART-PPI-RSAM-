@@ -30,6 +30,7 @@ export default function SemesterOfficialReport({
     periodType: 'semester',
     semester,
     year,
+    enabled: !reportData,
   });
 
   const data = reportData || internalData;
