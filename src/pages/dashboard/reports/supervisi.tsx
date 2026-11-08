@@ -736,7 +736,7 @@ export default function BuktiSupervisiPage() {
         <title>Bukti Supervisi & Tindak Lanjut PPI | SMART PPI RSUD AL-MULK</title>
       </Head>
 
-      <div className="max-w-[1600px] mx-auto px-3 sm:px-6 py-6 pb-28 text-slate-900 dark:text-slate-100">
+      <div className="w-full max-w-full mx-auto px-0.5 sm:px-1 py-1 pb-28 text-slate-900 dark:text-slate-100">
         {/* Toast Notification */}
         <AnimatePresence>
           {toastMessage && (
@@ -916,22 +916,22 @@ export default function BuktiSupervisiPage() {
         </div>
 
         {/* Main Accreditation Table */}
-        <div className="bg-white dark:bg-[#10132b]/95 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-xl overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="bg-white dark:bg-[#10132b]/95 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-xl overflow-hidden w-full">
+          <div className="overflow-x-auto w-full">
             <table className="w-full text-center border-collapse text-[10px]">
               <thead>
                 <tr className="bg-slate-100 dark:bg-[#161938] border-b border-slate-200 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 font-extrabold uppercase tracking-wider text-[10px]">
-                  <th className="px-2 py-3 text-center align-middle w-10">No</th>
-                  <th className="px-2.5 py-3 text-center align-middle w-28">Tanggal & Waktu</th>
-                  <th className="px-2.5 py-3 text-center align-middle w-36">Kegiatan Supervisi</th>
-                  <th className="px-2.5 py-3 text-center align-middle w-28">Ruangan</th>
-                  <th className="px-3 py-3 text-center align-middle min-w-[160px]">Temuan Lapangan</th>
-                  <th className="px-3 py-3 text-center align-middle w-36 min-w-[130px]">Foto Temuan (Before)</th>
-                  <th className="px-3 py-3 text-center align-middle min-w-[160px]">Rekomendasi PPI</th>
-                  <th className="px-3 py-3 text-center align-middle min-w-[160px]">Tindak Lanjut & Perbaikan</th>
-                  <th className="px-3 py-3 text-center align-middle w-36 min-w-[130px]">Foto Perbaikan (After)</th>
-                  <th className="px-2 py-3 text-center align-middle w-24">Status</th>
-                  <th className="px-2 py-3 text-center align-middle w-24">Aksi</th>
+                  <th className="px-1 py-3 text-center align-middle w-7 min-w-[28px]">No</th>
+                  <th className="px-1 py-3 text-center align-middle w-20 min-w-[78px]">Tanggal & Waktu</th>
+                  <th className="px-1.5 py-3 text-center align-middle w-28 min-w-[105px]">Kegiatan Supervisi</th>
+                  <th className="px-1 py-3 text-center align-middle w-16 min-w-[65px]">Ruangan</th>
+                  <th className="px-2 py-3 text-center align-middle w-32 min-w-[125px]">Temuan Lapangan</th>
+                  <th className="px-2 py-3 text-center align-middle w-64 min-w-[250px] lg:w-72 lg:min-w-[280px]">Foto Temuan (Before)</th>
+                  <th className="px-2 py-3 text-center align-middle w-32 min-w-[125px]">Rekomendasi PPI</th>
+                  <th className="px-2 py-3 text-center align-middle w-32 min-w-[125px]">Tindak Lanjut & Perbaikan</th>
+                  <th className="px-2 py-3 text-center align-middle w-64 min-w-[250px] lg:w-72 lg:min-w-[280px]">Foto Perbaikan (After)</th>
+                  <th className="px-1 py-3 text-center align-middle w-20 min-w-[75px]">Status</th>
+                  <th className="px-1 py-3 text-center align-middle w-16 min-w-[70px]">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
@@ -970,55 +970,55 @@ export default function BuktiSupervisiPage() {
                         className="border-b border-slate-100 dark:border-slate-800/80 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors"
                       >
                         {/* No */}
-                        <td className="px-2 py-3 text-center align-middle font-bold text-slate-500 dark:text-slate-400 text-[10px]">
+                        <td className="px-1 py-3 text-center align-middle font-bold text-slate-500 dark:text-slate-400 text-[10px]">
                           {idx + 1}
                         </td>
 
                         {/* Tanggal & Waktu */}
-                        <td className="px-2.5 py-3 text-center align-middle text-[10px]">
+                        <td className="px-1 py-3 text-center align-middle text-[10px]">
                           <span className="font-bold text-slate-800 dark:text-slate-200 block">
                             {dateFormatted.split(",")[0]}
                           </span>
-                          <span className="text-[9.5px] text-slate-500 dark:text-slate-400 block font-mono mt-0.5">
+                          <span className="text-[9px] text-slate-500 dark:text-slate-400 block font-mono mt-0.5">
                             {dateFormatted.split(",")[1]}
                           </span>
-                          <span className="text-[9px] text-slate-400 dark:text-slate-500 block mt-0.5 truncate" title={`Observer: ${item.observer}`}>
+                          <span className="text-[8.5px] text-slate-400 dark:text-slate-500 block mt-0.5 truncate" title={`Observer: ${item.observer}`}>
                             Obs: {item.observer}
                           </span>
                         </td>
 
                         {/* Kegiatan / Indikator */}
-                        <td className="px-2.5 py-3 text-center align-middle text-[10px]">
-                          <span className="font-bold text-slate-900 dark:text-white block leading-snug">
+                        <td className="px-1.5 py-3 text-center align-middle text-[10px]">
+                          <span className="font-bold text-slate-900 dark:text-white block leading-tight text-[10px]">
                             {item.nama_kegiatan}
                           </span>
-                          <span className="inline-block mt-1 text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#1b2044] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700/60">
+                          <span className="inline-block mt-0.5 text-[8.5px] uppercase font-bold px-1 py-0.5 rounded bg-slate-100 dark:bg-[#1b2044] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700/60">
                             {item.indikator_id.replace(/_/g, " ")}
                           </span>
                         </td>
 
                         {/* Ruangan - Cukup Nama Saja Tanpa Icon & Tanpa Garis Card */}
-                        <td className="px-2.5 py-3 text-center align-middle text-[10px]">
+                        <td className="px-1 py-3 text-center align-middle text-[10px]">
                           <span className="font-bold text-slate-800 dark:text-slate-200 block text-[10px]">
                             {item.unit}
                           </span>
                         </td>
 
                         {/* Temuan */}
-                        <td className="px-3 py-3 text-center align-middle text-[10px]">
+                        <td className="px-2 py-3 text-center align-middle text-[10px]">
                           {item.temuan ? (
-                            <p className="text-slate-800 dark:text-slate-200 leading-relaxed font-medium whitespace-pre-wrap">
+                            <p className="text-slate-800 dark:text-slate-200 leading-snug font-medium whitespace-pre-wrap text-[10px]">
                               {item.temuan}
                             </p>
                           ) : (
-                            <span className="text-slate-400 dark:text-slate-500 italic text-[9.5px]">
+                            <span className="text-slate-400 dark:text-slate-500 italic text-[9px]">
                               Tidak ada temuan khusus
                             </span>
                           )}
                         </td>
 
-                        {/* Foto Temuan (Before) - Diperbesar */}
-                        <td className="px-3 py-3 text-center align-middle">
+                        {/* Foto Temuan (Before) - Diperbesar Selebar Foto & Tanpa Ikon Mata */}
+                        <td className="px-2 py-3 text-center align-middle">
                           {item.foto_temuan.length > 0 ? (
                             <div className="flex flex-col items-center justify-center gap-1 mx-auto">
                               <button
@@ -1032,70 +1032,68 @@ export default function BuktiSupervisiPage() {
                                     compareUrl: item.foto_perbaikan[0],
                                   })
                                 }
-                                className="relative group w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden border-2 border-amber-400/80 shadow-md hover:scale-105 transition-transform bg-slate-900 flex items-center justify-center cursor-pointer"
+                                title="Klik untuk memperbesar foto temuan"
+                                className="relative group w-48 h-48 sm:w-56 sm:h-56 lg:w-64 lg:h-64 rounded-2xl overflow-hidden border-2 border-amber-400/90 shadow-md hover:scale-[1.02] hover:shadow-amber-500/20 hover:brightness-105 transition-all bg-slate-900 cursor-pointer block mx-auto"
                               >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={item.foto_temuan[0]}
                                   alt="Temuan Before"
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-cover rounded-2xl"
                                 />
-                                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                                  <Eye className="w-5 h-5 text-white opacity-80 group-hover:opacity-100" />
-                                </div>
                               </button>
                               {item.foto_temuan.length > 1 && (
-                                <span className="text-[9.5px] font-bold text-amber-500 dark:text-amber-400">
-                                  +{item.foto_temuan.length - 1} foto
+                                <span className="text-[9px] font-bold text-amber-500 dark:text-amber-400">
+                                  +{item.foto_temuan.length - 1} foto lainnya
                                 </span>
                               )}
-                              <span className="text-[9px] font-black uppercase text-amber-500 dark:text-amber-400 tracking-wider">
+                              <span className="text-[9.5px] font-black uppercase text-amber-500 dark:text-amber-400 tracking-wider mt-0.5 block">
                                 Before
                               </span>
                             </div>
                           ) : (
-                            <span className="text-[9.5px] text-slate-400 dark:text-slate-500 italic block">
+                            <span className="text-[9px] text-slate-400 dark:text-slate-500 italic block">
                               Tidak ada foto
                             </span>
                           )}
                         </td>
 
                         {/* Rekomendasi PPI */}
-                        <td className="px-3 py-3 text-center align-middle text-[10px]">
+                        <td className="px-2 py-3 text-center align-middle text-[10px]">
                           {item.rekomendasi ? (
-                            <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium whitespace-pre-wrap">
+                            <p className="text-slate-700 dark:text-slate-300 leading-snug font-medium whitespace-pre-wrap text-[10px]">
                               {item.rekomendasi}
                             </p>
                           ) : (
-                            <span className="text-slate-400 dark:text-slate-500 italic text-[9.5px]">
+                            <span className="text-slate-400 dark:text-slate-500 italic text-[9px]">
                               Pertahankan kepatuhan
                             </span>
                           )}
                         </td>
 
                         {/* Tindak Lanjut & Upaya Perbaikan */}
-                        <td className="px-3 py-3 text-center align-middle text-[10px]">
+                        <td className="px-2 py-3 text-center align-middle text-[10px]">
                           {item.upaya_perbaikan ? (
                             <div>
-                              <p className="text-emerald-800 dark:text-emerald-300 leading-relaxed font-medium whitespace-pre-wrap">
+                              <p className="text-emerald-800 dark:text-emerald-300 leading-snug font-medium whitespace-pre-wrap text-[10px]">
                                 {item.upaya_perbaikan}
                               </p>
                               {item.waktu_perbaikan && (
-                                <span className="text-[9px] font-mono text-slate-500 dark:text-slate-400 block mt-1">
+                                <span className="text-[8.5px] font-mono text-slate-500 dark:text-slate-400 block mt-1">
                                   Realisasi: {format(new Date(item.waktu_perbaikan), "dd/MM/yyyy")}
                                 </span>
                               )}
                             </div>
                           ) : (
-                            <span className="text-amber-600 dark:text-amber-400 font-semibold text-[9.5px] italic flex items-center justify-center gap-1">
+                            <span className="text-amber-600 dark:text-amber-400 font-semibold text-[9px] italic flex items-center justify-center gap-1">
                               <Clock className="w-3 h-3 shrink-0" />
                               Menunggu tindak lanjut
                             </span>
                           )}
                         </td>
 
-                        {/* Foto Perbaikan (After) - Diperbesar */}
-                        <td className="px-3 py-3 text-center align-middle">
+                        {/* Foto Perbaikan (After) - Diperbesar Selebar Foto & Tanpa Ikon Mata */}
+                        <td className="px-2 py-3 text-center align-middle">
                           {item.foto_perbaikan.length > 0 ? (
                             <div className="flex flex-col items-center justify-center gap-1 mx-auto">
                               <button
@@ -1109,43 +1107,41 @@ export default function BuktiSupervisiPage() {
                                     compareUrl: item.foto_temuan[0],
                                   })
                                 }
-                                className="relative group w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden border-2 border-emerald-400/80 shadow-md hover:scale-105 transition-transform bg-slate-900 flex items-center justify-center cursor-pointer"
+                                title="Klik untuk memperbesar foto perbaikan"
+                                className="relative group w-48 h-48 sm:w-56 sm:h-56 lg:w-64 lg:h-64 rounded-2xl overflow-hidden border-2 border-emerald-400/90 shadow-md hover:scale-[1.02] hover:shadow-emerald-500/20 hover:brightness-105 transition-all bg-slate-900 cursor-pointer block mx-auto"
                               >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={item.foto_perbaikan[0]}
                                   alt="Perbaikan After"
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-cover rounded-2xl"
                                 />
-                                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                                  <Eye className="w-5 h-5 text-white opacity-80 group-hover:opacity-100" />
-                                </div>
                               </button>
                               {item.foto_perbaikan.length > 1 && (
-                                <span className="text-[9.5px] font-bold text-emerald-600 dark:text-emerald-400">
-                                  +{item.foto_perbaikan.length - 1} foto
+                                <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+                                  +{item.foto_perbaikan.length - 1} foto lainnya
                                 </span>
                               )}
-                              <span className="text-[9px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-wider">
+                              <span className="text-[9.5px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-wider mt-0.5 block">
                                 After
                               </span>
                             </div>
                           ) : (
-                            <span className="text-[9.5px] text-slate-400 dark:text-slate-500 italic block">
+                            <span className="text-[9px] text-slate-400 dark:text-slate-500 italic block">
                               Belum ada bukti foto
                             </span>
                           )}
                         </td>
 
                         {/* Status */}
-                        <td className="px-2 py-3 text-center align-middle text-[10px]">
+                        <td className="px-1 py-3 text-center align-middle text-[10px]">
                           {item.status === "Selesai" ? (
-                            <span className="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30">
+                            <span className="inline-flex items-center justify-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30">
                               <CheckCircle2 className="w-3 h-3 shrink-0" />
                               Selesai
                             </span>
                           ) : (
-                            <span className="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300 border border-amber-300 dark:border-amber-500/30">
+                            <span className="inline-flex items-center justify-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300 border border-amber-300 dark:border-amber-500/30">
                               <Clock className="w-3 h-3 shrink-0" />
                               Dalam Proses
                             </span>
@@ -1153,22 +1149,22 @@ export default function BuktiSupervisiPage() {
                         </td>
 
                         {/* Aksi */}
-                        <td className="px-2 py-3 text-center align-middle text-[10px]">
+                        <td className="px-1 py-3 text-center align-middle text-[10px]">
                           <div className="flex flex-col gap-1 items-center justify-center">
                             <button
                               type="button"
                               onClick={() => handleOpenFollowUp(item)}
-                              className="w-full inline-flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-[9.5px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-colors cursor-pointer"
+                              className="w-full inline-flex items-center justify-center gap-1 px-1.5 py-1 rounded-lg text-[9px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-colors cursor-pointer"
                               title="Update Tindak Lanjut & Upload Foto Perbaikan"
                             >
-                              <Edit className="w-3 h-3" />
+                              <Edit className="w-2.5 h-2.5" />
                               <span>Tindak Lanjut</span>
                             </button>
 
                             {item.form_path && (
                               <Link
                                 href={item.form_path}
-                                className="w-full inline-flex items-center justify-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+                                className="w-full inline-flex items-center justify-center gap-0.5 px-1 py-0.5 rounded text-[8.5px] font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
                                 title="Buka form audit awal"
                               >
                                 <ExternalLink className="w-2.5 h-2.5" />
@@ -1182,7 +1178,7 @@ export default function BuktiSupervisiPage() {
                               className="text-slate-400 hover:text-rose-500 p-0.5 transition-colors cursor-pointer"
                               title="Hapus data supervisi ini"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <Trash2 className="w-3 h-3" />
                             </button>
                           </div>
                         </td>
@@ -1195,7 +1191,7 @@ export default function BuktiSupervisiPage() {
           </div>
         </div>
 
-        {/* MODAL 1: UPDATE TINDAK LANJUT & BUKTI FOTO PERBAIKAN */}
+        {/* MODAL 1: UPDATE TINDAK LANJUT & BUKTI FOTO PERBAIKAN (BLUR GLASSMORPHISM) */}
         <AnimatePresence>
           {editingRecord && (
             <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
@@ -1203,33 +1199,33 @@ export default function BuktiSupervisiPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+                className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl transition-all duration-300"
                 onClick={() => !isSubmittingFollowUp && setEditingRecord(null)}
               />
               <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 15 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 15 }}
-                className="relative w-full max-w-2xl bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl p-6 overflow-hidden my-auto max-h-[90vh] flex flex-col"
+                className="relative w-full max-w-2xl bg-[#0e112a]/95 backdrop-blur-2xl rounded-3xl border border-indigo-500/35 shadow-[0_25px_70px_rgba(0,0,0,0.9)] p-6 overflow-hidden my-auto max-h-[90vh] flex flex-col text-slate-100 ring-1 ring-white/10"
               >
                 {/* Modal Header */}
-                <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-700">
+                <div className="flex items-center justify-between pb-4 border-b border-indigo-900/50">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shadow-md">
                       <Sparkles className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                      <h3 className="text-lg font-black text-white">
                         Update Tindak Lanjut & Foto Perbaikan
                       </h3>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-indigo-300/80 font-medium">
                         {editingRecord.nama_kegiatan} • {editingRecord.unit}
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={() => setEditingRecord(null)}
-                    className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -1238,40 +1234,40 @@ export default function BuktiSupervisiPage() {
                 {/* Modal Body */}
                 <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
                   {/* Summary Box */}
-                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/80 space-y-2">
+                  <div className="p-4 rounded-2xl bg-[#161a3c]/90 border border-indigo-900/60 shadow-inner space-y-2.5 backdrop-blur-md">
                     <div>
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-300/80 block">
                         Temuan Lapangan Awal (Before)
                       </span>
-                      <p className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 mt-0.5">
+                      <p className="text-xs sm:text-sm font-semibold text-slate-100 mt-0.5 leading-relaxed">
                         {editingRecord.temuan || "Tidak ada rincian temuan khusus."}
                       </p>
                     </div>
 
                     {editingRecord.rekomendasi && (
-                      <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                      <div className="pt-2.5 border-t border-indigo-900/50">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-300/80 block">
                           Rekomendasi PPI
                         </span>
-                        <p className="text-xs font-medium text-slate-600 dark:text-slate-300 mt-0.5">
+                        <p className="text-xs font-medium text-slate-200 mt-0.5 leading-relaxed">
                           {editingRecord.rekomendasi}
                         </p>
                       </div>
                     )}
 
                     {editingRecord.foto_temuan.length > 0 && (
-                      <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-1">
+                      <div className="pt-2.5 border-t border-indigo-900/50">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-300/80 block mb-1.5">
                           Dokumentasi Foto Before ({editingRecord.foto_temuan.length})
                         </span>
-                        <div className="flex items-center gap-2 overflow-x-auto py-1">
+                        <div className="flex items-center gap-2.5 overflow-x-auto py-1">
                           {editingRecord.foto_temuan.map((img, i) => (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
                               key={i}
                               src={img}
                               alt="Before"
-                              className="w-14 h-14 rounded-lg object-cover border border-amber-300 dark:border-amber-600 shrink-0"
+                              className="w-16 h-16 rounded-xl object-cover border-2 border-amber-400/90 shadow-md shrink-0"
                             />
                           ))}
                         </div>
@@ -1281,7 +1277,7 @@ export default function BuktiSupervisiPage() {
 
                   {/* Status Selector */}
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
                       Status Penyelesaian
                     </label>
                     <div className="grid grid-cols-2 gap-3">
@@ -1290,8 +1286,8 @@ export default function BuktiSupervisiPage() {
                         onClick={() => setStatusInput("Selesai")}
                         className={`flex items-center justify-center gap-2 p-3 rounded-xl border text-xs font-bold transition-all ${
                           statusInput === "Selesai"
-                            ? "bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400 shadow-sm"
-                            : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400"
+                            ? "bg-emerald-500/20 border-emerald-500 text-emerald-300 shadow-md shadow-emerald-500/10 ring-1 ring-emerald-500/50"
+                            : "bg-[#141838] border-slate-700/80 text-slate-400 hover:text-slate-200 hover:bg-[#191e46]"
                         }`}
                       >
                         <CheckCircle2 className="w-4 h-4" />
@@ -1303,8 +1299,8 @@ export default function BuktiSupervisiPage() {
                         onClick={() => setStatusInput("Dalam Proses")}
                         className={`flex items-center justify-center gap-2 p-3 rounded-xl border text-xs font-bold transition-all ${
                           statusInput === "Dalam Proses"
-                            ? "bg-amber-500/10 border-amber-500 text-amber-600 dark:text-amber-400 shadow-sm"
-                            : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400"
+                            ? "bg-amber-500/20 border-amber-500 text-amber-300 shadow-md shadow-amber-500/10 ring-1 ring-amber-500/50"
+                            : "bg-[#141838] border-slate-700/80 text-slate-400 hover:text-slate-200 hover:bg-[#191e46]"
                         }`}
                       >
                         <Clock className="w-4 h-4" />
@@ -1315,7 +1311,7 @@ export default function BuktiSupervisiPage() {
 
                   {/* Uraian Tindak Lanjut Text */}
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
                       Rencana & Upaya Tindak Lanjut Perbaikan
                     </label>
                     <textarea
@@ -1323,33 +1319,33 @@ export default function BuktiSupervisiPage() {
                       value={tindakLanjutText}
                       onChange={(e) => setTindakLanjutText(e.target.value)}
                       placeholder="Jelaskan tindakan korektif fisik/perilaku yang telah atau sedang dilakukan oleh unit ruangan..."
-                      className="w-full p-3 rounded-xl text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full p-3 rounded-xl text-sm bg-[#090b1c] border border-slate-700 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                     />
                   </div>
 
                   {/* Tanggal Penyelesaian */}
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
                       Tanggal Realisasi Perbaikan
                     </label>
                     <input
                       type="date"
                       value={waktuPerbaikanInput}
                       onChange={(e) => setWaktuPerbaikanInput(e.target.value)}
-                      className="w-full p-2.5 rounded-xl text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full p-2.5 rounded-xl text-sm bg-[#090b1c] border border-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
 
                   {/* Upload Foto Bukti Perbaikan (After) */}
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
                       Bukti Foto Fisik Perbaikan (After)
                     </label>
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 mb-2">
                       {perbaikanPhotos.map((photo, pIdx) => (
                         <div
                           key={pIdx}
-                          className="relative group w-full aspect-square rounded-xl overflow-hidden border-2 border-emerald-400 dark:border-emerald-600"
+                          className="relative group w-full aspect-square rounded-xl overflow-hidden border-2 border-emerald-400 shadow-md"
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
@@ -1370,7 +1366,7 @@ export default function BuktiSupervisiPage() {
                       ))}
 
                       {/* Add photo button */}
-                      <label className="flex flex-col items-center justify-center w-full aspect-square rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-emerald-500 dark:hover:border-emerald-400 cursor-pointer bg-slate-50 dark:bg-slate-900/40 text-slate-500 hover:text-emerald-600 transition-colors">
+                      <label className="flex flex-col items-center justify-center w-full aspect-square rounded-xl border-2 border-dashed border-slate-700 hover:border-emerald-500 cursor-pointer bg-[#090b1c] text-slate-400 hover:text-emerald-400 transition-colors">
                         <Upload className="w-5 h-5 mb-1" />
                         <span className="text-[10px] font-bold text-center">Tambah Foto</span>
                         <input
@@ -1389,12 +1385,12 @@ export default function BuktiSupervisiPage() {
                 </div>
 
                 {/* Modal Footer */}
-                <div className="pt-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-3">
+                <div className="pt-4 border-t border-indigo-900/50 flex items-center justify-end gap-3">
                   <button
                     type="button"
                     onClick={() => setEditingRecord(null)}
                     disabled={isSubmittingFollowUp}
-                    className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    className="px-4 py-2.5 rounded-xl border border-slate-700 text-sm font-bold text-slate-300 hover:bg-white/5 transition-colors"
                   >
                     Batal
                   </button>
@@ -1402,7 +1398,7 @@ export default function BuktiSupervisiPage() {
                     type="button"
                     onClick={handleSaveFollowUp}
                     disabled={isSubmittingFollowUp}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-sm font-bold shadow-md shadow-emerald-600/30 transition-all disabled:opacity-50"
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-sm font-bold shadow-lg shadow-emerald-600/30 transition-all disabled:opacity-50 cursor-pointer"
                   >
                     {isSubmittingFollowUp ? (
                       <>
@@ -1422,7 +1418,7 @@ export default function BuktiSupervisiPage() {
           )}
         </AnimatePresence>
 
-        {/* MODAL 2: TAMBAH SUPERVISI LAPANGAN BARU (AD-HOC RONDE IPCN) */}
+        {/* MODAL 2: TAMBAH SUPERVISI LAPANGAN BARU (BLUR GLASSMORPHISM) */}
         <AnimatePresence>
           {isNewModalOpen && (
             <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
@@ -1430,33 +1426,33 @@ export default function BuktiSupervisiPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+                className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl transition-all duration-300"
                 onClick={() => !isSubmittingNew && setIsNewModalOpen(false)}
               />
               <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 15 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 15 }}
-                className="relative w-full max-w-2xl bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl p-6 overflow-hidden my-auto max-h-[90vh] flex flex-col"
+                className="relative w-full max-w-2xl bg-[#0e112a]/95 backdrop-blur-2xl rounded-3xl border border-indigo-500/35 shadow-[0_25px_70px_rgba(0,0,0,0.9)] p-6 overflow-hidden my-auto max-h-[90vh] flex flex-col text-slate-100 ring-1 ring-white/10"
               >
                 {/* Header */}
-                <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-700">
+                <div className="flex items-center justify-between pb-4 border-b border-indigo-900/50">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shadow-md">
                       <Plus className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                      <h3 className="text-lg font-black text-white">
                         Tambah Bukti Supervisi Lapangan Baru
                       </h3>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-indigo-300/80 font-medium">
                         Catat hasil ronde keliling, supervisi insidental, atau temuan lapangan baru
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={() => setIsNewModalOpen(false)}
-                    className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -1466,28 +1462,28 @@ export default function BuktiSupervisiPage() {
                 <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
                         Tanggal & Waktu Supervisi
                       </label>
                       <input
                         type="datetime-local"
                         value={newTanggal}
                         onChange={(e) => setNewTanggal(e.target.value)}
-                        className="w-full p-2.5 rounded-xl text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+                        className="w-full p-2.5 rounded-xl text-sm bg-[#090b1c] border border-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
                         Ruangan / Unit Kerja
                       </label>
                       <select
                         value={newUnit}
                         onChange={(e) => setNewUnit(e.target.value)}
-                        className="w-full p-2.5 rounded-xl text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+                        className="w-full p-2.5 rounded-xl text-sm bg-[#090b1c] border border-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                       >
                         {UNITS_LIST.filter((u) => u !== "Semua Ruangan").map((u) => (
-                          <option key={u} value={u}>
+                          <option key={u} value={u} className="bg-[#090b1c] text-slate-100">
                             {u}
                           </option>
                         ))}
@@ -1497,22 +1493,22 @@ export default function BuktiSupervisiPage() {
 
                   {/* Jenis Kegiatan */}
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
                       Jenis Kegiatan / Supervisi
                     </label>
                     <select
                       value={newKegiatan}
                       onChange={(e) => setNewKegiatan(e.target.value)}
-                      className="w-full p-2.5 rounded-xl text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+                      className="w-full p-2.5 rounded-xl text-sm bg-[#090b1c] border border-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     >
-                      <option value="Supervisi Ronde Lapangan IPCN">Supervisi Ronde Lapangan IPCN</option>
-                      <option value="Supervisi Pengelolaan Limbah Medis">Supervisi Pengelolaan Limbah Medis</option>
-                      <option value="Supervisi Kepatuhan Hand Hygiene & APD">Supervisi Kepatuhan Hand Hygiene & APD</option>
-                      <option value="Supervisi Pengendalian Lingkungan">Supervisi Sanitasi & Pengendalian Lingkungan</option>
-                      <option value="Supervisi Penatalaksanaan Linen">Supervisi Penatalaksanaan Linen & Laundry</option>
-                      <option value="Supervisi Dekontaminasi & Sterilisasi">Supervisi Dekontaminasi & Sterilisasi Alat</option>
-                      <option value="Supervisi Fasilitas & Sarana PPI">Supervisi Kesiapan Fasilitas & Sarana PPI</option>
-                      <option value="Kustom">Lainnya (Ketik Manual)...</option>
+                      <option value="Supervisi Ronde Lapangan IPCN" className="bg-[#090b1c] text-slate-100">Supervisi Ronde Lapangan IPCN</option>
+                      <option value="Supervisi Pengelolaan Limbah Medis" className="bg-[#090b1c] text-slate-100">Supervisi Pengelolaan Limbah Medis</option>
+                      <option value="Supervisi Kepatuhan Hand Hygiene & APD" className="bg-[#090b1c] text-slate-100">Supervisi Kepatuhan Hand Hygiene & APD</option>
+                      <option value="Supervisi Pengendalian Lingkungan" className="bg-[#090b1c] text-slate-100">Supervisi Sanitasi & Pengendalian Lingkungan</option>
+                      <option value="Supervisi Penatalaksanaan Linen" className="bg-[#090b1c] text-slate-100">Supervisi Penatalaksanaan Linen & Laundry</option>
+                      <option value="Supervisi Dekontaminasi & Sterilisasi" className="bg-[#090b1c] text-slate-100">Supervisi Dekontaminasi & Sterilisasi Alat</option>
+                      <option value="Supervisi Fasilitas & Sarana PPI" className="bg-[#090b1c] text-slate-100">Supervisi Kesiapan Fasilitas & Sarana PPI</option>
+                      <option value="Kustom" className="bg-[#090b1c] text-slate-100">Lainnya (Ketik Manual)...</option>
                     </select>
 
                     {newKegiatan === "Kustom" && (
@@ -1521,13 +1517,13 @@ export default function BuktiSupervisiPage() {
                         placeholder="Ketikkan nama kegiatan supervisi kustom..."
                         value={newKegiatanCustom}
                         onChange={(e) => setNewKegiatanCustom(e.target.value)}
-                        className="w-full mt-2 p-2.5 rounded-xl text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+                        className="w-full mt-2 p-2.5 rounded-xl text-sm bg-[#090b1c] border border-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                       />
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
                       Nama Observer / IPCN
                     </label>
                     <input
@@ -1535,34 +1531,34 @@ export default function BuktiSupervisiPage() {
                       value={newObserver}
                       onChange={(e) => setNewObserver(e.target.value)}
                       placeholder="Nama auditor / IPCN..."
-                      className="w-full p-2.5 rounded-xl text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+                      className="w-full p-2.5 rounded-xl text-sm bg-[#090b1c] border border-slate-700 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
 
                   {/* Temuan */}
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
-                      Uraian Temuan Lapangan (Masalah) <span className="text-rose-500">*</span>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
+                      Uraian Temuan Lapangan (Masalah) <span className="text-rose-400">*</span>
                     </label>
                     <textarea
                       rows={3}
                       value={newTemuan}
                       onChange={(e) => setNewTemuan(e.target.value)}
                       placeholder="Uraikan temuan ketidaksesuaian SOP atau masalah yang ditemukan saat supervisi..."
-                      className="w-full p-3 rounded-xl text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+                      className="w-full p-3 rounded-xl text-sm bg-[#090b1c] border border-slate-700 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
 
                   {/* Foto Temuan Before */}
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
                       Foto Dokumentasi Temuan (Before)
                     </label>
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 mb-1.5">
                       {newTemuanPhotos.map((photo, pIdx) => (
                         <div
                           key={pIdx}
-                          className="relative group w-full aspect-square rounded-xl overflow-hidden border-2 border-amber-400"
+                          className="relative group w-full aspect-square rounded-xl overflow-hidden border-2 border-amber-400 shadow-md"
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
@@ -1582,7 +1578,7 @@ export default function BuktiSupervisiPage() {
                         </div>
                       ))}
 
-                      <label className="flex flex-col items-center justify-center w-full aspect-square rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-amber-500 cursor-pointer bg-slate-50 dark:bg-slate-900/40 text-slate-500 hover:text-amber-600 transition-colors">
+                      <label className="flex flex-col items-center justify-center w-full aspect-square rounded-xl border-2 border-dashed border-slate-700 hover:border-amber-500 cursor-pointer bg-[#090b1c] text-slate-400 hover:text-amber-400 transition-colors">
                         <Camera className="w-5 h-5 mb-1" />
                         <span className="text-[10px] font-bold text-center">Foto Before</span>
                         <input
@@ -1598,7 +1594,7 @@ export default function BuktiSupervisiPage() {
 
                   {/* Rekomendasi */}
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
                       Rekomendasi PPI untuk Unit Kerja
                     </label>
                     <textarea
@@ -1606,13 +1602,13 @@ export default function BuktiSupervisiPage() {
                       value={newRekomendasi}
                       onChange={(e) => setNewRekomendasi(e.target.value)}
                       placeholder="Saran dan arahan perbaikan yang harus dipenuhi oleh unit ruangan..."
-                      className="w-full p-3 rounded-xl text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+                      className="w-full p-3 rounded-xl text-sm bg-[#090b1c] border border-slate-700 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
 
                   {/* Status Awal */}
-                  <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                  <div className="pt-2 border-t border-indigo-900/50">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
                       Status Supervisi Saat Ini
                     </label>
                     <div className="grid grid-cols-2 gap-3">
@@ -1621,8 +1617,8 @@ export default function BuktiSupervisiPage() {
                         onClick={() => setNewStatus("Dalam Proses")}
                         className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition-all ${
                           newStatus === "Dalam Proses"
-                            ? "bg-amber-500/10 border-amber-500 text-amber-600 dark:text-amber-400"
-                            : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500"
+                            ? "bg-amber-500/20 border-amber-500 text-amber-300 shadow-md ring-1 ring-amber-500/50"
+                            : "bg-[#141838] border-slate-700/80 text-slate-400 hover:text-slate-200 hover:bg-[#191e46]"
                         }`}
                       >
                         <Clock className="w-4 h-4" />
@@ -1634,8 +1630,8 @@ export default function BuktiSupervisiPage() {
                         onClick={() => setNewStatus("Selesai")}
                         className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition-all ${
                           newStatus === "Selesai"
-                            ? "bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400"
-                            : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500"
+                            ? "bg-emerald-500/20 border-emerald-500 text-emerald-300 shadow-md ring-1 ring-emerald-500/50"
+                            : "bg-[#141838] border-slate-700/80 text-slate-400 hover:text-slate-200 hover:bg-[#191e46]"
                         }`}
                       >
                         <CheckCircle2 className="w-4 h-4" />
@@ -1646,9 +1642,9 @@ export default function BuktiSupervisiPage() {
 
                   {/* Optional Tindak Lanjut jika langsung selesai */}
                   {newStatus === "Selesai" && (
-                    <div className="p-3.5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 space-y-3">
+                    <div className="p-4 rounded-2xl bg-[#161a3c]/90 border border-emerald-900/50 shadow-inner space-y-3 backdrop-blur-md">
                       <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 mb-1">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-emerald-300 mb-1">
                           Tindak Lanjut Perbaikan yang Telah Dilakukan
                         </label>
                         <textarea
@@ -1656,19 +1652,19 @@ export default function BuktiSupervisiPage() {
                           value={newTindakLanjut}
                           onChange={(e) => setNewTindakLanjut(e.target.value)}
                           placeholder="Jelaskan tindakan langsung yang telah dilakukan..."
-                          className="w-full p-2.5 rounded-xl text-sm bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800"
+                          className="w-full p-2.5 rounded-xl text-sm bg-[#090b1c] border border-slate-700 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 mb-2">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-emerald-300 mb-2">
                           Foto Bukti Perbaikan (After)
                         </label>
                         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
                           {newPerbaikanPhotos.map((photo, pIdx) => (
                             <div
                               key={pIdx}
-                              className="relative group w-full aspect-square rounded-xl overflow-hidden border-2 border-emerald-500"
+                              className="relative group w-full aspect-square rounded-xl overflow-hidden border-2 border-emerald-400 shadow-md"
                             >
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
@@ -1690,7 +1686,7 @@ export default function BuktiSupervisiPage() {
                             </div>
                           ))}
 
-                          <label className="flex flex-col items-center justify-center w-full aspect-square rounded-xl border-2 border-dashed border-emerald-300 dark:border-emerald-700 hover:border-emerald-500 cursor-pointer bg-white dark:bg-slate-900/60 text-emerald-600 transition-colors">
+                          <label className="flex flex-col items-center justify-center w-full aspect-square rounded-xl border-2 border-dashed border-slate-700 hover:border-emerald-500 cursor-pointer bg-[#090b1c] text-slate-400 hover:text-emerald-400 transition-colors">
                             <Upload className="w-5 h-5 mb-1" />
                             <span className="text-[10px] font-bold text-center">Foto After</span>
                             <input
@@ -1708,12 +1704,12 @@ export default function BuktiSupervisiPage() {
                 </div>
 
                 {/* Footer */}
-                <div className="pt-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-3">
+                <div className="pt-4 border-t border-indigo-900/50 flex items-center justify-end gap-3">
                   <button
                     type="button"
                     onClick={() => setIsNewModalOpen(false)}
                     disabled={isSubmittingNew}
-                    className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100"
+                    className="px-4 py-2.5 rounded-xl border border-slate-700 text-sm font-bold text-slate-300 hover:bg-white/5 transition-colors"
                   >
                     Batal
                   </button>
@@ -1721,7 +1717,7 @@ export default function BuktiSupervisiPage() {
                     type="button"
                     onClick={handleSaveNewSupervisi}
                     disabled={isSubmittingNew}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-sm font-bold shadow-md shadow-emerald-600/30 transition-all disabled:opacity-50"
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-sm font-bold shadow-lg shadow-emerald-600/30 transition-all disabled:opacity-50 cursor-pointer"
                   >
                     {isSubmittingNew ? (
                       <>
@@ -1744,15 +1740,15 @@ export default function BuktiSupervisiPage() {
         {/* MODAL 3: LIGHTBOX IMAGE VIEWER WITH BEFORE-AFTER COMPARISON */}
         <AnimatePresence>
           {lightboxImage && (
-            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-xl">
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="relative max-w-4xl w-full bg-slate-900 border border-slate-700 rounded-3xl p-4 sm:p-6 shadow-2xl flex flex-col max-h-[95vh]"
+                className="relative max-w-4xl w-full bg-[#0e112a]/95 backdrop-blur-2xl border border-indigo-500/35 rounded-3xl p-4 sm:p-6 shadow-[0_25px_70px_rgba(0,0,0,0.95)] flex flex-col max-h-[95vh] text-slate-100 ring-1 ring-white/10"
               >
                 {/* Header */}
-                <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                <div className="flex items-center justify-between pb-3 border-b border-indigo-900/50">
                   <div>
                     <h4 className="text-base font-bold text-white flex items-center gap-2">
                       <span
@@ -1767,14 +1763,14 @@ export default function BuktiSupervisiPage() {
                       {lightboxImage.title}
                     </h4>
                     {lightboxImage.subtitle && (
-                      <p className="text-xs text-slate-400 mt-1 line-clamp-2">
+                      <p className="text-xs text-slate-300 mt-1 line-clamp-2">
                         {lightboxImage.subtitle}
                       </p>
                     )}
                   </div>
                   <button
                     onClick={() => setLightboxImage(null)}
-                    className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800"
+                    className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors"
                   >
                     <X className="w-6 h-6" />
                   </button>
@@ -1786,13 +1782,13 @@ export default function BuktiSupervisiPage() {
                   <img
                     src={lightboxImage.url}
                     alt="Preview"
-                    className="max-h-[65vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl border border-slate-800"
+                    className="max-h-[65vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl border border-slate-700/80"
                   />
                 </div>
 
                 {/* Compare Button if the counter-part image exists */}
                 {lightboxImage.compareUrl && (
-                  <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+                  <div className="pt-3 border-t border-indigo-900/50 flex items-center justify-between">
                     <span className="text-xs text-slate-400">
                       Tersedia foto perbandingan pasangan
                     </span>
@@ -1813,7 +1809,7 @@ export default function BuktiSupervisiPage() {
                             : null
                         )
                       }
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold border border-slate-700 transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold border border-slate-700 transition-colors cursor-pointer"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
                       <span>
@@ -2043,35 +2039,35 @@ export default function BuktiSupervisiPage() {
           )}
         </AnimatePresence>
 
-        {/* MODAL 5: KONFIRMASI HAPUS */}
+        {/* MODAL 5: KONFIRMASI HAPUS (BLUR GLASSMORPHISM) */}
         <AnimatePresence>
           {deleteConfirmId && (
-            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xl">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="w-full max-w-sm bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-slate-700 text-center"
+                className="w-full max-w-sm bg-[#0e112a]/95 backdrop-blur-2xl rounded-3xl p-6 shadow-2xl border border-rose-500/35 text-center text-slate-100 ring-1 ring-white/10"
               >
-                <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto mb-3">
+                <div className="w-12 h-12 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400 flex items-center justify-center mx-auto mb-3 shadow-md">
                   <AlertTriangle className="w-6 h-6" />
                 </div>
-                <h4 className="text-base font-bold text-slate-900 dark:text-white">
+                <h4 className="text-base font-bold text-white">
                   Hapus Data Supervisi?
                 </h4>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-slate-400 mt-1">
                   Data supervisi ini akan dihapus permanen dari sistem rekap dan audit PPI.
                 </p>
                 <div className="flex items-center justify-center gap-3 mt-5">
                   <button
                     onClick={() => setDeleteConfirmId(null)}
-                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100"
+                    className="px-4 py-2 rounded-xl border border-slate-700 text-xs font-bold text-slate-300 hover:bg-white/5 transition-colors cursor-pointer"
                   >
                     Batal
                   </button>
                   <button
                     onClick={() => handleDeleteRecord(deleteConfirmId)}
-                    className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-md transition-all"
+                    className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-600/30 transition-all cursor-pointer"
                   >
                     Ya, Hapus
                   </button>
