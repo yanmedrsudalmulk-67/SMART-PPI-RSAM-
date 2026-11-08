@@ -650,60 +650,6 @@ export function useOfficialReportData({
       }
     }
 
-    // Default Baseline Fallback values from Word Document (September 2026 / Triwulan III 2026)
-    const defaultMonthlyHais: Record<string, { totalCases: number; totalDays: number; rooms: Record<string, { cases: number; days: number }> }> = {
-      phlebitis: {
-        totalCases: 13,
-        totalDays: 1420,
-        rooms: {
-          'Ranap Bedah': { cases: 1, days: 128 },
-          'Ranap Anak': { cases: 4, days: 765 },
-          'Ranap Kebidanan': { cases: 0, days: 56 },
-          'Ranap Dewasa': { cases: 8, days: 471 },
-        }
-      },
-      isk: {
-        totalCases: 0,
-        totalDays: 55,
-        rooms: {
-          'Ranap Bedah': { cases: 0, days: 27 },
-          'Ranap Anak': { cases: 0, days: 0 },
-          'Ranap Kebidanan': { cases: 0, days: 8 },
-          'Ranap Dewasa': { cases: 0, days: 20 },
-        }
-      },
-      decubitus: {
-        totalCases: 0,
-        totalDays: 49,
-        rooms: {
-          'Ranap Bedah': { cases: 0, days: 17 },
-          'Ranap Anak': { cases: 0, days: 12 },
-          'Ranap Kebidanan': { cases: 0, days: 0 },
-          'Ranap Dewasa': { cases: 0, days: 20 },
-        }
-      },
-      vap: {
-        totalCases: 0,
-        totalDays: 2,
-        rooms: {
-          'Ranap Bedah': { cases: 0, days: 0 },
-          'Ranap Anak': { cases: 0, days: 0 },
-          'Ranap Kebidanan': { cases: 0, days: 0 },
-          'Ranap Dewasa': { cases: 0, days: 2 },
-        }
-      },
-      ido: {
-        totalCases: 0,
-        totalDays: 42,
-        rooms: {
-          'Ranap Bedah': { cases: 0, days: 22 },
-          'Ranap Kebidanan': { cases: 0, days: 20 },
-          'Ranap Anak': { cases: 0, days: 0 },
-          'Ranap Dewasa': { cases: 0, days: 0 },
-        }
-      }
-    };
-
     const haisSummary: Record<string, IndicatorSummary> = {};
 
     const indicatorsConfig = [
@@ -715,15 +661,9 @@ export function useOfficialReportData({
     ];
 
     indicatorsConfig.forEach(cfg => {
-      let cases = haisByIndicator[cfg.id].cases;
-      let days = haisByIndicator[cfg.id].days;
-      let roomMap = haisByIndicator[cfg.id].byRoom;
-
-      if (!hasDbHais && month === 8 && year === 2026 && defaultMonthlyHais[cfg.id]) {
-        cases = defaultMonthlyHais[cfg.id].totalCases;
-        days = defaultMonthlyHais[cfg.id].totalDays;
-        roomMap = defaultMonthlyHais[cfg.id].rooms;
-      }
+      const cases = haisByIndicator[cfg.id].cases;
+      const days = haisByIndicator[cfg.id].days;
+      const roomMap = haisByIndicator[cfg.id].byRoom;
 
       const rate = days > 0 ? (cases / days) * cfg.multiplier : 0;
       const roomsList: HaisRoomData[] = ROOMS.map(r => {
@@ -752,7 +692,7 @@ export function useOfficialReportData({
 
     const overallHaisRate = haisSummary.phlebitis.rate;
 
-    // 2. Hand Hygiene calculation
+    // 2. Hand Hygiene calculation (100% Genuine Real-time DB)
     let hhTotalOpp = 0;
     let hhTotalAction = 0;
     const hhProfMap: Record<string, { opp: number; hh: number }> = {
@@ -761,7 +701,6 @@ export function useOfficialReportData({
       'Tenaga Kesehatan Lainnya': { opp: 0, hh: 0 },
     };
 
-    const hasDbHh = rawHh.length > 0;
     for (const h of rawHh) {
       const opp = Number(h.peluang || h.jumlah_dinilai) || 0;
       const act = Number(h.patuh || h.jumlah_patuh) || 0;
@@ -777,32 +716,16 @@ export function useOfficialReportData({
       hhProfMap[key].hh += act;
     }
 
-    let hhProfessions: HhProfessionSummary[] = [];
-    let hhOverallRate = 0;
+    const hhOverallRate = hhTotalOpp > 0
+      ? Number(((hhTotalAction / hhTotalOpp) * 100).toFixed(1))
+      : 0;
 
-    if (hasDbHh && hhTotalOpp > 0) {
-      hhOverallRate = Number(((hhTotalAction / hhTotalOpp) * 100).toFixed(1));
-      hhProfessions = Object.keys(hhProfMap).map(k => ({
-        profession: k,
-        opportunity: hhProfMap[k].opp,
-        compliance: hhProfMap[k].hh,
-        rate: hhProfMap[k].opp > 0 ? Number(((hhProfMap[k].hh / hhProfMap[k].opp) * 100).toFixed(1)) : 0,
-      }));
-    } else if (month === 8 && year === 2026) {
-      hhOverallRate = 80.9;
-      hhProfessions = [
-        { profession: 'Dokter', opportunity: 171, compliance: 140, rate: 81.9 },
-        { profession: 'Perawat / Bidan', opportunity: 1000, compliance: 809, rate: 80.9 },
-        { profession: 'Tenaga Kesehatan Lainnya', opportunity: 213, compliance: 171, rate: 80.3 },
-      ];
-    } else {
-      hhOverallRate = 0;
-      hhProfessions = [
-        { profession: 'Dokter', opportunity: 0, compliance: 0, rate: 0 },
-        { profession: 'Perawat / Bidan', opportunity: 0, compliance: 0, rate: 0 },
-        { profession: 'Tenaga Kesehatan Lainnya', opportunity: 0, compliance: 0, rate: 0 },
-      ];
-    }
+    const hhProfessions: HhProfessionSummary[] = Object.keys(hhProfMap).map(k => ({
+      profession: k,
+      opportunity: hhProfMap[k].opp,
+      compliance: hhProfMap[k].hh,
+      rate: hhProfMap[k].opp > 0 ? Number(((hhProfMap[k].hh / hhProfMap[k].opp) * 100).toFixed(1)) : 0,
+    }));
 
     const hhRoomMonthlyData = [
       {
@@ -843,14 +766,13 @@ export function useOfficialReportData({
       },
     ];
 
-    // 3. APD calculation
+    // 3. APD calculation (100% Genuine Real-time DB)
     let apdTotalEval = 0;
     let apdTotalComp = 0;
     let apdTotalObs = 0;
     let apdPatuhObs = 0;
     const apdRoomMap: Record<string, { eval: number; comp: number; obs: number; patuhObs: number }> = {};
 
-    const hasDbApd = rawApd.length > 0;
     for (const a of rawApd) {
       const evaluated = Number(a.jumlah_dinilai) || 0;
       const compliant = Number(a.jumlah_patuh) || 0;
@@ -872,44 +794,28 @@ export function useOfficialReportData({
       }
     }
 
-    let apdOverallRate = 0;
-    let apdRooms: ApdRoomSummary[] = [];
-    let apdTotalObservasi = 0;
-    let apdPatuhObservasi = 0;
-
-    if (hasDbApd) {
-      apdOverallRate = apdTotalEval > 0
-        ? Number(((apdTotalComp / apdTotalEval) * 100).toFixed(1))
-        : 100;
-      apdTotalObservasi = apdTotalObs;
-      apdPatuhObservasi = apdPatuhObs > 0 ? apdPatuhObs : Math.round((apdOverallRate / 100) * apdTotalObservasi);
-      apdRooms = Object.keys(apdRoomMap).map(r => ({
+    const apdOverallRate = apdTotalEval > 0
+      ? Number(((apdTotalComp / apdTotalEval) * 100).toFixed(1))
+      : 0;
+    const apdTotalObservasi = apdTotalObs;
+    const apdPatuhObservasi = apdPatuhObs;
+    const apdRooms: ApdRoomSummary[] = ROOMS.map(r => {
+      const roomData = apdRoomMap[r];
+      if (!roomData || roomData.eval === 0) {
+        return {
+          room: r,
+          evaluated: 0,
+          compliant: 0,
+          rate: 0,
+        };
+      }
+      return {
         room: r,
-        evaluated: apdRoomMap[r].eval,
-        compliant: apdRoomMap[r].comp,
-        rate: apdRoomMap[r].eval > 0 ? Number(((apdRoomMap[r].comp / apdRoomMap[r].eval) * 100).toFixed(1)) : 100,
-      }));
-    } else if (month === 8 && year === 2026) {
-      apdOverallRate = 99.6;
-      apdTotalObservasi = 101;
-      apdPatuhObservasi = 100;
-      apdRooms = [
-        { room: 'Ranap Bedah', evaluated: 110, compliant: 110, rate: 100 },
-        { room: 'Ranap Anak', evaluated: 95, compliant: 94, rate: 98.9 },
-        { room: 'Ranap Kebidanan', evaluated: 80, compliant: 80, rate: 100 },
-        { room: 'Ranap Dewasa', evaluated: 130, compliant: 129, rate: 99.2 },
-      ];
-    } else {
-      apdOverallRate = 0;
-      apdTotalObservasi = 0;
-      apdPatuhObservasi = 0;
-      apdRooms = ROOMS.map(r => ({
-        room: r,
-        evaluated: 0,
-        compliant: 0,
-        rate: 0,
-      }));
-    }
+        evaluated: roomData.eval,
+        compliant: roomData.comp,
+        rate: Number(((roomData.comp / roomData.eval) * 100).toFixed(1)),
+      };
+    });
 
     // 4. DETAILED QUARTERLY DATA (Monthly breakdown for the 3 months in the quarter)
     const qIndex = quarter !== undefined ? quarter : 2; // Default to Triwulan III (index 2)
@@ -924,14 +830,14 @@ export function useOfficialReportData({
       };
     });
 
-    // Monthly breakdown by indicator for the 3 months
+    // Monthly breakdown by indicator for the 3 months (from rawYearHais)
     const monthlyHaisByMonth: Record<number, Record<string, { days: number; cases: number; hasRecord: boolean }>> = {
       [qMonths[0].monthIndex]: { phlebitis: { days: 0, cases: 0, hasRecord: false }, isk: { days: 0, cases: 0, hasRecord: false }, decubitus: { days: 0, cases: 0, hasRecord: false }, vap: { days: 0, cases: 0, hasRecord: false }, ido: { days: 0, cases: 0, hasRecord: false } },
       [qMonths[1].monthIndex]: { phlebitis: { days: 0, cases: 0, hasRecord: false }, isk: { days: 0, cases: 0, hasRecord: false }, decubitus: { days: 0, cases: 0, hasRecord: false }, vap: { days: 0, cases: 0, hasRecord: false }, ido: { days: 0, cases: 0, hasRecord: false } },
       [qMonths[2].monthIndex]: { phlebitis: { days: 0, cases: 0, hasRecord: false }, isk: { days: 0, cases: 0, hasRecord: false }, decubitus: { days: 0, cases: 0, hasRecord: false }, vap: { days: 0, cases: 0, hasRecord: false }, ido: { days: 0, cases: 0, hasRecord: false } },
     };
 
-    for (const session of rawHaisSessions) {
+    for (const session of rawYearHais) {
       const sMonth = extractMonthIndex(session.tanggal_waktu || session.created_at);
       if (monthlyHaisByMonth[sMonth]) {
         const indId = (session.indikator_id || '').toLowerCase();
@@ -940,41 +846,10 @@ export function useOfficialReportData({
           const d = Number(session.jumlah_dinilai) || 0;
           monthlyHaisByMonth[sMonth][indId].cases += c;
           monthlyHaisByMonth[sMonth][indId].days += d;
-          if (c > 0 || d > 0) {
-            monthlyHaisByMonth[sMonth][indId].hasRecord = true;
-          }
+          monthlyHaisByMonth[sMonth][indId].hasRecord = true;
         }
       }
     }
-
-    // Default Baseline Fallback for Triwulan III 2026 matching Word file:
-    const defaultQuarterBaseline: Record<string, { m1: { days: number; cases: number }; m2: { days: number; cases: number }; m3: { days: number; cases: number } }> = {
-      phlebitis: {
-        m1: { days: 1243, cases: 6 },
-        m2: { days: 1345, cases: 8 },
-        m3: { days: 1420, cases: 13 },
-      },
-      isk: {
-        m1: { days: 26, cases: 0 },
-        m2: { days: 61, cases: 0 },
-        m3: { days: 55, cases: 0 },
-      },
-      decubitus: {
-        m1: { days: 16, cases: 0 },
-        m2: { days: 55, cases: 0 },
-        m3: { days: 49, cases: 0 },
-      },
-      vap: {
-        m1: { days: 0, cases: 0 },
-        m2: { days: 2, cases: 0 },
-        m3: { days: 2, cases: 0 },
-      },
-      ido: {
-        m1: { days: 47, cases: 0 },
-        m2: { days: 55, cases: 0 },
-        m3: { days: 42, cases: 0 },
-      },
-    };
 
     const haisRows: Record<string, QuarterHaisRow> = {};
     indicatorsConfig.forEach(cfg => {
@@ -983,17 +858,12 @@ export function useOfficialReportData({
       const dbM2 = monthlyHaisByMonth[qMonths[1].monthIndex][ind];
       const dbM3 = monthlyHaisByMonth[qMonths[2].monthIndex][ind];
 
-      const isQ3_2026 = qIndex === 2 && year === 2026;
-      const m1Data = dbM1.hasRecord ? dbM1 : (isQ3_2026 ? defaultQuarterBaseline[ind].m1 : { days: 0, cases: 0 });
-      const m2Data = dbM2.hasRecord ? dbM2 : (isQ3_2026 ? defaultQuarterBaseline[ind].m2 : { days: 0, cases: 0 });
-      const m3Data = dbM3.hasRecord ? dbM3 : (isQ3_2026 ? defaultQuarterBaseline[ind].m3 : { days: 0, cases: 0 });
+      const m1Rate = dbM1.days > 0 ? Number(((dbM1.cases / dbM1.days) * cfg.multiplier).toFixed(1)) : 0;
+      const m2Rate = dbM2.days > 0 ? Number(((dbM2.cases / dbM2.days) * cfg.multiplier).toFixed(1)) : 0;
+      const m3Rate = dbM3.days > 0 ? Number(((dbM3.cases / dbM3.days) * cfg.multiplier).toFixed(1)) : 0;
 
-      const m1Rate = m1Data.days > 0 ? Number(((m1Data.cases / m1Data.days) * cfg.multiplier).toFixed(1)) : 0;
-      const m2Rate = m2Data.days > 0 ? Number(((m2Data.cases / m2Data.days) * cfg.multiplier).toFixed(1)) : 0;
-      const m3Rate = m3Data.days > 0 ? Number(((m3Data.cases / m3Data.days) * cfg.multiplier).toFixed(1)) : 0;
-
-      const totDays = m1Data.days + m2Data.days + m3Data.days;
-      const totCases = m1Data.cases + m2Data.cases + m3Data.cases;
+      const totDays = dbM1.days + dbM2.days + dbM3.days;
+      const totCases = dbM1.cases + dbM2.cases + dbM3.cases;
       const totRate = totDays > 0 ? Number(((totCases / totDays) * cfg.multiplier).toFixed(1)) : 0;
 
       haisRows[ind] = {
@@ -1001,21 +871,21 @@ export function useOfficialReportData({
         name: cfg.name,
         unit: cfg.unit,
         target: cfg.target,
-        m1: { days: m1Data.days, cases: m1Data.cases, rate: m1Rate },
-        m2: { days: m2Data.days, cases: m2Data.cases, rate: m2Rate },
-        m3: { days: m3Data.days, cases: m3Data.cases, rate: m3Rate },
+        m1: { days: dbM1.days, cases: dbM1.cases, rate: m1Rate },
+        m2: { days: dbM2.days, cases: dbM2.cases, rate: m2Rate },
+        m3: { days: dbM3.days, cases: dbM3.cases, rate: m3Rate },
         total: { days: totDays, cases: totCases, rate: totRate },
       };
     });
 
-    // Hand Hygiene monthly per profession
+    // Hand Hygiene monthly per profession in quarter (from rawYearHh)
     const monthlyHhByMonth: Record<number, Record<string, { opp: number; hh: number }>> = {
       [qMonths[0].monthIndex]: { 'Perawat /Bidan': { opp: 0, hh: 0 }, 'Dokter': { opp: 0, hh: 0 }, 'Tenaga Kesehatan Lainnya': { opp: 0, hh: 0 } },
       [qMonths[1].monthIndex]: { 'Perawat /Bidan': { opp: 0, hh: 0 }, 'Dokter': { opp: 0, hh: 0 }, 'Tenaga Kesehatan Lainnya': { opp: 0, hh: 0 } },
       [qMonths[2].monthIndex]: { 'Perawat /Bidan': { opp: 0, hh: 0 }, 'Dokter': { opp: 0, hh: 0 }, 'Tenaga Kesehatan Lainnya': { opp: 0, hh: 0 } },
     };
 
-    for (const h of rawHh) {
+    for (const h of rawYearHh) {
       const hMonth = extractMonthIndex(h.start_time || h.tanggal_waktu || h.created_at);
       if (monthlyHhByMonth[hMonth]) {
         const opp = Number(h.peluang || h.jumlah_dinilai) || 0;
@@ -1031,54 +901,27 @@ export function useOfficialReportData({
       }
     }
 
-    // Default authentic Hand Hygiene per profession Triwulan III matching Word file:
-    const defaultQuarterHhBaseline = {
-      'Perawat /Bidan': {
-        m1: { opp: 385, hh: 308, rate: 80 },
-        m2: { opp: 305, hh: 251, rate: 82 },
-        m3: { opp: 310, hh: 250, rate: 81 },
-      },
-      'Dokter': {
-        m1: { opp: 60, hh: 49, rate: 81 },
-        m2: { opp: 48, hh: 40, rate: 83 },
-        m3: { opp: 63, hh: 51, rate: 81 },
-      },
-      'Tenaga Kesehatan Lainnya': {
-        m1: { opp: 78, hh: 62, rate: 79 },
-        m2: { opp: 68, hh: 55, rate: 81 },
-        m3: { opp: 67, hh: 54, rate: 80 },
-      },
-    };
+    const quarterProfessionsList = ['Perawat /Bidan', 'Dokter', 'Tenaga Kesehatan Lainnya'];
+    const quarterHhProfessions: QuarterHhProfItem[] = quarterProfessionsList.map(prof => {
+      const dbM1 = monthlyHhByMonth[qMonths[0].monthIndex][prof] || { opp: 0, hh: 0 };
+      const dbM2 = monthlyHhByMonth[qMonths[1].monthIndex][prof] || { opp: 0, hh: 0 };
+      const dbM3 = monthlyHhByMonth[qMonths[2].monthIndex][prof] || { opp: 0, hh: 0 };
 
-    const quarterHhProfessions: QuarterHhProfItem[] = Object.keys(defaultQuarterHhBaseline).map(prof => {
-      const dbM1 = monthlyHhByMonth[qMonths[0].monthIndex][prof];
-      const dbM2 = monthlyHhByMonth[qMonths[1].monthIndex][prof];
-      const dbM3 = monthlyHhByMonth[qMonths[2].monthIndex][prof];
-
-      const isQ3_2026 = qIndex === 2 && year === 2026;
-      const m1 = dbM1 && dbM1.opp > 0
-        ? {
-            opp: dbM1.opp,
-            hh: dbM1.hh,
-            rate: Math.round((dbM1.hh / dbM1.opp) * 100),
-          }
-        : (isQ3_2026 ? (defaultQuarterHhBaseline as any)[prof].m1 : { opp: 0, hh: 0, rate: 0 });
-
-      const m2 = dbM2 && dbM2.opp > 0
-        ? {
-            opp: dbM2.opp,
-            hh: dbM2.hh,
-            rate: Math.round((dbM2.hh / dbM2.opp) * 100),
-          }
-        : (isQ3_2026 ? (defaultQuarterHhBaseline as any)[prof].m2 : { opp: 0, hh: 0, rate: 0 });
-
-      const m3 = dbM3 && dbM3.opp > 0
-        ? {
-            opp: dbM3.opp,
-            hh: dbM3.hh,
-            rate: Math.round((dbM3.hh / dbM3.opp) * 100),
-          }
-        : (isQ3_2026 ? (defaultQuarterHhBaseline as any)[prof].m3 : { opp: 0, hh: 0, rate: 0 });
+      const m1 = {
+        opp: dbM1.opp,
+        hh: dbM1.hh,
+        rate: dbM1.opp > 0 ? Math.round((dbM1.hh / dbM1.opp) * 100) : 0,
+      };
+      const m2 = {
+        opp: dbM2.opp,
+        hh: dbM2.hh,
+        rate: dbM2.opp > 0 ? Math.round((dbM2.hh / dbM2.opp) * 100) : 0,
+      };
+      const m3 = {
+        opp: dbM3.opp,
+        hh: dbM3.hh,
+        rate: dbM3.opp > 0 ? Math.round((dbM3.hh / dbM3.opp) * 100) : 0,
+      };
 
       const totOpp = m1.opp + m2.opp + m3.opp;
       const totHh = m1.hh + m2.hh + m3.hh;
@@ -1095,16 +938,16 @@ export function useOfficialReportData({
 
     const qHhTotalOpp = quarterHhProfessions.reduce((acc, p) => acc + p.total.opp, 0);
     const qHhTotalHh = quarterHhProfessions.reduce((acc, p) => acc + p.total.hh, 0);
-    const qHhOverallRate = qHhTotalOpp > 0 ? Number(((qHhTotalHh / qHhTotalOpp) * 100).toFixed(1)) : 80.9;
+    const qHhOverallRate = qHhTotalOpp > 0 ? Number(((qHhTotalHh / qHhTotalOpp) * 100).toFixed(1)) : 0;
 
-    // APD Monthly Triwulan (computed from DB per month with fallback to verified baseline)
+    // APD Monthly Triwulan (computed from DB per month)
     const monthlyApdByMonth: Record<number, { eval: number; comp: number }> = {
       [qMonths[0].monthIndex]: { eval: 0, comp: 0 },
       [qMonths[1].monthIndex]: { eval: 0, comp: 0 },
       [qMonths[2].monthIndex]: { eval: 0, comp: 0 },
     };
 
-    for (const a of rawApd) {
+    for (const a of rawYearApd) {
       const aMonth = extractMonthIndex(a.tanggal_waktu || a.created_at);
       if (monthlyApdByMonth[aMonth]) {
         monthlyApdByMonth[aMonth].eval += Number(a.jumlah_dinilai) || 0;
@@ -1112,13 +955,11 @@ export function useOfficialReportData({
       }
     }
 
-    const defaultApdRates = [100, 100, 99];
-    const isQ3_2026 = qIndex === 2 && year === 2026;
-    const apdMonthly = qMonths.map((qm, idx) => {
+    const apdMonthly = qMonths.map((qm) => {
       const mApd = monthlyApdByMonth[qm.monthIndex];
       const rate = mApd && mApd.eval > 0
         ? Number(((mApd.comp / mApd.eval) * 100).toFixed(1))
-        : (isQ3_2026 ? defaultApdRates[idx] : 0);
+        : 0;
       return {
         shortName: qm.shortName,
         rate,
@@ -1129,7 +970,7 @@ export function useOfficialReportData({
     const totalQuarterApdComp = Object.values(monthlyApdByMonth).reduce((s, v) => s + v.comp, 0);
     const quarterApdOverallRate = totalQuarterApdEval > 0
       ? Number(((totalQuarterApdComp / totalQuarterApdEval) * 100).toFixed(1))
-      : (isQ3_2026 ? 99.6 : 0);
+      : 0;
 
     const quarterData: QuarterData = {
       quarterIndex: qIndex,
@@ -1144,7 +985,7 @@ export function useOfficialReportData({
       apdOverallRate: quarterApdOverallRate,
     };
 
-    // 5. FULL 12-MONTH ANNUAL SERIES & 6-MONTH SEMESTER DATA (Real-time DB + Verified Baseline Fallback)
+    // 5. FULL 12-MONTH ANNUAL SERIES & 6-MONTH SEMESTER DATA (100% Genuine Real-time DB)
     const all12Months: QuarterMonthInfo[] = Array.from({ length: 12 }, (_, mIdx) => ({
       monthIndex: mIdx,
       monthName: MONTH_NAMES[mIdx],
@@ -1170,65 +1011,17 @@ export function useOfficialReportData({
         const d = Number(session.jumlah_dinilai) || 0;
         yearHaisMap[sMonth][indId].cases += c;
         yearHaisMap[sMonth][indId].days += d;
-        if (c > 0 || d > 0) {
-          yearHaisMap[sMonth][indId].hasRecord = true;
-        }
+        yearHaisMap[sMonth][indId].hasRecord = true;
       }
     }
-
-    const annualBaselineHais: Record<string, { days: number[]; cases: number[] }> = year === 2025
-      ? {
-          phlebitis: {
-            days: [1027, 808, 647, 776, 925, 1082, 1218, 1056, 1392, 893, 934, 1217],
-            cases: [7, 15, 4, 12, 25, 18, 36, 9, 12, 8, 3, 5],
-          },
-          isk: {
-            days: [42, 17, 24, 22, 15, 60, 100, 51, 104, 54, 73, 55],
-            cases: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          },
-          decubitus: {
-            days: [34, 6, 22, 29, 15, 176, 123, 72, 114, 22, 71, 30],
-            cases: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          },
-          vap: {
-            days: [2, 0, 0, 2, 0, 4, 4, 0, 12, 0, 0, 0],
-            cases: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          },
-          ido: {
-            days: [37, 40, 34, 73, 56, 40, 39, 63, 49, 51, 50, 43],
-            cases: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          },
-        }
-      : {
-          phlebitis: {
-            days: [1000, 968, 1034, 1143, 1190, 1053, 1243, 1345, 1420, 1384, 1120, 1210],
-            cases: [18, 3, 3, 4, 5, 4, 6, 8, 13, 6, 4, 5],
-          },
-          isk: {
-            days: [38, 32, 35, 40, 44, 39, 26, 61, 55, 48, 42, 45],
-            cases: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          },
-          decubitus: {
-            days: [28, 24, 26, 30, 32, 29, 16, 55, 49, 38, 34, 36],
-            cases: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          },
-          vap: {
-            days: [2, 1, 0, 2, 1, 2, 0, 2, 2, 2, 1, 2],
-            cases: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          },
-          ido: {
-            days: [41, 38, 44, 46, 50, 43, 47, 55, 42, 49, 46, 48],
-            cases: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          },
-        };
 
     const yearlyHais: Record<string, YearlyHaisIndicatorSeries> = {};
     indicatorsConfig.forEach(cfg => {
       const ind = cfg.id;
       const monthlyPoints: MonthlyPoint[] = all12Months.map((mInfo, mIdx) => {
         const dbRec = yearHaisMap[mIdx][ind];
-        const days = dbRec.hasRecord ? dbRec.days : annualBaselineHais[ind].days[mIdx];
-        const cases = dbRec.hasRecord ? dbRec.cases : annualBaselineHais[ind].cases[mIdx];
+        const days = dbRec.days;
+        const cases = dbRec.cases;
         const rate = days > 0 ? Number(((cases / days) * cfg.multiplier).toFixed(1)) : 0;
         return {
           monthIndex: mIdx,
@@ -1255,7 +1048,7 @@ export function useOfficialReportData({
       };
     });
 
-    // Annual Hand Hygiene 12 months + per profession
+    // Annual Hand Hygiene 12 months + per profession (100% Genuine Real-time DB)
     const yearHhByMonthProf: Record<number, Record<string, { opp: number; hh: number }>> = {};
     const prevYearHhByMonth: Record<number, { opp: number; hh: number }> = {};
     const prevYearHhByProf: Record<string, { opp: number; hh: number }> = {
@@ -1303,49 +1096,6 @@ export function useOfficialReportData({
       prevYearHhByProf[key].hh += act;
     }
 
-    const baselineHhRatesCurr = year === 2025
-      ? [67, 65, 64, 70, 68, 73, 67, 64, 66, 65, 66, 71]
-      : [78, 79, 80, 80, 81, 81, 80, 82, 81, 82, 82, 83];
-    const baselineHhRatesPrev = year === 2025
-      ? [64, 63, 67, 64, 70, 65, 65, 63, 66, 62, 66, 63]
-      : [67, 65, 64, 70, 68, 73, 67, 64, 66, 65, 66, 71];
-
-    const baselineProfMonthly: Record<string, { opp: number[]; hh: number[]; prevRate: number }> = year === 2025
-      ? {
-          'Dokter': {
-            opp: [50, 48, 50, 52, 50, 54, 55, 48, 52, 50, 50, 55],
-            hh: [35, 33, 34, 37, 35, 39, 38, 33, 36, 35, 35, 40],
-            prevRate: 63,
-          },
-          'Perawat/Bidan': {
-            opp: [300, 290, 310, 305, 315, 320, 330, 305, 310, 300, 310, 320],
-            hh: [186, 177, 189, 192, 198, 208, 205, 186, 192, 186, 195, 205],
-            prevRate: 65,
-          },
-          'Nakes Lainnya': {
-            opp: [70, 68, 72, 70, 72, 74, 76, 68, 70, 68, 70, 74],
-            hh: [45, 43, 45, 46, 47, 50, 49, 43, 46, 44, 46, 49],
-            prevRate: 62,
-          },
-        }
-      : {
-          'Dokter': {
-            opp: [55, 54, 58, 60, 58, 62, 60, 48, 63, 60, 62, 64],
-            hh: [43, 43, 47, 49, 47, 51, 49, 40, 51, 49, 51, 53],
-            prevRate: 70,
-          },
-          'Perawat/Bidan': {
-            opp: [320, 315, 330, 340, 345, 350, 385, 305, 310, 330, 335, 345],
-            hh: [250, 249, 264, 272, 279, 284, 308, 251, 250, 271, 275, 286],
-            prevRate: 62,
-          },
-          'Nakes Lainnya': {
-            opp: [70, 68, 72, 74, 75, 76, 78, 68, 67, 72, 74, 75],
-            hh: [54, 53, 57, 58, 60, 61, 62, 55, 54, 58, 60, 62],
-            prevRate: 65,
-          },
-        };
-
     const yearlyHhProfessions = (['Dokter', 'Perawat/Bidan', 'Nakes Lainnya'] as const).map(prof => {
       const monthlyOpp: number[] = [];
       const monthlyHh: number[] = [];
@@ -1353,8 +1103,8 @@ export function useOfficialReportData({
 
       for (let m = 0; m < 12; m++) {
         const dbP = yearHhByMonthProf[m][prof];
-        const opp = dbP && dbP.opp > 0 ? dbP.opp : baselineProfMonthly[prof].opp[m];
-        const hh = dbP && dbP.opp > 0 ? dbP.hh : baselineProfMonthly[prof].hh[m];
+        const opp = dbP?.opp || 0;
+        const hh = dbP?.hh || 0;
         const r = opp > 0 ? Math.round((hh / opp) * 100) : 0;
         monthlyOpp.push(opp);
         monthlyHh.push(hh);
@@ -1367,7 +1117,7 @@ export function useOfficialReportData({
       const prevDb = prevYearHhByProf[prof];
       const prevRate = prevDb && prevDb.opp > 0
         ? Number(((prevDb.hh / prevDb.opp) * 100).toFixed(1))
-        : baselineProfMonthly[prof].prevRate;
+        : 0;
 
       return {
         profession: prof,
@@ -1391,20 +1141,16 @@ export function useOfficialReportData({
         yearHhByMonthProf[mIdx]['Perawat/Bidan'].hh +
         yearHhByMonthProf[mIdx]['Nakes Lainnya'].hh;
 
-      const opp = dbTotOpp > 0
-        ? dbTotOpp
-        : yearlyHhProfessions.reduce((acc, p) => acc + p.monthlyOpp[mIdx], 0);
-      const hh = dbTotOpp > 0
-        ? dbTotHh
-        : yearlyHhProfessions.reduce((acc, p) => acc + p.monthlyHh[mIdx], 0);
+      const opp = dbTotOpp;
+      const hh = dbTotHh;
       const rate = dbTotOpp > 0
         ? Number(((dbTotHh / dbTotOpp) * 100).toFixed(1))
-        : baselineHhRatesCurr[mIdx];
+        : 0;
 
       const prevDb = prevYearHhByMonth[mIdx];
       const prevRate = prevDb && prevDb.opp > 0
         ? Number(((prevDb.hh / prevDb.opp) * 100).toFixed(1))
-        : baselineHhRatesPrev[mIdx];
+        : 0;
 
       return {
         monthIndex: mIdx,
@@ -1417,14 +1163,19 @@ export function useOfficialReportData({
       };
     });
 
-    const annualHhOverallRate = Number(
-      (yearlyHhMonthly.reduce((acc, m) => acc + m.rate, 0) / 12).toFixed(1)
-    );
-    const annualHhPrevOverallRate = Number(
-      (yearlyHhMonthly.reduce((acc, m) => acc + m.prevRate, 0) / 12).toFixed(1)
-    );
+    const totalAnnualHhOpp = yearlyHhMonthly.reduce((acc, m) => acc + m.opp, 0);
+    const totalAnnualHhAct = yearlyHhMonthly.reduce((acc, m) => acc + m.hh, 0);
+    const annualHhOverallRate = totalAnnualHhOpp > 0
+      ? Number(((totalAnnualHhAct / totalAnnualHhOpp) * 100).toFixed(1))
+      : 0;
 
-    // Annual APD 12 months
+    const totalPrevAnnualHhOpp = Object.values(prevYearHhByMonth).reduce((acc, m) => acc + m.opp, 0);
+    const totalPrevAnnualHhAct = Object.values(prevYearHhByMonth).reduce((acc, m) => acc + m.hh, 0);
+    const annualHhPrevOverallRate = totalPrevAnnualHhOpp > 0
+      ? Number(((totalPrevAnnualHhAct / totalPrevAnnualHhOpp) * 100).toFixed(1))
+      : 0;
+
+    // Annual APD 12 months (100% Genuine Real-time DB)
     const yearApdByMonth: Record<number, { eval: number; comp: number; obs: number; patuhObs: number }> = {};
     for (let m = 0; m < 12; m++) {
       yearApdByMonth[m] = { eval: 0, comp: 0, obs: 0, patuhObs: 0 };
@@ -1444,24 +1195,16 @@ export function useOfficialReportData({
       }
     }
 
-    const baselineApdRates = year === 2025
-      ? [100, 100, 100, 100, 100, 100, 100, 97, 100, 100, 100, 100]
-      : [98, 98.2, 100, 97, 100, 98, 100, 100, 99, 99.5, 100, 100];
-
     const yearlyApdMonthly = all12Months.map((mInfo, mIdx) => {
       const dbA = yearApdByMonth[mIdx];
       const hasDbRecord = dbA.obs > 0 || dbA.eval > 0;
-      const evalCount = hasDbRecord ? dbA.eval : 120;
+      const evalCount = dbA.eval;
+      const compCount = dbA.comp;
       const rate = dbA.eval > 0
         ? Number(((dbA.comp / dbA.eval) * 100).toFixed(1))
-        : (mIdx === 8 && year === 2026 ? 99 : baselineApdRates[mIdx]);
-      const compCount = hasDbRecord ? dbA.comp : Math.round((rate / 100) * evalCount);
-      const totalObservasi = dbA.obs > 0
-        ? dbA.obs
-        : (mIdx === 8 && year === 2026 ? 101 : 100);
-      const patuhObservasi = dbA.obs > 0
-        ? (dbA.patuhObs > 0 ? dbA.patuhObs : Math.round((rate / 100) * totalObservasi))
-        : (mIdx === 8 && year === 2026 ? 100 : Math.round((rate / 100) * totalObservasi));
+        : 0;
+      const totalObservasi = dbA.obs;
+      const patuhObservasi = dbA.patuhObs;
 
       return {
         monthIndex: mIdx,
@@ -1476,9 +1219,11 @@ export function useOfficialReportData({
       };
     });
 
-    const annualApdOverallRate = Number(
-      (yearlyApdMonthly.reduce((acc, m) => acc + m.rate, 0) / 12).toFixed(2)
-    );
+    const totalAnnualApdEval = yearlyApdMonthly.reduce((acc, m) => acc + m.eval, 0);
+    const totalAnnualApdComp = yearlyApdMonthly.reduce((acc, m) => acc + m.comp, 0);
+    const annualApdOverallRate = totalAnnualApdEval > 0
+      ? Number(((totalAnnualApdComp / totalAnnualApdEval) * 100).toFixed(1))
+      : 0;
 
     const yearlySeries: YearlySeriesData = {
       year,
@@ -1526,9 +1271,11 @@ export function useOfficialReportData({
       hh: m.hh,
       rate: m.rate,
     }));
-    const semHhOverallRate = Number(
-      (semHhMonthly.reduce((acc, m) => acc + m.rate, 0) / semHhMonthly.length).toFixed(1)
-    );
+    const semTotalHhOpp = semHhMonthly.reduce((acc, m) => acc + m.opp, 0);
+    const semTotalHhAct = semHhMonthly.reduce((acc, m) => acc + m.hh, 0);
+    const semHhOverallRate = semTotalHhOpp > 0
+      ? Number(((semTotalHhAct / semTotalHhOpp) * 100).toFixed(1))
+      : 0;
 
     const semHhProfessions = yearlyHhProfessions.map(p => {
       const monthly = [];
@@ -1561,9 +1308,11 @@ export function useOfficialReportData({
       comp: m.comp,
       rate: m.rate,
     }));
-    const semApdOverallRate = Number(
-      (semApdMonthly.reduce((acc, m) => acc + m.rate, 0) / semApdMonthly.length).toFixed(1)
-    );
+    const semTotalApdEval = semApdMonthly.reduce((acc, m) => acc + m.eval, 0);
+    const semTotalApdComp = semApdMonthly.reduce((acc, m) => acc + m.comp, 0);
+    const semApdOverallRate = semTotalApdEval > 0
+      ? Number(((semTotalApdComp / semTotalApdEval) * 100).toFixed(1))
+      : 0;
 
     const semesterData: SemesterData = {
       semesterIndex: semIndex,

@@ -509,21 +509,16 @@ export default function QuarterlyOfficialReport({
     });
 
     // Peak HH month across professions
-    const hhMonthAvgs = [
-      {
-        name: m1.monthName,
-        avg: Number(((perawatRow.m1.rate + dokterRow.m1.rate + nakesRow.m1.rate) / 3).toFixed(1)),
-      },
-      {
-        name: m2.monthName,
-        avg: Number(((perawatRow.m2.rate + dokterRow.m2.rate + nakesRow.m2.rate) / 3).toFixed(1)),
-      },
-      {
-        name: m3.monthName,
-        avg: Number(((perawatRow.m3.rate + dokterRow.m3.rate + nakesRow.m3.rate) / 3).toFixed(1)),
-      },
-    ];
-    const bestHhMonth = [...hhMonthAvgs].sort((a, b) => b.avg - a.avg)[0];
+    const hhMonths = [
+      { name: m1.monthName, opp: perawatRow.m1.opp + dokterRow.m1.opp + nakesRow.m1.opp, hh: perawatRow.m1.hh + dokterRow.m1.hh + nakesRow.m1.hh },
+      { name: m2.monthName, opp: perawatRow.m2.opp + dokterRow.m2.opp + nakesRow.m2.opp, hh: perawatRow.m2.hh + dokterRow.m2.hh + nakesRow.m2.hh },
+      { name: m3.monthName, opp: perawatRow.m3.opp + dokterRow.m3.opp + nakesRow.m3.opp, hh: perawatRow.m3.hh + dokterRow.m3.hh + nakesRow.m3.hh },
+    ].map(m => ({
+      name: m.name,
+      opp: m.opp,
+      avg: m.opp > 0 ? Number(((m.hh / m.opp) * 100).toFixed(1)) : 0,
+    })).filter(m => m.opp > 0);
+    const bestHhMonth = [...hhMonths].sort((a, b) => b.avg - a.avg)[0];
 
     const hhNarr = buildHandHygieneProfessionNarrative({
       periodLabel: qData.periodLabel,
@@ -533,16 +528,18 @@ export default function QuarterlyOfficialReport({
         { name: 'Dokter', rate: dokterRow.total.rate, opp: dokterRow.total.opp, hh: dokterRow.total.hh },
         { name: 'Nakes Lainnya', rate: nakesRow.total.rate, opp: nakesRow.total.opp, hh: nakesRow.total.hh },
       ],
-      peakMonthDetail: `Berdasarkan tren bulanan, rata-rata kepatuhan tertinggi tercapai pada bulan ${bestHhMonth.name} (${fmtIdNum(bestHhMonth.avg)}%).`,
+      peakMonthDetail: bestHhMonth && bestHhMonth.avg > 0
+        ? `Berdasarkan tren bulanan, rata-rata kepatuhan tertinggi tercapai pada bulan ${bestHhMonth.name} (${fmtIdNum(bestHhMonth.avg)}%).`
+        : undefined,
     });
 
     const apdNarr = buildApdNarrative({
       periodLabel: qData.periodLabel,
       overallRate: qData.apdOverallRate,
       points: [
-        { label: m1.monthName, rate: qData.apdMonthly[0]?.rate ?? 100 },
-        { label: m2.monthName, rate: qData.apdMonthly[1]?.rate ?? 100 },
-        { label: m3.monthName, rate: qData.apdMonthly[2]?.rate ?? 99 },
+        { label: m1.monthName, rate: qData.apdMonthly[0]?.rate ?? 0 },
+        { label: m2.monthName, rate: qData.apdMonthly[1]?.rate ?? 0 },
+        { label: m3.monthName, rate: qData.apdMonthly[2]?.rate ?? 0 },
       ],
     });
 

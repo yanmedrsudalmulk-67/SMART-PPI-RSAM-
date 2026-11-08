@@ -142,18 +142,24 @@ export default function SemesterOfficialReport({
     overallRate: ido.rate,
   });
 
-  const hhMonthAvgs = semMonths.map((m, idx) => ({
-    name: m.monthName,
-    avg: Number(
-      (
-        ((perawatRow?.monthly[idx]?.rate ?? 0) +
-          (dokterRow?.monthly[idx]?.rate ?? 0) +
-          (nakesRow?.monthly[idx]?.rate ?? 0)) /
-        3
-      ).toFixed(1)
-    ),
-  }));
-  const bestHhMonth = [...hhMonthAvgs].sort((a, b) => b.avg - a.avg)[0];
+  const activeHhMonths = semMonths
+    .map((m, idx) => {
+      const pOpp =
+        (perawatRow?.monthly[idx]?.opp ?? 0) +
+        (dokterRow?.monthly[idx]?.opp ?? 0) +
+        (nakesRow?.monthly[idx]?.opp ?? 0);
+      const pHh =
+        (perawatRow?.monthly[idx]?.hh ?? 0) +
+        (dokterRow?.monthly[idx]?.hh ?? 0) +
+        (nakesRow?.monthly[idx]?.hh ?? 0);
+      return {
+        name: m.monthName,
+        opp: pOpp,
+        avg: pOpp > 0 ? Number(((pHh / pOpp) * 100).toFixed(1)) : 0,
+      };
+    })
+    .filter((m) => m.opp > 0);
+  const bestHhMonth = [...activeHhMonths].sort((a, b) => b.avg - a.avg)[0];
 
   const hhNarr = buildHandHygieneProfessionNarrative({
     periodLabel: fullPeriodLabel,
@@ -163,15 +169,16 @@ export default function SemesterOfficialReport({
       { name: 'Dokter', rate: dokterRow?.rate ?? 0, opp: dokterRow?.opp ?? 0, hh: dokterRow?.hh ?? 0 },
       { name: 'Nakes Lainnya', rate: nakesRow?.rate ?? 0, opp: nakesRow?.opp ?? 0, hh: nakesRow?.hh ?? 0 },
     ],
-    peakMonthDetail: bestHhMonth
-      ? `Berdasarkan tren bulanan, rata-rata kepatuhan tertinggi tercapai pada bulan ${bestHhMonth.name} (${fmtIdNum(bestHhMonth.avg)}%).`
-      : undefined,
+    peakMonthDetail:
+      bestHhMonth && bestHhMonth.avg > 0
+        ? `Berdasarkan tren bulanan, rata-rata kepatuhan tertinggi tercapai pada bulan ${bestHhMonth.name} (${fmtIdNum(bestHhMonth.avg)}%).`
+        : undefined,
   });
 
   const apdNarr = buildApdNarrative({
     periodLabel: fullPeriodLabel,
     overallRate: sData.apdOverallRate,
-    points: sData.apdMonthly.map((m) => ({ label: m.monthName, rate: m.rate })),
+    points: sData.apdMonthly.filter((m) => m.eval > 0).map((m) => ({ label: m.monthName, rate: m.rate })),
   });
 
   const totHhOpp = sData.hhProfessions.reduce((a, p) => a + p.opp, 0);
