@@ -268,8 +268,8 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
   const svgPath = useMemo(() => getNavContourPath(activeIndex, itemCount), [activeIndex, itemCount]);
 
   return (
-    <div className="fixed bottom-3 sm:bottom-4 inset-x-3 sm:inset-x-6 z-50 flex justify-center landscape:hidden portrait:flex pb-[env(safe-area-inset-bottom)] pointer-events-none overflow-visible">
-      {/* Fullscreen Backdrop when Laporan Sub-Menu is open */}
+    <>
+      {/* Fullscreen Backdrop when Laporan Sub-Menu is open - placed OUTSIDE the nav bar at z-40 so it never covers the menu */}
       <AnimatePresence>
         {isReportsMenuOpen && (
           <motion.div
@@ -278,26 +278,28 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
             onClick={() => setIsReportsMenuOpen(false)}
-            className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-40 pointer-events-auto"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 landscape:hidden pointer-events-auto"
           />
         )}
       </AnimatePresence>
 
-      <nav 
-        aria-label="Mobile Navigation Bar"
-        className="w-full max-w-md h-[86px] relative pointer-events-auto select-none nav-dock-120fps transform-gpu overflow-visible"
-        style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
-      >
-        {/* Floating Sub-Menu Pop-up for Laporan */}
-        <AnimatePresence>
-          {isReportsMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: 14, scale: 0.94 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 14, scale: 0.94 }}
-              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute bottom-[96px] left-1/2 -translate-x-1/2 w-[calc(100%-12px)] max-w-sm z-50 pointer-events-auto"
-            >
+      <div className="fixed bottom-3 sm:bottom-4 inset-x-3 sm:inset-x-6 z-50 flex justify-center landscape:hidden portrait:flex pb-[env(safe-area-inset-bottom)] pointer-events-none overflow-visible">
+        <nav 
+          aria-label="Mobile Navigation Bar"
+          className="w-full max-w-md h-[86px] relative pointer-events-auto select-none nav-dock-120fps transform-gpu overflow-visible z-50"
+          style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+        >
+          {/* Floating Sub-Menu Pop-up for Laporan - strictly z-[60] above backdrop */}
+          <AnimatePresence>
+            {isReportsMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 14, scale: 0.94 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 14, scale: 0.94 }}
+                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                onClick={(e) => e.stopPropagation()}
+                className="absolute bottom-[96px] left-1/2 -translate-x-1/2 w-[calc(100%-12px)] max-w-sm z-[60] pointer-events-auto"
+              >
               <div className="w-full bg-[#131535]/95 backdrop-blur-2xl border border-indigo-400/40 rounded-3xl p-3 shadow-[0_24px_60px_rgba(0,0,0,0.92),0_0_24px_rgba(99,102,241,0.25)] ring-1 ring-white/10 flex flex-col gap-2">
                 {/* Pop-up Header */}
                 <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-indigo-900/50">
@@ -545,6 +547,7 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
         </div>
       </nav>
     </div>
+    </>
   );
 }
 
