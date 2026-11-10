@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase';
 import {
   Activity, BarChart, LineChart, TrendingUp,
-  Calendar, ChevronDown, Edit2, CheckCircle2, RefreshCw, AlertCircle
+  Edit2, CheckCircle2, RefreshCw, AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -589,115 +589,14 @@ export default function UnifiedSurveilansHaisReport({
 
   return (
     <div className="flex flex-col gap-6 w-full fade-in zoom-in-95 animate-in duration-500 pb-32">
-      {/* HEADER & FILTER PERIODE */}
-      <div className="mb-2 flex flex-col lg:flex-row justify-between items-center gap-4">
-        <div className="text-center lg:text-left w-full lg:w-auto shrink-0">
-          <h1 className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase">
-            SURVEILANS HAIs
-          </h1>
-          <p className="text-sm text-slate-300 mt-1 font-medium">
-            Monitoring Real-Time Insiden Healthcare-Associated Infections (HAIs) Terintegrasi SIMRS
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-center lg:justify-end gap-3 w-full lg:w-auto">
-          {/* Filter Periode */}
-          <div className="relative group w-full sm:w-auto">
-            <div className="relative bg-[#18193b] rounded-full p-2 sm:p-2.5 sm:px-3.5 border border-[#2b2d56] transition-all duration-300 transform-gpu overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)]">
-              <div className="absolute top-0 inset-x-6 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
-
-              <div className="flex flex-wrap items-center justify-center lg:justify-end gap-2 relative z-10">
-                <div className="hidden sm:inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)]">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <Calendar className="w-3.5 h-3.5 text-cyan-400" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
-                    PERIODE
-                  </span>
-                </div>
-
-                <div className="relative">
-                  <select
-                    value={periodeType}
-                    onChange={(e) => setPeriodeType(e.target.value)}
-                    className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-full pl-3.5 pr-8 py-1.5 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] capitalize"
-                  >
-                    <option value="Bulanan" className="bg-[#18193b] text-white">Bulanan</option>
-                    <option value="Triwulan" className="bg-[#18193b] text-white">Triwulan</option>
-                    <option value="Semester" className="bg-[#18193b] text-white">Semester</option>
-                    <option value="Tahunan" className="bg-[#18193b] text-white">Tahunan</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                    <ChevronDown className="w-3.5 h-3.5" />
-                  </div>
-                </div>
-
-                {periodeType === 'Bulanan' && (
-                  <div className="relative">
-                    <select
-                      value={selectedMonth}
-                      onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                      className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-full pl-3.5 pr-8 py-1.5 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
-                    >
-                      {['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'].map((m, i) => (
-                        <option key={m} value={i} className="bg-[#18193b] text-white">{m}</option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                      <ChevronDown className="w-3.5 h-3.5" />
-                    </div>
-                  </div>
-                )}
-                {periodeType === 'Triwulan' && (
-                  <div className="relative">
-                    <select
-                      value={selectedQuarter}
-                      onChange={(e) => setSelectedQuarter(parseInt(e.target.value))}
-                      className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-full pl-3.5 pr-8 py-1.5 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
-                    >
-                      <option value={0} className="bg-[#18193b] text-white">TW 1 (Jan-Mar)</option>
-                      <option value={1} className="bg-[#18193b] text-white">TW 2 (Apr-Jun)</option>
-                      <option value={2} className="bg-[#18193b] text-white">TW 3 (Jul-Sep)</option>
-                      <option value={3} className="bg-[#18193b] text-white">TW 4 (Okt-Des)</option>
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                      <ChevronDown className="w-3.5 h-3.5" />
-                    </div>
-                  </div>
-                )}
-                {periodeType === 'Semester' && (
-                  <div className="relative">
-                    <select
-                      value={selectedSemester}
-                      onChange={(e) => setSelectedSemester(parseInt(e.target.value))}
-                      className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-full pl-3.5 pr-8 py-1.5 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
-                    >
-                      <option value={0} className="bg-[#18193b] text-white">SM 1 (Jan-Jun)</option>
-                      <option value={1} className="bg-[#18193b] text-white">SM 2 (Jul-Des)</option>
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                      <ChevronDown className="w-3.5 h-3.5" />
-                    </div>
-                  </div>
-                )}
-
-                <div className="relative">
-                  <select
-                    value={selectedYear}
-                    onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                    className="bg-[#12132e] border border-indigo-900/40 text-slate-200 text-xs sm:text-sm font-bold rounded-full pl-3.5 pr-8 py-1.5 outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
-                  >
-                    <option value={2026} className="bg-[#18193b] text-white">2026</option>
-                    <option value={2025} className="bg-[#18193b] text-white">2025</option>
-                    <option value={2024} className="bg-[#18193b] text-white">2024</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                    <ChevronDown className="w-3.5 h-3.5" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* HEADER */}
+      <div className="mb-2">
+        <h1 className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] uppercase">
+          SURVEILANS HAIs
+        </h1>
+        <p className="text-sm text-slate-300 mt-1 font-medium">
+          Monitoring Real-Time Insiden Healthcare-Associated Infections (HAIs) Terintegrasi SIMRS
+        </p>
       </div>
 
       {loading && !data.length ? (
