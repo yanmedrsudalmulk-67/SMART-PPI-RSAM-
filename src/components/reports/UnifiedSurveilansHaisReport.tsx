@@ -608,9 +608,10 @@ export default function UnifiedSurveilansHaisReport({
           <div className="bg-[#18193b] rounded-[28px] md:rounded-[32px] border border-[#2b2d56] overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] transition-all mt-2 relative">
             <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
-            {/* Kop Surat / Header Laporan Resmi - Persis Standar Gambar No 2 */}
-            <div className="bg-white text-black p-6 sm:p-8 border-b border-slate-300">
+            {/* Kop Surat / Header Laporan Resmi - Persis Standar Gambar No 2 (Dark Mode) */}
+            <div className="p-6 sm:p-8 border-b border-indigo-900/30 bg-[#141532]/60 backdrop-blur-md">
               <OfficialHeaderKop
+                theme="dark"
                 reportTitle="LAPORAN SURVEILANS HAIs"
                 periode={`Periode: ${periodeType} ${selectedYear}${periodeType === 'Bulanan' ? ` - ${MONTHS_FULL[selectedMonth]}` : ''}`}
               />

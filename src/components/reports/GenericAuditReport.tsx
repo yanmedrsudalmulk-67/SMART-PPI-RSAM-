@@ -1132,7 +1132,7 @@ export default function GenericAuditReport({
         const pageItems = checklistItems;
 
         const renderKopSurat = () => (
-          <OfficialHeaderKop className="mb-2" />
+          <OfficialHeaderKop theme="light" className="mb-2" />
         );
 
         const renderMetadata = () => (

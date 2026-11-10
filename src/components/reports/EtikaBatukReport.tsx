@@ -267,7 +267,7 @@ export default function EtikaBatukReport({
               }
             `}} />
           {/* Header Kop Surat (Persis Standar Gambar No 2) */}
-          <OfficialHeaderKop className="mb-4" />
+          <OfficialHeaderKop theme="light" className="mb-4" />
 
           <div className="text-center mb-4">
             <h2 className="text-[13pt] font-black uppercase tracking-wider text-black underline decoration-1 underline-offset-4">

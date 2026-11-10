@@ -719,6 +719,7 @@ export default function ApdReport({
       {/* LAPORAN HEADER (PRINT READY) */}
       <div className="hidden print:block mb-8 w-full">
         <OfficialHeaderKop
+          theme="light"
           reportTitle="LAPORAN MONITORING KEPATUHAN PENGGUNAAN APD"
           periode={`Periode: ${filters.periode ? format(new Date(filters.periode), 'MMMM yyyy', {locale: idLocale}) : 'Semua Periode'}${filters.type ? ` | Tipe: ${filters.type}` : ''}`}
         />
@@ -729,9 +730,10 @@ export default function ApdReport({
         {/* Top Bevel Highlight */}
         <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
-        {/* Kop Surat / Header Laporan Resmi - Persis Standar Gambar No 2 */}
-        <div className="bg-white text-black p-6 sm:p-8 border-b border-slate-300">
+        {/* Kop Surat / Header Laporan Resmi - Persis Standar Gambar No 2 (Dark Mode) */}
+        <div className="p-6 sm:p-8 border-b border-indigo-900/30 bg-[#141532]/60 backdrop-blur-md">
           <OfficialHeaderKop
+            theme="dark"
             reportTitle="LAPORAN MONITORING KEPATUHAN PENGGUNAAN APD"
             periode={`Periode: ${filters.periode ? format(new Date(filters.periode), 'MMMM yyyy', {locale: idLocale}) : 'Semua Periode'}${filters.type ? ` | Tipe: ${filters.type}` : ''}${filters.searchQuery ? ` | Filter: ${filters.searchQuery}` : ''}`}
           />
@@ -972,7 +974,7 @@ export default function ApdReport({
             `}} />
 
             {/* Kop Surat Resmi RSUD AL-MULK (Standar Dinas) */}
-            <OfficialHeaderKop className="mb-2" />
+            <OfficialHeaderKop theme="light" className="mb-2" />
 
             {/* Judul & Metadata Laporan */}
             <div className="text-center mb-4">

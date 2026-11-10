@@ -500,7 +500,7 @@ export default function DiklatReport({
           `}} />
 
           {/* HOSPITAL LOGO & LETTERHEAD (Persis Standar Gambar No 2) */}
-          <OfficialHeaderKop className="mb-6" />
+          <OfficialHeaderKop theme="light" className="mb-6" />
 
           {/* REPORT CONTENT:
               1. Data Pelaksanaan 

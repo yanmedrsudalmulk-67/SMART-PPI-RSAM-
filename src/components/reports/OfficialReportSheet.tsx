@@ -124,7 +124,7 @@ export default function OfficialReportSheet({
       </div>
 
       {/* Kop Surat Resmi RSUD AL-MULK (Persis Standar Gambar No 2) */}
-      <OfficialHeaderKop className="mb-6" />
+      <OfficialHeaderKop theme="light" className="mb-6" />
 
       <div className="text-center mb-6">
         <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight text-black w-full text-center">LAPORAN AUDIT <br className="md:hidden" /> {title}</h2>
