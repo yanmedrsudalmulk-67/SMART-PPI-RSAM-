@@ -8,6 +8,7 @@ import { useSafeRouter as useRouter } from '@/hooks/useSafeRouter';
 import PdfDownloadButton from "@/components/reports/PdfDownloadButton";
 import ZoomableReportViewer from "@/components/reports/ZoomableReportViewer";
 import { ensureBlackSignature } from "@/utils/signatureUtils";
+import OfficialHeaderKop from "@/components/reports/official/OfficialHeaderKop";
 import {
   TrendingUp,
   Activity,
@@ -1131,40 +1132,7 @@ export default function GenericAuditReport({
         const pageItems = checklistItems;
 
         const renderKopSurat = () => (
-          <div className="mb-2">
-            <div className="border-b-[2.5px] border-black pb-2 mb-1">
-              <div className="flex items-center justify-center gap-4 sm:gap-5 max-w-4xl mx-auto">
-                <div className="w-14 h-14 shrink-0 flex items-center justify-center">
-                  {hospitalLogoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={hospitalLogoUrl}
-                      alt="Logo RS"
-                      className="max-w-full max-h-full object-contain"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                    />
-                  ) : (
-                    <ShieldCheck className="w-10 h-10 text-black" />
-                  )}
-                </div>
-                <div className="text-center">
-                  <h1 className="text-[11pt] sm:text-[12pt] font-black uppercase tracking-wide leading-tight text-black">
-                    TIM PENCEGAHAN DAN PENGENDALIAN INFEKSI (PPI)
-                  </h1>
-                  <h2 className="text-[11pt] sm:text-[12pt] font-black uppercase tracking-wider leading-tight text-black mt-0.5">
-                    UOBK RSUD AL-MULK KOTA SUKABUMI
-                  </h2>
-                  <p className="text-[8pt] sm:text-[8.5pt] text-black italic mt-0.5 leading-tight">
-                    Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota Sukabumi, Jawa Barat 43168
-                  </p>
-                </div>
-              </div>
-            </div>
-            {/* Garis batas ganda kop surat standar dinas */}
-            <div className="border-b border-black mb-3" />
-          </div>
+          <OfficialHeaderKop className="mb-2" />
         );
 
         const renderMetadata = () => (

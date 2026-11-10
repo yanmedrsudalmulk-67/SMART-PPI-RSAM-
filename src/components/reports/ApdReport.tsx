@@ -17,6 +17,7 @@ import { id as idLocale } from 'date-fns/locale';
 import { useAppContext } from '@/components/Providers';
 import PdfDownloadButton from '@/components/reports/PdfDownloadButton';
 import ZoomableReportViewer from '@/components/reports/ZoomableReportViewer';
+import OfficialHeaderKop from '@/components/reports/official/OfficialHeaderKop';
 
 const APD_COMPONENT_ITEMS = [
   { id: 'masker', name: 'Masker', key: 'masker' },
@@ -716,22 +717,11 @@ export default function ApdReport({
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
       
       {/* LAPORAN HEADER (PRINT READY) */}
-      <div className="hidden print:flex items-center gap-6 mb-8 border-b-4 border-slate-900 pb-6 w-full">
-         <div className="flex items-center gap-5 w-full">
-            <div className="w-20 h-20 bg-white flex items-center justify-center relative pl-2 sm:pl-3 shrink-0">
-              {hospitalLogoUrl ? (
-                <Image src={hospitalLogoUrl} alt="Logo RS" fill sizes="80px" className="object-contain" referrerPolicy="no-referrer" />
-              ) : (
-                <ShieldCheck className="w-12 h-12 text-black" />
-              )}
-            </div>
-            <div className="text-center flex-1 pr-8 sm:pr-12">
-              <h1 className="text-xl font-black tracking-tight leading-tight uppercase text-black">TIM PENCEGAHAN DAN PENGENDALIAN INFEKSI (PPI)</h1>
-              <p className="text-sm font-black uppercase text-black tracking-wider mt-0.5">UOBK RSUD AL-MULK KOTA SUKABUMI</p>
-              <p className="text-xs text-slate-600 italic mt-0.5">Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota Sukabumi, Jawa Barat 43168</p>
-              <p className="text-xs text-slate-700 font-bold mt-1">LAPORAN MONITORING KEPATUHAN PENGGUNAAN APD | Periode: {filters.periode ? format(new Date(filters.periode), 'MMMM yyyy', {locale: idLocale}) : 'Semua Periode'} {filters.type ? `| Tipe: ${filters.type}` : ''}</p>
-            </div>
-         </div>
+      <div className="hidden print:block mb-8 w-full">
+        <OfficialHeaderKop
+          reportTitle="LAPORAN MONITORING KEPATUHAN PENGGUNAAN APD"
+          periode={`Periode: ${filters.periode ? format(new Date(filters.periode), 'MMMM yyyy', {locale: idLocale}) : 'Semua Periode'}${filters.type ? ` | Tipe: ${filters.type}` : ''}`}
+        />
       </div>
 
       {/* Tabel Data Audit APD */}
@@ -739,27 +729,12 @@ export default function ApdReport({
         {/* Top Bevel Highlight */}
         <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
-        <div className="p-6 sm:p-8 border-b border-indigo-900/30 bg-[#141532]/60 backdrop-blur-md">
-           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-             <div className="flex flex-col md:flex-row items-center gap-6 w-full text-left justify-start">
-               <div className="flex-shrink-0">
-                 {hospitalLogoUrl ? (
-                   <img src={hospitalLogoUrl} alt="Logo RS" className="w-16 h-16 sm:w-20 sm:h-20 object-contain" />
-                 ) : (
-                   <ShieldCheck className="w-14 h-14 text-emerald-400" />
-                 )}
-               </div>
-               <div>
-                 <h2 className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-300 uppercase tracking-tight">LAPORAN MONITORING KEPATUHAN PENGGUNAAN APD</h2>
-                 <h3 className="text-base sm:text-lg font-black text-slate-200 uppercase mt-0.5">UOBK RSUD AL-MULK KOTA SUKABUMI</h3>
-                 <p className="text-slate-400 font-bold text-xs sm:text-sm mt-1 uppercase tracking-wider">
-                   Periode: {filters.periode ? format(new Date(filters.periode), 'MMMM yyyy', {locale: idLocale}) : 'Semua Periode'}
-                   {filters.type ? ` | Tipe: ${filters.type}` : ''}
-                   {filters.searchQuery ? ` | Filter: ${filters.searchQuery}` : ''}
-                 </p>
-               </div>
-             </div>
-           </div>
+        {/* Kop Surat / Header Laporan Resmi - Persis Standar Gambar No 2 */}
+        <div className="bg-white text-black p-6 sm:p-8 border-b border-slate-300">
+          <OfficialHeaderKop
+            reportTitle="LAPORAN MONITORING KEPATUHAN PENGGUNAAN APD"
+            periode={`Periode: ${filters.periode ? format(new Date(filters.periode), 'MMMM yyyy', {locale: idLocale}) : 'Semua Periode'}${filters.type ? ` | Tipe: ${filters.type}` : ''}${filters.searchQuery ? ` | Filter: ${filters.searchQuery}` : ''}`}
+          />
         </div>
 
         <div className="overflow-x-auto pb-4 max-h-[600px] print:max-h-none print:overflow-visible relative">
@@ -997,40 +972,7 @@ export default function ApdReport({
             `}} />
 
             {/* Kop Surat Resmi RSUD AL-MULK (Standar Dinas) */}
-            <div className="mb-2">
-              <div className="border-b-[2.5px] border-black pb-2 mb-1">
-                <div className="flex items-center justify-center gap-4 sm:gap-5 max-w-4xl mx-auto">
-                  <div className="w-14 h-14 shrink-0 flex items-center justify-center">
-                    {hospitalLogoUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={hospitalLogoUrl}
-                        alt="Logo RS"
-                        className="max-w-full max-h-full object-contain"
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                    ) : (
-                      <ShieldCheck className="w-10 h-10 text-black" />
-                    )}
-                  </div>
-                  <div className="text-center">
-                    <h1 className="text-[11pt] sm:text-[12pt] font-black uppercase tracking-wide leading-tight text-black">
-                      TIM PENCEGAHAN DAN PENGENDALIAN INFEKSI (PPI)
-                    </h1>
-                    <h2 className="text-[11pt] sm:text-[12pt] font-black uppercase tracking-wider leading-tight text-black mt-0.5">
-                      UOBK RSUD AL-MULK KOTA SUKABUMI
-                    </h2>
-                    <p className="text-[8pt] sm:text-[8.5pt] text-black italic mt-0.5 leading-tight">
-                      Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota Sukabumi, Jawa Barat 43168
-                    </p>
-                  </div>
-                </div>
-              </div>
-              {/* Garis batas ganda kop surat standar dinas */}
-              <div className="border-b border-black mb-3" />
-            </div>
+            <OfficialHeaderKop className="mb-2" />
 
             {/* Judul & Metadata Laporan */}
             <div className="text-center mb-4">

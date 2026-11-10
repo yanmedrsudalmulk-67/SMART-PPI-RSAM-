@@ -13,6 +13,7 @@ import { useSafeRouter } from '@/hooks/useSafeRouter';
 import { forceScrollToTop } from '@/utils/scrollHelper';
 import PdfDownloadButton from '@/components/reports/PdfDownloadButton';
 import ZoomableReportViewer from '@/components/reports/ZoomableReportViewer';
+import OfficialHeaderKop from '@/components/reports/official/OfficialHeaderKop';
 
 export interface TrainingMaterial {
   id: string;
@@ -498,34 +499,8 @@ export default function DiklatReport({
             }
           `}} />
 
-          {/* HOSPITAL LOGO & LETTERHEAD (No PPI-09 code in top right) */}
-          <div className="flex items-center gap-4 sm:gap-6 border-b-4 border-slate-900 pb-4 mb-6">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shrink-0 pl-2 sm:pl-3">
-              {hospitalLogoUrl ? (
-                <img 
-                  src={hospitalLogoUrl} 
-                  alt="Hospital Logo" 
-                  className="w-full h-full object-contain filter contrast-125"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-300 font-extrabold shrink-0 border border-slate-200">
-                  LOGO
-                </div>
-              )}
-            </div>
-            <div className="flex-1 text-center pr-8 sm:pr-12">
-              <h2 className="text-lg sm:text-xl font-black uppercase tracking-tight text-slate-900 leading-tight">
-                TIM PENCEGAHAN DAN PENGENDALIAN INFEKSI (PPI)
-              </h2>
-              <p className="text-xs sm:text-sm uppercase tracking-wider text-slate-900 font-black mt-0.5">
-                UOBK RSUD AL-MULK KOTA SUKABUMI
-              </p>
-              <p className="text-[10px] sm:text-[11px] text-slate-600 italic mt-0.5">
-                Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota Sukabumi, Jawa Barat 43168
-              </p>
-            </div>
-          </div>
+          {/* HOSPITAL LOGO & LETTERHEAD (Persis Standar Gambar No 2) */}
+          <OfficialHeaderKop className="mb-6" />
 
           {/* REPORT CONTENT:
               1. Data Pelaksanaan 

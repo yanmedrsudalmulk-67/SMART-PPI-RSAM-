@@ -18,6 +18,7 @@ import { forceScrollToTop } from '@/utils/scrollHelper';
 import PdfDownloadButton from '@/components/reports/PdfDownloadButton';
 import ZoomableReportViewer from '@/components/reports/ZoomableReportViewer';
 import { exportElementToA4Pdf } from '@/utils/pdfExport';
+import OfficialHeaderKop from '@/components/reports/official/OfficialHeaderKop';
 
 
 const ProfessionFilter = ({ 
@@ -701,29 +702,16 @@ export default function HandHygieneReport({
         {/* Top Bevel Highlight */}
         <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
-        <div className="p-6 sm:p-8 border-b border-indigo-900/30 bg-[#141532]/60 backdrop-blur-md">
-           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-             <div className="flex items-center gap-6">
-               {hospitalLogoUrl && (
-                 <img src={hospitalLogoUrl} alt="Logo RS" className="w-16 h-16 sm:w-20 sm:h-20 object-contain" />
-               )}
-               <div className="text-center md:text-left">
-                 <h2 className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-300 uppercase tracking-tight">Laporan Audit Kebersihan Tangan</h2>
-                 <h3 className="text-base sm:text-lg font-black text-slate-200 uppercase mt-0.5">UOBK RSUD AL-MULK KOTA SUKABUMI</h3>
-                 <p className="text-slate-400 font-bold text-xs sm:text-sm mt-1 uppercase tracking-wider">
-                   Periode: {filters.periode ? (
-                     (() => {
-                       const date = parseISO(filters.periode);
-                       const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-                       return `${months[date.getMonth()]} ${date.getFullYear()}`;
-                     })()
-                   ) : '-'}
-                 </p>
-               </div>
-             </div>
-
-
-           </div>
+        {/* Kop Surat / Header Laporan Resmi - Persis Standar Gambar No 2 */}
+        <div className="bg-white text-black p-6 sm:p-8 border-b border-slate-300">
+          <OfficialHeaderKop
+            reportTitle="LAPORAN AUDIT KEBERSIHAN TANGAN (HAND HYGIENE)"
+            periode={`Periode: ${filters.periode ? (() => {
+              const date = parseISO(filters.periode);
+              const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+              return `${months[date.getMonth()]} ${date.getFullYear()}`;
+            })() : '-'}`}
+          />
         </div>
 
         <div className="overflow-x-auto pb-4">
@@ -1001,40 +989,7 @@ export default function HandHygieneReport({
             `}} />
 
             {/* Kop Surat Resmi RSUD AL-MULK (Standar Dinas) */}
-            <div className="mb-2">
-              <div className="border-b-[2.5px] border-black pb-2 mb-1">
-                <div className="flex items-center justify-center gap-4 sm:gap-5 max-w-4xl mx-auto">
-                  <div className="w-14 h-14 shrink-0 flex items-center justify-center">
-                    {hospitalLogoUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={hospitalLogoUrl}
-                        alt="Logo RS"
-                        className="max-w-full max-h-full object-contain"
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                    ) : (
-                      <ShieldCheck className="w-10 h-10 text-black" />
-                    )}
-                  </div>
-                  <div className="text-center">
-                    <h1 className="text-[11pt] sm:text-[12pt] font-black uppercase tracking-wide leading-tight text-black">
-                      TIM PENCEGAHAN DAN PENGENDALIAN INFEKSI (PPI)
-                    </h1>
-                    <h2 className="text-[11pt] sm:text-[12pt] font-black uppercase tracking-wider leading-tight text-black mt-0.5">
-                      UOBK RSUD AL-MULK KOTA SUKABUMI
-                    </h2>
-                    <p className="text-[8pt] sm:text-[8.5pt] text-black italic mt-0.5 leading-tight">
-                      Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota Sukabumi, Jawa Barat 43168
-                    </p>
-                  </div>
-                </div>
-              </div>
-              {/* Garis batas ganda kop surat standar dinas */}
-              <div className="border-b border-black mb-3" />
-            </div>
+            <OfficialHeaderKop className="mb-2" />
 
             {/* Judul & Metadata Laporan */}
             <div className="text-center mb-4">

@@ -20,6 +20,7 @@ import { forceScrollToTop } from "@/utils/scrollHelper";
 import { exportElementToA4Pdf } from "@/utils/pdfExport";
 import PdfDownloadButton from "@/components/reports/PdfDownloadButton";
 import ZoomableReportViewer from "@/components/reports/ZoomableReportViewer";
+import OfficialHeaderKop from "@/components/reports/official/OfficialHeaderKop";
 
 interface EtikaBatukData {
   id: string;
@@ -265,40 +266,8 @@ export default function EtikaBatukReport({
                 }
               }
             `}} />
-          {/* Header Kop Surat */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b-[2.5px] border-black pb-2 mb-1" id="kop-surat">
-            <div className="flex items-center gap-4 w-full justify-center text-center max-w-full">
-              <div className="w-16 h-16 flex-shrink-0 flex items-center justify-center p-1 pl-2 sm:pl-3">
-                {hospitalLogoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={hospitalLogoUrl}
-                    alt="Logo RS"
-                    className="max-w-full max-h-full object-contain"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
-                    crossOrigin="anonymous"
-                  />
-                ) : (
-                  <ShieldCheck className="w-12 h-12 text-black shrink-0" />
-                )}
-              </div>
-              <div className="text-center flex-1 pr-10 sm:pr-14">
-                <h1 className="text-[11pt] sm:text-[12pt] font-black uppercase tracking-wide leading-tight text-black">
-                  TIM PENCEGAHAN DAN PENGENDALIAN INFEKSI (PPI)
-                </h1>
-                <h2 className="text-[11pt] sm:text-[12pt] font-black uppercase tracking-wider leading-tight text-black mt-0.5">
-                  UOBK RSUD AL-MULK KOTA SUKABUMI
-                </h2>
-                <p className="text-[8.5pt] text-black italic mt-0.5 leading-tight">
-                  Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota Sukabumi, Jawa Barat 43168
-                </p>
-              </div>
-            </div>
-          </div>
-          {/* Garis batas kop surat */}
-          <div className="border-b border-black mb-4" />
+          {/* Header Kop Surat (Persis Standar Gambar No 2) */}
+          <OfficialHeaderKop className="mb-4" />
 
           <div className="text-center mb-4">
             <h2 className="text-[13pt] font-black uppercase tracking-wider text-black underline decoration-1 underline-offset-4">
