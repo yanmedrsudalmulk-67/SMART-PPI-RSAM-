@@ -21,6 +21,7 @@ import DigitalSignatureSection, {
 } from "@/components/DigitalSignatureSection";
 import { EditableSelect } from "@/components/EditableSelect";
 import { useAppContext } from "@/components/Providers";
+import TemuanRekomendasiSection from "@/components/TemuanRekomendasiSection";
 const checklistGroups = [
   {
     title: "A: RUANG ISOLASI",
@@ -560,30 +561,12 @@ export default function InputMonitoringRuangIsolasiPage() {
           statusText={stats.statusText}
           title="KEPATUHAN RUANG ISOLASI"
         />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
-              📝 TEMUAN
-            </h2>
-            <textarea
-              value={temuan}
-              onChange={(e) => setTemuan(e.target.value)}
-              placeholder="Tuliskan temuan audit...&#10;Contoh:&#10;Handrub kosong&#10;Masker N95 tidak tersedia&#10;Pintu ruang isolasi sering terbuka"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none"
+        <TemuanRekomendasiSection
+              temuan={temuan}
+              setTemuan={setTemuan}
+              rekomendasi={rekomendasi}
+              setRekomendasi={setRekomendasi}
             />
-          </div>
-          <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
-              💡 REKOMENDASI
-            </h2>
-            <textarea
-              value={rekomendasi}
-              onChange={(e) => setRekomendasi(e.target.value)}
-              placeholder="Tuliskan rekomendasi tindak lanjut...&#10;Contoh:&#10;Lengkapi stok APD&#10;Perbaiki sistem tekanan negatif&#10;Edukasi ulang petugas"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none"
-            />
-          </div>
-        </div>
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
             📷 DOKUMENTASI

@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
-import Image from 'next/image';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Camera } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppContext } from '@/components/Providers';
 import PdfDownloadButton from '@/components/reports/PdfDownloadButton';
 import ZoomableReportViewer from '@/components/reports/ZoomableReportViewer';
 import OfficialHeaderKop from '@/components/reports/official/OfficialHeaderKop';
+import { parseImageUrls, normalizeImageUrl } from '@/utils/imageHelper';
 
 interface Item {
   id: string;
@@ -41,6 +41,7 @@ interface AuditRecord {
   tanggal_perbaikan?: string;
   foto_perbaikan?: string[] | string;
   foto?: string[] | string;
+  dokumentasi?: string[] | string;
   ttd_pj?: string;
   ttd_ipcn?: string;
 }
@@ -86,11 +87,20 @@ export default function OfficialReportSheet({
     return '';
   };
 
-  const images = Array.isArray(data.foto) ? data.foto : (typeof data.foto === 'string' ? [data.foto] : []);
+  const images = parseImageUrls([
+    ...parseImageUrls(data.foto),
+    ...parseImageUrls(data.dokumentasi),
+    ...parseImageUrls(checklist?.foto),
+    ...parseImageUrls(checklist?.dokumentasi),
+  ]);
   const upayaText = data.upaya_perbaikan || (checklist && checklist.upaya_perbaikan) || (checklist && checklist.upayaPerbaikan) || '';
   const waktuPerbaikan = data.waktu_perbaikan || data.tanggal_perbaikan || (checklist && checklist.waktu_perbaikan) || (checklist && checklist.tanggal_perbaikan) || '';
   const perbaikanRaw = data.foto_perbaikan || (checklist && checklist.foto_perbaikan) || (checklist && checklist.dokumentasi_perbaikan);
-  const perbaikanImages = Array.isArray(perbaikanRaw) ? perbaikanRaw : (typeof perbaikanRaw === 'string' ? [perbaikanRaw] : []);
+  const perbaikanImages = parseImageUrls([
+    ...parseImageUrls(perbaikanRaw),
+    ...parseImageUrls(checklist?.foto_perbaikan),
+    ...parseImageUrls(checklist?.dokumentasi_perbaikan),
+  ]);
 
   return (
     <div className="w-full">
@@ -225,11 +235,27 @@ export default function OfficialReportSheet({
          <div className="mb-8 space-y-4">
            <h4 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-4 border-b border-slate-300 pb-2">Dokumentasi Audit</h4>
            <div className="grid grid-cols-2 gap-4 print:page-break-inside-avoid px-2">
-             {images.map((url, i) => (
-               <div key={i} onClick={() => setZoomedImage(url)} className="relative pt-[75%] border border-slate-300 p-1 cursor-zoom-in bg-white shadow-sm">
-                 <Image src={url} alt="Dokumentasi" fill sizes="50vw" className="absolute inset-0 w-full h-full object-cover p-1" referrerPolicy="no-referrer" />
-               </div>
-             ))}
+             {images.map((url, i) => {
+               const normalized = normalizeImageUrl(url);
+               return (
+                 <div key={i} onClick={() => setZoomedImage(normalized)} className="relative pt-[75%] border border-slate-300 p-1 cursor-zoom-in bg-white shadow-sm overflow-hidden">
+                   {/* eslint-disable-next-line @next/next/no-img-element */}
+                   <img src={normalized} alt={`Dokumentasi ${i+1}`}
+                     className="absolute inset-0 w-full h-full object-cover p-1" loading="lazy"
+                     onError={(e) => {
+                       const target = e.currentTarget;
+                       target.style.display = 'none';
+                       const parent = target.parentElement;
+                       if (parent && !parent.querySelector('.img-fallback')) {
+                         const fallback = document.createElement('div');
+                         fallback.className = 'img-fallback absolute inset-0 flex flex-col items-center justify-center bg-slate-100 text-slate-400 text-[10px] text-center p-2';
+                         fallback.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg><span style="margin-top:4px">Gambar tidak tersedia</span>';
+                         parent.appendChild(fallback);
+                       }
+                     }} />
+                 </div>
+               );
+             })}
            </div>
          </div>
       )}
@@ -253,11 +279,17 @@ export default function OfficialReportSheet({
              <div className="pt-2">
                <p className="text-[10px] font-bold text-amber-900 mb-2 uppercase tracking-wider">Foto Bukti Upaya Perbaikan:</p>
                <div className="grid grid-cols-2 gap-4 print:page-break-inside-avoid px-2">
-                 {perbaikanImages.map((url, i) => (
-                   <div key={i} onClick={() => setZoomedImage(url)} className="relative pt-[75%] border-2 border-amber-500 bg-white p-1 cursor-zoom-in rounded-lg overflow-hidden shadow-sm">
-                     <Image src={url} alt="Foto Upaya Perbaikan" fill sizes="50vw" className="absolute inset-0 w-full h-full object-cover p-1" referrerPolicy="no-referrer" />
-                   </div>
-                 ))}
+                 {perbaikanImages.map((url, i) => {
+                   const normalizedP = normalizeImageUrl(url);
+                   return (
+                     <div key={i} onClick={() => setZoomedImage(normalizedP)} className="relative pt-[75%] border-2 border-amber-500 bg-white p-1 cursor-zoom-in rounded-lg overflow-hidden shadow-sm">
+                       {/* eslint-disable-next-line @next/next/no-img-element */}
+                       <img src={normalizedP} alt={`Foto Perbaikan ${i+1}`}
+                         className="absolute inset-0 w-full h-full object-cover p-1" loading="lazy"
+                         onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                     </div>
+                   );
+                 })}
                </div>
              </div>
            )}
@@ -269,7 +301,7 @@ export default function OfficialReportSheet({
         <div className="text-center space-y-4">
           <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">Petugas / PJ Ruangan</p>
           <div className="h-20 relative w-full flex justify-center items-center">
-            {data.ttd_pj && <Image src={data.ttd_pj} fill sizes="200px" className="object-contain filter brightness-0" alt="TTD PJ" referrerPolicy="no-referrer" />}
+            {data.ttd_pj && <img src={normalizeImageUrl(data.ttd_pj)} className="w-full h-full object-contain filter brightness-0" alt="TTD PJ" />}
           </div>
           <div className="pt-2 border-t border-slate-300 w-full">
             <p className="font-bold text-xs uppercase tracking-wider text-black">
@@ -282,7 +314,7 @@ export default function OfficialReportSheet({
         <div className="text-center space-y-4">
           <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">Tim PPI</p>
           <div className="h-20 relative w-full flex justify-center items-center">
-            {data.ttd_ipcn && <Image src={data.ttd_ipcn} fill sizes="200px" className="object-contain filter brightness-0" alt="TTD IPCN" referrerPolicy="no-referrer" />}
+            {data.ttd_ipcn && <img src={normalizeImageUrl(data.ttd_ipcn)} className="w-full h-full object-contain filter brightness-0" alt="TTD IPCN" />}
           </div>
           <div className="pt-2 border-t border-slate-300 w-full">
             <p className="font-bold text-xs uppercase tracking-wider text-black">{inspector || '( ............................... )'}</p>

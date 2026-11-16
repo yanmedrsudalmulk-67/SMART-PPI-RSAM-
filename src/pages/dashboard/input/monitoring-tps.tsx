@@ -25,6 +25,7 @@ import {
   DocImage,
 } from "@/components/DocumentationUploader";
 import { UpayaPerbaikanSection } from "@/components/UpayaPerbaikanSection";
+import TemuanRekomendasiSection from "@/components/TemuanRekomendasiSection";
 const checklistGroups = [
   {
     title: "A. Area TPS dan Bangunan",
@@ -446,51 +447,7 @@ export default function InputMonitoringTPSPage() {
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
             <Activity className="w-4 h-4 text-purple-400" /> Informasi Umum
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-3">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
-                🕒 Waktu Audit
-              </label>
-              <input
-                type="datetime-local"
-                value={
-                  startTime
-                    ? new Date(
-                        startTime.getTime() -
-                          startTime.getTimezoneOffset() * 60000,
-                      )
-                        .toISOString()
-                        .slice(0, 16)
-                    : ""
-                }
-                onChange={(e) => setStartTime(new Date(e.target.value))}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 [color-scheme:dark]"
-              />
-            </div>
-            <div className="space-y-3">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
-                📍 Ruangan
-              </label>
-              <input
-                type="text"
-                readOnly
-                value="TPS"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none cursor-not-allowed text-slate-400"
-              />
-            </div>
-            <div className="md:col-span-2">
-              <EditableSelect
-                label="👤 Supervisor"
-                value={observer}
-                onChange={setObserver}
-                options={["IPCN_Adi Tresa Purnama"]}
-                isIPCN={isIPCN}
-                table="master_observers"
-                storageKey="local_obs"
-                placeholder="Pilih Supervisor..."
-              />
-            </div>
-          </div>
+          
         </div>
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -598,30 +555,12 @@ export default function InputMonitoringTPSPage() {
           statusText={stats.statusText}
           title="KEPATUHAN TPS"
         />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
-              📝 Temuan Audit
-            </h2>
-            <textarea
-              value={temuan}
-              onChange={(e) => setTemuan(e.target.value)}
-              placeholder="Tuliskan temuan audit...&#10;Contoh:&#10;Safety box penuh&#10;Lantai TPS licin&#10;Limbah belum dipilah"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600"
-            />
-          </div>
-          <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
-              💡 Rekomendasi
-            </h2>
-            <textarea
-              value={rekomendasi}
-              onChange={(e) => setRekomendasi(e.target.value)}
-              placeholder="Tuliskan rekomendasi tindak lanjut...&#10;Contoh:&#10;Ganti safety box segera&#10;Lakukan disinfeksi harian&#10;Tambahkan label pemilahan limbah"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600"
-            />
-          </div>
-        </div>
+        <TemuanRekomendasiSection
+          temuan={temuan}
+          setTemuan={setTemuan}
+          rekomendasi={rekomendasi}
+          setRekomendasi={setRekomendasi}
+        />
         <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
           <DocumentationUploader images={images} setImages={setImages} />
         </div>

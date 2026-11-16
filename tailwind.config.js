@@ -18,8 +18,9 @@ module.exports = {
     },
     extend: {
       fontFamily: {
-        sans: ["var(--font-sans)", "sans-serif"],
-        heading: ["var(--font-sans)", "sans-serif"],
+        sans: ["var(--font-sans)", "'DM Sans'", "system-ui", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+        heading: ["var(--font-heading)", "'Poppins'", "system-ui", "-apple-system", "sans-serif"],
+        poppins: ["var(--font-poppins)", "'Poppins'", "system-ui", "-apple-system", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

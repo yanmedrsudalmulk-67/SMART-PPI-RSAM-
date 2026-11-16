@@ -1,8 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Poppins:ital,wght@0,600;0,700;0,800;0,900;1,600;1,700;1,800&family=Carlito:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Carlito:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html, body {
+    font-family: var(--font-sans), 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.012em;
+  }
+
+  /* Judul menu, heading utama, dan teks SMART PPI menggunakan Poppins Bold */
+  h1:not(.official-report-sheet *):not(.official-pdf-page *):not([data-pdf-page="true"] *):not(.f4-page *),
+  h2:not(.official-report-sheet *):not(.official-pdf-page *):not([data-pdf-page="true"] *):not(.f4-page *),
+  h3:not(.official-report-sheet *):not(.official-pdf-page *):not([data-pdf-page="true"] *):not(.f4-page *),
+  .font-heading,
+  .font-poppins,
+  .menu-title,
+  .page-title,
+  .welcome-smart-ppi {
+    font-family: var(--font-poppins), 'Poppins', system-ui, -apple-system, sans-serif !important;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+
+  button, input, select, textarea {
+    font-family: inherit;
+  }
+
+  /* Cegah dropdown select bawaan OS berubah menjadi putih */
+  select option {
+    background-color: #12142e !important;
+    color: #f1f5f9 !important;
+    padding: 8px 12px;
+  }
+}
 
 /* Fix html2canvas & Tailwind preflight downward text shift bug */
 img, svg {
@@ -137,7 +172,8 @@ img, svg {
 
 @media print {
   @page {
-    margin: 2.5cm !important;
+    size: 330mm 215mm;
+    margin: 15mm !important;
   }
 
   body {
@@ -179,17 +215,25 @@ img, svg {
   }
 
   .official-report-sheet th,
-  .official-report-sheet td,
+  .official-report-sheet td:not(.align-top):not([class*="align-top"]),
   #official-report-sheet th,
-  #official-report-sheet td,
+  #official-report-sheet td:not(.align-top):not([class*="align-top"]),
   .official-report-paper th,
-  .official-report-paper td,
+  .official-report-paper td:not(.align-top):not([class*="align-top"]),
   .official-pdf-page th,
-  .official-pdf-page td,
+  .official-pdf-page td:not(.align-top):not([class*="align-top"]),
   [data-pdf-page="true"] th,
-  [data-pdf-page="true"] td {
+  [data-pdf-page="true"] td:not(.align-top):not([class*="align-top"]) {
     vertical-align: middle !important;
     padding: 0.25rem 0.5rem !important;
+    border: 1px solid #000000 !important;
+  }
+
+  .supervisi-page-sheet td,
+  .official-report-sheet td.align-top,
+  .official-pdf-page td.align-top,
+  [data-pdf-page="true"] td.align-top {
+    vertical-align: top !important;
     border: 1px solid #000000 !important;
   }
 }
@@ -466,9 +510,9 @@ html, body {
 :root:not(.light) .text-slate-700:not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *):not(#hand-hygiene-official-report *) {
   color: #ffffff !important;
 }
-:root:not(.light) .bg-white:not(.official-report-paper):not(.official-pdf-page):not(.official-report-sheet):not([data-pdf-page="true"]):not(#generic-official-report):not(#official-report-sheet):not(#etika-batuk-official-report):not(#diklat-official-report):not(#hand-hygiene-official-report):not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *):not(#hand-hygiene-official-report *),
-:root:not(.light) .bg-slate-50:not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *):not(#hand-hygiene-official-report *),
-:root:not(.light) .bg-gray-50:not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *):not(#hand-hygiene-official-report *) {
+:root:not(.light) .bg-white:not(.official-report-paper):not(.official-pdf-page):not(.official-report-sheet):not([data-pdf-page="true"]):not(#generic-official-report):not(#official-report-sheet):not(#etika-batuk-official-report):not(#diklat-official-report):not(#hand-hygiene-official-report):not(#printable-supervisi-sheet):not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *):not(#hand-hygiene-official-report *):not(#printable-supervisi-sheet *),
+:root:not(.light) .bg-slate-50:not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *):not(#hand-hygiene-official-report *):not(#printable-supervisi-sheet *),
+:root:not(.light) .bg-gray-50:not(.official-report-paper *):not(.official-pdf-page *):not(.official-report-sheet *):not([data-pdf-page="true"] *):not(#generic-official-report *):not(#official-report-sheet *):not(#etika-batuk-official-report *):not(#diklat-official-report *):not(#hand-hygiene-official-report *):not(#printable-supervisi-sheet *) {
   background-color: rgba(255, 255, 255, 0.05) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
 }
@@ -500,6 +544,7 @@ html, body {
 #official-report-sheet,
 #etika-batuk-official-report,
 #diklat-official-report,
+#printable-supervisi-sheet,
 [data-pdf-page="true"],
 :root:not(.light) .official-report-paper,
 :root:not(.light) .official-pdf-page,
@@ -508,11 +553,86 @@ html, body {
 :root:not(.light) #official-report-sheet,
 :root:not(.light) #etika-batuk-official-report,
 :root:not(.light) #diklat-official-report,
+:root:not(.light) #printable-supervisi-sheet,
 :root:not(.light) [data-pdf-page="true"] {
   background-color: #ffffff !important;
   color: #000000 !important;
   -webkit-text-fill-color: #000000 !important;
   opacity: 1 !important;
+}
+
+#printable-supervisi-sheet,
+#printable-supervisi-sheet tr,
+#printable-supervisi-sheet td,
+#printable-supervisi-sheet th,
+#printable-supervisi-sheet p,
+#printable-supervisi-sheet span,
+#printable-supervisi-sheet div,
+.supervisi-page-sheet,
+.supervisi-page-sheet tr,
+.supervisi-page-sheet td,
+.supervisi-page-sheet th,
+.supervisi-page-sheet p,
+.supervisi-page-sheet span,
+.supervisi-page-sheet div,
+:root:not(.light) #printable-supervisi-sheet tr,
+:root:not(.light) #printable-supervisi-sheet td,
+:root:not(.light) #printable-supervisi-sheet th,
+:root:not(.light) #printable-supervisi-sheet p,
+:root:not(.light) #printable-supervisi-sheet span,
+:root:not(.light) #printable-supervisi-sheet div,
+:root:not(.light) .supervisi-page-sheet tr,
+:root:not(.light) .supervisi-page-sheet td,
+:root:not(.light) .supervisi-page-sheet th,
+:root:not(.light) .supervisi-page-sheet p,
+:root:not(.light) .supervisi-page-sheet span,
+:root:not(.light) .supervisi-page-sheet div {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}
+
+#printable-supervisi-sheet,
+#printable-supervisi-sheet table,
+#printable-supervisi-sheet tbody,
+#printable-supervisi-sheet tr,
+#printable-supervisi-sheet td,
+.supervisi-page-sheet,
+.supervisi-page-sheet table,
+.supervisi-page-sheet tbody,
+.supervisi-page-sheet tr,
+.supervisi-page-sheet td,
+:root:not(.light) #printable-supervisi-sheet,
+:root:not(.light) #printable-supervisi-sheet table,
+:root:not(.light) #printable-supervisi-sheet tbody,
+:root:not(.light) #printable-supervisi-sheet tr,
+:root:not(.light) #printable-supervisi-sheet td,
+:root:not(.light) .supervisi-page-sheet,
+:root:not(.light) .supervisi-page-sheet table,
+:root:not(.light) .supervisi-page-sheet tbody,
+:root:not(.light) .supervisi-page-sheet tr,
+:root:not(.light) .supervisi-page-sheet td {
+  background-color: #ffffff !important;
+}
+
+#printable-supervisi-sheet thead tr,
+#printable-supervisi-sheet thead th,
+.supervisi-page-sheet thead tr,
+.supervisi-page-sheet thead th,
+:root:not(.light) #printable-supervisi-sheet thead tr,
+:root:not(.light) #printable-supervisi-sheet thead th,
+:root:not(.light) .supervisi-page-sheet thead tr,
+:root:not(.light) .supervisi-page-sheet thead th {
+  background-color: #f1f5f9 !important;
+  color: #000000 !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+#printable-supervisi-sheet tbody td,
+.supervisi-page-sheet tbody td,
+:root:not(.light) #printable-supervisi-sheet tbody td,
+:root:not(.light) .supervisi-page-sheet tbody td {
+  vertical-align: top !important;
 }
 
 .official-report-paper .bg-white,
@@ -985,6 +1105,98 @@ video {
   .f4-page.is-cover,
   .f4-page[data-is-cover="true"] {
     padding: 0 !important;
+  }
+
+  /* Super-clean print for Supervisi Official F4 Report */
+  body.printing-supervisi {
+    background: #ffffff !important;
+  }
+
+  body.printing-supervisi aside,
+  body.printing-supervisi header,
+  body.printing-supervisi nav,
+  body.printing-supervisi .print-modal-bar,
+  body.printing-supervisi #app-header,
+  body.printing-supervisi #app-sidebar,
+  body.printing-supervisi .no-print {
+    display: none !important;
+  }
+
+  body.printing-supervisi #supervisi-print-modal-container {
+    position: static !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  body.printing-supervisi #supervisi-print-modal-container > div {
+    max-height: none !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background: #ffffff !important;
+    border: none !important;
+  }
+
+  body.printing-supervisi .supervisi-page-sheet,
+  body.printing-supervisi [data-pdf-page="true"],
+  #printable-supervisi-sheet {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    position: relative !important;
+    width: 330mm !important;
+    min-width: 330mm !important;
+    max-width: 330mm !important;
+    height: 215mm !important;
+    min-height: 215mm !important;
+    max-height: 215mm !important;
+    overflow: hidden !important;
+    margin: 0 auto !important;
+    padding: 15mm !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border: none !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    box-sizing: border-box !important;
+  }
+
+  body.printing-supervisi .supervisi-page-sheet:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  body.printing-supervisi .supervisi-page-sheet *,
+  #printable-supervisi-sheet * {
+    color: #000000 !important;
+    border-color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body.printing-supervisi .supervisi-page-sheet tbody td,
+  #printable-supervisi-sheet tbody td {
+    vertical-align: top !important;
+  }
+
+  body.printing-supervisi .supervisi-page-sheet thead tr,
+  body.printing-supervisi .supervisi-page-sheet thead th,
+  #printable-supervisi-sheet thead tr,
+  #printable-supervisi-sheet thead th {
+    background-color: #f1f5f9 !important;
+    color: #000000 !important;
+    font-weight: 800 !important;
+    text-align: center !important;
+    vertical-align: middle !important;
   }
 }
 

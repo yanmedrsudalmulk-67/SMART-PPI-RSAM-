@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Default tetap '.next'; NEXT_DIST_DIR hanya dipakai untuk server uji agar tidak menimpa build produksi
-  distDir: process.env.NEXT_DIST_DIR || '.next',
+  // Default tetap '.next' untuk produksi; mode dev memakai '.next-dev' agar tidak merusak build produksi
+  distDir: process.env.NEXT_DIST_DIR || (process.env.NODE_ENV === 'development' ? '.next-dev' : '.next'),
   reactStrictMode: true,
   images: {
     remotePatterns: [

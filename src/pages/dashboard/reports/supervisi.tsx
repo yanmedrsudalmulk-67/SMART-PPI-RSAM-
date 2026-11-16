@@ -43,6 +43,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { supabase } from "@/lib/supabase";
 import { useAppContext } from "@/components/Providers";
 import ZoomableReportViewer from "@/components/reports/ZoomableReportViewer";
+import { parseImageUrls, normalizeImageUrl } from "@/utils/imageHelper";
 
 interface SupervisiRecord {
   id: string;
@@ -219,6 +220,8 @@ export default function BuktiSupervisiPage() {
   const [editingRecord, setEditingRecord] = useState<SupervisiRecord | null>(null);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [pdfProgressText, setPdfProgressText] = useState("");
   const [lightboxImage, setLightboxImage] = useState<{
     images: string[];
     currentIndex: number;
@@ -510,6 +513,171 @@ export default function BuktiSupervisiPage() {
     searchQuery,
   ]);
 
+  // Paginated Pages for Official F4 Landscape Report (Modal Preview & Multi-page PDF Export)
+  // Mengacu presisi pada ukuran kertas F4 Landscape (330mm x 215mm) dengan margin 1,5 cm (15mm) keliling.
+  // Area bersih dalam margin: lebar 300mm x tinggi 185mm.
+  // Memaksimalkan ruang isi halaman hingga baris mendekati batas margin bawah / footer sebelum pindah halaman.
+  const paginatedSupervisiPages = useMemo(() => {
+    if (!filteredRecords || filteredRecords.length === 0) {
+      return [
+        {
+          pageNumber: 1,
+          records: [] as Array<{ record: SupervisiRecord; globalIndex: number }>,
+          isFirstPage: true,
+          isLastPage: true,
+        },
+      ];
+    }
+
+    const countWrappedLines = (text: string, charsPerLine: number): number => {
+      if (!text || !text.trim()) return 1;
+      return text
+        .trim()
+        .split(/\r?\n/)
+        .reduce((acc, paragraph) => {
+          const trimmed = paragraph.trim();
+          if (!trimmed) return acc + 1;
+          const words = trimmed.split(/\s+/);
+          let lines = 1;
+          let currentLen = 0;
+          for (const word of words) {
+            if (currentLen === 0) {
+              if (word.length > charsPerLine) {
+                lines += Math.floor((word.length - 1) / charsPerLine);
+                currentLen = ((word.length - 1) % charsPerLine) + 1;
+              } else {
+                currentLen = word.length;
+              }
+            } else if (currentLen + 1 + word.length <= charsPerLine) {
+              currentLen += 1 + word.length;
+            } else {
+              lines += 1;
+              if (word.length > charsPerLine) {
+                lines += Math.floor((word.length - 1) / charsPerLine);
+                currentLen = ((word.length - 1) % charsPerLine) + 1;
+              } else {
+                currentLen = word.length;
+              }
+            }
+          }
+          return acc + lines;
+        }, 0);
+    };
+
+    const estimateRowHeightMm = (rec: SupervisiRecord): number => {
+      const beforeCount = rec.foto_temuan ? rec.foto_temuan.length : 0;
+      const afterCount = rec.foto_perbaikan ? rec.foto_perbaikan.length : 0;
+      const maxPhotos = Math.max(beforeCount, afterCount);
+
+      const kegiatanLines = countWrappedLines(rec.nama_kegiatan || "Supervisi PPI", 18);
+      const unitLines = countWrappedLines(rec.unit || "Umum", 13);
+      const temuanLines = countWrappedLines(rec.temuan || "-", 28);
+      const rekomLines = countWrappedLines(rec.rekomendasi || "-", 45);
+      const tindakLines =
+        countWrappedLines(rec.upaya_perbaikan || "-", 16) + (rec.waktu_perbaikan ? 1.5 : 0);
+
+      const maxTextLines = Math.max(
+        kegiatanLines,
+        unitLines,
+        temuanLines,
+        rekomLines,
+        tindakLines,
+        2
+      );
+
+      // Tinggi teks: ~3.55mm per baris (font 8pt line-height 1.25) + 4mm padding atas/bawah sel
+      const textHeightMm = maxTextLines * 3.55 + 4;
+
+      // Tinggi foto: setiap foto w-[20mm] h-[15.5mm] + 1.2mm gap antar foto + 4mm padding sel
+      const photoHeightMm =
+        maxPhotos > 0 ? maxPhotos * 15.5 + (maxPhotos - 1) * 1.2 + 4 : 12;
+
+      return Math.max(textHeightMm, photoHeightMm, 15);
+    };
+
+    // Tinggi ruang tabel aktual dalam area bersih 185mm:
+    // Halaman 1: 185mm - (Kop+Judul 35mm + Thead 8mm + Footer 7mm + Buffer 5mm) = 130mm
+    // Halaman 2+: 185mm - (Header 8.5mm + Thead 8mm + Footer 7mm + Buffer 5.5mm) = 156mm
+    const FIRST_PAGE_MAX_HEIGHT_MM = 130;
+    const NEXT_PAGE_MAX_HEIGHT_MM = 156;
+    const SIGNATURE_BLOCK_HEIGHT_MM = 34;
+
+    const pagesData: Array<{
+      items: Array<{ record: SupervisiRecord; globalIndex: number }>;
+      usedHeightMm: number;
+    }> = [];
+
+    let currentItems: Array<{ record: SupervisiRecord; globalIndex: number }> = [];
+    let currentHeightMm = 0;
+    let isFirst = true;
+
+    for (let i = 0; i < filteredRecords.length; i++) {
+      const rec = filteredRecords[i];
+      const rowHeight = estimateRowHeightMm(rec);
+      const maxAllowedHeight = isFirst ? FIRST_PAGE_MAX_HEIGHT_MM : NEXT_PAGE_MAX_HEIGHT_MM;
+      const maxAllowedRows = isFirst ? 8 : 10;
+
+      if (
+        currentItems.length > 0 &&
+        (currentHeightMm + rowHeight > maxAllowedHeight || currentItems.length >= maxAllowedRows)
+      ) {
+        pagesData.push({ items: currentItems, usedHeightMm: currentHeightMm });
+        currentItems = [{ record: rec, globalIndex: i + 1 }];
+        currentHeightMm = rowHeight;
+        isFirst = false;
+      } else {
+        currentItems.push({ record: rec, globalIndex: i + 1 });
+        currentHeightMm += rowHeight;
+      }
+    }
+
+    if (currentItems.length > 0) {
+      pagesData.push({ items: currentItems, usedHeightMm: currentHeightMm });
+    }
+
+    // Pastikan halaman terakhir memiliki ruang yang cukup untuk blok tanda tangan (34mm)
+    // tanpa menyentuh garis margin bawah. Jika penuh, pindahkan baris dari akhir ke halaman baru.
+    if (pagesData.length > 0) {
+      const lastPageIndex = pagesData.length - 1;
+      const lastPage = pagesData[lastPageIndex];
+      const lastPageBudget =
+        lastPageIndex === 0 ? FIRST_PAGE_MAX_HEIGHT_MM : NEXT_PAGE_MAX_HEIGHT_MM;
+
+      if (
+        lastPage.usedHeightMm + SIGNATURE_BLOCK_HEIGHT_MM > lastPageBudget &&
+        lastPage.items.length > 1
+      ) {
+        const movedItems: Array<{ record: SupervisiRecord; globalIndex: number }> = [];
+        let movedHeightMm = 0;
+
+        while (
+          lastPage.usedHeightMm + SIGNATURE_BLOCK_HEIGHT_MM > lastPageBudget &&
+          lastPage.items.length > 1
+        ) {
+          const movedItem = lastPage.items.pop()!;
+          const itemHeight = estimateRowHeightMm(movedItem.record);
+          lastPage.usedHeightMm = Math.max(0, lastPage.usedHeightMm - itemHeight);
+          movedItems.unshift(movedItem);
+          movedHeightMm += itemHeight;
+        }
+
+        if (movedItems.length > 0) {
+          pagesData.push({
+            items: movedItems,
+            usedHeightMm: movedHeightMm,
+          });
+        }
+      }
+    }
+
+    return pagesData.map((p, idx) => ({
+      pageNumber: idx + 1,
+      records: p.items,
+      isFirstPage: idx === 0,
+      isLastPage: idx === pagesData.length - 1,
+    }));
+  }, [filteredRecords]);
+
   // Summary Metrics
   const stats = useMemo(() => {
     const total = filteredRecords.length;
@@ -775,6 +943,134 @@ export default function BuktiSupervisiPage() {
     }
   };
 
+  // Unduh PDF Resmi Standar F4 Landscape Multi-Halaman (100% 1:1 Sama Persis Tampilan Pratinjau Aplikasi)
+  const handleDownloadPdf = async () => {
+    setIsDownloadingPdf(true);
+    setPdfProgressText("Menyiapkan dokumen...");
+    try {
+      const pageElements = document.querySelectorAll<HTMLElement>("[data-pdf-page='true']");
+      if (!pageElements || pageElements.length === 0) {
+        alert("Tidak ada lembar dokumen untuk diunduh.");
+        return;
+      }
+
+      // Pastikan seluruh gambar pada setiap lembar pratinjau telah ter-decode penuh
+      const allImgs = Array.from(
+        document.querySelectorAll<HTMLImageElement>("[data-pdf-page='true'] img")
+      );
+      await Promise.all(
+        allImgs.map((img) => {
+          if (img.complete) return Promise.resolve();
+          return new Promise<void>((resolve) => {
+            img.onload = () => resolve();
+            img.onerror = () => resolve();
+          });
+        })
+      );
+
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ]);
+
+      // Format Kertas F4 Landscape Standar Indonesia (330mm x 215mm)
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: [330, 215],
+        compress: true,
+      });
+
+      const totalPages = pageElements.length;
+
+      for (let i = 0; i < totalPages; i++) {
+        setPdfProgressText(`Menyusun Halaman ${i + 1} dari ${totalPages}...`);
+        const pageEl = pageElements[i];
+
+        if (i > 0) {
+          pdf.addPage([330, 215], "landscape");
+        }
+
+        const exactWidth = pageEl.offsetWidth || 1248;
+        const exactHeight = pageEl.offsetHeight || 813;
+
+        const canvas = await html2canvas(pageEl, {
+          scale: 2.2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: "#ffffff",
+          width: exactWidth,
+          height: exactHeight,
+          windowWidth: exactWidth,
+          windowHeight: exactHeight,
+          scrollX: 0,
+          scrollY: 0,
+          onclone: (clonedDoc) => {
+            const clonedPages = clonedDoc.querySelectorAll<HTMLElement>("[data-pdf-page='true']");
+            const targetClonedPage = clonedPages[i];
+            if (targetClonedPage) {
+              targetClonedPage.style.width = "330mm";
+              targetClonedPage.style.minWidth = "330mm";
+              targetClonedPage.style.maxWidth = "330mm";
+              targetClonedPage.style.height = "215mm";
+              targetClonedPage.style.minHeight = "215mm";
+              targetClonedPage.style.maxHeight = "215mm";
+              targetClonedPage.style.padding = "15mm";
+              targetClonedPage.style.boxSizing = "border-box";
+              targetClonedPage.style.overflow = "hidden";
+              targetClonedPage.style.backgroundColor = "#ffffff";
+              targetClonedPage.style.color = "#000000";
+              targetClonedPage.style.boxShadow = "none";
+              targetClonedPage.style.margin = "0";
+              const allEls = targetClonedPage.querySelectorAll("*");
+              allEls.forEach((el: any) => {
+                el.style.color = "#000000";
+                el.style.webkitTextFillColor = "#000000";
+                if (el.tagName === "TD") {
+                  el.style.verticalAlign = "top";
+                  el.style.backgroundColor = "#ffffff";
+                  el.style.borderColor = "#000000";
+                }
+                if (
+                  el.tagName === "TH" ||
+                  el.tagName === "THEAD" ||
+                  el.classList.contains("bg-slate-100")
+                ) {
+                  el.style.backgroundColor = "#f1f5f9";
+                  el.style.textAlign = "center";
+                  el.style.verticalAlign = "middle";
+                  el.style.borderColor = "#000000";
+                }
+              });
+            }
+          },
+        });
+
+        const imgData = canvas.toDataURL("image/jpeg", 0.98);
+        pdf.addImage(imgData, "JPEG", 0, 0, 330, 215, undefined, "FAST");
+      }
+
+      const dateStr = format(new Date(), "yyyyMMdd");
+      pdf.save(`Bukti_Supervisi_PPI_RSUD_Al-Mulk_F4_Landscape_${dateStr}.pdf`);
+      showToast("Dokumen PDF Bukti Supervisi berhasil diunduh.");
+    } catch (err) {
+      console.error("Gagal mengunduh PDF:", err);
+      alert("Gagal mengunduh PDF. Silakan gunakan tombol Cetak Lembar sebagai alternatif.");
+    } finally {
+      setIsDownloadingPdf(false);
+      setPdfProgressText("");
+    }
+  };
+
+  // Cetak Resmi Menggunakan Standard Dialog Print Browser
+  const handlePrintOfficial = () => {
+    document.body.classList.add("printing-supervisi");
+    window.print();
+    setTimeout(() => {
+      document.body.classList.remove("printing-supervisi");
+    }, 1000);
+  };
+
   return (
     <DashboardLayout>
       <Head>
@@ -830,16 +1126,18 @@ export default function BuktiSupervisiPage() {
           </div>
         </div>
 
-        {/* KPI Mini-Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-          <div className="p-4 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 shadow-sm relative overflow-hidden">
+        {/* KPI Mini-Cards with 3D Neumorphism */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-6">
+          <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#141738] border border-slate-200/80 dark:border-indigo-500/20 shadow-[5px_5px_15px_rgba(0,0,0,0.06),-5px_-5px_15px_rgba(255,255,255,0.8)] dark:shadow-[6px_6px_18px_rgba(0,0,0,0.5),-4px_-4px_12px_rgba(255,255,255,0.04)] relative overflow-hidden transition-all hover:-translate-y-1">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Total Supervisi
               </span>
-              <ClipboardCheck className="w-4 h-4 text-slate-400" />
+              <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800/90 flex items-center justify-center shadow-inner">
+                <ClipboardCheck className="w-4 h-4 text-slate-500 dark:text-slate-300" />
+              </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-2">
               {stats.total}
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
@@ -847,14 +1145,16 @@ export default function BuktiSupervisiPage() {
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50 shadow-sm relative overflow-hidden">
+          <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/25 border border-emerald-200/80 dark:border-emerald-700/30 shadow-[5px_5px_15px_rgba(16,185,129,0.08),-5px_-5px_15px_rgba(255,255,255,0.8)] dark:shadow-[6px_6px_18px_rgba(0,0,0,0.5),-4px_-4px_12px_rgba(16,185,129,0.05)] relative overflow-hidden transition-all hover:-translate-y-1">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
                 Selesai Ditindaklanjuti
               </span>
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center shadow-inner">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-emerald-700 dark:text-emerald-300 mt-1">
+            <div className="text-2xl sm:text-3xl font-black text-emerald-700 dark:text-emerald-300 mt-2">
               {stats.selesai}
             </div>
             <div className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5 font-medium">
@@ -862,14 +1162,16 @@ export default function BuktiSupervisiPage() {
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50 shadow-sm relative overflow-hidden">
+          <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-700/30 shadow-[5px_5px_15px_rgba(245,158,11,0.08),-5px_-5px_15px_rgba(255,255,255,0.8)] dark:shadow-[6px_6px_18px_rgba(0,0,0,0.5),-4px_-4px_12px_rgba(245,158,11,0.05)] relative overflow-hidden transition-all hover:-translate-y-1">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
                 Dalam Proses (Pending)
               </span>
-              <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center shadow-inner">
+                <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-amber-700 dark:text-amber-300 mt-1">
+            <div className="text-2xl sm:text-3xl font-black text-amber-700 dark:text-amber-300 mt-2">
               {stats.dalamProses}
             </div>
             <div className="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5 font-medium">
@@ -877,14 +1179,16 @@ export default function BuktiSupervisiPage() {
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/50 shadow-sm relative overflow-hidden">
+          <div className="p-4 sm:p-5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/25 border border-blue-200/80 dark:border-blue-700/30 shadow-[5px_5px_15px_rgba(59,130,246,0.08),-5px_-5px_15px_rgba(255,255,255,0.8)] dark:shadow-[6px_6px_18px_rgba(0,0,0,0.5),-4px_-4px_12px_rgba(59,130,246,0.05)] relative overflow-hidden transition-all hover:-translate-y-1">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">
                 % Penyelesaian
               </span>
-              <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center shadow-inner">
+                <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-blue-700 dark:text-blue-300 mt-1">
+            <div className="text-2xl sm:text-3xl font-black text-blue-700 dark:text-blue-300 mt-2">
               {stats.percentSelesai}%
             </div>
             <div className="text-[11px] text-blue-600 dark:text-blue-400 mt-0.5 font-medium">
@@ -965,7 +1269,7 @@ export default function BuktiSupervisiPage() {
                   <th className="px-1.5 py-3 text-center align-middle w-20 min-w-[75px] border-r border-slate-200 dark:border-slate-700/80">Ruangan</th>
                   <th className="px-2.5 py-3 text-center align-middle w-36 min-w-[135px] border-r border-slate-200 dark:border-slate-700/80">Temuan Lapangan</th>
                   <th className="px-2.5 py-3 text-center align-middle w-64 min-w-[250px] lg:w-72 lg:min-w-[280px] border-r border-slate-200 dark:border-slate-700/80">Foto Temuan (Before)</th>
-                  <th className="px-2.5 py-3 text-center align-middle w-36 min-w-[135px] border-r border-slate-200 dark:border-slate-700/80">Rekomendasi PPI</th>
+                  <th className="px-3.5 py-3 text-center align-middle w-64 min-w-[250px] lg:w-72 lg:min-w-[280px] border-r border-slate-200 dark:border-slate-700/80">Rekomendasi PPI</th>
                   <th className="px-2.5 py-3 text-center align-middle w-36 min-w-[135px] border-r border-slate-200 dark:border-slate-700/80">Tindak Lanjut & Perbaikan</th>
                   <th className="px-2.5 py-3 text-center align-middle w-64 min-w-[250px] lg:w-72 lg:min-w-[280px] border-r border-slate-200 dark:border-slate-700/80">Foto Perbaikan (After)</th>
                   <th className="px-1.5 py-3 text-center align-middle w-24 min-w-[85px] border-r border-slate-200 dark:border-slate-700/80">Status</th>
@@ -1060,59 +1364,39 @@ export default function BuktiSupervisiPage() {
                           )}
                         </td>
 
-                        {/* Foto Temuan (Before) - Tinggi Dikurangi Lagi 1 Baris, Lebar Tetap, Sekat Kolom & Top Align */}
+                        {/* Foto Temuan (Before) - Seluruh Foto Berjajar ke Bawah */}
                         <td className="px-2.5 py-3 text-center align-top border-r border-slate-200 dark:border-slate-700/80">
                           {item.foto_temuan.length > 0 ? (
-                            <div className="flex flex-col items-center justify-start gap-1 mx-auto">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setLightboxImage({
-                                    images: item.foto_temuan,
-                                    currentIndex: 0,
-                                    url: item.foto_temuan[0],
-                                    title: `Foto Temuan (Before) - ${item.unit}`,
-                                    subtitle: item.temuan,
-                                    type: "before",
-                                    compareImages: item.foto_perbaikan,
-                                    compareUrl: item.foto_perbaikan[0],
-                                  })
-                                }
-                                title="Klik untuk memperbesar foto temuan"
-                                className="relative group w-48 h-32 sm:w-56 sm:h-36 lg:w-64 lg:h-44 rounded-2xl overflow-hidden border-2 border-amber-400/90 shadow-md hover:scale-[1.02] hover:shadow-amber-500/20 hover:brightness-105 transition-all bg-slate-900 cursor-pointer block mx-auto shrink-0"
-                              >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                  src={item.foto_temuan[0]}
-                                  alt="Temuan Before"
-                                  loading="lazy"
-                                  decoding="async"
-                                  className="w-full h-full object-cover rounded-2xl"
-                                />
-                              </button>
-                              {item.foto_temuan.length > 1 && (
+                            <div className="flex flex-col items-center justify-start gap-2.5 mx-auto">
+                              {item.foto_temuan.map((imgUrl, imgIdx) => (
                                 <button
+                                  key={imgIdx}
                                   type="button"
                                   onClick={() =>
                                     setLightboxImage({
-                                      images: item.foto_temuan,
-                                      currentIndex: 1,
-                                      url: item.foto_temuan[1],
-                                      title: `Foto Temuan (Before) - ${item.unit}`,
+                                      images: [imgUrl],
+                                      currentIndex: 0,
+                                      url: imgUrl,
+                                      title: `Foto Temuan (Before) #${imgIdx + 1} - ${item.unit}`,
                                       subtitle: item.temuan,
                                       type: "before",
-                                      compareImages: item.foto_perbaikan,
-                                      compareUrl: item.foto_perbaikan[0],
                                     })
                                   }
-                                  className="text-[10px] font-bold text-amber-500 dark:text-amber-400 hover:underline cursor-pointer"
-                                  title="Buka slider semua foto temuan"
+                                  title={`Klik untuk memperbesar Foto Temuan #${imgIdx + 1}`}
+                                  className="relative group w-48 h-32 sm:w-56 sm:h-36 lg:w-64 lg:h-44 rounded-2xl overflow-hidden border-2 border-amber-400/90 shadow-md hover:scale-[1.02] hover:shadow-amber-500/20 hover:brightness-105 transition-all bg-slate-900 cursor-pointer block mx-auto shrink-0"
                                 >
-                                  +{item.foto_temuan.length - 1} foto lainnya
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={normalizeImageUrl(imgUrl)}
+                                    alt={`Temuan Before ${imgIdx + 1}`}
+                                    loading="lazy"
+                                    decoding="async"
+                                    className="w-full h-full object-cover rounded-2xl"
+                                  />
                                 </button>
-                              )}
+                              ))}
                               <span className="text-[10.5px] font-black uppercase text-amber-500 dark:text-amber-400 tracking-wider mt-0.5 block">
-                                Before
+                                Before {item.foto_temuan.length > 1 ? `(${item.foto_temuan.length} Foto)` : ""}
                               </span>
                             </div>
                           ) : (
@@ -1122,10 +1406,10 @@ export default function BuktiSupervisiPage() {
                           )}
                         </td>
 
-                        {/* Rekomendasi PPI */}
-                        <td className="px-2.5 py-3 text-center align-top text-[12px] border-r border-slate-200 dark:border-slate-700/80">
+                        {/* Rekomendasi PPI - Diperlebar Sama Lebar dengan Foto Temuan */}
+                        <td className="px-3.5 py-3 text-center align-top text-[12px] w-64 min-w-[250px] lg:w-72 lg:min-w-[280px] border-r border-slate-200 dark:border-slate-700/80">
                           {item.rekomendasi ? (
-                            <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium whitespace-pre-wrap text-[12px]">
+                            <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium whitespace-pre-wrap text-[12px] text-left">
                               {item.rekomendasi}
                             </p>
                           ) : (
@@ -1156,59 +1440,39 @@ export default function BuktiSupervisiPage() {
                           )}
                         </td>
 
-                        {/* Foto Perbaikan (After) - Tinggi Dikurangi Lagi 1 Baris, Lebar Tetap, Sekat Kolom & Top Align */}
+                        {/* Foto Perbaikan (After) - Seluruh Foto Berjajar ke Bawah */}
                         <td className="px-2.5 py-3 text-center align-top border-r border-slate-200 dark:border-slate-700/80">
                           {item.foto_perbaikan.length > 0 ? (
-                            <div className="flex flex-col items-center justify-start gap-1 mx-auto">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setLightboxImage({
-                                    images: item.foto_perbaikan,
-                                    currentIndex: 0,
-                                    url: item.foto_perbaikan[0],
-                                    title: `Foto Bukti Perbaikan (After) - ${item.unit}`,
-                                    subtitle: item.upaya_perbaikan,
-                                    type: "after",
-                                    compareImages: item.foto_temuan,
-                                    compareUrl: item.foto_temuan[0],
-                                  })
-                                }
-                                title="Klik untuk memperbesar foto perbaikan"
-                                className="relative group w-48 h-32 sm:w-56 sm:h-36 lg:w-64 lg:h-44 rounded-2xl overflow-hidden border-2 border-emerald-400/90 shadow-md hover:scale-[1.02] hover:shadow-emerald-500/20 hover:brightness-105 transition-all bg-slate-900 cursor-pointer block mx-auto shrink-0"
-                              >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                  src={item.foto_perbaikan[0]}
-                                  alt="Perbaikan After"
-                                  loading="lazy"
-                                  decoding="async"
-                                  className="w-full h-full object-cover rounded-2xl"
-                                />
-                              </button>
-                              {item.foto_perbaikan.length > 1 && (
+                            <div className="flex flex-col items-center justify-start gap-2.5 mx-auto">
+                              {item.foto_perbaikan.map((imgUrl, imgIdx) => (
                                 <button
+                                  key={imgIdx}
                                   type="button"
                                   onClick={() =>
                                     setLightboxImage({
-                                      images: item.foto_perbaikan,
-                                      currentIndex: 1,
-                                      url: item.foto_perbaikan[1],
-                                      title: `Foto Bukti Perbaikan (After) - ${item.unit}`,
+                                      images: [imgUrl],
+                                      currentIndex: 0,
+                                      url: imgUrl,
+                                      title: `Foto Bukti Perbaikan (After) #${imgIdx + 1} - ${item.unit}`,
                                       subtitle: item.upaya_perbaikan,
                                       type: "after",
-                                      compareImages: item.foto_temuan,
-                                      compareUrl: item.foto_temuan[0],
                                     })
                                   }
-                                  className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
-                                  title="Buka slider semua foto perbaikan"
+                                  title={`Klik untuk memperbesar Foto Perbaikan #${imgIdx + 1}`}
+                                  className="relative group w-48 h-32 sm:w-56 sm:h-36 lg:w-64 lg:h-44 rounded-2xl overflow-hidden border-2 border-emerald-400/90 shadow-md hover:scale-[1.02] hover:shadow-emerald-500/20 hover:brightness-105 transition-all bg-slate-900 cursor-pointer block mx-auto shrink-0"
                                 >
-                                  +{item.foto_perbaikan.length - 1} foto lainnya
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={normalizeImageUrl(imgUrl)}
+                                    alt={`Perbaikan After ${imgIdx + 1}`}
+                                    loading="lazy"
+                                    decoding="async"
+                                    className="w-full h-full object-cover rounded-2xl"
+                                  />
                                 </button>
-                              )}
+                              ))}
                               <span className="text-[10.5px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-wider mt-0.5 block">
-                                After
+                                After {item.foto_perbaikan.length > 1 ? `(${item.foto_perbaikan.length} Foto)` : ""}
                               </span>
                             </div>
                           ) : (
@@ -2132,216 +2396,427 @@ export default function BuktiSupervisiPage() {
           )}
         </AnimatePresence>
 
-        {/* MODAL 4: CETAK LEMBAR RESMI F4 (STANDAR AKREDITASI) */}
+        {/* MODAL 4: CETAK LEMBAR RESMI F4 LANDSCAPE (STANDAR AKREDITASI MULTI-HALAMAN) */}
         <AnimatePresence>
           {isPrintModalOpen && (
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 bg-black/75 backdrop-blur-sm overflow-y-auto">
+            <div
+              id="supervisi-print-modal-container"
+              className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto"
+            >
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="relative w-full max-w-5xl bg-white text-black rounded-3xl shadow-2xl overflow-hidden my-auto max-h-[96vh] flex flex-col"
+                className="relative w-full max-w-[98vw] xl:max-w-[360mm] bg-[#141634] text-black rounded-3xl shadow-2xl overflow-hidden my-auto max-h-[96vh] flex flex-col border border-indigo-900/40"
               >
                 {/* Print Modal Bar */}
-                <div className="p-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
+                <div className="print-modal-bar p-4 bg-slate-900 text-white flex items-center justify-between shrink-0 border-b border-slate-800">
                   <div className="flex items-center gap-3">
                     <Printer className="w-5 h-5 text-emerald-400" />
                     <div>
-                      <h4 className="font-bold text-sm">
-                        Pratinjau Lembar Bukti Supervisi PPI (Standar F4 Akreditasi)
+                      <h4 className="font-bold text-sm sm:text-base tracking-wide uppercase text-white">
+                        PRATINJAU BUKTI SUPERVISI
                       </h4>
-                      <p className="text-[11px] text-slate-400">
-                        {filteredRecords.length} data kegiatan supervisi tercantum
-                      </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2.5">
+                    {/* Tombol Unduh PDF (Icon Merah di Pojok Kanan Atas) */}
                     <button
-                      onClick={() => window.print()}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md transition-all"
+                      type="button"
+                      disabled={isDownloadingPdf}
+                      onClick={handleDownloadPdf}
+                      className="w-10 h-10 rounded-xl bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center shadow-md shadow-rose-600/30 transition-all hover:scale-105 active:scale-95 disabled:opacity-60 cursor-pointer"
+                      title={isDownloadingPdf ? (pdfProgressText || "Menyusun PDF...") : "Unduh PDF Bukti Supervisi"}
                     >
-                      <Printer className="w-3.5 h-3.5" />
-                      <span>Cetak Lembar Resmi</span>
+                      {isDownloadingPdf ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Download className="w-5 h-5" />
+                      )}
                     </button>
+
                     <button
+                      type="button"
                       onClick={() => setIsPrintModalOpen(false)}
-                      className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800"
+                      className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 cursor-pointer transition-colors"
+                      title="Tutup"
                     >
                       <X className="w-5 h-5" />
                     </button>
                   </div>
                 </div>
 
-                {/* Printable Document Sheet */}
-                <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-200 print:bg-white print:p-0">
-                  <div
-                    id="printable-supervisi-sheet"
-                    className="max-w-[215mm] mx-auto bg-white p-8 sm:p-10 shadow-lg print:shadow-none print:p-4 text-black font-sans"
-                    style={{ minHeight: "297mm" }}
-                  >
-                    {/* Kop Surat Resmi UOBK RSUD AL-MULK KOTA SUKABUMI */}
-                    <div className="border-b-[2.5px] border-black pb-2 mb-1">
-                      <div className="flex items-center justify-center gap-4 max-w-3xl mx-auto">
-                        <div className="w-14 h-14 shrink-0 flex items-center justify-center">
-                          {hospitalLogoUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={hospitalLogoUrl}
-                              alt="Logo RS"
-                              className="max-w-full max-h-full object-contain"
-                            />
+                {/* Printable Document Sheets Preview Area (Multi-Page F4 Landscape) */}
+                <div className="flex-1 overflow-auto p-4 sm:p-8 bg-slate-900/90 print:bg-white print:p-0 flex flex-col items-center gap-8">
+                  {paginatedSupervisiPages.map((page) => {
+                    const totalPagesCount = paginatedSupervisiPages.length;
+                    return (
+                      <div
+                        key={page.pageNumber}
+                        id={page.isFirstPage ? "printable-supervisi-sheet" : undefined}
+                        data-pdf-page="true"
+                        className="supervisi-page-sheet official-report-sheet official-pdf-page bg-white bg-force-white w-[330mm] min-w-[330mm] max-w-[330mm] h-[215mm] min-h-[215mm] max-h-[215mm] p-[15mm] shadow-2xl text-black font-sans box-border relative flex flex-col justify-between overflow-hidden shrink-0"
+                        style={{
+                          width: "330mm",
+                          minWidth: "330mm",
+                          maxWidth: "330mm",
+                          height: "215mm",
+                          minHeight: "215mm",
+                          maxHeight: "215mm",
+                          padding: "15mm",
+                          boxSizing: "border-box",
+                          overflow: "hidden",
+                          backgroundColor: "#ffffff",
+                          color: "#000000",
+                        }}
+                      >
+                        <div className="w-full">
+                          {/* Kop Surat Resmi UOBK RSUD AL-MULK KOTA SUKABUMI (Hanya Halaman 1) */}
+                          {page.isFirstPage ? (
+                            <>
+                              <div className="border-b-[2.5px] border-black pb-1.5 mb-0.5">
+                                <div className="flex items-center justify-center gap-4 max-w-4xl mx-auto">
+                                  <div className="w-12 h-12 shrink-0 flex items-center justify-center">
+                                    {hospitalLogoUrl ? (
+                                      // eslint-disable-next-line @next/next/no-img-element
+                                      <img
+                                        src={hospitalLogoUrl}
+                                        alt="Logo RS"
+                                        crossOrigin="anonymous"
+                                        className="max-w-full max-h-full object-contain"
+                                      />
+                                    ) : (
+                                      <ShieldCheck className="w-9 h-9 text-black" />
+                                    )}
+                                  </div>
+                                  <div className="text-center">
+                                    <h1 className="text-[11.5pt] font-black uppercase tracking-wide leading-tight text-black">
+                                      TIM PENCEGAHAN DAN PENGENDALIAN INFEKSI (PPI)
+                                    </h1>
+                                    <h2 className="text-[11.5pt] font-black uppercase tracking-wider leading-tight text-black mt-0.5">
+                                      UOBK RSUD AL-MULK KOTA SUKABUMI
+                                    </h2>
+                                    <p className="text-[8pt] text-black italic mt-0.5 leading-tight">
+                                      Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota Sukabumi, Jawa Barat 43168
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="border-b border-black mb-2.5" />
+
+                              {/* Judul Dokumen */}
+                              <div className="text-center mb-3">
+                                <h2 className="text-[12pt] font-black uppercase text-black underline tracking-tight">
+                                  REKAPITULASI BUKTI SUPERVISI & TINDAK LANJUT PPI
+                                </h2>
+                                <div className="flex items-center justify-center gap-4 text-[8.5pt] text-black mt-1">
+                                  <span>
+                                    Periode:{" "}
+                                    <strong>
+                                      {selectedMonth === "all"
+                                        ? `Tahun ${selectedYear}`
+                                        : `${MONTHS_LIST.find((m) => m.value === selectedMonth)?.label} ${selectedYear}`}
+                                    </strong>
+                                  </span>
+                                  <span>•</span>
+                                  <span>
+                                    Ruangan: <strong>{selectedUnit}</strong>
+                                  </span>
+                                </div>
+                              </div>
+                            </>
                           ) : (
-                            <ShieldCheck className="w-10 h-10 text-black" />
+                            /* Subsequent Pages: Official Running Header */
+                            <div className="border-b-[1.5px] border-black pb-1.5 mb-2.5 flex items-center justify-between text-[8pt] text-black">
+                              <div className="flex items-center gap-2">
+                                {hospitalLogoUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={hospitalLogoUrl}
+                                    alt="Logo"
+                                    crossOrigin="anonymous"
+                                    className="w-5 h-5 object-contain"
+                                  />
+                                ) : (
+                                  <ShieldCheck className="w-4 h-4 text-black" />
+                                )}
+                                <span className="font-extrabold uppercase tracking-wide text-black">
+                                  TIM PENCEGAHAN DAN PENGENDALIAN INFEKSI (PPI) • UOBK RSUD AL-MULK
+                                </span>
+                              </div>
+                              <div className="text-right italic font-semibold text-black">
+                                Rekapitulasi Bukti Supervisi & Tindak Lanjut PPI
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Print Table - Proporsional Kertas F4 Landscape dengan Margin 1,5 cm dan Header Rata Tengah */}
+                          <table
+                            className="w-full table-fixed text-left border-collapse border border-black text-[8pt] leading-snug mb-2 bg-white"
+                            style={{ backgroundColor: "#ffffff" }}
+                          >
+                            <thead>
+                              <tr
+                                className="bg-slate-100 border-b border-black text-black font-extrabold text-center"
+                                style={{ backgroundColor: "#f1f5f9" }}
+                              >
+                                <th
+                                  className="border border-black px-1 py-2 w-[3.5%] text-center align-middle"
+                                  style={{ backgroundColor: "#f1f5f9", textAlign: "center" }}
+                                >
+                                  No
+                                </th>
+                                <th
+                                  className="border border-black px-1.5 py-2 w-[7.5%] text-center align-middle"
+                                  style={{ backgroundColor: "#f1f5f9", textAlign: "center" }}
+                                >
+                                  Tanggal
+                                </th>
+                                <th
+                                  className="border border-black px-2 py-2 w-[11%] text-center align-middle"
+                                  style={{ backgroundColor: "#f1f5f9", textAlign: "center" }}
+                                >
+                                  Kegiatan Supervisi
+                                </th>
+                                <th
+                                  className="border border-black px-1.5 py-2 w-[7.5%] text-center align-middle"
+                                  style={{ backgroundColor: "#f1f5f9", textAlign: "center" }}
+                                >
+                                  Ruangan
+                                </th>
+                                <th
+                                  className="border border-black px-2 py-2 w-[16%] text-center align-middle"
+                                  style={{ backgroundColor: "#f1f5f9", textAlign: "center" }}
+                                >
+                                  Temuan Lapangan
+                                </th>
+                                <th
+                                  className="border border-black px-1.5 py-2 w-[9%] text-center align-middle"
+                                  style={{ backgroundColor: "#f1f5f9", textAlign: "center" }}
+                                >
+                                  Foto Before
+                                </th>
+                                <th
+                                  className="border border-black px-2 py-2 w-[22.5%] text-center align-middle"
+                                  style={{ backgroundColor: "#f1f5f9", textAlign: "center" }}
+                                >
+                                  Rekomendasi PPI
+                                </th>
+                                <th
+                                  className="border border-black px-2 py-2 w-[9.5%] text-center align-middle"
+                                  style={{ backgroundColor: "#f1f5f9", textAlign: "center" }}
+                                >
+                                  Tindak Lanjut
+                                </th>
+                                <th
+                                  className="border border-black px-1.5 py-2 w-[8%] text-center align-middle"
+                                  style={{ backgroundColor: "#f1f5f9", textAlign: "center" }}
+                                >
+                                  Foto After
+                                </th>
+                                <th
+                                  className="border border-black px-1 py-2 w-[5.5%] text-center align-middle"
+                                  style={{ backgroundColor: "#f1f5f9", textAlign: "center" }}
+                                >
+                                  Status
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody style={{ backgroundColor: "#ffffff" }}>
+                              {page.records.map(({ record: rec, globalIndex }) => (
+                                <tr
+                                  key={rec.id}
+                                  className="border-b border-black align-top text-black bg-white break-inside-avoid"
+                                  style={{
+                                    backgroundColor: "#ffffff",
+                                    color: "#000000",
+                                    pageBreakInside: "avoid",
+                                    breakInside: "avoid",
+                                  }}
+                                >
+                                  <td
+                                    className="border border-black px-1 py-1.5 text-center font-bold text-black align-top"
+                                    style={{
+                                      backgroundColor: "#ffffff",
+                                      textAlign: "center",
+                                      verticalAlign: "top",
+                                    }}
+                                  >
+                                    {globalIndex}
+                                  </td>
+                                  <td
+                                    className="border border-black px-1.5 py-1.5 text-center text-black align-top"
+                                    style={{
+                                      backgroundColor: "#ffffff",
+                                      textAlign: "center",
+                                      verticalAlign: "top",
+                                    }}
+                                  >
+                                    {rec.tanggal_waktu
+                                      ? format(new Date(rec.tanggal_waktu), "dd/MM/yyyy HH:mm")
+                                      : "-"}
+                                  </td>
+                                  <td
+                                    className="border border-black px-2 py-1.5 font-bold text-black align-top break-words"
+                                    style={{
+                                      backgroundColor: "#ffffff",
+                                      verticalAlign: "top",
+                                    }}
+                                  >
+                                    {rec.nama_kegiatan || "Supervisi PPI"}
+                                  </td>
+                                  <td
+                                    className="border border-black px-1.5 py-1.5 font-bold text-center text-black align-top break-words"
+                                    style={{
+                                      backgroundColor: "#ffffff",
+                                      textAlign: "center",
+                                      verticalAlign: "top",
+                                    }}
+                                  >
+                                    {rec.unit || "Umum"}
+                                  </td>
+                                  <td
+                                    className="border border-black px-2 py-1.5 whitespace-pre-wrap break-words text-black align-top"
+                                    style={{
+                                      backgroundColor: "#ffffff",
+                                      verticalAlign: "top",
+                                    }}
+                                  >
+                                    {rec.temuan && rec.temuan.trim() ? rec.temuan : "-"}
+                                  </td>
+                                  <td
+                                    className="border border-black px-1 py-1.5 text-center align-top"
+                                    style={{
+                                      backgroundColor: "#ffffff",
+                                      verticalAlign: "top",
+                                    }}
+                                  >
+                                    {rec.foto_temuan.length > 0 ? (
+                                      <div className="flex flex-col items-center justify-start gap-1 mx-auto">
+                                        {rec.foto_temuan.map((imgUrl, fIdx) => (
+                                          // eslint-disable-next-line @next/next/no-img-element
+                                          <img
+                                            key={fIdx}
+                                            src={normalizeImageUrl(imgUrl)}
+                                            alt={`Before ${fIdx + 1}`}
+                                            crossOrigin="anonymous"
+                                            className="w-[20mm] h-[15.5mm] object-cover mx-auto rounded border border-black"
+                                          />
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <span className="text-[7.5pt] text-black italic">-</span>
+                                    )}
+                                  </td>
+                                  <td
+                                    className="border border-black px-2 py-1.5 whitespace-pre-wrap break-words text-black font-medium align-top"
+                                    style={{
+                                      backgroundColor: "#ffffff",
+                                      verticalAlign: "top",
+                                    }}
+                                  >
+                                    {rec.rekomendasi && rec.rekomendasi.trim()
+                                      ? rec.rekomendasi
+                                      : "-"}
+                                  </td>
+                                  <td
+                                    className="border border-black px-2 py-1.5 whitespace-pre-wrap break-words text-black align-top"
+                                    style={{
+                                      backgroundColor: "#ffffff",
+                                      verticalAlign: "top",
+                                    }}
+                                  >
+                                    {rec.upaya_perbaikan && rec.upaya_perbaikan.trim()
+                                      ? rec.upaya_perbaikan
+                                      : "-"}
+                                    {rec.waktu_perbaikan && (
+                                      <div className="text-[7pt] text-black mt-0.5 font-mono">
+                                        Tgl: {format(new Date(rec.waktu_perbaikan), "dd/MM/yyyy")}
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td
+                                    className="border border-black px-1 py-1.5 text-center align-top"
+                                    style={{
+                                      backgroundColor: "#ffffff",
+                                      verticalAlign: "top",
+                                    }}
+                                  >
+                                    {rec.foto_perbaikan.length > 0 ? (
+                                      <div className="flex flex-col items-center justify-start gap-1 mx-auto">
+                                        {rec.foto_perbaikan.map((imgUrl, fIdx) => (
+                                          // eslint-disable-next-line @next/next/no-img-element
+                                          <img
+                                            key={fIdx}
+                                            src={normalizeImageUrl(imgUrl)}
+                                            alt={`After ${fIdx + 1}`}
+                                            crossOrigin="anonymous"
+                                            className="w-[20mm] h-[15.5mm] object-cover mx-auto rounded border border-black"
+                                          />
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <span className="text-[7.5pt] text-black italic">-</span>
+                                    )}
+                                  </td>
+                                  <td
+                                    className="border border-black px-1 py-1.5 text-center font-bold text-black align-top"
+                                    style={{
+                                      backgroundColor: "#ffffff",
+                                      textAlign: "center",
+                                      verticalAlign: "top",
+                                    }}
+                                  >
+                                    <span className="inline-block px-1 py-0.5 rounded text-[7.5pt] font-extrabold border border-black text-black leading-tight">
+                                      {rec.status}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+
+                          {/* Lembar Tanda Tangan Resmi HANYA pada Halaman Terakhir */}
+                          {page.isLastPage && (
+                            <div
+                              className="mt-3 pt-2.5 border-t border-black grid grid-cols-2 gap-16 text-[9pt] text-center break-inside-avoid text-black bg-white"
+                              style={{ backgroundColor: "#ffffff" }}
+                            >
+                              <div>
+                                <p className="text-black font-bold mb-11">
+                                  Mengetahui,<br />
+                                  <span className="text-black font-black">Ketua Komite PPI</span>
+                                </p>
+                                <p className="font-black text-black underline text-[9.5pt]">
+                                  dr. Nurul Iman
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-black font-bold mb-11">
+                                  Sukabumi, {format(new Date(), "d MMMM yyyy", { locale: idLocale })}<br />
+                                  <span className="text-black font-black">Infection Prevention and Control Nurse (IPCN)</span>
+                                </p>
+                                <p className="font-black text-black underline text-[9.5pt]">
+                                  Adi Tresa Purnama
+                                </p>
+                              </div>
+                            </div>
                           )}
                         </div>
-                        <div className="text-center">
-                          <h1 className="text-[11pt] font-black uppercase tracking-wide leading-tight text-black">
-                            TIM PENCEGAHAN DAN PENGENDALIAN INFEKSI (PPI)
-                          </h1>
-                          <h2 className="text-[11pt] font-black uppercase tracking-wider leading-tight text-black mt-0.5">
-                            UOBK RSUD AL-MULK KOTA SUKABUMI
-                          </h2>
-                          <p className="text-[8pt] text-black italic mt-0.5 leading-tight">
-                            Jl. Pelabuhan II No. Km.6, Lembursitu, Kec. Lembursitu, Kota Sukabumi, Jawa Barat 43168
-                          </p>
+
+                        {/* Running Footer Nomor Halaman */}
+                        <div
+                          className="mt-auto pt-1.5 border-t border-slate-300 flex items-center justify-between text-[7.5pt] text-slate-700 font-mono bg-white shrink-0"
+                          style={{ backgroundColor: "#ffffff" }}
+                        >
+                          <span>TIM PENCEGAHAN DAN PENGENDALIAN INFEKSI (PPI) • UOBK RSUD AL-MULK</span>
+                          <span className="font-bold">
+                            Halaman {page.pageNumber} dari {totalPagesCount}
+                          </span>
                         </div>
                       </div>
-                    </div>
-                    <div className="border-b border-black mb-4" />
-
-                    {/* Judul Dokumen */}
-                    <div className="text-center mb-5">
-                      <h2 className="text-[13pt] font-black uppercase text-black underline tracking-tight">
-                        REKAPITULASI BUKTI SUPERVISI & TINDAK LANJUT PPI
-                      </h2>
-                      <p className="text-[9.5pt] font-bold text-slate-800 mt-1">
-                        STANDAR AKREDITASI RUMAH SAKIT (KARS / STARKES)
-                      </p>
-                      <div className="flex items-center justify-center gap-4 text-[8.5pt] text-slate-600 mt-1">
-                        <span>
-                          Periode:{" "}
-                          <strong>
-                            {selectedMonth === "all"
-                              ? `Tahun ${selectedYear}`
-                              : `${MONTHS_LIST.find((m) => m.value === selectedMonth)?.label} ${selectedYear}`}
-                          </strong>
-                        </span>
-                        <span>•</span>
-                        <span>
-                          Ruangan: <strong>{selectedUnit}</strong>
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Print Table */}
-                    <table className="w-full text-left border-collapse border border-black text-[8pt] mb-6">
-                      <thead>
-                        <tr className="bg-slate-100 border-b border-black text-black font-extrabold text-center">
-                          <th className="border border-black px-1.5 py-2 w-8">No</th>
-                          <th className="border border-black px-2 py-2 w-24">Tanggal</th>
-                          <th className="border border-black px-2 py-2 w-32">Kegiatan Supervisi</th>
-                          <th className="border border-black px-2 py-2 w-20">Ruangan</th>
-                          <th className="border border-black px-2.5 py-2">Temuan Lapangan</th>
-                          <th className="border border-black px-1.5 py-2 w-20">Foto Before</th>
-                          <th className="border border-black px-2.5 py-2">Rekomendasi PPI</th>
-                          <th className="border border-black px-2.5 py-2">Tindak Lanjut</th>
-                          <th className="border border-black px-1.5 py-2 w-20">Foto After</th>
-                          <th className="border border-black px-1.5 py-2 w-16">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredRecords.map((rec, rIdx) => (
-                          <tr key={rec.id} className="border-b border-black align-top">
-                            <td className="border border-black px-1.5 py-2 text-center font-bold">
-                              {rIdx + 1}
-                            </td>
-                            <td className="border border-black px-2 py-2">
-                              {rec.tanggal_waktu
-                                ? format(new Date(rec.tanggal_waktu), "dd/MM/yyyy HH:mm")
-                                : "-"}
-                            </td>
-                            <td className="border border-black px-2 py-2 font-bold">
-                              {rec.nama_kegiatan}
-                            </td>
-                            <td className="border border-black px-2 py-2 font-bold">
-                              {rec.unit}
-                            </td>
-                            <td className="border border-black px-2 py-2 whitespace-pre-wrap">
-                              {rec.temuan || "-"}
-                            </td>
-                            <td className="border border-black px-1.5 py-2 text-center">
-                              {rec.foto_temuan.length > 0 ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={rec.foto_temuan[0]}
-                                  alt="Before"
-                                  className="w-14 h-14 object-cover mx-auto rounded border border-black"
-                                />
-                              ) : (
-                                <span className="text-[7pt] text-slate-400 italic">-</span>
-                              )}
-                            </td>
-                            <td className="border border-black px-2 py-2 whitespace-pre-wrap">
-                              {rec.rekomendasi || "-"}
-                            </td>
-                            <td className="border border-black px-2 py-2 whitespace-pre-wrap">
-                              {rec.upaya_perbaikan || "-"}
-                              {rec.waktu_perbaikan && (
-                                <div className="text-[7pt] text-slate-500 mt-1">
-                                  Tgl: {format(new Date(rec.waktu_perbaikan), "dd/MM/yyyy")}
-                                </div>
-                              )}
-                            </td>
-                            <td className="border border-black px-1.5 py-2 text-center">
-                              {rec.foto_perbaikan.length > 0 ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={rec.foto_perbaikan[0]}
-                                  alt="After"
-                                  className="w-14 h-14 object-cover mx-auto rounded border border-black"
-                                />
-                              ) : (
-                                <span className="text-[7pt] text-slate-400 italic">-</span>
-                              )}
-                            </td>
-                            <td className="border border-black px-1.5 py-2 text-center font-bold">
-                              <span
-                                className={
-                                  rec.status === "Selesai"
-                                    ? "text-emerald-800"
-                                    : "text-amber-800"
-                                }
-                              >
-                                {rec.status}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-
-                    {/* Lembar Tanda Tangan */}
-                    <div className="mt-8 pt-4 border-t border-slate-300 grid grid-cols-2 gap-8 text-[9pt] text-center break-inside-avoid">
-                      <div>
-                        <p className="text-slate-700 font-bold mb-16">
-                          Mengetahui,<br />
-                          <span className="text-black font-black">Ketua Komite PPI</span>
-                        </p>
-                        <p className="font-black text-black underline text-[9.5pt]">
-                          dr. Nurul Iman
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-slate-700 font-bold mb-16">
-                          Sukabumi, {format(new Date(), "d MMMM yyyy", { locale: idLocale })}<br />
-                          <span className="text-black font-black">Infection Prevention and Control Nurse (IPCN)</span>
-                        </p>
-                        <p className="font-black text-black underline text-[9.5pt]">
-                          Adi Tresa Purnama
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                    );
+                  })}
                 </div>
               </motion.div>
             </div>

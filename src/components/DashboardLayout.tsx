@@ -11,6 +11,7 @@ import {
   Settings, 
   LogOut,
   ShieldCheck,
+  ShieldAlert,
   ChevronLeft,
   ChevronDown
 } from 'lucide-react';
@@ -54,6 +55,16 @@ const navItems: NavItemData[] = [
     shortName: 'Grafik', 
     href: '/dashboard/analytics', 
     icon: BarChart2,
+  },
+  { 
+    name: 'ICRA & KLB', 
+    shortName: 'ICRA & KLB', 
+    href: '/dashboard/icra', 
+    icon: ShieldAlert,
+    subItems: [
+      { name: 'ICRA PPI', href: '/dashboard/icra' },
+      { name: 'Investigasi KLB', href: '/dashboard/klb' },
+    ]
   },
   { 
     name: 'Laporan PPI', 
@@ -428,6 +439,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       navItems.forEach((item) => {
         try {
           router.prefetch(item.href);
+          item.subItems?.forEach((sub) => router.prefetch(sub.href));
         } catch (e) {
           // ignore prefetch errors
         }

@@ -791,10 +791,11 @@ export async function exportElementToA4Pdf(
     }
 
     // =========================================================================
-    // MODE 1: DEDICATED MULTI-PAGE EXPORT
-    // Used when explicit page containers are provided
+    // MODE 1: DEDICATED PAGE-BY-PAGE EXPORT
+    // Used when explicit page containers are provided (including single .f4-page)
     // =========================================================================
-    if (pageElements.length > 1) {
+    const hasSelfContainedF4Page = pageElements.some((el) => el.classList.contains('f4-page'));
+    if (pageElements.length > 1 || (pageElements.length === 1 && hasSelfContainedF4Page)) {
       const firstPageIsLandscape =
         options.orientation === 'landscape' ||
         pageElements[0].getAttribute('data-orientation') === 'landscape' ||
@@ -865,11 +866,14 @@ export async function exportElementToA4Pdf(
           scrollX: 0,
           scrollY: 0,
           windowWidth: pageTargetWidthPx,
-          onclone: async (clonedDoc) => {
+          onclone: async (clonedDoc, clonedEl) => {
             injectPrintStyles(clonedDoc, pageIsLandscape, isF4 ? 'f4' : 'a4');
             
-            const pageId = pageEl.id;
-            let targetClonedPage: HTMLElement | null = pageId ? clonedDoc.getElementById(pageId) : null;
+            let targetClonedPage: HTMLElement | null = (clonedEl as HTMLElement) || null;
+            if (!targetClonedPage) {
+              const pageId = pageEl.id;
+              targetClonedPage = pageId ? clonedDoc.getElementById(pageId) : null;
+            }
             if (!targetClonedPage) {
               const pages = Array.from(clonedDoc.querySelectorAll<HTMLElement>('.official-pdf-page, [data-pdf-page]'));
               targetClonedPage = pages[i] || null;

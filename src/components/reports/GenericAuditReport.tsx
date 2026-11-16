@@ -9,6 +9,7 @@ import PdfDownloadButton from "@/components/reports/PdfDownloadButton";
 import ZoomableReportViewer from "@/components/reports/ZoomableReportViewer";
 import { ensureBlackSignature } from "@/utils/signatureUtils";
 import OfficialHeaderKop from "@/components/reports/official/OfficialHeaderKop";
+import { parseImageUrls, normalizeImageUrl } from "@/utils/imageHelper";
 import {
   TrendingUp,
   Activity,
@@ -72,7 +73,9 @@ interface GenericAuditData {
   rekomendasi?: string;
   upaya_perbaikan?: string;
   waktu_perbaikan?: string;
+  tanggal_perbaikan?: string;
   foto_perbaikan?: string[];
+  dokumentasi_perbaikan?: string[];
   foto?: string[];
   dokumentasi?: string[];
   tanda_tangan_1?: string;
@@ -276,10 +279,12 @@ export default function GenericAuditReport({
         (typeof item.tanda_tangan_2 === 'string' ? item.tanda_tangan_2 : null) ||
         (typeof jsonFallback.tanda_tangan_2 === 'string' ? jsonFallback.tanda_tangan_2 : null) ||
         null,
-      foto:
-        (Array.isArray(item.dokumentasi) ? item.dokumentasi : typeof item.dokumentasi === 'string' && item.dokumentasi.length > 0 ? [item.dokumentasi] : null) || 
-        (Array.isArray(item.foto) ? item.foto : typeof item.foto === 'string' && item.foto.length > 0 ? [item.foto] : null) || 
-        (Array.isArray(jsonFallback.dokumentasi) ? jsonFallback.dokumentasi : typeof jsonFallback.dokumentasi === 'string' && jsonFallback.dokumentasi.length > 0 ? [jsonFallback.dokumentasi] : []) || [],
+      foto: parseImageUrls([
+        ...parseImageUrls(item.foto),
+        ...parseImageUrls(item.dokumentasi),
+        ...parseImageUrls(jsonFallback.foto),
+        ...parseImageUrls(jsonFallback.dokumentasi),
+      ]),
       nama_pj_ruangan:
         item.nama_pj_ruangan ||
         item.nama_pj ||
@@ -306,11 +311,12 @@ export default function GenericAuditReport({
       rekomendasi: item.rekomendasi || jsonFallback.rekomendasi || "",
       upaya_perbaikan: item.upaya_perbaikan || jsonFallback.upaya_perbaikan || jsonFallback.upayaPerbaikan || item.upayaPerbaikan || "",
       waktu_perbaikan: item.waktu_perbaikan || item.tanggal_perbaikan || jsonFallback.waktu_perbaikan || jsonFallback.tanggal_perbaikan || jsonFallback.waktuPerbaikan || "",
-      foto_perbaikan:
-        (Array.isArray(item.foto_perbaikan) ? item.foto_perbaikan : typeof item.foto_perbaikan === 'string' && item.foto_perbaikan.length > 0 ? [item.foto_perbaikan] : null) ||
-        (Array.isArray(jsonFallback.foto_perbaikan) ? jsonFallback.foto_perbaikan : typeof jsonFallback.foto_perbaikan === 'string' && jsonFallback.foto_perbaikan.length > 0 ? [jsonFallback.foto_perbaikan] : []) ||
-        (Array.isArray(jsonFallback.dokumentasi_perbaikan) ? jsonFallback.dokumentasi_perbaikan : typeof jsonFallback.dokumentasi_perbaikan === 'string' && jsonFallback.dokumentasi_perbaikan.length > 0 ? [jsonFallback.dokumentasi_perbaikan] : []) ||
-        [],
+      foto_perbaikan: parseImageUrls([
+        ...parseImageUrls(item.foto_perbaikan),
+        ...parseImageUrls(item.dokumentasi_perbaikan),
+        ...parseImageUrls(jsonFallback.foto_perbaikan),
+        ...parseImageUrls(jsonFallback.dokumentasi_perbaikan),
+      ]),
     };
   }, [tableName]);
 
@@ -1115,15 +1121,45 @@ export default function GenericAuditReport({
           : (Number(selectedRecord.persentase) || 0);
         const isSesuai = persentaseVal >= 85;
 
-        const photosList = Array.isArray(selectedRecord.foto)
-          ? selectedRecord.foto
-          : (typeof selectedRecord.foto === "string" && selectedRecord.foto ? [selectedRecord.foto] : []);
-        const perbaikanPhotosList = Array.isArray(selectedRecord.foto_perbaikan)
-          ? selectedRecord.foto_perbaikan
-          : (typeof selectedRecord.foto_perbaikan === "string" && selectedRecord.foto_perbaikan ? [selectedRecord.foto_perbaikan] : []);
+        const rawDataInd = (selectedRecord as any).data_indikator;
+        let parsedDataInd: any = {};
+        if (rawDataInd) {
+          try {
+            parsedDataInd = typeof rawDataInd === "string" ? JSON.parse(rawDataInd) : rawDataInd;
+          } catch (_) {}
+        }
+        const rawChecklist = (selectedRecord as any).checklist_json;
+        let parsedChecklist: any = {};
+        if (rawChecklist) {
+          try {
+            parsedChecklist = typeof rawChecklist === "string" ? JSON.parse(rawChecklist) : rawChecklist;
+          } catch (_) {}
+        }
+
+        const photosList = parseImageUrls([
+          ...parseImageUrls(selectedRecord.foto),
+          ...parseImageUrls(selectedRecord.dokumentasi),
+          ...parseImageUrls(parsedDataInd.dokumentasi),
+          ...parseImageUrls(parsedDataInd.foto),
+          ...parseImageUrls(parsedChecklist.dokumentasi),
+          ...parseImageUrls(parsedChecklist.foto),
+        ]);
+        const perbaikanPhotosList = parseImageUrls([
+          ...parseImageUrls(selectedRecord.foto_perbaikan),
+          ...parseImageUrls(selectedRecord.dokumentasi_perbaikan),
+          ...parseImageUrls(parsedDataInd.foto_perbaikan),
+          ...parseImageUrls(parsedDataInd.dokumentasi_perbaikan),
+          ...parseImageUrls(parsedChecklist.foto_perbaikan),
+          ...parseImageUrls(parsedChecklist.dokumentasi_perbaikan),
+        ]);
+        const temuanText = selectedRecord.temuan || parsedDataInd.temuan || parsedDataInd.temuan_lapangan || parsedChecklist.temuan || "";
+        const rekomendasiText = selectedRecord.rekomendasi || parsedDataInd.rekomendasi || parsedDataInd.saran || parsedChecklist.rekomendasi || "";
+        const upayaPerbaikanText = selectedRecord.upaya_perbaikan || parsedDataInd.upaya_perbaikan || parsedDataInd.upayaPerbaikan || parsedChecklist.upaya_perbaikan || "";
+        const waktuPerbaikanText = selectedRecord.waktu_perbaikan || selectedRecord.tanggal_perbaikan || parsedDataInd.waktu_perbaikan || parsedDataInd.tanggal_perbaikan || parsedChecklist.waktu_perbaikan || "";
+
         const hasPerbaikanContent = Boolean(
-          selectedRecord.upaya_perbaikan ||
-          selectedRecord.waktu_perbaikan ||
+          upayaPerbaikanText ||
+          waktuPerbaikanText ||
           perbaikanPhotosList.length > 0
         );
         const hasPhotos = photosList.length > 0 || perbaikanPhotosList.length > 0;
@@ -1263,7 +1299,7 @@ export default function GenericAuditReport({
                       Temuan Lapangan
                     </div>
                     <div className="text-[11pt] leading-snug whitespace-pre-wrap">
-                      {selectedRecord.temuan || "Tidak ada temuan spesifik yang dicatat."}
+                      {temuanText || "Tidak ada temuan spesifik yang dicatat."}
                     </div>
                   </td>
                   <td className="w-1/2 border border-black p-2.5 align-top bg-white" style={{ backgroundColor: "#ffffff" }}>
@@ -1271,7 +1307,7 @@ export default function GenericAuditReport({
                       Rekomendasi & Tindak Lanjut
                     </div>
                     <div className="text-[11pt] leading-snug whitespace-pre-wrap">
-                      {selectedRecord.rekomendasi || "Sesuai dengan standar prosedur operasional yang berlaku."}
+                      {rekomendasiText || "Sesuai dengan standar prosedur operasional yang berlaku."}
                     </div>
                   </td>
                 </tr>
@@ -1388,23 +1424,41 @@ export default function GenericAuditReport({
                       <Camera className="w-4 h-4 text-black" /> FOTO DOKUMENTASI AUDIT
                     </h4>
                     <div className="grid grid-cols-2 gap-4 print:page-break-inside-avoid px-2">
-                      {photosList.map((url: string, i: number) => (
-                        <div
-                          key={i}
-                          onClick={() => setZoomedImage(url)}
-                          className="relative pt-[75%] border border-slate-800 p-1 cursor-zoom-in bg-white shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:translate-y-[2px] hover:shadow-none transition-all"
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={url}
-                            alt="Dokumentasi"
-                            className="absolute inset-0 w-full h-full object-cover p-1"
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none";
-                            }}
-                          />
-                        </div>
-                      ))}
+                      {photosList.map((url: string, i: number) => {
+                        const normalized = normalizeImageUrl(url);
+                        return (
+                          <div
+                            key={i}
+                            onClick={() => setZoomedImage(normalized)}
+                            className="relative pt-[75%] border border-slate-800 p-1 cursor-zoom-in bg-slate-50 shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:translate-y-[2px] hover:shadow-none transition-all group overflow-hidden"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={normalized}
+                              alt={`Dokumentasi ${i + 1}`}
+                              className="absolute inset-0 w-full h-full object-cover p-1"
+                              loading="lazy"
+                              onError={(e) => {
+                                const parent = e.currentTarget.parentElement;
+                                if (parent) {
+                                  e.currentTarget.style.display = "none";
+                                  const fallback = parent.querySelector(".img-fallback-placeholder");
+                                  if (fallback) (fallback as HTMLElement).style.display = "flex";
+                                }
+                              }}
+                            />
+                            <div className="img-fallback-placeholder absolute inset-0 hidden flex-col items-center justify-center p-3 text-center bg-slate-100 text-slate-500">
+                              <Camera className="w-8 h-8 opacity-40 mb-1 text-slate-400" />
+                              <span className="text-[10pt] font-bold uppercase tracking-wider text-slate-700">
+                                Dokumentasi #{i + 1}
+                              </span>
+                              <span className="text-[9pt] text-slate-400 mt-0.5">
+                                (Gambar belum tersinkronisasi)
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -1418,19 +1472,19 @@ export default function GenericAuditReport({
                         HASIL PERBAIKAN
                       </span>
                     </h4>
-                    {selectedRecord.waktu_perbaikan && (
+                    {waktuPerbaikanText && (
                       <div className="text-[10pt] font-bold text-black mb-2 flex items-center gap-1.5 border border-black px-2.5 py-1 bg-white w-fit">
                         <span>📅 Tanggal &amp; Waktu Perbaikan:</span>
                         <span className="font-mono">
-                          {selectedRecord.waktu_perbaikan.includes("T")
-                            ? selectedRecord.waktu_perbaikan.replace("T", " ")
-                            : selectedRecord.waktu_perbaikan}
+                          {waktuPerbaikanText.includes("T")
+                            ? waktuPerbaikanText.replace("T", " ")
+                            : waktuPerbaikanText}
                         </span>
                       </div>
                     )}
-                    {selectedRecord.upaya_perbaikan && (
+                    {upayaPerbaikanText && (
                       <div className="text-[11pt] text-black leading-relaxed whitespace-pre-wrap font-medium mb-3 p-2 bg-white border border-slate-300">
-                        {selectedRecord.upaya_perbaikan}
+                        {upayaPerbaikanText}
                       </div>
                     )}
                     {perbaikanPhotosList.length > 0 && (
@@ -1439,23 +1493,41 @@ export default function GenericAuditReport({
                           <Camera className="w-3.5 h-3.5 text-black" /> Foto Bukti Upaya Perbaikan:
                         </p>
                         <div className="grid grid-cols-2 gap-4 print:page-break-inside-avoid px-2">
-                          {perbaikanPhotosList.map((url: string, i: number) => (
-                            <div
-                              key={i}
-                              onClick={() => setZoomedImage(url)}
-                              className="relative pt-[75%] border-2 border-black bg-white p-1 cursor-zoom-in shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:translate-y-[2px] hover:shadow-none transition-all"
-                            >
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={url}
-                                alt="Foto Perbaikan"
-                                className="absolute inset-0 w-full h-full object-cover p-1"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = "none";
-                                }}
-                              />
-                            </div>
-                          ))}
+                          {perbaikanPhotosList.map((url: string, i: number) => {
+                            const normalized = normalizeImageUrl(url);
+                            return (
+                              <div
+                                key={i}
+                                onClick={() => setZoomedImage(normalized)}
+                                className="relative pt-[75%] border-2 border-black bg-white p-1 cursor-zoom-in shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:translate-y-[2px] hover:shadow-none transition-all group overflow-hidden"
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={normalized}
+                                  alt={`Foto Perbaikan ${i + 1}`}
+                                  className="absolute inset-0 w-full h-full object-cover p-1"
+                                  loading="lazy"
+                                  onError={(e) => {
+                                    const parent = e.currentTarget.parentElement;
+                                    if (parent) {
+                                      e.currentTarget.style.display = "none";
+                                      const fallback = parent.querySelector(".img-fallback-placeholder");
+                                      if (fallback) (fallback as HTMLElement).style.display = "flex";
+                                    }
+                                  }}
+                                />
+                                <div className="img-fallback-placeholder absolute inset-0 hidden flex-col items-center justify-center p-3 text-center bg-slate-100 text-slate-500">
+                                  <Camera className="w-8 h-8 opacity-40 mb-1 text-slate-400" />
+                                  <span className="text-[10pt] font-bold uppercase tracking-wider text-slate-700">
+                                    Bukti Perbaikan #{i + 1}
+                                  </span>
+                                  <span className="text-[9pt] text-slate-400 mt-0.5">
+                                    (Gambar belum tersinkronisasi)
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}

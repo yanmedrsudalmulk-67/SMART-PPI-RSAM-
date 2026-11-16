@@ -10,9 +10,12 @@ export const uploadImagesToSupabase = async (
   for (const img of images) {
     if (!img) continue;
 
-    // 1. If it's a direct string URL (e.g. Supabase storage URL or data URL)
+    // 1. If it's a direct string URL (e.g. Supabase storage URL or local /uploads URL)
     if (typeof img === 'string') {
-      if (img.trim().length > 0) urls.push(img.trim());
+      const trimmed = img.trim();
+      if (trimmed.length > 0 && !trimmed.startsWith('blob:') && trimmed !== '[]') {
+        urls.push(trimmed);
+      }
       continue;
     }
 
@@ -28,7 +31,10 @@ export const uploadImagesToSupabase = async (
 
     // 4. If there is an existing remote/uploaded URL and no new File to upload, keep the existing URL
     if (!file && existingUrl) {
-      if (existingUrl.trim().length > 0) urls.push(existingUrl.trim());
+      const trimmed = existingUrl.trim();
+      if (trimmed.length > 0 && !trimmed.startsWith('blob:') && trimmed !== '[]') {
+        urls.push(trimmed);
+      }
       continue;
     }
 

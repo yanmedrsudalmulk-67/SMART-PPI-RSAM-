@@ -277,12 +277,12 @@ export default function WelcomePage() {
           transition={{ duration: 1, ease: "easeOut", delay: 0.4 }}
           className="text-center max-w-4xl w-full flex flex-col items-center"
         >
-          <h1 className="text-6xl md:text-[100px] lg:text-[120px] font-black leading-[1.1] tracking-tighter relative mb-6 md:mb-10 lg:mb-8">
+          <h1 className="text-6xl md:text-[100px] lg:text-[120px] font-black font-poppins leading-[1.1] tracking-tighter relative mb-6 md:mb-10 lg:mb-8">
             <motion.span 
               initial={{ y: 20, opacity: 0 }} 
               animate={{ y: 0, opacity: 1 }} 
               transition={{ duration: 0.8, delay: 0.6 }}
-              className="block text-transparent bg-clip-text bg-gradient-to-r bg-[length:200%_auto] animate-gradient drop-shadow-[1.5px_1.5px_1.5px_rgba(0,0,0,0.9)] from-blue-400 via-purple-500 to-blue-400"
+              className="block font-poppins font-black welcome-smart-ppi text-transparent bg-clip-text bg-gradient-to-r bg-[length:200%_auto] animate-gradient drop-shadow-[1.5px_1.5px_1.5px_rgba(0,0,0,0.9)] from-blue-400 via-purple-500 to-blue-400"
             >
               SMART PPI
             </motion.span>

@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, BarChart2, ShieldCheck, ChevronRight, X } from 'lucide-react';
+import { FileText, BarChart2, ShieldCheck, ShieldAlert, Activity, ChevronRight, X } from 'lucide-react';
 
 export interface MobileNavItem {
   id: string;
@@ -44,6 +44,23 @@ export const REPORT_SUB_ITEMS: ReportSubItem[] = [
   },
 ];
 
+export const ICRA_SUB_ITEMS: ReportSubItem[] = [
+  {
+    name: 'ICRA PPI',
+    desc: 'ICRA Program Tahunan & Konstruksi',
+    href: '/dashboard/icra',
+    icon: ShieldAlert,
+    badge: 'Risiko & Izin',
+  },
+  {
+    name: 'Investigasi KLB',
+    desc: 'Deteksi Dini, Line Listing & Epi-Curve',
+    href: '/dashboard/klb',
+    icon: Activity,
+    badge: 'Outbreak',
+  },
+];
+
 export const MOBILE_NAV_ITEMS: MobileNavItem[] = [
   { 
     id: 'dashboard',
@@ -62,6 +79,12 @@ export const MOBILE_NAV_ITEMS: MobileNavItem[] = [
     name: 'Grafik Capaian', 
     shortName: 'Grafik', 
     href: '/dashboard/analytics', 
+  },
+  { 
+    id: 'icra',
+    name: 'ICRA & KLB', 
+    shortName: 'ICRA/KLB', 
+    href: '/dashboard/icra', 
   },
   { 
     id: 'reports',
@@ -117,6 +140,19 @@ function SolidNavIcon({ id, className = "" }: { id: string; className?: string }
             clipRule="evenodd" 
             d="M 6.5 20 C 6.5 18.6 7.6 17.5 9 17.5 L 9.8 17.5 C 11.2 17.5 12.3 18.6 12.3 20 L 12.3 25.5 C 12.3 26.9 11.2 28 9.8 28 L 9 28 C 7.6 28 6.5 26.9 6.5 25.5 L 6.5 20 Z M 13.7 13 C 13.7 11.6 14.8 10.5 16.2 10.5 L 17 10.5 C 18.4 10.5 19.5 11.6 19.5 13 L 19.5 25.5 C 19.5 26.9 18.4 28 17 28 L 16.2 28 C 14.8 28 13.7 26.9 13.7 25.5 L 13.7 13 Z M 20.9 6.5 C 20.9 5.1 22 4 23.4 4 L 24.2 4 C 25.6 4 26.7 5.1 26.7 6.5 L 26.7 25.5 C 26.7 26.9 25.6 28 24.2 28 L 23.4 28 C 22 28 20.9 26.9 20.9 25.5 L 20.9 6.5 Z" 
             fill="currentColor" 
+          />
+        </svg>
+      );
+
+    case 'icra':
+      // Solid Shield with exclamation cutout for ICRA Risk Assessment
+      return (
+        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+          <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M 16 3.2 C 16.4 3.2 16.8 3.3 17.1 3.5 L 25.6 7.1 C 26.4 7.5 27 8.3 27 9.2 L 27 15.6 C 27 21.8 22.7 26.9 16.8 28.7 C 16.3 28.9 15.7 28.9 15.2 28.7 C 9.3 26.9 5 21.8 5 15.6 L 5 9.2 C 5 8.3 5.6 7.5 6.4 7.1 L 14.9 3.5 C 15.2 3.3 15.6 3.2 16 3.2 Z M 16 9.5 C 15.1 9.5 14.4 10.2 14.4 11.1 L 14.7 17.5 C 14.7 18.2 15.3 18.8 16 18.8 C 16.7 18.8 17.3 18.2 17.3 17.5 L 17.6 11.1 C 17.6 10.2 16.9 9.5 16 9.5 Z M 16 20.5 C 15 20.5 14.2 21.3 14.2 22.3 C 14.2 23.3 15 24.1 16 24.1 C 17 24.1 17.8 23.3 17.8 22.3 C 17.8 21.3 17 20.5 16 20.5 Z"
+            fill="currentColor"
           />
         </svg>
       );
@@ -208,9 +244,9 @@ function NavIcon3D({
 function getNavContourPath(activeIndex: number, itemCount: number = 5): string {
   const slot = 1000 / Math.max(1, itemCount);
   const cx = slot / 2 + activeIndex * slot;
-  const R = 72;
-  const x_left = Math.max(30, cx - R);
-  const x_right = Math.min(970, cx + R);
+  const R = itemCount >= 6 ? 62 : 72;
+  const x_left = Math.max(24, cx - R);
+  const x_right = Math.min(976, cx + R);
 
   return `M 0 120 L 0 95 C 0 75, 12 55, 28 55 L ${x_left} 55 C ${x_left + 35} 55, ${cx - 35} 14, ${cx} 14 C ${cx + 35} 14, ${x_right - 35} 55, ${x_right} 55 L 972 55 C 988 55, 1000 75, 1000 95 L 1000 120 C 1000 145, 980 165, 955 165 L 45 165 C 20 165, 0 145, 0 120 Z`;
 }
@@ -242,6 +278,7 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
       if (currentPath === '/dashboard') return 'dashboard';
       if (currentPath.startsWith('/dashboard/input')) return 'input';
       if (currentPath.startsWith('/dashboard/analytics')) return 'analytics';
+      if (currentPath.startsWith('/dashboard/icra') || currentPath.startsWith('/dashboard/klb')) return 'icra';
       if (currentPath.startsWith('/dashboard/reports')) return 'reports';
       if (currentPath.startsWith('/dashboard/settings')) return 'settings';
       return 'dashboard';
@@ -253,8 +290,8 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
   // Optimistic index for instantaneous response on tap, eliminating route transition lag
   const [optimisticIndex, setOptimisticIndex] = useState<number | null>(null);
 
-  // Floating sub-menu state for Laporan on mobile/tablet portrait
-  const [isReportsMenuOpen, setIsReportsMenuOpen] = useState(false);
+  // Floating sub-menu state for ICRA & KLB or Laporan on mobile/tablet portrait
+  const [openSubMenu, setOpenSubMenu] = useState<'reports' | 'icra' | null>(null);
 
   const rawActiveIndex = optimisticIndex !== null ? optimisticIndex : routeIndex;
   const activeIndex = Math.min(rawActiveIndex, itemCount - 1);
@@ -262,22 +299,29 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
   // Sync back with router when navigation finishes and close popup
   useEffect(() => {
     setOptimisticIndex(null);
-    setIsReportsMenuOpen(false);
+    setOpenSubMenu(null);
   }, [currentPath]);
+
+  const activePopupConfig =
+    openSubMenu === 'icra'
+      ? { title: 'PILIHAN ICRA & KLB', items: ICRA_SUB_ITEMS }
+      : openSubMenu === 'reports'
+      ? { title: 'PILIHAN LAPORAN PPI', items: REPORT_SUB_ITEMS }
+      : null;
 
   const svgPath = useMemo(() => getNavContourPath(activeIndex, itemCount), [activeIndex, itemCount]);
 
   return (
     <>
-      {/* Fullscreen Backdrop when Laporan Sub-Menu is open - placed OUTSIDE the nav bar at z-40 so it never covers the menu */}
+      {/* Fullscreen Backdrop when Sub-Menu is open - placed OUTSIDE the nav bar at z-40 so it never covers the menu */}
       <AnimatePresence>
-        {isReportsMenuOpen && (
+        {openSubMenu && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
-            onClick={() => setIsReportsMenuOpen(false)}
+            onClick={() => setOpenSubMenu(null)}
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 landscape:hidden pointer-events-auto"
           />
         )}
@@ -289,10 +333,11 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
           className="w-full max-w-md h-[86px] relative pointer-events-auto select-none nav-dock-120fps transform-gpu overflow-visible z-50"
           style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
         >
-          {/* Floating Sub-Menu Pop-up for Laporan - strictly z-[60] above backdrop */}
-          <AnimatePresence>
-            {isReportsMenuOpen && (
+          {/* Floating Sub-Menu Pop-up - strictly z-[60] above backdrop */}
+          <AnimatePresence mode="wait">
+            {activePopupConfig && (
               <motion.div
+                key={openSubMenu}
                 initial={{ opacity: 0, y: 14, scale: 0.94 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 14, scale: 0.94 }}
@@ -306,12 +351,12 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
                     <span className="text-[11px] font-black uppercase tracking-wider bg-gradient-to-r from-white via-indigo-100 to-cyan-300 bg-clip-text text-transparent">
-                      PILIHAN LAPORAN PPI
+                      {activePopupConfig.title}
                     </span>
                   </div>
                   <button
                     type="button"
-                    onClick={() => setIsReportsMenuOpen(false)}
+                    onClick={() => setOpenSubMenu(null)}
                     className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
                     aria-label="Tutup Menu"
                   >
@@ -321,7 +366,7 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
 
                 {/* Sub-Menu List */}
                 <div className="space-y-1.5">
-                  {REPORT_SUB_ITEMS.map((sub) => {
+                  {activePopupConfig.items.map((sub) => {
                     const isSubActive =
                       sub.href === '/dashboard/reports'
                         ? currentPath === '/dashboard/reports'
@@ -334,7 +379,7 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
                         href={sub.href}
                         prefetch={true}
                         scroll={false}
-                        onClick={() => setIsReportsMenuOpen(false)}
+                        onClick={() => setOpenSubMenu(null)}
                         className={`flex items-center justify-between p-2.5 rounded-2xl transition-all duration-200 group active:scale-[0.98] ${
                           isSubActive
                             ? 'bg-gradient-to-r from-indigo-600/40 via-cyan-600/30 to-blue-600/40 border border-cyan-400/60 text-white shadow-lg shadow-cyan-950/40'
@@ -460,14 +505,15 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
           {navItems.map((item, idx) => {
             const isActive = activeIndex === idx;
 
-            if (item.id === 'reports') {
+            if (item.id === 'reports' || item.id === 'icra') {
+              const targetMenu = item.id as 'reports' | 'icra';
               return (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => {
                     setOptimisticIndex(idx);
-                    setIsReportsMenuOpen((prev) => !prev);
+                    setOpenSubMenu((prev) => (prev === targetMenu ? null : targetMenu));
                   }}
                   className="relative h-full flex flex-col items-center justify-end pb-3 pt-1 outline-none group select-none cursor-pointer touch-manipulation active:scale-95 transition-transform duration-100 will-change-transform"
                   style={{ width: itemWidth, WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
@@ -492,7 +538,7 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
                       scale: isActive ? 1.04 : 1,
                     }}
                     transition={{ duration: 0.18 }}
-                    className={`text-[11px] tracking-tight text-center leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] transition-colors duration-200 ${
+                    className={`text-[10px] sm:text-[11px] tracking-tight text-center leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] transition-colors duration-200 ${
                       isActive ? 'font-black' : 'font-semibold group-hover:text-violet-200'
                     }`}
                   >
@@ -510,7 +556,7 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
                 scroll={false}
                 onClick={() => {
                   setOptimisticIndex(idx);
-                  setIsReportsMenuOpen(false);
+                  setOpenSubMenu(null);
                 }}
                 className="relative h-full flex flex-col items-center justify-end pb-3 pt-1 outline-none group select-none cursor-pointer touch-manipulation active:scale-95 transition-transform duration-100 will-change-transform"
                 style={{ width: itemWidth, WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
@@ -535,7 +581,7 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
                     scale: isActive ? 1.04 : 1,
                   }}
                   transition={{ duration: 0.18 }}
-                  className={`text-[11px] tracking-tight text-center leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] transition-colors duration-200 ${
+                  className={`text-[10px] sm:text-[11px] tracking-tight text-center leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] transition-colors duration-200 ${
                     isActive ? 'font-black' : 'font-semibold group-hover:text-violet-200'
                   }`}
                 >

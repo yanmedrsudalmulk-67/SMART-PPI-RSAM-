@@ -31,6 +31,7 @@ import {
 } from "@/components/DocumentationUploader";
 import { UpayaPerbaikanSection } from "@/components/UpayaPerbaikanSection";
 import { EditableSelect } from "@/components/EditableSelect";
+import TemuanRekomendasiSection from "@/components/TemuanRekomendasiSection";
 const units = [
   "IGD",
   "ICU",
@@ -577,32 +578,13 @@ export default function InputDekontaminasiAlatPage() {
           statusText={stats.statusText}
           title="KEPATUHAN DEKONTAMINASI ALAT"
         />
+        <TemuanRekomendasiSection
+          temuan={temuan}
+          setTemuan={setTemuan}
+          rekomendasi={rekomendasi}
+          setRekomendasi={setRekomendasi}
+        />
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 space-y-6">
-          <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">
-            Temuan dan Rekomendasi
-          </h2>
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">
-              Temuan Lapangan
-            </label>
-            <textarea
-              value={temuan}
-              onChange={(e) => setTemuan(e.target.value)}
-              placeholder="Tuliskan temuan lapangan..."
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none min-h-[100px]"
-            />
-          </div>
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">
-              Rekomendasi
-            </label>
-            <textarea
-              value={rekomendasi}
-              onChange={(e) => setRekomendasi(e.target.value)}
-              placeholder="Rekomendasi tindakan..."
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none min-h-[100px]"
-            />
-          </div>
           <DocumentationUploader images={images} setImages={setImages} />
           {isEditMode && (
             <UpayaPerbaikanSection

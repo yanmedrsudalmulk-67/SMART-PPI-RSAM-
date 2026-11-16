@@ -21,6 +21,7 @@ import DigitalSignatureSection, {
 } from "@/components/DigitalSignatureSection";
 import { EditableSelect } from "@/components/EditableSelect";
 import { useAppContext } from "@/components/Providers";
+import TemuanRekomendasiSection from "@/components/TemuanRekomendasiSection";
 const checklistItems = [
   {
     id: "im_1",
@@ -506,45 +507,6 @@ export default function InputMonitoringImmunoPage() {
             <Activity className="w-4 h-4 text-emerald-400" /> Data Subjek &
             Ruangan
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-3">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
-                Waktu Input
-              </label>
-              <input
-                type="datetime-local"
-                value={
-                  startTime
-                    ? new Date(
-                        startTime.getTime() -
-                          startTime.getTimezoneOffset() * 60000,
-                      )
-                        .toISOString()
-                        .slice(0, 16)
-                    : ""
-                }
-                onChange={(e) => setStartTime(new Date(e.target.value))}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 [color-scheme:dark]"
-              />
-            </div>
-            <div className="space-y-3">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">
-                Ruangan
-              </label>
-              <div className="w-full bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-3 text-sm text-blue-300 font-medium">
-                Ruang Isolasi
-              </div>
-            </div>
-            <EditableSelect
-              label="Supervisor"
-              value={observer}
-              onChange={setObserver}
-              options={[]}
-              isIPCN={isIPCN}
-              table="master_observers"
-              placeholder="Pilih Supervisor..."
-            />
-          </div>
         </div>
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
@@ -664,30 +626,12 @@ export default function InputMonitoringImmunoPage() {
           statusText={stats.statusText}
           title="KEPATUHAN PENEMPATAN PASIEN IMMUNOCOMPROMISED"
         />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
-              📝 TEMUAN
-            </h2>
-            <textarea
-              value={temuan}
-              onChange={(e) => setTemuan(e.target.value)}
-              placeholder="Tuliskan temuan audit...&#10;Contoh:&#10;Pengunjung tidak memakai masker&#10;Edukasi keluarga belum dilakukan&#10;Handrub tidak tersedia"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none"
-            />
-          </div>
-          <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
-              💡 REKOMENDASI
-            </h2>
-            <textarea
-              value={rekomendasi}
-              onChange={(e) => setRekomendasi(e.target.value)}
-              placeholder="Tuliskan rekomendasi tindak lanjut...&#10;Contoh:&#10;Lengkapi fasilitas hand hygiene&#10;Batasi transport pasien tidak perlu&#10;Edukasi ulang keluarga pasien"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none"
-            />
-          </div>
-        </div>
+        <TemuanRekomendasiSection
+          temuan={temuan}
+          setTemuan={setTemuan}
+          rekomendasi={rekomendasi}
+          setRekomendasi={setRekomendasi}
+        />
         <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
             📷 DOKUMENTASI

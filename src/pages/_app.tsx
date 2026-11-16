@@ -1,16 +1,25 @@
 import '@/styles/globals.css';
 import type { AppProps } from 'next/app';
 import Router from 'next/router';
-import { Poppins } from 'next/font/google';
+import { DM_Sans, Poppins } from 'next/font/google';
 import { AppProvider } from '@/components/Providers';
 import { NextPage } from 'next';
 import { ReactElement, ReactNode, useEffect } from 'react';
 
-const poppins = Poppins({ 
+const dmSans = DM_Sans({ 
   subsets: ['latin'], 
   weight: ['400', '500', '600', '700', '800'],
   display: 'swap',
-  variable: '--font-sans' 
+  variable: '--font-sans',
+  fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+});
+
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['600', '700', '800', '900'],
+  display: 'swap',
+  variable: '--font-poppins',
+  fallback: ['system-ui', '-apple-system', 'sans-serif'],
 });
 
 function isAbortError(err: any) {
@@ -150,13 +159,16 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
     <AppProvider>
       <style jsx global>{`
         :root {
-          --font-sans: ${poppins.style.fontFamily};
+          --font-sans: ${dmSans.style.fontFamily}, 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          --font-poppins: ${poppins.style.fontFamily}, 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+          --font-heading: var(--font-poppins);
         }
         body {
           font-family: var(--font-sans);
+          letter-spacing: -0.012em;
         }
       `}</style>
-      <div id="__app_shell" className={`${poppins.variable} font-sans overflow-x-hidden min-h-screen`}>
+      <div id="__app_shell" className={`${dmSans.variable} ${poppins.variable} font-sans overflow-x-hidden min-h-screen`}>
         {getLayout(
           <Component {...pageProps} />
         )}

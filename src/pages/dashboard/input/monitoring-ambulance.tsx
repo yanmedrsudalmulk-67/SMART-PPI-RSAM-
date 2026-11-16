@@ -28,6 +28,7 @@ import {
   DocImage,
 } from "@/components/DocumentationUploader";
 import { UpayaPerbaikanSection } from "@/components/UpayaPerbaikanSection";
+import TemuanRekomendasiSection from "@/components/TemuanRekomendasiSection";
 import DigitalSignatureSection, {
   DigitalSignatureRef,
 } from "@/components/DigitalSignatureSection";
@@ -483,30 +484,12 @@ export default function MonitoringAmbulancePage() {
           statusText={stats.statusText}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
-              📝 Temuan Audit
-            </h2>
-            <textarea
-              value={temuan}
-              onChange={(e) => setTemuan(e.target.value)}
-              placeholder="Tuliskan temuan audit..."
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600"
+        <TemuanRekomendasiSection
+              temuan={temuan}
+              setTemuan={setTemuan}
+              rekomendasi={rekomendasi}
+              setRekomendasi={setRekomendasi}
             />
-          </div>
-          <div className="bg-white/5 p-6 rounded-[24px] border border-white/5 shadow-sm">
-            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
-              💡 Rekomendasi
-            </h2>
-            <textarea
-              value={rekomendasi}
-              onChange={(e) => setRekomendasi(e.target.value)}
-              placeholder="Tuliskan rekomendasi tindak lanjut..."
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white h-32 outline-none focus:border-blue-500/50 transition-colors placeholder:text-slate-600"
-            />
-          </div>
-        </div>
 
         <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-[2.5rem] border border-white/5 shadow-sm">
           <DocumentationUploader images={images} setImages={setImages} />
