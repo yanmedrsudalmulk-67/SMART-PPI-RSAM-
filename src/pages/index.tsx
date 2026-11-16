@@ -118,7 +118,6 @@ export default function WelcomePage() {
     <div className="h-screen w-full transition-colors duration-700 ease-in-out relative flex flex-col items-center justify-center overflow-hidden font-sans bg-gradient-to-br from-[#060814] via-[#0b0e26] to-[#18092d] text-white">
       <Head>
         <title>Smart PPI | Welcome</title>
-        <link rel="preload" as="video" href={DEFAULT_VIDEO_URL} type="video/mp4" />
       </Head>
 
       {/* Futuristic Ambient Glowing Orbs */}

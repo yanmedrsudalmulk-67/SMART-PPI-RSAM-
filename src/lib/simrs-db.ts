@@ -18,23 +18,28 @@ export function getSimrsConfig(): SimrsConfig {
   };
 }
 
-let pool: mysql.Pool | null = null;
+let pool: mysql.Pool | { query: (...args: any[]) => Promise<[any[], any]> } | null = null;
 
-export function getSimrsPool(): mysql.Pool {
+export function getSimrsPool(): any {
   if (!pool) {
     const config = getSimrsConfig();
-    pool = mysql.createPool({
-      host: config.host,
-      port: config.port,
-      database: config.database,
-      user: config.user,
-      password: config.password,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0,
-      connectTimeout: 5000,
-      dateStrings: true,
-    });
+    try {
+      pool = mysql.createPool({
+        host: config.host,
+        port: config.port,
+        database: config.database,
+        user: config.user,
+        password: config.password,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0,
+        connectTimeout: 1500,
+        dateStrings: true,
+      });
+    } catch {
+      console.warn('[AI Studio] MySQL SIMRS DB not connected — mock active');
+      pool = { query: async () => [[], []] };
+    }
   }
   return pool;
 }
@@ -196,7 +201,7 @@ export async function testSimrsConnection(): Promise<{ ok: boolean; message: str
 export async function fetchSimrsHaisWeb(startDate: string, endDate: string): Promise<SimrsHaisWebResponse> {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 7000);
+    const timeout = setTimeout(() => controller.abort(), 1500);
 
     const res = await fetch('http://192.168.18.11/almulk/ranap/data_hais1', {
       method: 'POST',

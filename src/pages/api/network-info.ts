@@ -27,9 +27,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     primaryIp = preferred.ip;
   }
 
-  // Extract port from Host header if available, otherwise default to 3001
+  // Extract port from Host header if available, otherwise default to 3000
   const host = req.headers.host || '';
-  const port = host.includes(':') ? host.split(':')[1] : '3001';
+  const port = host.includes(':') ? host.split(':')[1] : '3000';
 
   // Check if custom domain is configured
   let customDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'https://www.rsudalmulkmobile.xyz';

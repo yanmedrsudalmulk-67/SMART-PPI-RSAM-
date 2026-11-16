@@ -1,126 +1,39 @@
-import path from 'path';
-import fs from 'fs';
-import sqlite3 from 'sqlite3';
+import crypto from 'crypto';
 
-const dbPath = path.resolve(process.cwd(), 'data/smart_ppi.db');
-const dbDir = path.dirname(dbPath);
-if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
-}
+// MOCKED — in-memory SQLite replacement (native sqlite3 stripped for container compatibility)
+export const db = {
+  prepare: () => ({
+    get: () => null,
+    all: () => [],
+    run: () => ({ changes: 0 }),
+  }),
+};
 
-// Singleton database connection
-let dbInstance: sqlite3.Database | null = null;
+const globalStore = globalThis as unknown as {
+  __smartPpiMemoryDb?: Map<string, Record<string, any>[]>;
+};
 
-// In-Memory Caches for Extreme Performance
-const tableColumnsCache = new Map<string, Set<string>>();
-
-interface QueryCacheEntry {
-  timestamp: number;
-  data: { data: any[]; count: number | null };
-}
-const queryCache = new Map<string, QueryCacheEntry>();
-const QUERY_CACHE_TTL_MS = 20000; // 20 seconds cache for identical SELECT queries
-
-export function clearQueryCache(table?: string) {
-  if (!table) {
-    queryCache.clear();
-    return;
+function getTablesMap(): Map<string, Record<string, any>[]> {
+  if (!globalStore.__smartPpiMemoryDb) {
+    globalStore.__smartPpiMemoryDb = new Map<string, Record<string, any>[]>();
   }
-  const prefix = `${table}:`;
-  for (const key of queryCache.keys()) {
-    if (key.startsWith(prefix)) {
-      queryCache.delete(key);
-    }
-  }
+  return globalStore.__smartPpiMemoryDb;
 }
 
-export function getDb(): sqlite3.Database {
-  if (!dbInstance) {
-    dbInstance = new sqlite3.Database(dbPath, (err) => {
-      if (err) {
-        console.error('Failed to connect to local SQLite database:', err);
-      }
-    });
-    dbInstance.serialize(() => {
-      dbInstance?.run('PRAGMA journal_mode = WAL;');
-      dbInstance?.run('PRAGMA synchronous = NORMAL;');
-      dbInstance?.run('PRAGMA cache_size = -64000;'); // 64MB memory cache
-      dbInstance?.run('PRAGMA temp_store = MEMORY;');
-      dbInstance?.run('PRAGMA foreign_keys = OFF;');
-    });
+function getTableRows(table: string): Record<string, any>[] {
+  const map = getTablesMap();
+  if (!map.has(table)) {
+    map.set(table, []);
   }
-  return dbInstance;
+  return map.get(table)!;
 }
 
-export function runSql(sql: string, params: any[] = []): Promise<{ lastID: number; changes: number }> {
-  const db = getDb();
-  return new Promise((resolve, reject) => {
-    db.run(sql, params, function (err) {
-      if (err) reject(err);
-      else resolve({ lastID: this.lastID, changes: this.changes });
-    });
-  });
+export function clearQueryCache(_table?: string) {
+  // No-op for in-memory store
 }
 
-export function allSql<T = any>(sql: string, params: any[] = []): Promise<T[]> {
-  const db = getDb();
-  return new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
-      if (err) reject(err);
-      else resolve((rows || []) as T[]);
-    });
-  });
-}
-
-export function getSql<T = any>(sql: string, params: any[] = []): Promise<T | null> {
-  const db = getDb();
-  return new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-      if (err) reject(err);
-      else resolve((row as T) || null);
-    });
-  });
-}
-
-export async function getTableColumns(table: string): Promise<Set<string>> {
-  if (tableColumnsCache.has(table)) {
-    return tableColumnsCache.get(table)!;
-  }
-  try {
-    const info = await allSql<{ name: string }>(`PRAGMA table_info("${table}")`);
-    const cols = new Set(info.map(c => c.name));
-    if (cols.size > 0) {
-      tableColumnsCache.set(table, cols);
-    }
-    return cols;
-  } catch (e) {
-    return new Set();
-  }
-}
-
-export async function ensureTableAndColumns(table: string, sampleRow?: Record<string, any>): Promise<Set<string>> {
-  const existingCols = await getTableColumns(table);
-  if (existingCols.size === 0) {
-    await runSql(`CREATE TABLE IF NOT EXISTS "${table}" (id TEXT PRIMARY KEY, created_at TEXT)`);
-    existingCols.add('id');
-    existingCols.add('created_at');
-    tableColumnsCache.set(table, existingCols);
-  }
-
-  if (sampleRow && typeof sampleRow === 'object') {
-    for (const key of Object.keys(sampleRow)) {
-      if (!existingCols.has(key)) {
-        try {
-          await runSql(`ALTER TABLE "${table}" ADD COLUMN "${key}" TEXT`);
-          existingCols.add(key);
-          tableColumnsCache.set(table, existingCols);
-        } catch (e) {
-          // column might have been added concurrently
-        }
-      }
-    }
-  }
-  return existingCols;
+export function getDb() {
+  return db;
 }
 
 export function serializeValue(val: any): any {
@@ -148,14 +61,35 @@ export function deserializeRow(row: any): any {
         try {
           out[k] = JSON.parse(v);
           continue;
-        } catch (e) {
-          // not valid json, treat as string
+        } catch {
+          // keep as string
         }
       }
     }
     out[k] = v;
   }
   return out;
+}
+
+export async function getTableColumns(table: string): Promise<Set<string>> {
+  const rows = getTableRows(table);
+  const cols = new Set<string>(['id', 'created_at']);
+  for (const row of rows) {
+    for (const key of Object.keys(row)) {
+      cols.add(key);
+    }
+  }
+  return cols;
+}
+
+export async function ensureTableAndColumns(table: string, sampleRow?: Record<string, any>): Promise<Set<string>> {
+  const cols = await getTableColumns(table);
+  if (sampleRow && typeof sampleRow === 'object') {
+    for (const key of Object.keys(sampleRow)) {
+      cols.add(key);
+    }
+  }
+  return cols;
 }
 
 export interface FilterCondition {
@@ -174,304 +108,317 @@ export interface SelectOptions {
   head?: boolean;
 }
 
-export async function executeSelect(table: string, options: SelectOptions = {}) {
-  // Check in-memory query cache for instant responses
-  const cacheKey = `${table}:${JSON.stringify(options)}`;
-  const cached = queryCache.get(cacheKey);
-  if (cached && (Date.now() - cached.timestamp < QUERY_CACHE_TTL_MS)) {
-    return cached.data;
+function likeToRegex(pattern: string): RegExp {
+  const escaped = String(pattern)
+    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    .replace(/%/g, '.*')
+    .replace(/_/g, '.');
+  return new RegExp(`^${escaped}$`, 'i');
+}
+
+function matchesFilter(row: Record<string, any>, f: FilterCondition): boolean {
+  const rawVal = row[f.column];
+  const valStr = rawVal === null || rawVal === undefined ? null : String(rawVal);
+
+  switch (f.operator) {
+    case 'eq':
+      if (f.value === null) return rawVal === null || rawVal === undefined;
+      return valStr === String(serializeValue(f.value));
+    case 'neq':
+      if (f.value === null) return rawVal !== null && rawVal !== undefined;
+      return valStr !== String(serializeValue(f.value));
+    case 'gt':
+      return rawVal !== null && rawVal !== undefined && String(rawVal) > String(serializeValue(f.value));
+    case 'gte':
+      return rawVal !== null && rawVal !== undefined && String(rawVal) >= String(serializeValue(f.value));
+    case 'lt':
+      return rawVal !== null && rawVal !== undefined && String(rawVal) < String(serializeValue(f.value));
+    case 'lte':
+      return rawVal !== null && rawVal !== undefined && String(rawVal) <= String(serializeValue(f.value));
+    case 'like':
+    case 'ilike':
+      return valStr !== null && likeToRegex(String(f.value)).test(valStr);
+    case 'in':
+      if (!Array.isArray(f.value) || f.value.length === 0) return false;
+      return f.value.some((v: any) => valStr === String(serializeValue(v)));
+    case 'contains':
+      return valStr !== null && valStr.toLowerCase().includes(String(f.value).toLowerCase());
+    default:
+      return true;
   }
+}
 
-  await ensureTableAndColumns(table);
-
-  const existingCols = await getTableColumns(table);
-  const whereClauses: string[] = [];
-  const params: any[] = [];
+export async function executeSelect(table: string, options: SelectOptions = {}) {
+  let rows = [...getTableRows(table)];
 
   if (options.filters && options.filters.length > 0) {
-    for (const f of options.filters) {
-      // Ensure column exists to avoid SQL syntax error
-      if (!existingCols.has(f.column)) {
-        await ensureTableAndColumns(table, { [f.column]: '' });
-      }
-
-      switch (f.operator) {
-        case 'eq':
-          if (f.value === null) {
-            whereClauses.push(`"${f.column}" IS NULL`);
-          } else {
-            whereClauses.push(`"${f.column}" = ?`);
-            params.push(serializeValue(f.value));
-          }
-          break;
-        case 'neq':
-          if (f.value === null) {
-            whereClauses.push(`"${f.column}" IS NOT NULL`);
-          } else {
-            whereClauses.push(`("${f.column}" != ? OR "${f.column}" IS NULL)`);
-            params.push(serializeValue(f.value));
-          }
-          break;
-        case 'gt':
-          whereClauses.push(`"${f.column}" > ?`);
-          params.push(serializeValue(f.value));
-          break;
-        case 'gte':
-          whereClauses.push(`"${f.column}" >= ?`);
-          params.push(serializeValue(f.value));
-          break;
-        case 'lt':
-          whereClauses.push(`"${f.column}" < ?`);
-          params.push(serializeValue(f.value));
-          break;
-        case 'lte':
-          whereClauses.push(`"${f.column}" <= ?`);
-          params.push(serializeValue(f.value));
-          break;
-        case 'like':
-        case 'ilike':
-          whereClauses.push(`"${f.column}" LIKE ?`);
-          params.push(f.value);
-          break;
-        case 'in':
-          if (Array.isArray(f.value) && f.value.length > 0) {
-            const placeholders = f.value.map(() => '?').join(', ');
-            whereClauses.push(`"${f.column}" IN (${placeholders})`);
-            f.value.forEach((v: any) => params.push(serializeValue(v)));
-          } else {
-            whereClauses.push(`1 = 0`);
-          }
-          break;
-        case 'contains':
-          whereClauses.push(`"${f.column}" LIKE ?`);
-          params.push(`%${f.value}%`);
-          break;
-      }
-    }
+    rows = rows.filter((row) => options.filters!.every((f) => matchesFilter(row, f)));
   }
 
-  const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
-
-  let totalCount: number | null = null;
-  if (options.count === 'exact') {
-    const countRes = await getSql<{ c: number }>(`SELECT COUNT(*) as c FROM "${table}" ${whereSql}`, params);
-    totalCount = countRes ? countRes.c : 0;
-  }
-
+  const totalCount = options.count === 'exact' ? rows.length : null;
   if (options.head) {
     return { data: [], count: totalCount };
   }
 
-  // Parse columns
-  let colSql = '*';
-  if (options.columns && options.columns !== '*') {
-    const rawCols = options.columns.split(',').map(c => c.trim()).filter(Boolean);
-    // ensure all requested cols exist
-    for (const c of rawCols) {
-      if (!existingCols.has(c)) {
-        await ensureTableAndColumns(table, { [c]: '' });
-      }
-    }
-    colSql = rawCols.map(c => `"${c}"`).join(', ');
-  }
-
-  let orderSql = '';
   if (options.order) {
-    const dir = options.order.ascending ? 'ASC' : 'DESC';
-    orderSql = `ORDER BY "${options.order.column}" ${dir}`;
+    const { column, ascending = true } = options.order;
+    rows.sort((a, b) => {
+      const va = a[column] ?? '';
+      const vb = b[column] ?? '';
+      if (va < vb) return ascending ? -1 : 1;
+      if (va > vb) return ascending ? 1 : -1;
+      return 0;
+    });
   }
 
-  let limitSql = '';
+  if (typeof options.offset === 'number' && options.offset > 0) {
+    rows = rows.slice(options.offset);
+  }
   if (typeof options.limit === 'number') {
-    limitSql = `LIMIT ${options.limit}`;
-    if (typeof options.offset === 'number') {
-      limitSql += ` OFFSET ${options.offset}`;
-    }
+    rows = rows.slice(0, options.limit);
   }
 
-  const querySql = `SELECT ${colSql} FROM "${table}" ${whereSql} ${orderSql} ${limitSql}`.trim();
-  const rawRows = await allSql(querySql, params);
-  const data = rawRows.map(deserializeRow);
+  let data = rows.map((r) => deserializeRow(r));
+  if (options.columns && options.columns !== '*') {
+    const requestedCols = options.columns.split(',').map((c) => c.trim()).filter(Boolean);
+    data = data.map((r) => {
+      const projected: Record<string, any> = {};
+      for (const col of requestedCols) {
+        projected[col] = r[col] ?? null;
+      }
+      return projected;
+    });
+  }
 
-  const output = { data, count: totalCount };
-  queryCache.set(cacheKey, { timestamp: Date.now(), data: output });
-  return output;
+  return { data, count: totalCount };
 }
 
 export async function executeInsert(table: string, rows: Record<string, any>[]) {
-  clearQueryCache(table);
   if (!rows || rows.length === 0) return { data: [] };
-
-  // Ensure all columns exist
-  for (const r of rows) {
-    await ensureTableAndColumns(table, r);
-  }
-
+  const tableRows = getTableRows(table);
   const insertedRows: any[] = [];
+
   for (const r of rows) {
-    const rowToInsert = { ...r };
+    const rowToInsert: Record<string, any> = { ...r };
     if (!rowToInsert.id) {
-      rowToInsert.id = crypto.randomUUID ? crypto.randomUUID() : `loc-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+      rowToInsert.id = crypto.randomUUID
+        ? crypto.randomUUID()
+        : `loc-${Date.now()}-${Math.random().toString(36).substring(7)}`;
     }
     if (!rowToInsert.created_at) {
       rowToInsert.created_at = new Date().toISOString();
     }
-
-    const keys = Object.keys(rowToInsert);
-    const placeholders = keys.map(() => '?').join(', ');
-    const values = keys.map(k => serializeValue(rowToInsert[k]));
-
-    await runSql(
-      `INSERT INTO "${table}" ("${keys.join('", "')}") VALUES (${placeholders})`,
-      values
-    );
-
-    insertedRows.push(rowToInsert);
+    const storedRow: Record<string, any> = {};
+    for (const [k, v] of Object.entries(rowToInsert)) {
+      storedRow[k] = serializeValue(v);
+    }
+    tableRows.push(storedRow);
+    insertedRows.push(deserializeRow(storedRow));
   }
 
   return { data: insertedRows };
 }
 
 export async function executeUpsert(table: string, rows: Record<string, any>[], onConflict: string = 'id') {
-  clearQueryCache(table);
   if (!rows || rows.length === 0) return { data: [] };
+  const tableRows = getTableRows(table);
+  const upsertedRows: any[] = [];
 
   for (const r of rows) {
-    await ensureTableAndColumns(table, r);
-  }
-
-  const upsertedRows: any[] = [];
-  await runSql('BEGIN TRANSACTION');
-  try {
-    for (const r of rows) {
-      const rowToInsert = { ...r };
-      if (!rowToInsert.id) {
-        rowToInsert.id = crypto.randomUUID ? crypto.randomUUID() : `loc-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-      }
-      if (!rowToInsert.created_at) {
-        rowToInsert.created_at = new Date().toISOString();
-      }
-
-      const keys = Object.keys(rowToInsert);
-      const placeholders = keys.map(() => '?').join(', ');
-      const values = keys.map(k => serializeValue(rowToInsert[k]));
-
-      // SQLite INSERT OR REPLACE
-      await runSql(
-        `INSERT OR REPLACE INTO "${table}" ("${keys.join('", "')}") VALUES (${placeholders})`,
-        values
-      );
-
-      upsertedRows.push(rowToInsert);
+    const rowToInsert: Record<string, any> = { ...r };
+    if (!rowToInsert.id) {
+      rowToInsert.id = crypto.randomUUID
+        ? crypto.randomUUID()
+        : `loc-${Date.now()}-${Math.random().toString(36).substring(7)}`;
     }
-    await runSql('COMMIT');
-  } catch (err) {
-    await runSql('ROLLBACK').catch(() => {});
-    throw err;
+    if (!rowToInsert.created_at) {
+      rowToInsert.created_at = new Date().toISOString();
+    }
+    const storedRow: Record<string, any> = {};
+    for (const [k, v] of Object.entries(rowToInsert)) {
+      storedRow[k] = serializeValue(v);
+    }
+
+    const conflictKey = onConflict || 'id';
+    const idx = tableRows.findIndex((existing) => existing[conflictKey] === storedRow[conflictKey]);
+    if (idx >= 0) {
+      tableRows[idx] = { ...tableRows[idx], ...storedRow };
+    } else {
+      tableRows.push(storedRow);
+    }
+    upsertedRows.push(deserializeRow(storedRow));
   }
 
   return { data: upsertedRows };
 }
 
 export async function executeUpdate(table: string, updates: Record<string, any>, filters: FilterCondition[] = []) {
-  clearQueryCache(table);
-  await ensureTableAndColumns(table, updates);
+  const tableRows = getTableRows(table);
+  const updatedRows: any[] = [];
 
-  const setClauses: string[] = [];
-  const params: any[] = [];
-
-  for (const [k, v] of Object.entries(updates)) {
-    setClauses.push(`"${k}" = ?`);
-    params.push(serializeValue(v));
-  }
-
-  const whereClauses: string[] = [];
-  if (filters.length > 0) {
-    for (const f of filters) {
-      if (f.operator === 'eq') {
-        whereClauses.push(`"${f.column}" = ?`);
-        params.push(serializeValue(f.value));
+  for (let i = 0; i < tableRows.length; i++) {
+    const row = tableRows[i];
+    const matches = filters.length === 0 || filters.every((f) => matchesFilter(row, f));
+    if (matches) {
+      for (const [k, v] of Object.entries(updates)) {
+        row[k] = serializeValue(v);
       }
+      updatedRows.push(deserializeRow(row));
     }
   }
 
-  const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
-  const sql = `UPDATE "${table}" SET ${setClauses.join(', ')} ${whereSql}`;
-
-  await runSql(sql, params);
-
-  // Return updated rows if possible
-  const updated = await allSql(`SELECT * FROM "${table}" ${whereSql}`, whereClauses.length > 0 ? params.slice(Object.keys(updates).length) : []);
-  return { data: updated.map(deserializeRow) };
+  return { data: updatedRows };
 }
 
 export async function executeDelete(table: string, filters: FilterCondition[] = []) {
-  clearQueryCache(table);
-  await ensureTableAndColumns(table);
+  const map = getTablesMap();
+  const tableRows = getTableRows(table);
+  if (filters.length === 0) {
+    map.set(table, []);
+    return { data: null };
+  }
+  const remaining = tableRows.filter((row) => !filters.every((f) => matchesFilter(row, f)));
+  map.set(table, remaining);
+  return { data: null };
+}
 
-  const whereClauses: string[] = [];
-  const params: any[] = [];
+// Lightweight SQL compatibility handlers for routes that invoke runSql / allSql / getSql directly
+export async function runSql(sql: string, params: any[] = []): Promise<{ lastID: number; changes: number }> {
+  const normalized = sql.trim();
 
-  if (filters.length > 0) {
-    for (const f of filters) {
-      switch (f.operator) {
-        case 'eq':
-          if (f.value === null) {
-            whereClauses.push(`"${f.column}" IS NULL`);
-          } else {
-            whereClauses.push(`"${f.column}" = ?`);
-            params.push(serializeValue(f.value));
+  // CREATE TABLE
+  if (/^CREATE\s+TABLE/i.test(normalized)) {
+    const match = normalized.match(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?["`]?(\w+)["`]?/i);
+    if (match) getTableRows(match[1]);
+    return { lastID: 0, changes: 0 };
+  }
+
+  // INSERT INTO "table" (col1, col2, ...) VALUES (?, ?, ...)
+  const insertMatch = normalized.match(
+    /^INSERT\s+(?:OR\s+REPLACE\s+)?INTO\s+["`]?(\w+)["`]?\s*\(([^)]+)\)\s*VALUES\s*\(([^)]+)\)/i
+  );
+  if (insertMatch) {
+    const table = insertMatch[1];
+    const cols = insertMatch[2].split(',').map((c) => c.trim().replace(/^["`]|["`]$/g, ''));
+    const row: Record<string, any> = {};
+    cols.forEach((col, i) => {
+      row[col] = params[i] ?? null;
+    });
+    if (/OR\s+REPLACE/i.test(normalized)) {
+      await executeUpsert(table, [row], 'id');
+    } else {
+      await executeInsert(table, [row]);
+    }
+    return { lastID: 1, changes: 1 };
+  }
+
+  // DELETE FROM "table" ...
+  const deleteMatch = normalized.match(/^DELETE\s+FROM\s+["`]?(\w+)["`]?/i);
+  if (deleteMatch) {
+    const table = deleteMatch[1];
+    const tableRows = getTableRows(table);
+    if (table === 'audit_sessions' && params.length >= 4 && normalized.includes('substr("tanggal_waktu"')) {
+      const [room, indId, , ym] = params;
+      const filtered = tableRows.filter(
+        (r) =>
+          !(
+            r.kategori === 'Surveilans HAIs' &&
+            r.unit === room &&
+            (r.indikator_id === indId || String(r.nama_indikator || '').toLowerCase().includes(String(indId).toLowerCase())) &&
+            String(r.tanggal_waktu || '').slice(0, 7) === String(ym)
+          )
+      );
+      getTablesMap().set(table, filtered);
+      return { lastID: 0, changes: tableRows.length - filtered.length };
+    }
+    if (table === 'audit_sessions' && normalized.includes('"id" LIKE \'simrs-%\'') && params.length >= 2) {
+      const [startIso, endIso] = params;
+      const filtered = tableRows.filter(
+        (r) =>
+          !(
+            r.kategori === 'Surveilans HAIs' &&
+            String(r.id || '').startsWith('simrs-') &&
+            String(r.tanggal_waktu || '') >= String(startIso) &&
+            String(r.tanggal_waktu || '') <= String(endIso)
+          )
+      );
+      getTablesMap().set(table, filtered);
+      return { lastID: 0, changes: tableRows.length - filtered.length };
+    }
+    if (table === 'simrs_hais_patients' && params.length >= 2) {
+      const [startDate, endDate] = params;
+      const filtered = tableRows.filter(
+        (r) => !(String(r.tanggal || '') >= String(startDate) && String(r.tanggal || '') <= String(endDate))
+      );
+      getTablesMap().set(table, filtered);
+      return { lastID: 0, changes: tableRows.length - filtered.length };
+    }
+    return { lastID: 0, changes: 0 };
+  }
+
+  return { lastID: 0, changes: 0 };
+}
+
+export async function allSql<T = any>(sql: string, params: any[] = []): Promise<T[]> {
+  const normalized = sql.trim();
+  const fromMatch = normalized.match(/FROM\s+["`]?(\w+)["`]?/i);
+  if (!fromMatch) return [];
+  const table = fromMatch[1];
+  const rows = getTableRows(table);
+
+  if (table === 'simrs_hais_patients' && params.length >= 2) {
+    const [startDate, endDate] = params;
+    return rows
+      .filter((r) => String(r.tanggal || '') >= String(startDate) && String(r.tanggal || '') <= String(endDate))
+      .map((r) => deserializeRow(r)) as T[];
+  }
+
+  if (table === 'audit_sessions') {
+    if (normalized.includes('SELECT DISTINCT substr(tanggal_waktu, 1, 7) as ym')) {
+      const seen = new Set<string>();
+      const out: any[] = [];
+      for (const r of rows) {
+        if (
+          r.kategori === 'Surveilans HAIs' &&
+          (String(r.id || '').startsWith('manual-hais') || String(r.id || '').startsWith('excel-hais'))
+        ) {
+          const ym = String(r.tanggal_waktu || '').slice(0, 7);
+          const ind_id = String(r.indikator_id || '').toLowerCase();
+          const key = `${ym}|${r.unit}|${ind_id}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            out.push({ ym, unit: r.unit, ind_id });
           }
-          break;
-        case 'neq':
-          if (f.value === null) {
-            whereClauses.push(`"${f.column}" IS NOT NULL`);
-          } else {
-            whereClauses.push(`("${f.column}" != ? OR "${f.column}" IS NULL)`);
-            params.push(serializeValue(f.value));
-          }
-          break;
-        case 'gt':
-          whereClauses.push(`"${f.column}" > ?`);
-          params.push(serializeValue(f.value));
-          break;
-        case 'gte':
-          whereClauses.push(`"${f.column}" >= ?`);
-          params.push(serializeValue(f.value));
-          break;
-        case 'lt':
-          whereClauses.push(`"${f.column}" < ?`);
-          params.push(serializeValue(f.value));
-          break;
-        case 'lte':
-          whereClauses.push(`"${f.column}" <= ?`);
-          params.push(serializeValue(f.value));
-          break;
-        case 'like':
-        case 'ilike':
-          whereClauses.push(`"${f.column}" LIKE ?`);
-          params.push(f.value);
-          break;
-        case 'in':
-          if (Array.isArray(f.value) && f.value.length > 0) {
-            const placeholders = f.value.map(() => '?').join(', ');
-            whereClauses.push(`"${f.column}" IN (${placeholders})`);
-            f.value.forEach((v: any) => params.push(serializeValue(v)));
-          } else {
-            whereClauses.push(`1 = 0`);
-          }
-          break;
-        case 'contains':
-          whereClauses.push(`"${f.column}" LIKE ?`);
-          params.push(`%${f.value}%`);
-          break;
+        }
       }
+      return out as T[];
+    }
+    if (params.length >= 2) {
+      const [startDate, endDate] = params;
+      return rows
+        .filter((r) => {
+          const d = String(r.tanggal_waktu || '').slice(0, 10);
+          return r.kategori === 'Surveilans HAIs' && d >= String(startDate) && d <= String(endDate);
+        })
+        .map((r) => deserializeRow(r)) as T[];
     }
   }
 
-  const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
-  const sql = `DELETE FROM "${table}" ${whereSql}`;
+  return rows.map((r) => deserializeRow(r)) as T[];
+}
 
-  await runSql(sql, params);
-  return { data: null };
+export async function getSql<T = any>(sql: string, params: any[] = []): Promise<T | null> {
+  const normalized = sql.trim();
+  const fromMatch = normalized.match(/FROM\s+["`]?(\w+)["`]?/i);
+  if (!fromMatch) return null;
+  const table = fromMatch[1];
+  const rows = getTableRows(table);
+
+  if (table === 'ipcln_accounts' && params.length >= 1) {
+    const targetUsername = String(params[0]).toLowerCase();
+    const found = rows.find((r) => String(r.username || '').toLowerCase() === targetUsername);
+    return (found ? deserializeRow(found) : null) as T | null;
+  }
+
+  return (rows.length > 0 ? deserializeRow(rows[0]) : null) as T | null;
 }

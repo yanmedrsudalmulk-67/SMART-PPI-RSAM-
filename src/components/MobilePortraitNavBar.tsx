@@ -377,7 +377,6 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
                       <Link
                         key={sub.href}
                         href={sub.href}
-                        prefetch={true}
                         scroll={false}
                         onClick={() => setOpenSubMenu(null)}
                         className={`flex items-center justify-between p-2.5 rounded-2xl transition-all duration-200 group active:scale-[0.98] ${
@@ -552,7 +551,6 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
               <Link 
                 key={item.id} 
                 href={item.href}
-                prefetch={true}
                 scroll={false}
                 onClick={() => {
                   setOptimisticIndex(idx);
