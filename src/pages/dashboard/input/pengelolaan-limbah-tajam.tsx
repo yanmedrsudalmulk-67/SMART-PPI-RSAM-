@@ -381,6 +381,7 @@ export default function InputPengelolaanLimbahTajamPage() {
         jumlah_patuh: stats.patuh,
         persentase: stats.persentase,
         status_kepatuhan: stats.statusText,
+        foto_perbaikan: uploadedPerbaikanUrls,
         data_indikator: {
           ...auditData,
           temuan,

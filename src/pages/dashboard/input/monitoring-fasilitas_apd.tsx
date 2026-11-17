@@ -287,6 +287,8 @@ export default function MonitoringFasilitasAPDPage() {
         jumlah_patuh: stats.patuh,
         jumlah_dinilai: stats.dinilai,
         status_kepatuhan: stats.status,
+        dokumentasi: uploadedUrls,
+        foto_perbaikan: uploadedPerbaikanUrls,
         data_indikator: {
           ...data,
           temuan,

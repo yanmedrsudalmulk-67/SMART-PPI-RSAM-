@@ -1,26 +1,23 @@
 import '@/styles/globals.css';
 import type { AppProps } from 'next/app';
 import Router from 'next/router';
-import { DM_Sans, Poppins } from 'next/font/google';
 import { AppProvider } from '@/components/Providers';
 import { NextPage } from 'next';
 import { ReactElement, ReactNode, useEffect } from 'react';
 
-const dmSans = DM_Sans({ 
-  subsets: ['latin'], 
-  weight: ['400', '500', '600', '700', '800'],
-  display: 'swap',
-  variable: '--font-sans',
-  fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-});
+const dmSans = {
+  variable: 'font-sans',
+  style: {
+    fontFamily: "'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+  },
+};
 
-const poppins = Poppins({
-  subsets: ['latin'],
-  weight: ['600', '700', '800', '900'],
-  display: 'swap',
-  variable: '--font-poppins',
-  fallback: ['system-ui', '-apple-system', 'sans-serif'],
-});
+const poppins = {
+  variable: 'font-poppins',
+  style: {
+    fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, sans-serif",
+  },
+};
 
 function isAbortError(err: any) {
   if (!err) return false;
