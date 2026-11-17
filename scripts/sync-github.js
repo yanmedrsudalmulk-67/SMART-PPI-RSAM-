@@ -242,40 +242,57 @@ async function syncOnce({ quietWhenUpToDate = false, quickTimeoutMs = 8000 } = {
       return { updated: false };
     }
 
-    // Attempt clean merge without auto-commit so we can verify AI Studio compatibility patches
+    // Ensure local hospital SQLite DB is never modified or staged by git
     try {
-      execSync('git merge origin/main --no-commit --no-ff -X theirs', {
+      execSync('git update-index --skip-worktree data/smart_ppi.db', { cwd: ROOT, stdio: 'ignore' });
+    } catch {}
+
+    // Attempt clean merge (fast-forward if possible, or merge -X theirs)
+    try {
+      execSync('git merge origin/main --no-edit', {
         cwd: ROOT,
         encoding: 'utf8',
-        timeout: 20000,
+        timeout: 25000,
         env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
         stdio: ['ignore', 'pipe', 'pipe'],
       });
-    } catch (mergeErr) {
-      // If a tracked local binary (e.g. data/smart_ppi.db) caused merge abort, abort merge and report
+    } catch (ffErr) {
       try {
-        runGit('merge --abort', 5000);
-      } catch {}
-      log(`Gagal merge otomatis (periksa konflik lokal): ${mergeErr.message}`);
-      return { updated: false, error: mergeErr.message };
+        execSync('git merge origin/main --no-edit -X theirs', {
+          cwd: ROOT,
+          encoding: 'utf8',
+          timeout: 25000,
+          env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+          stdio: ['ignore', 'pipe', 'pipe'],
+        });
+      } catch (mergeErr) {
+        try {
+          runGit('merge --abort', 5000);
+        } catch {}
+        log(`Gagal merge otomatis (periksa konflik lokal): ${mergeErr.message}`);
+        return { updated: false, error: mergeErr.message };
+      }
     }
 
     // Safety guard: Protect real SQLite DB layer, standalone config, and port 3001
+    let needsProtectionCommit = false;
     const sqlitePath = path.join(ROOT, 'src/lib/sqlite-db.ts');
-    if (fs.existsSync(sqlitePath)) {
+    if (fs.existsSync(sqlitePath) && protectedSnapshots['src/lib/sqlite-db.ts']) {
       const mergedSqlite = fs.readFileSync(sqlitePath, 'utf8');
       if (mergedSqlite.includes('MOCKED') || !mergedSqlite.includes("from 'sqlite3'")) {
         fs.writeFileSync(sqlitePath, protectedSnapshots['src/lib/sqlite-db.ts'], 'utf8');
         log('[Proteksi] Mencegah AI Studio mengganti SQLite lokal dengan mock in-memory.');
+        needsProtectionCommit = true;
       }
     }
 
     const nextCfgPath = path.join(ROOT, 'next.config.js');
-    if (fs.existsSync(nextCfgPath)) {
+    if (fs.existsSync(nextCfgPath) && protectedSnapshots['next.config.js']) {
       const mergedNextCfg = fs.readFileSync(nextCfgPath, 'utf8');
       if (mergedNextCfg.includes("output: 'standalone'") || mergedNextCfg.includes('output: "standalone"')) {
         fs.writeFileSync(nextCfgPath, protectedSnapshots['next.config.js'], 'utf8');
         log('[Proteksi] Menjaga next.config.js agar kompatibel dengan server produksi port 3001.');
+        needsProtectionCommit = true;
       }
     }
 
@@ -286,25 +303,27 @@ async function syncOnce({ quietWhenUpToDate = false, quickTimeoutMs = 8000 } = {
         if (content.includes("'3000'") && !content.includes("'3001'")) {
           fs.writeFileSync(abs, content.replace(/'3000'/g, "'3001'"), 'utf8');
           log(`[Proteksi] Mengembalikan port default 3001 pada ${portFile}.`);
+          needsProtectionCommit = true;
         }
       }
     }
 
     const incomingPkgRaw = fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8');
     const pkgMerged = mergePackageJsonSafely(beforePkgRaw, incomingPkgRaw);
-    fs.writeFileSync(path.join(ROOT, 'package.json'), pkgMerged.text, 'utf8');
+    if (pkgMerged.text !== incomingPkgRaw) {
+      fs.writeFileSync(path.join(ROOT, 'package.json'), pkgMerged.text, 'utf8');
+      needsProtectionCommit = true;
+    }
 
-    // Stage all guarded adjustments and commit merge
-    execSync('git add -A -- . ":!data/smart_ppi.db" ":!public/uploads/" ":!tsconfig.tsbuildinfo"', {
-      cwd: ROOT,
-      stdio: 'ignore',
-    });
-    try {
-      execSync('git commit -m "chore(sync): tarik pembaruan otomatis dari GitHub (dengan proteksi DB lokal)"', {
-        cwd: ROOT,
-        stdio: 'ignore',
-      });
-    } catch {}
+    if (needsProtectionCommit) {
+      try {
+        execSync('git add -u', { cwd: ROOT, stdio: 'ignore' });
+        execSync('git commit -m "chore(sync): proteksi konfigurasi lokal RSUD Al-Mulk pasca sinkronisasi"', {
+          cwd: ROOT,
+          stdio: 'ignore',
+        });
+      } catch {}
+    }
 
     if (pkgMerged.depsChanged) {
       log('Menginstal dependensi baru dari package.json...');
