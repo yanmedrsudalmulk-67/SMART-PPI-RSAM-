@@ -313,10 +313,11 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
 
   return (
     <>
-      {/* Fullscreen Backdrop when Sub-Menu is open - placed OUTSIDE the nav bar at z-40 so it never covers the menu */}
+      {/* Fullscreen Backdrop & Centered Sub-Menu Pop-up when Sub-Menu is open */}
       <AnimatePresence>
         {openSubMenu && (
           <motion.div
+            key="mobile-nav-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -327,25 +328,21 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
         )}
       </AnimatePresence>
 
-      <div className="fixed bottom-3 sm:bottom-4 inset-x-3 sm:inset-x-6 z-50 flex justify-center landscape:hidden portrait:flex pb-[env(safe-area-inset-bottom)] pointer-events-none overflow-visible">
-        <nav 
-          aria-label="Mobile Navigation Bar"
-          className="w-full max-w-md h-[86px] relative pointer-events-auto select-none nav-dock-120fps transform-gpu overflow-visible z-50"
-          style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
-        >
-          {/* Floating Sub-Menu Pop-up - strictly z-[60] above backdrop */}
-          <AnimatePresence mode="wait">
-            {activePopupConfig && (
-              <motion.div
-                key={openSubMenu}
-                initial={{ opacity: 0, y: 14, scale: 0.94 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 14, scale: 0.94 }}
-                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-                onClick={(e) => e.stopPropagation()}
-                className="absolute bottom-[96px] left-1/2 -translate-x-1/2 w-[calc(100%-12px)] max-w-sm z-[60] pointer-events-auto"
-              >
-              <div className="w-full bg-[#131535]/95 backdrop-blur-2xl border border-indigo-400/40 rounded-3xl p-3 shadow-[0_24px_60px_rgba(0,0,0,0.92),0_0_24px_rgba(99,102,241,0.25)] ring-1 ring-white/10 flex flex-col gap-2">
+      <AnimatePresence>
+        {activePopupConfig && (
+          <motion.div
+            key={openSubMenu}
+            initial={{ opacity: 0, y: 16, scale: 0.94 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 16, scale: 0.94 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed inset-0 z-[60] flex items-center justify-center px-5 pb-24 landscape:hidden pointer-events-none"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm pointer-events-auto"
+            >
+              <div className="w-full bg-[#131535]/95 backdrop-blur-2xl border border-indigo-400/40 rounded-3xl p-3.5 shadow-[0_24px_60px_rgba(0,0,0,0.92),0_0_24px_rgba(99,102,241,0.25)] ring-1 ring-white/10 flex flex-col gap-2">
                 {/* Pop-up Header */}
                 <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-indigo-900/50">
                   <div className="flex items-center gap-2">
@@ -433,9 +430,17 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
                   })}
                 </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="fixed bottom-3 sm:bottom-4 inset-x-3 sm:inset-x-6 z-50 flex justify-center landscape:hidden portrait:flex pb-[env(safe-area-inset-bottom)] pointer-events-none overflow-visible">
+        <nav 
+          aria-label="Mobile Navigation Bar"
+          className="w-full max-w-md h-[86px] relative pointer-events-auto select-none nav-dock-120fps transform-gpu overflow-visible z-50"
+          style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+        >
 
         {/* SVG Background Contour: Fluidly morphs without snapping */}
         <svg 
