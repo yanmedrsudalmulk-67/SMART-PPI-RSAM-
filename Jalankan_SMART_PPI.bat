@@ -6,7 +6,7 @@ cd /d "%~dp0"
 curl -s -o nul --connect-timeout 1 http://127.0.0.1:3001 >nul 2>&1
 if %errorlevel% equ 0 (
     start "" "http://localhost:3001"
-    tasklist /FI "IMAGENAME eq cloudflared.exe" 2>nul | find /I "cloudflared.exe" >nul 2>&1
+    tasklist /FI "IMAGENAME eq cloudflared.exe" /FI "SESSION ne 0" 2>nul | find /I "cloudflared.exe" >nul 2>&1
     if errorlevel 1 start /min "Cloudflare Tunnel - SMART PPI" cmd /c "Aktifkan_Akses_Online_Cloudflare.bat"
     start /min "AutoSync GitHub - SMART PPI" cmd /c "Aktifkan_AutoSync_GitHub.bat"
     exit /b 0
@@ -23,7 +23,7 @@ node scripts/sync-github.js --startup
 
 :: 3. Aktifkan Cloudflare Tunnel di background tanpa memblokir startup lokal
 echo [2/4] Memeriksa layanan akses online Cloudflare Tunnel...
-tasklist /FI "IMAGENAME eq cloudflared.exe" 2>nul | find /I "cloudflared.exe" >nul 2>&1
+tasklist /FI "IMAGENAME eq cloudflared.exe" /FI "SESSION ne 0" 2>nul | find /I "cloudflared.exe" >nul 2>&1
 if errorlevel 1 (
     echo [INFO] Mengaktifkan Cloudflare Tunnel untuk akses HP / Mobile Data...
     start /min "Cloudflare Tunnel - SMART PPI" cmd /c "Aktifkan_Akses_Online_Cloudflare.bat"
