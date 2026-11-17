@@ -18,23 +18,28 @@ export function getSimrsConfig(): SimrsConfig {
   };
 }
 
-let pool: mysql.Pool | null = null;
+let pool: mysql.Pool | { query: (...args: any[]) => Promise<[any[], any]> } | null = null;
 
-export function getSimrsPool(): mysql.Pool {
+export function getSimrsPool(): any {
   if (!pool) {
     const config = getSimrsConfig();
-    pool = mysql.createPool({
-      host: config.host,
-      port: config.port,
-      database: config.database,
-      user: config.user,
-      password: config.password,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0,
-      connectTimeout: 5000,
-      dateStrings: true,
-    });
+    try {
+      pool = mysql.createPool({
+        host: config.host,
+        port: config.port,
+        database: config.database,
+        user: config.user,
+        password: config.password,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0,
+        connectTimeout: 5000,
+        dateStrings: true,
+      });
+    } catch {
+      console.warn('[AI Studio] MySQL SIMRS DB not connected — mock active');
+      pool = { query: async () => [[], []] };
+    }
   }
   return pool;
 }

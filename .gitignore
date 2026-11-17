@@ -13,6 +13,7 @@ data/*backup*.db
 data/tunnel_*.txt
 data/custom_domain.txt
 data/public_tunnel_url.txt
+data/autosync.*
 .env*
 !.env.example
 config.yml

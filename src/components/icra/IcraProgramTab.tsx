@@ -4,7 +4,7 @@ import {
   Plus,
   Search,
   Sparkles,
-  FileText,
+  Printer,
   FileSpreadsheet,
   Edit3,
   Trash2,
@@ -464,38 +464,41 @@ export default function IcraProgramTab() {
             type="button"
             disabled={saving}
             onClick={handleLoadTemplates}
-            className="px-3.5 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/35 border border-indigo-400/40 text-indigo-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
-            title="Isi otomatis 8 masalah risiko infeksi standar akreditasi RS"
+            className="w-10 h-10 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/35 border border-indigo-400/40 text-indigo-200 flex items-center justify-center transition-all cursor-pointer disabled:opacity-50"
+            title="Template Standar RS (Isi otomatis 8 masalah risiko infeksi standar akreditasi RS)"
+            aria-label="Template Standar RS"
           >
             <Sparkles className="w-4 h-4 text-cyan-400" />
-            <span>Template Standar RS</span>
           </button>
 
           <button
             type="button"
             onClick={handleExportExcel}
-            className="px-3.5 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/35 border border-emerald-500/40 text-emerald-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+            className="w-10 h-10 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/35 border border-emerald-500/40 text-emerald-200 flex items-center justify-center transition-all cursor-pointer"
+            title="Ekspor Excel"
+            aria-label="Ekspor Excel"
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-            <span>Excel</span>
           </button>
 
           <button
             type="button"
             onClick={() => setIsReportModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600/35 border border-rose-500/40 text-rose-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+            className="w-10 h-10 rounded-xl bg-rose-600/20 hover:bg-rose-600/35 border border-rose-500/40 text-rose-200 flex items-center justify-center transition-all cursor-pointer"
+            title="Cetak Laporan F4"
+            aria-label="Cetak Laporan F4"
           >
-            <FileText className="w-4 h-4 text-rose-400" />
-            <span>Cetak Laporan F4</span>
+            <Printer className="w-4 h-4 text-rose-400" />
           </button>
 
           <button
             type="button"
             onClick={openAddForm}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-lg shadow-cyan-500/25 transition-all cursor-pointer"
+            className="w-10 h-10 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white flex items-center justify-center shadow-lg shadow-cyan-500/25 transition-all cursor-pointer"
+            title="Tambah Risiko"
+            aria-label="Tambah Risiko"
           >
             <Plus className="w-4 h-4" />
-            <span>Tambah Risiko</span>
           </button>
         </div>
       </div>
