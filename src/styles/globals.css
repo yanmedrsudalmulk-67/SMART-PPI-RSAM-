@@ -69,6 +69,40 @@
   }
 }
 
+.icra-header-banner {
+  container-type: inline-size;
+}
+
+.icra-header-inner {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.icra-title-fluid {
+  font-size: clamp(1.125rem, 4.4cqi, 1.875rem);
+}
+
+.icra-header-tabs {
+  align-self: flex-start;
+}
+
+@container (min-width: 900px) {
+  .icra-header-inner {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .icra-title-fluid {
+    font-size: clamp(1.5rem, 2.85cqi, 2.25rem);
+  }
+
+  .icra-header-tabs {
+    align-self: center;
+  }
+}
+
 /* Fix html2canvas & Tailwind preflight downward text shift bug */
 img, svg {
   display: inline-block !important;

@@ -19,20 +19,20 @@ export default function IcraPage() {
 
       <div className="space-y-6 pb-20 sm:pb-8">
         {/* Header & Tab Switcher - 3D Neumorphic Bento Banner */}
-        <div className="relative rounded-[32px] bg-gradient-to-b from-[#1c1e42] via-[#161836] to-[#11122a] border border-[#2c3060]/80 p-5 sm:p-7 shadow-[-8px_-8px_24px_rgba(140,165,255,0.06),16px_20px_45px_rgba(0,0,0,0.8),inset_1px_1.5px_2px_rgba(255,255,255,0.2),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] overflow-hidden">
+        <div className="icra-header-banner relative rounded-[32px] bg-gradient-to-b from-[#1c1e42] via-[#161836] to-[#11122a] border border-[#2c3060]/80 p-5 sm:p-7 shadow-[-8px_-8px_24px_rgba(140,165,255,0.06),16px_20px_45px_rgba(0,0,0,0.8),inset_1px_1.5px_2px_rgba(255,255,255,0.2),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] overflow-hidden">
           {/* Top Bevel Highlight Line */}
           <div className="absolute top-0 inset-x-12 h-[1.5px] bg-gradient-to-r from-transparent via-white/35 to-transparent pointer-events-none rounded-t-full" />
           
           {/* Corner Ambient Glow */}
           <div className="absolute -right-10 -top-10 w-56 h-56 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.25),transparent_70%)] pointer-events-none" />
 
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 relative z-10">
-            <div>
-              <h1 className="font-gta text-2xl sm:text-3xl lg:text-3xl xl:text-4xl font-extrabold tracking-wide leading-tight whitespace-nowrap flex flex-wrap items-baseline gap-2 sm:gap-2.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+          <div className="icra-header-inner relative z-10">
+            <div className="min-w-0">
+              <h1 className="font-gta icra-title-fluid font-extrabold tracking-wide leading-tight sm:whitespace-nowrap flex flex-wrap sm:flex-nowrap items-baseline gap-2 sm:gap-2.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 uppercase font-black tracking-wider">
                   ICRA
                 </span>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-purple-300 to-indigo-300 italic font-bold text-sm sm:text-base lg:text-lg xl:text-xl">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-purple-300 to-indigo-300 italic font-bold pr-1.5">
                   (Infection Control Risk Assessment)
                 </span>
               </h1>
@@ -42,11 +42,11 @@ export default function IcraPage() {
             </div>
 
             {/* 2-Tab Selector - Neumorphic Inset Well */}
-            <div className="flex items-center bg-[#0c0e24] p-1.5 rounded-[22px] border border-black/50 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.85),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] self-start lg:self-center shrink-0 w-full sm:w-auto">
+            <div className="icra-header-tabs flex items-center bg-[#0c0e24] p-1.5 rounded-[22px] border border-black/50 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.85),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] shrink-0 w-full sm:w-auto">
               <button
                 type="button"
                 onClick={() => setActiveTab('program')}
-                className={`relative flex-1 sm:flex-initial px-4 sm:px-5 py-2.5 rounded-[18px] text-xs sm:text-sm font-black tracking-wide flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                className={`relative flex-1 sm:flex-initial px-3.5 sm:px-4 2xl:px-5 py-2.5 rounded-[18px] text-xs sm:text-sm font-black tracking-wide flex items-center justify-center gap-2 transition-all cursor-pointer ${
                   activeTab === 'program'
                     ? 'bg-gradient-to-r from-cyan-500 via-cyan-600 to-blue-600 text-white shadow-[-3px_-3px_8px_rgba(255,255,255,0.2),4px_6px_16px_rgba(0,0,0,0.5),inset_0_1px_1.5px_rgba(255,255,255,0.4)]'
                     : 'text-white hover:text-white hover:bg-white/10'
@@ -62,7 +62,7 @@ export default function IcraPage() {
               <button
                 type="button"
                 onClick={() => setActiveTab('konstruksi')}
-                className={`relative flex-1 sm:flex-initial px-4 sm:px-5 py-2.5 rounded-[18px] text-xs sm:text-sm font-black tracking-wide flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                className={`relative flex-1 sm:flex-initial px-3.5 sm:px-4 2xl:px-5 py-2.5 rounded-[18px] text-xs sm:text-sm font-black tracking-wide flex items-center justify-center gap-2 transition-all cursor-pointer ${
                   activeTab === 'konstruksi'
                     ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-950 font-black shadow-[-3px_-3px_8px_rgba(255,255,255,0.25),4px_6px_16px_rgba(0,0,0,0.5),inset_0_1px_1.5px_rgba(255,255,255,0.5)]'
                     : 'text-white hover:text-white hover:bg-white/10'
