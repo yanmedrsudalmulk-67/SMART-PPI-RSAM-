@@ -526,61 +526,66 @@ export default function IcraConstructionTab() {
         )}
       </AnimatePresence>
 
-      {/* Ringkasan Statistik Proyek */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="rounded-2xl bg-[#141634] border border-indigo-900/40 p-4 shadow-lg">
+      {/* Ringkasan Statistik Proyek - 3D Neumorphic Stat Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-5">
+        <div className="relative rounded-[26px] bg-gradient-to-b from-[#181a3d] via-[#141634] to-[#101128] border border-[#2c3060]/70 p-4 sm:p-5 shadow-[-6px_-6px_20px_rgba(140,165,255,0.05),12px_16px_34px_rgba(0,0,0,0.75),inset_1px_1.5px_2px_rgba(255,255,255,0.15),inset_-1px_-1px_2px_rgba(0,0,0,0.4)] overflow-hidden group hover:-translate-y-1 transition-all duration-200">
+          <div className="absolute top-0 inset-x-6 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none rounded-t-full" />
           <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Proyek</span>
-          <div className="text-2xl font-black text-white mt-1">{stats.total}</div>
-          <span className="text-[11px] text-indigo-300/80">Terdaftar</span>
+          <div className="text-2xl sm:text-3xl font-black text-white mt-1.5 drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]">{stats.total}</div>
+          <span className="text-[11px] font-semibold text-indigo-300/80">Terdaftar</span>
         </div>
-        <div className="rounded-2xl bg-[#131e3c] border border-cyan-500/35 p-4 shadow-lg">
+        <div className="relative rounded-[26px] bg-gradient-to-b from-[#142345] via-[#101b38] to-[#0c152c] border border-cyan-500/40 p-4 sm:p-5 shadow-[-6px_-6px_20px_rgba(6,182,212,0.06),12px_16px_34px_rgba(0,0,0,0.75),inset_1px_1.5px_2px_rgba(255,255,255,0.18),inset_-1px_-1px_2px_rgba(0,0,0,0.4)] overflow-hidden group hover:-translate-y-1 transition-all duration-200">
+          <div className="absolute top-0 inset-x-6 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent pointer-events-none rounded-t-full" />
           <span className="text-[10px] font-black uppercase tracking-widest text-cyan-300">Aktif Berjalan</span>
-          <div className="text-2xl font-black text-cyan-400 mt-1">{stats.aktif}</div>
-          <span className="text-[11px] text-cyan-300/80">Dalam Pengawasan</span>
+          <div className="text-2xl sm:text-3xl font-black text-cyan-400 mt-1.5 drop-shadow-[0_2px_6px_rgba(6,182,212,0.4)]">{stats.aktif}</div>
+          <span className="text-[11px] font-semibold text-cyan-300/80">Dalam Pengawasan</span>
         </div>
-        <div className="rounded-2xl bg-[#1f1325] border border-rose-500/35 p-4 shadow-lg">
+        <div className="relative rounded-[26px] bg-gradient-to-b from-[#261528] via-[#1e1121] to-[#150c18] border border-rose-500/40 p-4 sm:p-5 shadow-[-6px_-6px_20px_rgba(244,63,94,0.06),12px_16px_34px_rgba(0,0,0,0.75),inset_1px_1.5px_2px_rgba(255,255,255,0.18),inset_-1px_-1px_2px_rgba(0,0,0,0.4)] overflow-hidden group hover:-translate-y-1 transition-all duration-200">
+          <div className="absolute top-0 inset-x-6 h-[1px] bg-gradient-to-r from-transparent via-rose-400/30 to-transparent pointer-events-none rounded-t-full" />
           <span className="text-[10px] font-black uppercase tracking-widest text-rose-300">Kelas III & IV</span>
-          <div className="text-2xl font-black text-rose-400 mt-1">{stats.highClass}</div>
-          <span className="text-[11px] text-rose-300/80">Wajib Barier & HEPA</span>
+          <div className="text-2xl sm:text-3xl font-black text-rose-400 mt-1.5 drop-shadow-[0_2px_6px_rgba(244,63,94,0.4)]">{stats.highClass}</div>
+          <span className="text-[11px] font-semibold text-rose-300/80">Wajib Barier & HEPA</span>
         </div>
-        <div className="rounded-2xl bg-[#10242c] border border-emerald-500/35 p-4 shadow-lg">
+        <div className="relative rounded-[26px] bg-gradient-to-b from-[#122830] via-[#0f2027] to-[#0b171c] border border-emerald-500/40 p-4 sm:p-5 shadow-[-6px_-6px_20px_rgba(16,185,129,0.06),12px_16px_34px_rgba(0,0,0,0.75),inset_1px_1.5px_2px_rgba(255,255,255,0.18),inset_-1px_-1px_2px_rgba(0,0,0,0.4)] overflow-hidden group hover:-translate-y-1 transition-all duration-200">
+          <div className="absolute top-0 inset-x-6 h-[1px] bg-gradient-to-r from-transparent via-emerald-400/30 to-transparent pointer-events-none rounded-t-full" />
           <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300">Proyek Selesai</span>
-          <div className="text-2xl font-black text-emerald-400 mt-1">{stats.selesai}</div>
-          <span className="text-[11px] text-emerald-300/80">Lulus Inspeksi PPI</span>
+          <div className="text-2xl sm:text-3xl font-black text-emerald-400 mt-1.5 drop-shadow-[0_2px_6px_rgba(16,185,129,0.4)]">{stats.selesai}</div>
+          <span className="text-[11px] font-semibold text-emerald-300/80">Lulus Inspeksi PPI</span>
         </div>
       </div>
 
-      {/* Toolbar Filter & Aksi */}
-      <div className="rounded-2xl bg-[#141634]/90 border border-indigo-900/40 p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 shadow-xl">
+      {/* Toolbar Filter & Aksi - 3D Neumorphic Box */}
+      <div className="relative rounded-[28px] bg-gradient-to-b from-[#181a3d] via-[#141532] to-[#101127] border border-[#2b2d56] p-4 sm:p-5 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5 shadow-[-6px_-6px_20px_rgba(140,165,255,0.04),12px_16px_36px_rgba(0,0,0,0.75),inset_1px_1px_1.5px_rgba(255,255,255,0.12),inset_-1px_-1px_2px_rgba(0,0,0,0.4)] overflow-hidden">
+        <div className="absolute top-0 inset-x-12 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none rounded-t-full" />
         <div className="flex flex-wrap items-center gap-2.5">
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as any)}
-            className="bg-[#0e1028] border border-indigo-800/60 text-white text-xs sm:text-sm font-bold rounded-xl px-3 py-2 outline-none focus:border-cyan-400"
+            className="bg-[#0e1028] border border-black/40 text-white text-xs sm:text-sm font-bold rounded-2xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-cyan-500/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.85),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] cursor-pointer"
           >
-            <option value="Semua">Semua Status Proyek</option>
-            <option value="Aktif Berjalan">Aktif Berjalan</option>
-            <option value="Menunggu Izin">Menunggu Izin</option>
-            <option value="Selesai">Selesai</option>
+            <option value="Semua" className="bg-[#18193b] text-white">Semua Status Proyek</option>
+            <option value="Aktif Berjalan" className="bg-[#18193b] text-white">Aktif Berjalan</option>
+            <option value="Menunggu Izin" className="bg-[#18193b] text-white">Menunggu Izin</option>
+            <option value="Selesai" className="bg-[#18193b] text-white">Selesai</option>
           </select>
 
           <div className="relative flex-1 min-w-[210px]">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari nama proyek, nomor izin, lokasi..."
-              className="w-full bg-[#0e1028] border border-indigo-800/60 text-white text-xs sm:text-sm rounded-xl pl-9 pr-3 py-2 outline-none focus:border-cyan-400 placeholder:text-slate-500"
+              className="w-full bg-[#0e1028] border border-black/40 text-white text-xs sm:text-sm rounded-2xl pl-10 pr-4 py-2.5 outline-none focus:ring-2 focus:ring-cyan-500/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.85),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] placeholder:text-slate-500 font-medium"
             />
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
             type="button"
             onClick={handleExportExcel}
-            className="px-3.5 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/35 border border-emerald-500/40 text-emerald-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+            className="px-4 py-2.5 rounded-2xl bg-gradient-to-b from-[#162e2c] to-[#0e2020] border border-emerald-500/40 text-emerald-300 text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-[-2px_-2px_6px_rgba(140,255,200,0.08),3px_4px_10px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:brightness-110 active:scale-95 transition-all cursor-pointer"
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
             <span>Rekap Excel</span>
@@ -589,23 +594,24 @@ export default function IcraConstructionTab() {
           <button
             type="button"
             onClick={openAddProject}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-lg shadow-orange-500/25 transition-all cursor-pointer"
+            className="relative overflow-hidden group px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-[-3px_-3px_10px_rgba(255,255,255,0.2),6px_8px_20px_rgba(0,0,0,0.6),inset_0_1.5px_2px_rgba(255,255,255,0.5),inset_0_-2px_3px_rgba(0,0,0,0.35)] active:scale-95 transition-all cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
-            <span>Ajukan ICRA Konstruksi Baru</span>
+            <div className="absolute top-0 inset-x-4 h-[1px] bg-white/40 pointer-events-none rounded-t-full" />
+            <Plus className="w-4 h-4 text-slate-950" strokeWidth={2.5} />
+            <span className="text-slate-950 font-black">Ajukan ICRA Konstruksi Baru</span>
           </button>
         </div>
       </div>
 
       {/* Daftar Proyek Renovasi */}
       {loading ? (
-        <div className="rounded-2xl bg-[#141634] border border-indigo-900/40 p-12 flex flex-col items-center justify-center text-slate-400 gap-3">
+        <div className="rounded-[28px] bg-[#141634] border border-indigo-900/40 p-12 flex flex-col items-center justify-center text-slate-400 gap-3 shadow-xl">
           <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
           <p className="text-sm font-semibold">Memuat proyek ICRA Konstruksi...</p>
         </div>
       ) : filteredProjects.length === 0 ? (
-        <div className="rounded-3xl bg-[#141634]/80 border border-indigo-900/40 p-8 sm:p-12 text-center space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center mx-auto text-amber-400">
+        <div className="rounded-[32px] bg-gradient-to-b from-[#181a3d] to-[#111228] border border-[#2b2d56] p-8 sm:p-12 text-center space-y-4 shadow-xl">
+          <div className="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center mx-auto text-amber-400 shadow-md">
             <HardHat className="w-8 h-8" />
           </div>
           <div>
@@ -619,89 +625,95 @@ export default function IcraConstructionTab() {
           <button
             type="button"
             onClick={openAddProject}
-            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white text-xs sm:text-sm font-black uppercase tracking-wider inline-flex items-center gap-2 shadow-lg cursor-pointer"
+            className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 text-xs sm:text-sm font-black uppercase tracking-wider inline-flex items-center gap-2 shadow-lg cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 text-slate-950" />
             <span>Buat Pengajuan ICRA Konstruksi Pertama</span>
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
           {filteredProjects.map((proj) => {
             const projLogs = monitoringLogs.filter((m) => m.konstruksi_id === proj.id);
             const classBadge =
               proj.kelas_tindakan === 'IV'
-                ? 'bg-rose-500/20 text-rose-300 border-rose-500/50'
+                ? 'bg-rose-500/25 text-rose-300 border-rose-500/60 shadow-[0_0_10px_rgba(244,63,94,0.3)]'
                 : proj.kelas_tindakan === 'III'
-                ? 'bg-orange-500/20 text-orange-300 border-orange-500/50'
+                ? 'bg-orange-500/25 text-orange-300 border-orange-500/60 shadow-[0_0_10px_rgba(249,115,22,0.3)]'
                 : proj.kelas_tindakan === 'II'
-                ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
-                : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50';
+                ? 'bg-amber-500/25 text-amber-300 border-amber-500/60 shadow-[0_0_10px_rgba(245,158,11,0.3)]'
+                : 'bg-emerald-500/25 text-emerald-300 border-emerald-500/60 shadow-[0_0_10px_rgba(16,185,129,0.3)]';
 
             const statusBadge =
               proj.status_proyek === 'Selesai'
-                ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40'
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.25)]'
                 : proj.status_proyek === 'Aktif Berjalan'
-                ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40'
+                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-[0_0_8px_rgba(6,182,212,0.25)]'
                 : 'bg-slate-700/50 text-slate-300 border-slate-600';
 
             return (
               <div
                 key={proj.id}
-                className="rounded-3xl bg-[#141634] border border-indigo-900/50 p-5 shadow-xl flex flex-col justify-between gap-4 hover:border-indigo-500/50 transition-all"
+                className="relative group rounded-[32px] bg-gradient-to-b from-[#1c1e42] via-[#161836] to-[#11122a] border border-[#2c3060]/80 p-6 sm:p-7 shadow-[-8px_-8px_24px_rgba(140,165,255,0.05),14px_18px_40px_rgba(0,0,0,0.8),inset_1px_1.5px_2px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.4)] flex flex-col justify-between gap-5 hover:-translate-y-1.5 hover:border-[#3d4482] transition-all duration-300 overflow-hidden"
               >
-                <div className="space-y-3">
+                {/* Top Specular Highlight Line */}
+                <div className="absolute top-0 inset-x-10 h-[1.5px] bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none rounded-t-full" />
+
+                <div className="space-y-3.5 relative z-10">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-[11px] font-mono font-bold px-2.5 py-1 rounded-lg bg-[#0c0e22] text-indigo-300 border border-indigo-800/50">
+                    <span className="text-[11px] font-mono font-bold px-3 py-1.5 rounded-xl bg-[#0c0e22] text-indigo-300 border border-indigo-800/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
                       {proj.nomor_izin || 'NO-IZIN'}
                     </span>
                     <div className="flex items-center gap-2">
-                      <span className={`text-[11px] font-black uppercase px-2.5 py-1 rounded-full border ${classBadge}`}>
+                      <span className={`text-[10px] font-black uppercase px-3 py-1 rounded-full border ${classBadge}`}>
                         Kelas {proj.kelas_tindakan}
                       </span>
-                      <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${statusBadge}`}>
+                      <span className={`text-[10px] font-extrabold px-3 py-1 rounded-full border ${statusBadge}`}>
                         {proj.status_proyek}
                       </span>
                     </div>
                   </div>
 
                   <div>
-                    <h4 className="text-base font-black text-white leading-snug">{proj.nama_proyek}</h4>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-300 mt-1.5">
-                      <span className="flex items-center gap-1">
-                        <Building2 className="w-3.5 h-3.5 text-cyan-400" />
-                        {proj.lokasi_area}
+                    <h4 className="text-base sm:text-lg font-black text-white leading-snug drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] group-hover:text-amber-200 transition-colors">
+                      {proj.nama_proyek}
+                    </h4>
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-slate-300 mt-2 font-medium">
+                      <span className="flex items-center gap-1.5">
+                        <Building2 className="w-4 h-4 text-cyan-400" />
+                        <span className="font-semibold text-slate-200">{proj.lokasi_area}</span>
                       </span>
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5 text-amber-400" />
-                        {safeFormatDate(proj.tgl_mulai)} – {safeFormatDate(proj.tgl_selesai_estimasi)}
+                      <span className="flex items-center gap-1.5">
+                        <Calendar className="w-4 h-4 text-amber-400" />
+                        <span>{safeFormatDate(proj.tgl_mulai)} – {safeFormatDate(proj.tgl_selesai_estimasi)}</span>
                       </span>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 text-[11px] bg-[#0e1026] p-3 rounded-2xl border border-indigo-900/40">
-                    <div>
-                      <span className="text-slate-400 block">Tipe Aktivitas</span>
-                      <span className="font-bold text-white">Tipe {proj.tipe_konstruksi}</span>
+                  {/* 3 Deep Sunken Sub-stats Wells */}
+                  <div className="grid grid-cols-3 gap-2.5 text-[11px] bg-[#0c0e22] p-3.5 rounded-[22px] border border-black/50 shadow-[inset_2px_2.5px_6px_rgba(0,0,0,0.85),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
+                    <div className="flex flex-col">
+                      <span className="text-slate-400 text-[10px] uppercase font-bold block mb-0.5">Tipe Aktivitas</span>
+                      <span className="font-black text-white text-xs">Tipe {proj.tipe_konstruksi}</span>
                     </div>
-                    <div>
-                      <span className="text-slate-400 block">Risiko Pasien</span>
-                      <span className="font-bold text-white">Kelompok {proj.kelompok_risiko}</span>
+                    <div className="flex flex-col">
+                      <span className="text-slate-400 text-[10px] uppercase font-bold block mb-0.5">Risiko Pasien</span>
+                      <span className="font-black text-white text-xs">Kelompok {proj.kelompok_risiko}</span>
                     </div>
-                    <div>
-                      <span className="text-slate-400 block">Pelaksana / PJ</span>
-                      <span className="font-bold text-white truncate block">{proj.kontraktor_pelaksana}</span>
+                    <div className="flex flex-col">
+                      <span className="text-slate-400 text-[10px] uppercase font-bold block mb-0.5">Pelaksana / PJ</span>
+                      <span className="font-black text-white text-xs truncate block">{proj.kontraktor_pelaksana}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Action Footer */}
-                <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-indigo-950">
+                <div className="flex flex-wrap items-center justify-between gap-2.5 pt-3.5 border-t border-indigo-950/70 relative z-10">
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
                       onClick={() => setPermitProject(proj)}
-                      className="px-3.5 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600/35 border border-rose-500/40 text-rose-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                      className="px-4 py-2.5 rounded-2xl bg-gradient-to-b from-[#2a1322] to-[#1c0d17] border border-rose-500/40 text-rose-300 text-xs font-black shadow-[-2px_-2px_6px_rgba(255,150,180,0.05),3px_4px_10px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
                     >
                       <FileCheck2 className="w-4 h-4 text-rose-400" />
                       <span>Surat Izin (F4)</span>
@@ -710,18 +722,18 @@ export default function IcraConstructionTab() {
                     <button
                       type="button"
                       onClick={() => openMonitoringModal(proj)}
-                      className="px-3.5 py-2 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/35 border border-cyan-500/40 text-cyan-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                      className="px-4 py-2.5 rounded-2xl bg-gradient-to-b from-[#122238] to-[#0c1626] border border-cyan-500/40 text-cyan-300 text-xs font-black shadow-[-2px_-2px_6px_rgba(100,200,255,0.05),3px_4px_10px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
                     >
                       <ClipboardList className="w-4 h-4 text-cyan-400" />
                       <span>Monitoring ({projLogs.length})</span>
                     </button>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => openEditProject(proj)}
-                      className="p-2 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/30 text-indigo-300 transition-colors cursor-pointer"
+                      className="p-2.5 rounded-xl bg-[#141635] hover:bg-[#1a1c42] text-indigo-300 hover:text-white border border-[#2b2d56] shadow-[-2px_-2px_6px_rgba(140,165,255,0.03),3px_3px_8px_rgba(0,0,0,0.5),inset_1px_1px_1px_rgba(255,255,255,0.1)] transition-all cursor-pointer"
                       title="Edit Proyek & Checklist"
                     >
                       <Edit3 className="w-4 h-4" />
@@ -729,7 +741,7 @@ export default function IcraConstructionTab() {
                     <button
                       type="button"
                       onClick={() => handleDeleteProject(proj.id)}
-                      className="p-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/30 text-rose-300 transition-colors cursor-pointer"
+                      className="p-2.5 rounded-xl bg-[#26131c] hover:bg-[#321724] text-rose-400 hover:text-rose-300 border border-rose-500/30 shadow-[-2px_-2px_6px_rgba(255,100,120,0.03),3px_3px_8px_rgba(0,0,0,0.5),inset_1px_1px_1px_rgba(255,255,255,0.1)] transition-all cursor-pointer"
                       title="Hapus Proyek"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -1335,14 +1347,13 @@ export default function IcraConstructionTab() {
                     </h4>
                   </div>
 
-                  {/* Foto Dokumentasi Pra Konstruksi / Renovasi (Bisa > 2 Foto, Maks 5 Foto) */}
+                  {/* Foto Dokumentasi Pra Konstruksi / Renovasi (Maksimal 3 Foto) */}
                   <div className="rounded-2xl bg-[#12132e] border border-black/40 p-4 sm:p-5 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
                     <DocumentationUploader
                       images={fotoSebelum}
                       setImages={setFotoSebelum}
-                      maxImages={5}
-                      label="Foto Dokumentasi Pra Kontruksi / Renovasi"
-                      helperText="Unggah foto kondisi awal sebelum pekerjaan konstruksi/renovasi dimulai (bisa lebih dari 2 foto, maksimal 5 foto)."
+                      maxImages={3}
+                      hideTitle={true}
                     />
                   </div>
                 </div>

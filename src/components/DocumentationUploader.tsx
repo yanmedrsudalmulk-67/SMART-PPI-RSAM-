@@ -13,9 +13,10 @@ interface DocumentationUploaderProps {
   maxImages?: number;
   label?: string;
   helperText?: string;
+  hideTitle?: boolean;
 }
 
-export function DocumentationUploader({ images, setImages, maxImages, label, helperText }: DocumentationUploaderProps) {
+export function DocumentationUploader({ images, setImages, maxImages, label, helperText, hideTitle }: DocumentationUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -113,26 +114,28 @@ export function DocumentationUploader({ images, setImages, maxImages, label, hel
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <label className="text-[11px] font-black uppercase tracking-widest text-slate-300 flex items-center gap-2">
-              <Camera className="w-4 h-4 text-cyan-400" /> {label || 'Foto Dokumentasi'}
-            </label>
-            {maxImages && (
-              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider border ${
-                isMaxReached 
-                  ? 'bg-amber-500/15 border-amber-500/40 text-amber-300' 
-                  : 'bg-cyan-500/15 border-cyan-400/30 text-cyan-300'
-              }`}>
-                {validImages.length} / {maxImages} Foto
-              </span>
+      <div className={`flex flex-col sm:flex-row ${hideTitle ? 'justify-end' : 'justify-between'} items-start sm:items-center gap-4 w-full`}>
+        {!hideTitle && (
+          <div>
+            <div className="flex items-center gap-2.5">
+              <label className="text-[11px] font-black uppercase tracking-widest text-slate-300 flex items-center gap-2">
+                <Camera className="w-4 h-4 text-cyan-400" /> {label || 'Foto Dokumentasi'}
+              </label>
+              {maxImages && (
+                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider border ${
+                  isMaxReached 
+                    ? 'bg-amber-500/15 border-amber-500/40 text-amber-300' 
+                    : 'bg-cyan-500/15 border-cyan-400/30 text-cyan-300'
+                }`}>
+                  {validImages.length} / {maxImages} Foto
+                </span>
+              )}
+            </div>
+            {helperText && (
+              <p className="text-[11px] text-slate-400 mt-1">{helperText}</p>
             )}
           </div>
-          {helperText && (
-            <p className="text-[11px] text-slate-400 mt-1">{helperText}</p>
-          )}
-        </div>
+        )}
         <div className="flex gap-3 w-full sm:w-auto">
           <button
             type="button"
@@ -155,7 +158,7 @@ export function DocumentationUploader({ images, setImages, maxImages, label, hel
         <input type="file" ref={cameraInputRef} className="hidden" accept="image/*" capture="environment" onChange={handleFileUpload} />
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3.5 mt-5 w-full">
+      <div className={`grid ${maxImages && maxImages <= 3 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-5'} gap-3.5 mt-4 w-full`}>
         <AnimatePresence>
           {validImages.map((img, idx) => {
             const url = getImageUrl(img);
@@ -180,10 +183,10 @@ export function DocumentationUploader({ images, setImages, maxImages, label, hel
       </div>
         
       {validImages.length === 0 && (
-        <div className="py-10 border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center text-slate-400 gap-2 bg-black/20 w-full mt-4">
+        <div className="py-9 border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center text-slate-400 gap-2 bg-black/20 w-full mt-3">
           <Camera className="w-7 h-7 opacity-30 text-cyan-400" />
           <p className="text-[11px] font-bold uppercase tracking-wider opacity-60">Belum ada foto dokumentasi</p>
-          <span className="text-[10px] text-slate-500">Dapat mengunggah 1 hingga {maxImages || 5} foto</span>
+          <span className="text-[10px] text-slate-500">Dapat mengunggah 1 hingga {maxImages || 3} foto</span>
         </div>
       )}
 

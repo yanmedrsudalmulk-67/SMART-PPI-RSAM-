@@ -99,6 +99,7 @@ export const ICRA_UNITS_LIST = [
   'TPS Limbah B3',
   'Area Administrasi / Manajemen',
   'Area Umum / Parkir & Koridor',
+  'Gedung Koperasi',
 ];
 
 export const ICRA_RISK_CATEGORIES = [
