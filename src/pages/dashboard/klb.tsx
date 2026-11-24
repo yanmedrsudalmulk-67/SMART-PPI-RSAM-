@@ -648,7 +648,7 @@ export default function KlbPage() {
                 <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-rose-500/15 border border-rose-400/30 text-[10px] font-black uppercase tracking-widest text-rose-300 mb-1.5">
                   Deteksi Dini & Manajemen Outbreak STARKES
                 </div>
-                <h1 className="text-lg sm:text-2xl font-black tracking-tight text-white leading-tight">
+                <h1 className="font-gta title-ultra-bold text-2xl sm:text-3xl lg:text-[34px] font-black tracking-wide leading-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase drop-shadow-[0_2px_10px_rgba(99,102,241,0.35)]">
                   Investigasi KLB (Kejadian Luar Biasa) PPI
                 </h1>
                 <p className="text-xs sm:text-sm text-indigo-200/80 mt-1 max-w-2xl">

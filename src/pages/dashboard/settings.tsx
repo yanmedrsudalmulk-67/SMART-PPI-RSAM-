@@ -286,7 +286,7 @@ export default function SettingsPage() {
     <div className="max-w-3xl mx-auto space-y-8 pb-32">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between py-4 border-b border-slate-200 dark:border-white/5 transition-all text-center lg:text-left gap-4">
         <div className="w-full lg:w-auto">
-          <h1 className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 via-blue-500 to-emerald-500 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all drop-shadow-sm dark:drop-shadow-[0_0_10px_rgba(59,130,246,0.4)] uppercase">Pengaturan</h1>
+          <h1 className="font-gta title-ultra-bold text-3xl sm:text-4xl lg:text-[42px] font-black tracking-wide leading-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient transition-all drop-shadow-[0_2px_10px_rgba(99,102,241,0.35)] uppercase">Pengaturan</h1>
           <p className="text-sm text-white mt-2 font-medium">Kelola preferensi dan tampilan aplikasi SMART-PPI</p>
         </div>
       </div>

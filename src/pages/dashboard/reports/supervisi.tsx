@@ -1096,7 +1096,7 @@ export default function BuktiSupervisiPage() {
         {/* Header Title Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase">
+            <h1 className="font-gta title-ultra-bold text-3xl sm:text-4xl lg:text-[42px] font-black tracking-wide leading-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase drop-shadow-[0_2px_10px_rgba(99,102,241,0.35)]">
               Bukti Supervisi & Tindak Lanjut
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">

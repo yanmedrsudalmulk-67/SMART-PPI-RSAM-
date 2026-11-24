@@ -260,7 +260,7 @@ export default function LaporanResmiPage() {
             <span className="p-2 sm:p-2.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 shadow-sm flex-shrink-0">
               <FileText className="w-5 h-5 sm:w-6 sm:h-6" />
             </span>
-            <h1 className="text-lg sm:text-xl font-black text-white tracking-tight uppercase whitespace-nowrap">
+            <h1 className="font-gta title-ultra-bold text-2xl sm:text-3xl font-black tracking-wide leading-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase whitespace-nowrap drop-shadow-[0_2px_10px_rgba(99,102,241,0.35)]">
               LAPORAN PPI
             </h1>
           </div>

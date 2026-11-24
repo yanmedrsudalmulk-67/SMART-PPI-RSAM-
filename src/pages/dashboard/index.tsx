@@ -1255,7 +1255,7 @@ export default function DashboardPage() {
     <div className="space-y-6 pb-10 w-full max-w-full overflow-x-hidden">
       <div className="flex flex-col items-center justify-between gap-4 mb-2 landscape:lg:flex-row landscape:lg:items-center">
         <div className="text-center landscape:lg:text-left w-full landscape:lg:w-auto">
-          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase">
+          <h1 className="font-gta title-ultra-bold text-3xl sm:text-4xl lg:text-[42px] font-black tracking-wide leading-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase drop-shadow-[0_2px_10px_rgba(99,102,241,0.35)]">
             Dashboard SMART PPI
           </h1>
           <div className="mt-1">
