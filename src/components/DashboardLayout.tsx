@@ -584,7 +584,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           className={`flex-1 overflow-y-auto overflow-x-hidden ${
             pathname.startsWith('/dashboard/reports/supervisi')
               ? 'p-2 sm:p-3 lg:p-3.5'
-              : 'p-4 sm:p-6 lg:p-8'
+              : 'p-3.5 sm:p-5 lg:p-6 xl:p-7'
           } pb-32 sm:pb-10 relative scroll-container-120fps w-full max-w-full z-10 ${
             pathname.startsWith('/dashboard/reports/resmi') ? 'resmi-report-scroll-container' : ''
           }`}

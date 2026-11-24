@@ -1438,62 +1438,62 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 lg:gap-4 xl:gap-6">
         {/* Card 1: HH Card - 3D Tactile Slate Card with Floating Isometric Plate */}
-        <div className="group relative bg-[#18193b] p-7 md:p-8 rounded-[32px] md:rounded-[36px] border border-[#2b2d56] transition-all duration-300 transform-gpu hover:-translate-y-2 overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] hover:shadow-[-8px_-8px_24px_rgba(140,165,255,0.1),12px_16px_40px_rgba(0,0,0,0.8),inset_1px_1px_2px_rgba(255,255,255,0.25)] flex flex-col justify-between">
+        <div className="group relative bg-[#18193b] p-5 sm:p-6 lg:p-5 xl:p-8 rounded-[28px] sm:rounded-[32px] md:rounded-[36px] border border-[#2b2d56] transition-all duration-300 transform-gpu hover:-translate-y-2 overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] hover:shadow-[-8px_-8px_24px_rgba(140,165,255,0.1),12px_16px_40px_rgba(0,0,0,0.8),inset_1px_1px_2px_rgba(255,255,255,0.25)] flex flex-col justify-between">
           {/* Top Bevel Highlight */}
           <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
           <div>
             {/* Header: Badge & 3D Floating Isometric Feature Plate */}
-            <div className="flex items-start justify-between gap-4 mb-4 relative z-10">
-              <div>
+            <div className="flex items-start justify-between gap-2.5 xl:gap-4 mb-3 xl:mb-4 relative z-10">
+              <div className="flex-1 min-w-0">
                 {/* Pill Badge */}
-                <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)] mb-3">
-                  <span className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-300">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 xl:px-4 xl:py-1.5 rounded-full bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)] mb-2 xl:mb-3">
+                  <span className="text-[9.5px] xl:text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
                     INDIKATOR MUTU
                   </span>
                 </div>
-                <h3 className="text-[23px] font-extrabold text-white leading-snug tracking-tight">
+                <h3 className="text-[17px] sm:text-[18px] lg:text-[18px] xl:text-[22px] font-extrabold text-white leading-snug tracking-tight">
                   Kepatuhan Kebersihan Tangan
                 </h3>
               </div>
 
               {/* 3D Floating Isometric Plate */}
               <div className="shrink-0 relative">
-                <div className="w-16 h-16 rounded-[22px] bg-gradient-to-br from-[#272952] to-[#12132d] border-2 border-indigo-400/30 shadow-[-3px_-3px_10px_rgba(140,165,255,0.12),6px_8px_18px_rgba(0,0,0,0.7),inset_1.5px_1.5px_2px_rgba(255,255,255,0.2)] flex items-center justify-center transform group-hover:scale-105 group-hover:-rotate-3 transition-transform duration-300">
-                  <div className="w-10 h-10 rounded-[16px] bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-400 shadow-[0_6px_16px_rgba(160,185,129,0.5),inset_1px_1px_2px_rgba(255,255,255,0.4)] flex items-center justify-center text-white">
-                    <Droplets className="w-5 h-5 drop-shadow" />
+                <div className="w-13 h-13 sm:w-14 sm:h-14 xl:w-16 xl:h-16 rounded-[18px] xl:rounded-[22px] bg-gradient-to-br from-[#272952] to-[#12132d] border-2 border-indigo-400/30 shadow-[-3px_-3px_10px_rgba(140,165,255,0.12),6px_8px_18px_rgba(0,0,0,0.7),inset_1.5px_1.5px_2px_rgba(255,255,255,0.2)] flex items-center justify-center transform group-hover:scale-105 group-hover:-rotate-3 transition-transform duration-300">
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 xl:w-10 xl:h-10 rounded-[13px] xl:rounded-[16px] bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-400 shadow-[0_6px_16px_rgba(160,185,129,0.5),inset_1px_1px_2px_rgba(255,255,255,0.4)] flex items-center justify-center text-white">
+                    <Droplets className="w-4 h-4 xl:w-5 xl:h-5 drop-shadow" />
                   </div>
                 </div>
               </div>
             </div>
 
-            <p className="text-slate-400 text-xs md:text-sm font-medium mb-5 leading-relaxed relative z-10">
+            <p className="text-slate-400 text-xs xl:text-sm font-medium mb-4 xl:mb-5 leading-relaxed relative z-10">
               Evaluasi kepatuhan 6 langkah dan 5 momen kebersihan tangan tenaga medis & non-medis.
             </p>
           </div>
 
           {/* Recessed Tray */}
-          <div className="mt-auto bg-[#12132e] rounded-2xl p-4 border border-black/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] relative z-10">
-            <div className="flex items-end justify-between">
+          <div className="mt-auto bg-[#12132e] rounded-2xl p-3 sm:p-3.5 xl:p-4 border border-black/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] relative z-10">
+            <div className="flex items-end justify-between gap-2">
               <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-0.5">
+                <span className="text-[9.5px] xl:text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-0.5">
                   Capaian Periode Ini
                 </span>
                 <span
-                  className={`text-4xl font-black tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] ${stats.hh >= (standards?.hh?.nilai_standar || 85) ? "text-emerald-400" : "text-rose-400"}`}
+                  className={`text-3xl xl:text-4xl font-black tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] ${stats.hh >= (standards?.hh?.nilai_standar || 85) ? "text-emerald-400" : "text-rose-400"}`}
                 >
                   {stats.hh}%
                 </span>
               </div>
 
-              <div className="flex flex-col items-end">
-                <span className="text-[10px] font-black uppercase text-slate-400 mb-1">
+              <div className="flex flex-col items-end shrink-0">
+                <span className="text-[9.5px] xl:text-[10px] font-black uppercase text-slate-400 mb-1">
                   Standar: {standards?.hh?.nilai_standar || 85}%
                 </span>
                 <span
-                  className={`text-[10px] font-black uppercase px-3.5 py-1 rounded-full shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)] ${stats.hh >= (standards?.hh?.nilai_standar || 85) ? "bg-emerald-950/80 text-emerald-300 border border-emerald-500/40" : "bg-rose-950/80 text-rose-300 border border-rose-500/40"}`}
+                  className={`text-[9.5px] xl:text-[10px] font-black uppercase px-2.5 py-1 xl:px-3.5 rounded-full shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)] ${stats.hh >= (standards?.hh?.nilai_standar || 85) ? "bg-emerald-950/80 text-emerald-300 border border-emerald-500/40" : "bg-rose-950/80 text-rose-300 border border-rose-500/40"}`}
                 >
                   {stats.hh >= (standards?.hh?.nilai_standar || 85)
                     ? "Tercapai"
@@ -1505,60 +1505,60 @@ export default function DashboardPage() {
         </div>
 
         {/* Card 2: APD Card - 3D Tactile Slate Card with Floating Isometric Plate */}
-        <div className="group relative bg-[#18193b] p-7 md:p-8 rounded-[32px] md:rounded-[36px] border border-[#2b2d56] transition-all duration-300 transform-gpu hover:-translate-y-2 overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] hover:shadow-[-8px_-8px_24px_rgba(140,165,255,0.1),12px_16px_40px_rgba(0,0,0,0.8),inset_1px_1px_2px_rgba(255,255,255,0.25)] flex flex-col justify-between">
+        <div className="group relative bg-[#18193b] p-5 sm:p-6 lg:p-5 xl:p-8 rounded-[28px] sm:rounded-[32px] md:rounded-[36px] border border-[#2b2d56] transition-all duration-300 transform-gpu hover:-translate-y-2 overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] hover:shadow-[-8px_-8px_24px_rgba(140,165,255,0.1),12px_16px_40px_rgba(0,0,0,0.8),inset_1px_1px_2px_rgba(255,255,255,0.25)] flex flex-col justify-between">
           {/* Top Bevel Highlight */}
           <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
           <div>
             {/* Header: Badge & 3D Floating Isometric Feature Plate */}
-            <div className="flex items-start justify-between gap-4 mb-4 relative z-10">
-              <div>
+            <div className="flex items-start justify-between gap-2.5 xl:gap-4 mb-3 xl:mb-4 relative z-10">
+              <div className="flex-1 min-w-0">
                 {/* Pill Badge */}
-                <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)] mb-3">
-                  <span className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-300">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 xl:px-4 xl:py-1.5 rounded-full bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)] mb-2 xl:mb-3">
+                  <span className="text-[9.5px] xl:text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
                     INDIKATOR MUTU
                   </span>
                 </div>
-                <h3 className="text-[23px] font-extrabold text-white leading-snug tracking-tight">
+                <h3 className="text-[17px] sm:text-[18px] lg:text-[18px] xl:text-[22px] font-extrabold text-white leading-snug tracking-tight">
                   Kepatuhan Penggunaan APD
                 </h3>
               </div>
 
               {/* 3D Floating Isometric Plate */}
               <div className="shrink-0 relative">
-                <div className="w-16 h-16 rounded-[22px] bg-gradient-to-br from-[#272952] to-[#12132d] border-2 border-indigo-400/30 shadow-[-3px_-3px_10px_rgba(140,165,255,0.12),6px_8px_18px_rgba(0,0,0,0.7),inset_1.5px_1.5px_2px_rgba(255,255,255,0.2)] flex items-center justify-center transform group-hover:scale-105 group-hover:-rotate-3 transition-transform duration-300">
-                  <div className="w-10 h-10 rounded-[16px] bg-gradient-to-tr from-blue-600 via-indigo-500 to-sky-400 shadow-[0_6px_16px_rgba(59,130,246,0.5),inset_1px_1px_2px_rgba(255,255,255,0.4)] flex items-center justify-center text-white">
-                    <Shield className="w-5 h-5 drop-shadow" />
+                <div className="w-13 h-13 sm:w-14 sm:h-14 xl:w-16 xl:h-16 rounded-[18px] xl:rounded-[22px] bg-gradient-to-br from-[#272952] to-[#12132d] border-2 border-indigo-400/30 shadow-[-3px_-3px_10px_rgba(140,165,255,0.12),6px_8px_18px_rgba(0,0,0,0.7),inset_1.5px_1.5px_2px_rgba(255,255,255,0.2)] flex items-center justify-center transform group-hover:scale-105 group-hover:-rotate-3 transition-transform duration-300">
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 xl:w-10 xl:h-10 rounded-[13px] xl:rounded-[16px] bg-gradient-to-tr from-blue-600 via-indigo-500 to-sky-400 shadow-[0_6px_16px_rgba(59,130,246,0.5),inset_1px_1px_2px_rgba(255,255,255,0.4)] flex items-center justify-center text-white">
+                    <Shield className="w-4 h-4 xl:w-5 xl:h-5 drop-shadow" />
                   </div>
                 </div>
               </div>
             </div>
 
-            <p className="text-slate-400 text-xs md:text-sm font-medium mb-5 leading-relaxed relative z-10">
+            <p className="text-slate-400 text-xs xl:text-sm font-medium mb-4 xl:mb-5 leading-relaxed relative z-10">
               Monitoring penggunaan alat pelindung diri sesuai transmisi dan risiko tindakan.
             </p>
           </div>
 
           {/* Recessed Tray */}
-          <div className="mt-auto bg-[#12132e] rounded-2xl p-4 border border-black/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] relative z-10">
-            <div className="flex items-end justify-between">
+          <div className="mt-auto bg-[#12132e] rounded-2xl p-3 sm:p-3.5 xl:p-4 border border-black/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] relative z-10">
+            <div className="flex items-end justify-between gap-2">
               <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-0.5">
+                <span className="text-[9.5px] xl:text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-0.5">
                   Capaian Periode Ini
                 </span>
                 <span
-                  className={`text-4xl font-black tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] ${stats.apd >= (standards?.apd?.nilai_standar || 100) ? "text-emerald-400" : "text-rose-400"}`}
+                  className={`text-3xl xl:text-4xl font-black tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] ${stats.apd >= (standards?.apd?.nilai_standar || 100) ? "text-emerald-400" : "text-rose-400"}`}
                 >
                   {stats.apd}%
                 </span>
               </div>
 
-              <div className="flex flex-col items-end">
-                <span className="text-[10px] font-black uppercase text-slate-400 mb-1">
+              <div className="flex flex-col items-end shrink-0">
+                <span className="text-[9.5px] xl:text-[10px] font-black uppercase text-slate-400 mb-1">
                   Standar: {standards?.apd?.nilai_standar || 100}%
                 </span>
                 <span
-                  className={`text-[10px] font-black uppercase px-3.5 py-1 rounded-full shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)] ${stats.apd >= (standards?.apd?.nilai_standar || 100) ? "bg-emerald-950/80 text-emerald-300 border border-emerald-500/40" : "bg-rose-950/80 text-rose-300 border border-rose-500/40"}`}
+                  className={`text-[9.5px] xl:text-[10px] font-black uppercase px-2.5 py-1 xl:px-3.5 rounded-full shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)] ${stats.apd >= (standards?.apd?.nilai_standar || 100) ? "bg-emerald-950/80 text-emerald-300 border border-emerald-500/40" : "bg-rose-950/80 text-rose-300 border border-rose-500/40"}`}
                 >
                   {stats.apd >= (standards?.apd?.nilai_standar || 100)
                     ? "Tercapai"
@@ -1570,79 +1570,79 @@ export default function DashboardPage() {
         </div>
 
         {/* Card 3: HAIs Card - 3D Tactile Slate Card with Floating Isometric Plate */}
-        <div className="group relative bg-[#18193b] p-7 md:p-8 rounded-[32px] md:rounded-[36px] border border-[#2b2d56] transition-all duration-300 transform-gpu hover:-translate-y-2 overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] hover:shadow-[-8px_-8px_24px_rgba(140,165,255,0.1),12px_16px_40px_rgba(0,0,0,0.8),inset_1px_1px_2px_rgba(255,255,255,0.25)] flex flex-col justify-between">
+        <div className="group relative bg-[#18193b] p-5 sm:p-6 lg:p-5 xl:p-8 rounded-[28px] sm:rounded-[32px] md:rounded-[36px] border border-[#2b2d56] transition-all duration-300 transform-gpu hover:-translate-y-2 overflow-hidden shadow-[-6px_-6px_20px_rgba(140,165,255,0.06),10px_12px_32px_rgba(0,0,0,0.7),inset_1px_1px_1.5px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] hover:shadow-[-8px_-8px_24px_rgba(140,165,255,0.1),12px_16px_40px_rgba(0,0,0,0.8),inset_1px_1px_2px_rgba(255,255,255,0.25)] flex flex-col justify-between">
           {/* Top Bevel Highlight */}
           <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
           <div>
             {/* Header: Badge & 3D Floating Isometric Feature Plate */}
-            <div className="flex items-start justify-between gap-4 mb-4 relative z-10">
-              <div>
+            <div className="flex items-start justify-between gap-2.5 xl:gap-4 mb-3 xl:mb-4 relative z-10">
+              <div className="flex-1 min-w-0">
                 {/* Pill Badge */}
-                <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)] mb-3">
-                  <span className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-300">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 xl:px-4 xl:py-1.5 rounded-full bg-[#12132e] border border-white/10 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)] mb-2 xl:mb-3">
+                  <span className="text-[9.5px] xl:text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
                     INDIKATOR MUTU
                   </span>
                 </div>
-                <h3 className="text-[23px] font-extrabold text-white leading-snug tracking-tight">
+                <h3 className="text-[17px] sm:text-[18px] lg:text-[18px] xl:text-[22px] font-extrabold text-white leading-snug tracking-tight">
                   Surveilans HAIs
                 </h3>
               </div>
 
               {/* 3D Floating Isometric Plate */}
               <div className="shrink-0 relative">
-                <div className="w-16 h-16 rounded-[22px] bg-gradient-to-br from-[#272952] to-[#12132d] border-2 border-indigo-400/30 shadow-[-3px_-3px_10px_rgba(140,165,255,0.12),6px_8px_18px_rgba(0,0,0,0.7),inset_1.5px_1.5px_2px_rgba(255,255,255,0.2)] flex items-center justify-center transform group-hover:scale-105 group-hover:-rotate-3 transition-transform duration-300">
-                  <div className="w-10 h-10 rounded-[16px] bg-gradient-to-tr from-purple-600 via-fuchsia-500 to-pink-500 shadow-[0_6px_16px_rgba(168,85,247,0.5),inset_1px_1px_2px_rgba(255,255,255,0.4)] flex items-center justify-center text-white">
-                    <AlertCircle className="w-5 h-5 drop-shadow" />
+                <div className="w-13 h-13 sm:w-14 sm:h-14 xl:w-16 xl:h-16 rounded-[18px] xl:rounded-[22px] bg-gradient-to-br from-[#272952] to-[#12132d] border-2 border-indigo-400/30 shadow-[-3px_-3px_10px_rgba(140,165,255,0.12),6px_8px_18px_rgba(0,0,0,0.7),inset_1.5px_1.5px_2px_rgba(255,255,255,0.2)] flex items-center justify-center transform group-hover:scale-105 group-hover:-rotate-3 transition-transform duration-300">
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 xl:w-10 xl:h-10 rounded-[13px] xl:rounded-[16px] bg-gradient-to-tr from-purple-600 via-fuchsia-500 to-pink-500 shadow-[0_6px_16px_rgba(168,85,247,0.5),inset_1px_1px_2px_rgba(255,255,255,0.4)] flex items-center justify-center text-white">
+                    <AlertCircle className="w-4 h-4 xl:w-5 xl:h-5 drop-shadow" />
                   </div>
                 </div>
               </div>
             </div>
 
-            <p className="text-slate-400 text-xs md:text-sm font-medium mb-4 leading-relaxed relative z-10">
+            <p className="text-slate-400 text-xs xl:text-sm font-medium mb-3.5 xl:mb-4 leading-relaxed relative z-10">
               Pemantauan insiden infeksi terkait pelayanan kesehatan seperti Phlebitis, ISK, IDO, VAP di seluruh unit rawat inap
             </p>
           </div>
 
           {/* Recessed Tray with 4 Mini Stats */}
-          <div className="mt-auto bg-[#12132e] rounded-2xl p-3 border border-black/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] relative z-10">
-            <div className="grid grid-cols-4 gap-2">
-              <div className="bg-[#18193b] p-2 rounded-xl border border-white/5 text-center shadow-[inset_1px_1px_2px_rgba(0,0,0,0.4)]">
-                <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider mb-0.5">
+          <div className="mt-auto bg-[#12132e] rounded-2xl p-2.5 sm:p-3 xl:p-3.5 border border-black/40 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] relative z-10">
+            <div className="grid grid-cols-4 gap-1.5 xl:gap-2">
+              <div className="bg-[#18193b] p-1.5 xl:p-2 rounded-xl border border-white/5 text-center shadow-[inset_1px_1px_2px_rgba(0,0,0,0.4)]">
+                <p className="text-[7.5px] xl:text-[8px] font-black text-slate-400 uppercase tracking-wider mb-0.5">
                   Phlebitis
                 </p>
                 <p
-                  className={`text-xs md:text-sm font-black ${stats.hais.phlebitis <= (standards.phlebitis?.nilai_standar || 1.5) ? "text-emerald-400" : "text-rose-400"}`}
+                  className={`text-[11px] sm:text-xs xl:text-sm font-black ${stats.hais.phlebitis <= (standards.phlebitis?.nilai_standar || 1.5) ? "text-emerald-400" : "text-rose-400"}`}
                 >
                   {stats.hais.phlebitis}‰
                 </p>
               </div>
-              <div className="bg-[#18193b] p-2 rounded-xl border border-white/5 text-center shadow-[inset_1px_1px_2px_rgba(0,0,0,0.4)]">
-                <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider mb-0.5">
+              <div className="bg-[#18193b] p-1.5 xl:p-2 rounded-xl border border-white/5 text-center shadow-[inset_1px_1px_2px_rgba(0,0,0,0.4)]">
+                <p className="text-[7.5px] xl:text-[8px] font-black text-slate-400 uppercase tracking-wider mb-0.5">
                   ISK
                 </p>
                 <p
-                  className={`text-xs md:text-sm font-black ${stats.hais.isk <= (standards.isk?.nilai_standar || 5) ? "text-emerald-400" : "text-rose-400"}`}
+                  className={`text-[11px] sm:text-xs xl:text-sm font-black ${stats.hais.isk <= (standards.isk?.nilai_standar || 5) ? "text-emerald-400" : "text-rose-400"}`}
                 >
                   {stats.hais.isk}‰
                 </p>
               </div>
-              <div className="bg-[#18193b] p-2 rounded-xl border border-white/5 text-center shadow-[inset_1px_1px_2px_rgba(0,0,0,0.4)]">
-                <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider mb-0.5">
+              <div className="bg-[#18193b] p-1.5 xl:p-2 rounded-xl border border-white/5 text-center shadow-[inset_1px_1px_2px_rgba(0,0,0,0.4)]">
+                <p className="text-[7.5px] xl:text-[8px] font-black text-slate-400 uppercase tracking-wider mb-0.5">
                   IDO
                 </p>
                 <p
-                  className={`text-xs md:text-sm font-black ${stats.hais.ido <= (standards.ido?.nilai_standar || 2) ? "text-emerald-400" : "text-rose-400"}`}
+                  className={`text-[11px] sm:text-xs xl:text-sm font-black ${stats.hais.ido <= (standards.ido?.nilai_standar || 2) ? "text-emerald-400" : "text-rose-400"}`}
                 >
                   {stats.hais.ido}%
                 </p>
               </div>
-              <div className="bg-[#18193b] p-2 rounded-xl border border-white/5 text-center shadow-[inset_1px_1px_2px_rgba(0,0,0,0.4)]">
-                <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider mb-0.5">
+              <div className="bg-[#18193b] p-1.5 xl:p-2 rounded-xl border border-white/5 text-center shadow-[inset_1px_1px_2px_rgba(0,0,0,0.4)]">
+                <p className="text-[7.5px] xl:text-[8px] font-black text-slate-400 uppercase tracking-wider mb-0.5">
                   VAP
                 </p>
                 <p
-                  className={`text-xs md:text-sm font-black ${stats.hais.vap <= (standards.vap?.nilai_standar || 5) ? "text-emerald-400" : "text-rose-400"}`}
+                  className={`text-[11px] sm:text-xs xl:text-sm font-black ${stats.hais.vap <= (standards.vap?.nilai_standar || 5) ? "text-emerald-400" : "text-rose-400"}`}
                 >
                   {stats.hais.vap}‰
                 </p>
@@ -1658,8 +1658,8 @@ export default function DashboardPage() {
         <div className="absolute top-0 inset-x-10 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
         {/* Header */}
-        <div className="p-5 sm:p-7 border-b border-indigo-900/30 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-[#141532]/60 backdrop-blur-md">
-          <div className="flex flex-wrap gap-2">
+        <div className="p-3.5 sm:p-4 lg:px-5 lg:py-3.5 xl:p-6 border-b border-indigo-900/30 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 xl:gap-4 bg-[#141532]/60 backdrop-blur-md overflow-x-auto">
+          <div className="flex items-center gap-1.5 xl:gap-2 flex-nowrap shrink-0 overflow-x-auto">
             {[
               {
                 id: "hh",
@@ -1680,24 +1680,24 @@ export default function DashboardPage() {
               <button
                 key={t.id}
                 onClick={() => setActiveTab(t.id as any)}
-                className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all ${
+                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 xl:px-4 xl:py-2 rounded-full text-[11px] xl:text-xs font-black uppercase tracking-wider flex items-center gap-1.5 xl:gap-2 transition-all whitespace-nowrap shrink-0 ${
                   activeTab === t.id
                     ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-[-2px_-2px_8px_rgba(140,165,255,0.2),4px_6px_16px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.3)] border border-white/20"
                     : "text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent"
                 }`}
               >
-                <t.icon className={`w-4 h-4 ${activeTab === t.id ? "text-cyan-300" : "text-slate-400"}`} /> {t.label}
+                <t.icon className={`w-3.5 h-3.5 xl:w-4 xl:h-4 ${activeTab === t.id ? "text-cyan-300" : "text-slate-400"}`} /> {t.label}
               </button>
             ))}
           </div>
 
-          <div className="flex flex-wrap gap-3 items-center">
-            <div className="flex bg-[#12132e] rounded-xl border border-indigo-900/40 items-center px-3 py-1.5 gap-2 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
-              <Calendar className="w-3.5 h-3.5 text-indigo-400" />
+          <div className="flex items-center gap-2 xl:gap-3 flex-nowrap shrink-0 overflow-x-auto justify-end w-full lg:w-auto">
+            <div className="flex bg-[#12132e] rounded-xl border border-indigo-900/40 items-center px-2.5 py-1.5 xl:px-3 gap-1.5 xl:gap-2 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] shrink-0">
+              <Calendar className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
               <select
                 value={filterPeriodType}
                 onChange={(e) => setFilterPeriodType(e.target.value as any)}
-                className="bg-transparent border-none outline-none text-[10px] font-black uppercase text-slate-300 cursor-pointer"
+                className="bg-transparent border-none outline-none text-[10px] xl:text-[11px] font-black uppercase text-slate-300 cursor-pointer"
               >
                 {["bulanan", "triwulan", "semester", "tahunan"].map((p) => (
                   <option
@@ -1712,11 +1712,11 @@ export default function DashboardPage() {
 
               {filterPeriodType === "bulanan" && (
                 <>
-                  <div className="w-px h-4 bg-white/10 mx-1" />
+                  <div className="w-px h-3.5 bg-white/10 mx-0.5 xl:mx-1 shrink-0" />
                   <select
                     value={filterMonth}
                     onChange={(e) => setFilterMonth(parseInt(e.target.value))}
-                    className="bg-transparent border-none outline-none text-xs font-bold text-slate-200 cursor-pointer"
+                    className="bg-transparent border-none outline-none text-[11px] xl:text-xs font-bold text-slate-200 cursor-pointer"
                   >
                     {[
                       "Januari",
@@ -1746,13 +1746,13 @@ export default function DashboardPage() {
 
               {filterPeriodType === "triwulan" && (
                 <>
-                  <div className="w-px h-4 bg-white/10 mx-1" />
+                  <div className="w-px h-3.5 bg-white/10 mx-0.5 xl:mx-1 shrink-0" />
                   <select
                     value={filterQuarter}
                     onChange={(e) =>
                       setFilterQuarter(parseInt(e.target.value))
                     }
-                    className="bg-transparent border-none outline-none text-xs font-bold text-slate-200 cursor-pointer"
+                    className="bg-transparent border-none outline-none text-[11px] xl:text-xs font-bold text-slate-200 cursor-pointer"
                   >
                     {[
                       "Triwulan 1",
@@ -1774,13 +1774,13 @@ export default function DashboardPage() {
 
               {filterPeriodType === "semester" && (
                 <>
-                  <div className="w-px h-4 bg-white/10 mx-1" />
+                  <div className="w-px h-3.5 bg-white/10 mx-0.5 xl:mx-1 shrink-0" />
                   <select
                     value={filterSemester}
                     onChange={(e) =>
                       setFilterSemester(parseInt(e.target.value))
                     }
-                    className="bg-transparent border-none outline-none text-xs font-bold text-slate-200 cursor-pointer"
+                    className="bg-transparent border-none outline-none text-[11px] xl:text-xs font-bold text-slate-200 cursor-pointer"
                   >
                     {["Semester 1", "Semester 2"].map((s, i) => (
                       <option
@@ -1795,11 +1795,11 @@ export default function DashboardPage() {
                 </>
               )}
 
-              <div className="w-px h-4 bg-white/10 mx-1" />
+              <div className="w-px h-3.5 bg-white/10 mx-0.5 xl:mx-1 shrink-0" />
               <select
                 value={filterYear}
                 onChange={(e) => setFilterYear(parseInt(e.target.value))}
-                className="bg-transparent border-none outline-none text-xs font-bold text-slate-200 cursor-pointer"
+                className="bg-transparent border-none outline-none text-[11px] xl:text-xs font-bold text-slate-200 cursor-pointer"
               >
                 {Array.from(
                   { length: 5 },
@@ -1819,7 +1819,7 @@ export default function DashboardPage() {
             <select
               value={selectedUnit}
               onChange={(e) => setSelectedUnit(e.target.value)}
-              className="bg-[#12132e] border border-indigo-900/40 text-white text-xs font-bold rounded-xl px-3 py-2 outline-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.5),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]"
+              className="bg-[#12132e] border border-indigo-900/40 text-white text-[11px] xl:text-xs font-bold rounded-xl px-2.5 py-1.5 xl:px-3 xl:py-2 outline-none cursor-pointer hover:border-indigo-700/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.5),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] shrink-0 max-w-[120px] sm:max-w-[150px] xl:max-w-none truncate"
             >
               {units.map((u) => (
                 <option
@@ -1832,18 +1832,18 @@ export default function DashboardPage() {
               ))}
             </select>
 
-            <div className="flex bg-[#12132e] rounded-xl border border-indigo-900/40 overflow-hidden p-0.5 shadow-inner">
+            <div className="flex bg-[#12132e] rounded-xl border border-indigo-900/40 overflow-hidden p-0.5 shadow-inner shrink-0">
               <button
                 onClick={() => setChartMode("bar")}
                 className={`p-1.5 rounded-lg transition-colors ${chartMode === "bar" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-400 hover:text-white"}`}
               >
-                <BarChart2 className="w-4 h-4" />
+                <BarChart2 className="w-3.5 h-3.5 xl:w-4 xl:h-4" />
               </button>
               <button
                 onClick={() => setChartMode("line")}
                 className={`p-1.5 rounded-lg transition-colors ${chartMode === "line" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-400 hover:text-white"}`}
               >
-                <LineChart className="w-4 h-4" />
+                <LineChart className="w-3.5 h-3.5 xl:w-4 xl:h-4" />
               </button>
             </div>
           </div>
