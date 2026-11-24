@@ -103,6 +103,20 @@
   }
 }
 
+@keyframes hero3dPopFloat {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(0, -7px, 0) rotate(1.5deg);
+  }
+}
+
+.hero3d-pop-float {
+  animation: hero3dPopFloat 4.6s ease-in-out infinite;
+  will-change: transform;
+}
+
 /* Fix html2canvas & Tailwind preflight downward text shift bug */
 img, svg {
   display: inline-block !important;

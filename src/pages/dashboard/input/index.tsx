@@ -23,6 +23,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import DashboardLayout from "@/components/DashboardLayout";
+import { Hero3DModuleIcon } from "@/components/input/Hero3DIcons";
 import { supabase } from "@/lib/supabase";
 
 // Define the modules statically to maintain the layout configuration
@@ -39,7 +40,10 @@ const STATIC_MODULES = [
       btnHoverBg: "group-hover:bg-[#2563EB]",
       watermark: "text-blue-500/10",
       progressColor: "bg-gradient-to-r from-blue-500 to-indigo-500",
-      mainIconBox: "bg-gradient-to-br from-[#3b82f6] via-[#2563eb] to-[#1d4ed8] text-white border border-blue-300/40 shadow-[-3px_-3px_10px_rgba(140,180,255,0.25),8px_10px_24px_rgba(0,0,0,0.65),inset_0_1.5px_2px_rgba(255,255,255,0.5),inset_0_-2px_4px_rgba(0,0,0,0.35)]",
+      topBevel: "via-sky-300/65",
+      cardHoverBorder: "hover:border-blue-400/55",
+      heroGlow: "bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.45),rgba(37,99,235,0.16)_48%,transparent_72%)]",
+      heroDropShadow: "drop-shadow-[0_14px_20px_rgba(37,99,235,0.48)]",
       colBorder: "border-blue-400/20 group-hover:border-blue-400/35",
       colIconBox: "bg-gradient-to-br from-blue-500/25 to-blue-600/15 border border-blue-400/30 text-blue-400 shadow-[inset_1px_1px_1.5px_rgba(255,255,255,0.2),2px_3px_6px_rgba(0,0,0,0.4)]"
     },
@@ -59,7 +63,10 @@ const STATIC_MODULES = [
       btnHoverBg: "group-hover:bg-[#10B981]",
       watermark: "text-emerald-500/10",
       progressColor: "bg-gradient-to-r from-emerald-500 to-teal-500",
-      mainIconBox: "bg-gradient-to-br from-[#10b981] via-[#059669] to-[#047857] text-white border border-emerald-300/40 shadow-[-3px_-3px_10px_rgba(110,255,200,0.25),8px_10px_24px_rgba(0,0,0,0.65),inset_0_1.5px_2px_rgba(255,255,255,0.5),inset_0_-2px_4px_rgba(0,0,0,0.35)]",
+      topBevel: "via-emerald-300/65",
+      cardHoverBorder: "hover:border-emerald-400/55",
+      heroGlow: "bg-[radial-gradient(ellipse_at_center,rgba(52,211,153,0.45),rgba(5,150,105,0.16)_48%,transparent_72%)]",
+      heroDropShadow: "drop-shadow-[0_14px_20px_rgba(16,185,129,0.48)]",
       colBorder: "border-emerald-400/20 group-hover:border-emerald-400/35",
       colIconBox: "bg-gradient-to-br from-emerald-500/25 to-emerald-600/15 border border-emerald-400/30 text-emerald-400 shadow-[inset_1px_1px_1.5px_rgba(255,255,255,0.2),2px_3px_6px_rgba(0,0,0,0.4)]"
     },
@@ -79,7 +86,10 @@ const STATIC_MODULES = [
       btnHoverBg: "group-hover:bg-[#7C3AED]",
       watermark: "text-purple-500/10",
       progressColor: "bg-gradient-to-r from-purple-500 to-indigo-500",
-      mainIconBox: "bg-gradient-to-br from-[#8b5cf6] via-[#7c3aed] to-[#6d28d9] text-white border border-purple-300/40 shadow-[-3px_-3px_10px_rgba(180,140,255,0.25),8px_10px_24px_rgba(0,0,0,0.65),inset_0_1.5px_2px_rgba(255,255,255,0.5),inset_0_-2px_4px_rgba(0,0,0,0.35)]",
+      topBevel: "via-purple-300/65",
+      cardHoverBorder: "hover:border-purple-400/55",
+      heroGlow: "bg-[radial-gradient(ellipse_at_center,rgba(168,85,247,0.46),rgba(124,58,237,0.16)_48%,transparent_72%)]",
+      heroDropShadow: "drop-shadow-[0_14px_20px_rgba(139,92,246,0.5)]",
       colBorder: "border-purple-400/20 group-hover:border-purple-400/35",
       colIconBox: "bg-gradient-to-br from-purple-500/25 to-purple-600/15 border border-purple-400/30 text-purple-400 shadow-[inset_1px_1px_1.5px_rgba(255,255,255,0.2),2px_3px_6px_rgba(0,0,0,0.4)]"
     },
@@ -99,7 +109,10 @@ const STATIC_MODULES = [
       btnHoverBg: "group-hover:bg-[#F59E0B]",
       watermark: "text-amber-500/10",
       progressColor: "bg-gradient-to-r from-amber-500 to-orange-500",
-      mainIconBox: "bg-gradient-to-br from-[#f59e0b] via-[#d97706] to-[#b45309] text-white border border-amber-300/40 shadow-[-3px_-3px_10px_rgba(255,200,100,0.25),8px_10px_24px_rgba(0,0,0,0.65),inset_0_1.5px_2px_rgba(255,255,255,0.5),inset_0_-2px_4px_rgba(0,0,0,0.35)]",
+      topBevel: "via-amber-300/65",
+      cardHoverBorder: "hover:border-amber-400/55",
+      heroGlow: "bg-[radial-gradient(ellipse_at_center,rgba(251,191,36,0.45),rgba(217,119,6,0.16)_48%,transparent_72%)]",
+      heroDropShadow: "drop-shadow-[0_14px_20px_rgba(245,158,11,0.48)]",
       colBorder: "border-amber-400/20 group-hover:border-amber-400/35",
       colIconBox: "bg-gradient-to-br from-amber-500/25 to-amber-600/15 border border-amber-400/30 text-amber-400 shadow-[inset_1px_1px_1.5px_rgba(255,255,255,0.2),2px_3px_6px_rgba(0,0,0,0.4)]"
     },
@@ -724,47 +737,54 @@ export default function InputIndexPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-7 lg:gap-9">
-        {modules.map((mod) => (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-7 lg:gap-x-9 gap-y-12 sm:gap-y-14 pt-7 sm:pt-9 px-1 sm:px-2">
+        {modules.map((mod, modIdx) => (
           <div
             key={mod.id}
-            className="flex h-full w-full [content-visibility:auto] [contain-intrinsic-size:0_360px]"
+            className="flex h-full w-full"
           >
             <Link
               href={mod.href}
               prefetch={false}
-              className="relative group p-6 sm:p-8 rounded-[36px] bg-gradient-to-b from-[#1d2042] via-[#171936] to-[#12132a] border border-[#2e3362]/70 flex flex-col overflow-hidden shadow-[-10px_-10px_28px_rgba(140,165,255,0.06),18px_24px_50px_rgba(0,0,0,0.82),inset_1px_1.5px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.5)] hover:-translate-y-1.5 hover:border-[#3d4482]/90 hover:shadow-[-12px_-12px_32px_rgba(140,165,255,0.1),22px_28px_60px_rgba(0,0,0,0.9),inset_1px_1.5px_2px_rgba(255,255,255,0.28)] transition-all duration-300 ease-out transform-gpu w-full"
+              className={`relative group p-6 sm:p-8 rounded-[36px] bg-gradient-to-b from-[#1e2148] via-[#171938] to-[#12142d] border border-[#32386c]/75 flex flex-col overflow-visible shadow-[inset_0_1.5px_2px_rgba(255,255,255,0.22),inset_0_-2px_5px_rgba(0,0,0,0.35)] hover:-translate-y-1.5 ${mod.colorTheme.cardHoverBorder} hover:shadow-[inset_0_1.5px_2.5px_rgba(255,255,255,0.3),0_12px_28px_-12px_rgba(79,70,229,0.28)] transition-all duration-300 ease-out transform-gpu w-full`}
             >
-              {/* Top Neumorphic Specular Highlight Bevel Line */}
-              <div className="absolute top-0 inset-x-12 h-[1.5px] bg-gradient-to-r from-transparent via-white/35 to-transparent pointer-events-none rounded-t-full" />
+              {/* Inner clipped surface decorations (no black outer box shadow) */}
+              <div className="absolute inset-0 rounded-[36px] overflow-hidden pointer-events-none">
+                {/* Top Bevel Specular Highlight Line matched to module theme */}
+                <div
+                  className={`absolute top-0 inset-x-10 h-[1.5px] bg-gradient-to-r from-transparent ${mod.colorTheme.topBevel} to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-300`}
+                />
 
-              {/* Hardware-friendly ambient radial corner glow */}
-              <div
-                className="absolute -top-12 -right-12 w-56 h-56 pointer-events-none rounded-full opacity-25 transition-opacity duration-300 group-hover:opacity-40 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.35),transparent_70%)]"
-              />
+                {/* Volumetric 3D Hero Banner Ambient Glow behind Pop-Out Icon */}
+                <div
+                  className={`absolute -top-16 -right-12 w-64 h-64 rounded-full opacity-60 transition-all duration-500 group-hover:opacity-95 group-hover:scale-110 ${mod.colorTheme.heroGlow}`}
+                />
 
-              <div className="flex justify-between items-start gap-4 mb-6 relative z-10 flex-1">
-                <div className="flex gap-4 sm:gap-5 flex-1 min-w-0 items-center">
-                  {/* 3D Convex Pill/Squircle Icon Box */}
-                  <div
-                    className={`relative w-15 h-15 rounded-[22px] flex flex-shrink-0 items-center justify-center overflow-hidden ${mod.colorTheme.mainIconBox}`}
-                  >
-                    {/* Inner 3D specular highlight arc */}
-                    <div className="absolute top-1 inset-x-2.5 h-[1.5px] bg-gradient-to-r from-transparent via-white/70 to-transparent rounded-full pointer-events-none" />
-                    <div className="absolute bottom-0 inset-x-0 h-2 bg-black/25 rounded-b-[22px] pointer-events-none" />
-                    <mod.icon
-                      className="w-7 h-7 relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
-                      strokeWidth={2.4}
-                    />
-                  </div>
-                  <div className="pt-0.5 flex-1 min-w-0">
-                    <h2 className="text-[clamp(19px,2vw,24px)] font-black text-white leading-tight mb-1 group-hover:text-indigo-200 transition-colors break-words whitespace-normal drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] tracking-tight">
-                      {mod.title}
-                    </h2>
-                    <p className="text-[clamp(12px,1.2vw,14px)] text-slate-300/85 font-medium break-words whitespace-normal leading-snug">
-                      {mod.desc}
-                    </p>
-                  </div>
+                {/* Subtle Diagonal Glass Sheen across Upper Card */}
+                <div className="absolute -top-24 -left-16 w-72 h-48 rounded-full opacity-15 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.28),transparent_70%)]" />
+              </div>
+
+              {/* 3D Pop-Out Hero Banner Icon — Standalone Sculpted 3D Emblem (No Round Card) */}
+              <div className="absolute -top-8 -right-2 sm:-top-10 sm:-right-3 lg:-top-11 lg:-right-3 w-28 h-28 sm:w-32 sm:h-32 lg:w-[138px] lg:h-[138px] z-20 pointer-events-none select-none transition-transform duration-500 ease-out group-hover:-translate-y-3 group-hover:scale-110 group-hover:-rotate-3">
+                <div
+                  className="hero3d-pop-float w-full h-full"
+                  style={{ animationDelay: `${modIdx * 0.65}s` }}
+                >
+                  <Hero3DModuleIcon
+                    id={mod.id}
+                    className={`w-full h-full ${mod.colorTheme.heroDropShadow}`}
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-between items-start gap-4 mb-6 relative z-10 flex-1 pr-24 sm:pr-28 lg:pr-32 min-h-[68px] sm:min-h-[76px]">
+                <div className="pt-0.5 flex-1 min-w-0">
+                  <h2 className="text-[clamp(20px,2.1vw,25px)] font-black text-white leading-tight mb-1.5 group-hover:text-indigo-100 transition-colors break-words whitespace-normal drop-shadow-[0_2px_4px_rgba(0,0,0,0.45)] tracking-tight">
+                    {mod.title}
+                  </h2>
+                  <p className="text-[clamp(12px,1.2vw,14px)] text-slate-300/85 font-medium break-words whitespace-normal leading-snug">
+                    {mod.desc}
+                  </p>
                 </div>
               </div>
 
