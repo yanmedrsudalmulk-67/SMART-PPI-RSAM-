@@ -21,6 +21,7 @@ module.exports = {
         sans: ["var(--font-sans)", "'DM Sans'", "system-ui", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
         heading: ["var(--font-heading)", "'Poppins'", "system-ui", "-apple-system", "sans-serif"],
         poppins: ["var(--font-poppins)", "'Poppins'", "system-ui", "-apple-system", "sans-serif"],
+        gta: ["'GTAArtDeco'", "'Bebas Neue'", "'Anton'", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

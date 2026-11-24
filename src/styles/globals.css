@@ -1,5 +1,30 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Poppins:ital,wght@0,600;0,700;0,800;0,900;1,600;1,700;1,800&family=Carlito:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Carlito:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+
+@font-face {
+  font-family: 'GTAArtDeco';
+  src: url('/fonts/GTAArtDeco_CondensedHeavy.woff') format('woff');
+  font-weight: 800 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'GTAArtDeco';
+  src: url('/fonts/GTAArtDeco_CondensedBold.woff') format('woff');
+  font-weight: 600 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'GTAArtDeco';
+  src: url('/fonts/GTAArtDeco_Bold.woff') format('woff');
+  font-weight: 400 500;
+  font-style: normal;
+  font-display: swap;
+}
 
 @tailwind base;
 @tailwind components;
@@ -14,9 +39,9 @@
   }
 
   /* Judul menu, heading utama, dan teks SMART PPI menggunakan Poppins Bold */
-  h1:not(.official-report-sheet *):not(.official-pdf-page *):not([data-pdf-page="true"] *):not(.f4-page *),
-  h2:not(.official-report-sheet *):not(.official-pdf-page *):not([data-pdf-page="true"] *):not(.f4-page *),
-  h3:not(.official-report-sheet *):not(.official-pdf-page *):not([data-pdf-page="true"] *):not(.f4-page *),
+  h1:not(.official-report-sheet *):not(.official-pdf-page *):not([data-pdf-page="true"] *):not(.f4-page *):not(.font-gta):not(.font-gta *),
+  h2:not(.official-report-sheet *):not(.official-pdf-page *):not([data-pdf-page="true"] *):not(.f4-page *):not(.font-gta):not(.font-gta *),
+  h3:not(.official-report-sheet *):not(.official-pdf-page *):not([data-pdf-page="true"] *):not(.f4-page *):not(.font-gta):not(.font-gta *),
   .font-heading,
   .font-poppins,
   .menu-title,
@@ -25,6 +50,11 @@
     font-family: var(--font-poppins), 'Poppins', system-ui, -apple-system, sans-serif !important;
     font-weight: 700;
     letter-spacing: -0.015em;
+  }
+
+  .font-gta {
+    font-family: 'GTAArtDeco', 'Bebas Neue', 'Anton', sans-serif !important;
+    letter-spacing: 0.035em !important;
   }
 
   button, input, select, textarea {

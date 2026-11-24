@@ -28,14 +28,11 @@ export default function IcraPage() {
 
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 relative z-10">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/15 border border-cyan-400/30 text-[10px] font-black uppercase tracking-widest text-cyan-300 mb-2 shadow-[inset_1px_1px_1px_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.3)]">
-                Standar PMK 27/2017 & STARKES PPI
-              </div>
-              <h1 className="text-base sm:text-lg lg:text-xl xl:text-2xl font-black tracking-tight leading-tight whitespace-nowrap flex flex-wrap items-baseline gap-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+              <h1 className="font-gta text-2xl sm:text-3xl lg:text-3xl xl:text-4xl font-extrabold tracking-wide leading-tight whitespace-nowrap flex flex-wrap items-baseline gap-2 sm:gap-2.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 uppercase font-black tracking-wider">
                   ICRA
                 </span>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-purple-300 to-indigo-300 italic font-bold text-xs sm:text-sm lg:text-base xl:text-lg">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-purple-300 to-indigo-300 italic font-bold text-sm sm:text-base lg:text-lg xl:text-xl">
                   (Infection Control Risk Assessment)
                 </span>
               </h1>
