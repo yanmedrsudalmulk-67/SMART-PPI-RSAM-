@@ -303,17 +303,10 @@ export default function IcraConstructionTab() {
     setSaving(true);
     try {
       const uploadedSebelum = await uploadImagesToSupabase(supabase, fotoSebelum, 'audit_images', 'icra-konstruksi');
-      const uploadedSesudah = await uploadImagesToSupabase(supabase, fotoSesudah, 'audit_images', 'icra-konstruksi');
+      const uploadedSesudah = editingProject?.foto_sesudah || [];
 
-      let ttdIpcn = existingTtdIpcn;
-      if (sigIpcnRef.current && !sigIpcnRef.current.isEmpty()) {
-        ttdIpcn = exportBlackSignatureCanvas(sigIpcnRef.current.getCanvas());
-      }
-
-      let ttdPelaksana = existingTtdPelaksana;
-      if (sigPelaksanaRef.current && !sigPelaksanaRef.current.isEmpty()) {
-        ttdPelaksana = exportBlackSignatureCanvas(sigPelaksanaRef.current.getCanvas());
-      }
+      let ttdIpcn = existingTtdIpcn || editingProject?.ttd_ipcn || null;
+      let ttdPelaksana = existingTtdPelaksana || editingProject?.ttd_pelaksana || null;
 
       const payload = {
         nomor_izin: (projForm.nomor_izin?.trim() || generatePermitNumber()),
@@ -331,9 +324,9 @@ export default function IcraConstructionTab() {
         checklist_pengendalian: projForm.checklist_pengendalian,
         foto_sebelum: uploadedSebelum,
         foto_sesudah: uploadedSesudah,
-        status_proyek: projForm.status_proyek,
-        nama_ipcn: projForm.nama_ipcn.trim(),
-        nama_k3rs: projForm.nama_k3rs.trim(),
+        status_proyek: projForm.status_proyek || 'Aktif Berjalan',
+        nama_ipcn: projForm.nama_ipcn?.trim() || 'Adi Tresa Purnama, A.M.Kep',
+        nama_k3rs: projForm.nama_k3rs?.trim() || 'Tim K3RS RSUD Al-Mulk',
         ttd_ipcn: ttdIpcn,
         ttd_pelaksana: ttdPelaksana,
       };
@@ -1100,7 +1093,7 @@ export default function IcraConstructionTab() {
                           {PATIENT_RISK_GROUPS.find((r) => r.code === projForm.kelompok_risiko)?.riskLabel})
                         </span>
                         <div className="text-lg font-black text-white mt-0.5 flex flex-wrap items-center gap-2">
-                          <span>Penetapan Izin Kerja:</span>
+                          <span>Kelas Kewaspadaan:</span>
                           <span
                             className={`px-3 py-1 rounded-xl border text-sm font-black shadow-md ${
                               projForm.kelas_tindakan === 'IV'
@@ -1136,11 +1129,8 @@ export default function IcraConstructionTab() {
                       </div>
                     </div>
 
-                    {/* Tabel 12: Kelas Kewaspadaan */}
+                    {/* Matriks Kelas Kewaspadaan */}
                     <div>
-                      <div className="text-[11px] font-black text-slate-300 uppercase tracking-wider mb-2 flex items-center justify-between">
-                        <span>Tabel 12. Kelas Kewaspadaan</span>
-                      </div>
                       <div className="overflow-x-auto rounded-2xl border border-[#2b2e5c] shadow-[inset_1.5px_1.5px_4px_rgba(0,0,0,0.6)]">
                         <table className="w-full text-center border-collapse text-[11px]">
                           <thead>
@@ -1331,8 +1321,8 @@ export default function IcraConstructionTab() {
                   );
                 })()}
 
-                {/* Bagian 4: Status, Dokumentasi Foto & TTD Digital - Neumorphic Card */}
-                <div className="relative bg-[#18193b] rounded-[28px] p-5 sm:p-6 border border-[#2b2d56] shadow-[-6px_-6px_20px_rgba(140,165,255,0.05),10px_12px_32px_rgba(0,0,0,0.65),inset_1px_1px_1.5px_rgba(255,255,255,0.15),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] overflow-hidden space-y-5">
+                {/* Bagian 4: Dokumentasi Pra Kontruksi / Renovasi - Neumorphic Card */}
+                <div className="relative bg-[#18193b] rounded-[28px] p-5 sm:p-6 border border-[#2b2d56] shadow-[-6px_-6px_20px_rgba(140,165,255,0.05),10px_12px_32px_rgba(0,0,0,0.65),inset_1px_1px_1.5px_rgba(255,255,255,0.15),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] overflow-hidden space-y-4">
                   {/* Top Bevel Highlight */}
                   <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
@@ -1341,116 +1331,19 @@ export default function IcraConstructionTab() {
                       BAGIAN 4
                     </span>
                     <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-white">
-                      Status Proyek, Dokumentasi Kondisi & Pengesahan
+                      Dokumentasi Pra Kontruksi / Renovasi
                     </h4>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1.5">Status Proyek</label>
-                      <select
-                        value={projForm.status_proyek}
-                        onChange={(e) => setProjForm((p) => ({ ...p, status_proyek: e.target.value as any }))}
-                        className="w-full bg-[#12132e] border border-black/40 text-white text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-400/60 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] transition-all cursor-pointer"
-                      >
-                        <option value="Menunggu Izin" className="bg-[#18193b] text-white">Menunggu Izin</option>
-                        <option value="Aktif Berjalan" className="bg-[#18193b] text-white">Aktif Berjalan</option>
-                        <option value="Selesai" className="bg-[#18193b] text-white">Selesai (Lulus Inspeksi)</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1.5">Nama IPCN</label>
-                      <input
-                        type="text"
-                        value={projForm.nama_ipcn}
-                        onChange={(e) => setProjForm((p) => ({ ...p, nama_ipcn: e.target.value }))}
-                        className="w-full bg-[#12132e] border border-black/40 text-white text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-400/60 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] transition-all placeholder-slate-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1.5">Mengetahui Tim K3RS</label>
-                      <input
-                        type="text"
-                        value={projForm.nama_k3rs}
-                        onChange={(e) => setProjForm((p) => ({ ...p, nama_k3rs: e.target.value }))}
-                        className="w-full bg-[#12132e] border border-black/40 text-white text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-400/60 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] transition-all placeholder-slate-500"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Foto Sebelum & Sesudah */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="rounded-2xl bg-[#12132e] border border-black/40 p-4 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
-                      <span className="text-[11px] font-black uppercase text-amber-300 block mb-2">
-                        Foto Sebelum Pekerjaan / Kondisi Awal
-                      </span>
-                      <DocumentationUploader images={fotoSebelum} setImages={setFotoSebelum} />
-                    </div>
-                    <div className="rounded-2xl bg-[#12132e] border border-black/40 p-4 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
-                      <span className="text-[11px] font-black uppercase text-emerald-300 block mb-2">
-                        Foto Sesudah Selesai / Terminal Cleaning
-                      </span>
-                      <DocumentationUploader images={fotoSesudah} setImages={setFotoSesudah} />
-                    </div>
-                  </div>
-
-                  {/* Tanda Tangan Digital */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="rounded-2xl bg-[#12132e] border border-black/40 p-4 space-y-2 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold uppercase text-slate-300">TTD Pelaksana / IPSRS (Opsional)</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            sigPelaksanaRef.current?.clear();
-                            setExistingTtdPelaksana(null);
-                          }}
-                          className="text-[11px] text-rose-400 hover:text-rose-300 flex items-center gap-1 cursor-pointer transition-colors"
-                        >
-                          <Eraser className="w-3.5 h-3.5" /> Hapus
-                        </button>
-                      </div>
-                      <div className="bg-[#0b0c20] rounded-xl border border-indigo-950/80 overflow-hidden h-28 flex items-center justify-center relative shadow-[inset_2px_2px_6px_rgba(0,0,0,0.9)]">
-                        <SignatureCanvas
-                          ref={sigPelaksanaRef}
-                          penColor="#38bdf8"
-                          canvasProps={{ className: 'sigCanvas w-full h-full cursor-crosshair touch-none' }}
-                        />
-                        {existingTtdPelaksana && (
-                          <span className="absolute bottom-1 right-2 text-[10px] text-emerald-400 pointer-events-none">
-                            TTD tersimpan (gores ulang untuk ganti)
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="rounded-2xl bg-[#12132e] border border-black/40 p-4 space-y-2 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold uppercase text-slate-300">TTD IPCN / Tim PPI (Opsional)</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            sigIpcnRef.current?.clear();
-                            setExistingTtdIpcn(null);
-                          }}
-                          className="text-[11px] text-rose-400 hover:text-rose-300 flex items-center gap-1 cursor-pointer transition-colors"
-                        >
-                          <Eraser className="w-3.5 h-3.5" /> Hapus
-                        </button>
-                      </div>
-                      <div className="bg-[#0b0c20] rounded-xl border border-indigo-950/80 overflow-hidden h-28 flex items-center justify-center relative shadow-[inset_2px_2px_6px_rgba(0,0,0,0.9)]">
-                        <SignatureCanvas
-                          ref={sigIpcnRef}
-                          penColor="#38bdf8"
-                          canvasProps={{ className: 'sigCanvas w-full h-full cursor-crosshair touch-none' }}
-                        />
-                        {existingTtdIpcn && (
-                          <span className="absolute bottom-1 right-2 text-[10px] text-emerald-400 pointer-events-none">
-                            TTD tersimpan (gores ulang untuk ganti)
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                  {/* Foto Dokumentasi Pra Konstruksi / Renovasi (Bisa > 2 Foto, Maks 5 Foto) */}
+                  <div className="rounded-2xl bg-[#12132e] border border-black/40 p-4 sm:p-5 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
+                    <DocumentationUploader
+                      images={fotoSebelum}
+                      setImages={setFotoSebelum}
+                      maxImages={5}
+                      label="Foto Dokumentasi Pra Kontruksi / Renovasi"
+                      helperText="Unggah foto kondisi awal sebelum pekerjaan konstruksi/renovasi dimulai (bisa lebih dari 2 foto, maksimal 5 foto)."
+                    />
                   </div>
                 </div>
 

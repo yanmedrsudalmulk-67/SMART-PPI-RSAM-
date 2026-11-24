@@ -10,9 +10,12 @@ export interface DocImage {
 interface DocumentationUploaderProps {
   images: (DocImage | any)[];
   setImages: React.Dispatch<React.SetStateAction<DocImage[]>> | React.Dispatch<React.SetStateAction<any[]>>;
+  maxImages?: number;
+  label?: string;
+  helperText?: string;
 }
 
-export function DocumentationUploader({ images, setImages }: DocumentationUploaderProps) {
+export function DocumentationUploader({ images, setImages, maxImages, label, helperText }: DocumentationUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -22,6 +25,8 @@ export function DocumentationUploader({ images, setImages }: DocumentationUpload
     if (typeof img === 'string') return img;
     return img.url || '';
   };
+
+  const validImages = Array.isArray(images) ? images.filter(img => Boolean(getImageUrl(img))) : [];
 
   const compressImage = async (file: File): Promise<File> => {
     return new Promise((resolve) => {
@@ -54,16 +59,34 @@ export function DocumentationUploader({ images, setImages }: DocumentationUpload
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
+    const rawFiles = e.target.files;
+    if (!rawFiles || rawFiles.length === 0) return;
+
+    const currentCount = validImages.length;
+    let filesToProcess: File[] = Array.from(rawFiles);
+
+    if (maxImages && maxImages > 0) {
+      const availableSlots = maxImages - currentCount;
+      if (availableSlots <= 0) {
+        alert(`Batas maksimal ${maxImages} foto dokumentasi sudah tercapai.`);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        if (cameraInputRef.current) cameraInputRef.current.value = '';
+        return;
+      }
+      if (filesToProcess.length > availableSlots) {
+        alert(`Anda memilih ${filesToProcess.length} foto, hanya ${availableSlots} foto yang dapat ditambahkan (maksimal ${maxImages} foto).`);
+        filesToProcess = filesToProcess.slice(0, availableSlots);
+      }
+    }
+
     const newImages: DocImage[] = [];
     const MAX_SIZE = 3 * 1024 * 1024; // 3MB
-    for (let i = 0; i < files.length; i++) {
-        if (files[i].size > MAX_SIZE) {
-          alert('Ukuran gambar terlalu besar (' + (files[i].size / 1024 / 1024).toFixed(1) + ' MB). Maksimal upload 3 MB.');
+    for (let i = 0; i < filesToProcess.length; i++) {
+        if (filesToProcess[i].size > MAX_SIZE) {
+          alert('Ukuran gambar terlalu besar (' + (filesToProcess[i].size / 1024 / 1024).toFixed(1) + ' MB). Maksimal upload 3 MB.');
           continue;
         }
-        const compressed = await compressImage(files[i]);
+        const compressed = await compressImage(filesToProcess[i]);
         newImages.push({ url: URL.createObjectURL(compressed), file: compressed });
     }
     setImages((prev: any) => [...(Array.isArray(prev) ? prev : []), ...newImages]);
@@ -86,31 +109,53 @@ export function DocumentationUploader({ images, setImages }: DocumentationUpload
     });
   };
 
-  const validImages = Array.isArray(images) ? images.filter(img => Boolean(getImageUrl(img))) : [];
+  const isMaxReached = Boolean(maxImages && validImages.length >= maxImages);
 
   return (
     <>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
-        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
-          <Camera className="w-3.5 h-3.5 text-blue-400" /> Foto Dokumentasi
-        </label>
+        <div>
+          <div className="flex items-center gap-2.5">
+            <label className="text-[11px] font-black uppercase tracking-widest text-slate-300 flex items-center gap-2">
+              <Camera className="w-4 h-4 text-cyan-400" /> {label || 'Foto Dokumentasi'}
+            </label>
+            {maxImages && (
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider border ${
+                isMaxReached 
+                  ? 'bg-amber-500/15 border-amber-500/40 text-amber-300' 
+                  : 'bg-cyan-500/15 border-cyan-400/30 text-cyan-300'
+              }`}>
+                {validImages.length} / {maxImages} Foto
+              </span>
+            )}
+          </div>
+          {helperText && (
+            <p className="text-[11px] text-slate-400 mt-1">{helperText}</p>
+          )}
+        </div>
         <div className="flex gap-3 w-full sm:w-auto">
-          <button type="button" onClick={() => fileInputRef.current?.click()}
-            className="flex-1 sm:flex-none px-4 py-3 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/20 rounded-2xl text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-lg"
+          <button
+            type="button"
+            disabled={isMaxReached}
+            onClick={() => fileInputRef.current?.click()}
+            className="flex-1 sm:flex-none px-4 py-2.5 bg-blue-600/15 hover:bg-blue-600/25 text-blue-300 border border-blue-500/30 rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-[inset_1px_1px_1px_rgba(255,255,255,0.1),2px_3px_6px_rgba(0,0,0,0.4)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
           >
-            <ImageIcon className="w-4 h-4" /> Pilih Galeri
+            <ImageIcon className="w-4 h-4 text-blue-400" /> Pilih Galeri
           </button>
-          <button type="button" onClick={() => cameraInputRef.current?.click()}
-            className="flex-1 sm:flex-none px-4 py-3 bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 border border-emerald-500/20 rounded-2xl text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-lg"
+          <button
+            type="button"
+            disabled={isMaxReached}
+            onClick={() => cameraInputRef.current?.click()}
+            className="flex-1 sm:flex-none px-4 py-2.5 bg-emerald-600/15 hover:bg-emerald-600/25 text-emerald-300 border border-emerald-500/30 rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-[inset_1px_1px_1px_rgba(255,255,255,0.1),2px_3px_6px_rgba(0,0,0,0.4)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
           >
-            <Camera className="w-4 h-4" /> Buka Kamera
+            <Camera className="w-4 h-4 text-emerald-400" /> Buka Kamera
           </button>
         </div>
         <input type="file" ref={fileInputRef} className="hidden" accept="image/*" multiple onChange={handleFileUpload} />
         <input type="file" ref={cameraInputRef} className="hidden" accept="image/*" capture="environment" onChange={handleFileUpload} />
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-6 w-full">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3.5 mt-5 w-full">
         <AnimatePresence>
           {validImages.map((img, idx) => {
             const url = getImageUrl(img);
@@ -120,12 +165,12 @@ export function DocumentationUploader({ images, setImages }: DocumentationUpload
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={url} alt={`Doc ${idx}`} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                    <button type="button" onClick={() => setPreviewImage(url)} className="p-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-xl transition-all">
-                      <Eye className="w-4 h-4" />
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <button type="button" onClick={() => setPreviewImage(url)} className="p-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-xl transition-all cursor-pointer">
+                      <Eye className="w-3.5 h-3.5" />
                     </button>
-                    <button type="button" onClick={() => removeImage(idx)} className="p-3 bg-red-600 hover:bg-red-500 text-white rounded-xl shadow-xl transition-all">
-                      <Trash2 className="w-4 h-4" />
+                    <button type="button" onClick={() => removeImage(idx)} className="p-2 bg-red-600 hover:bg-red-500 text-white rounded-xl shadow-xl transition-all cursor-pointer">
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                 </div>
               </motion.div>
@@ -135,9 +180,10 @@ export function DocumentationUploader({ images, setImages }: DocumentationUpload
       </div>
         
       {validImages.length === 0 && (
-        <div className="col-span-full py-12 border-2 border-dashed border-white/5 rounded-[2rem] flex flex-col items-center justify-center text-slate-500 gap-4 bg-white/2 w-full mt-4">
-          <Camera className="w-8 h-8 opacity-20" />
-          <p className="text-[10px] font-bold uppercase tracking-widest opacity-40">Belum ada foto dokumentasi</p>
+        <div className="py-10 border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center text-slate-400 gap-2 bg-black/20 w-full mt-4">
+          <Camera className="w-7 h-7 opacity-30 text-cyan-400" />
+          <p className="text-[11px] font-bold uppercase tracking-wider opacity-60">Belum ada foto dokumentasi</p>
+          <span className="text-[10px] text-slate-500">Dapat mengunggah 1 hingga {maxImages || 5} foto</span>
         </div>
       )}
 

@@ -51,7 +51,7 @@ export default function IcraConstructionPermitModal({
     if (!project) return [];
     const list: Array<{ label: string; url: string }> = [];
     (project.foto_sebelum || []).forEach((u, i) => {
-      list.push({ label: `Sebelum Pekerjaan (${i + 1})`, url: normalizeImageUrl(u) });
+      list.push({ label: `Pra Konstruksi (${i + 1})`, url: normalizeImageUrl(u) });
     });
     sortedLogs.forEach((log) => {
       (log.foto_monitoring || []).forEach((u, i) => {
