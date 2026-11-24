@@ -1145,7 +1145,7 @@ export default function IcraConstructionTab() {
                         <table className="w-full text-center border-collapse text-[11px]">
                           <thead>
                             <tr className="bg-[#181a42] text-indigo-200 font-extrabold uppercase">
-                              <th className="border border-indigo-900/60 p-2.5 text-left w-1/4">Kelompok Pasien Berisiko</th>
+                              <th className="border border-indigo-900/60 p-2.5 text-center w-1/4">Kelompok Pasien Berisiko</th>
                               <th className="border border-indigo-900/60 p-2.5">Tipe A</th>
                               <th className="border border-indigo-900/60 p-2.5">Tipe B</th>
                               <th className="border border-indigo-900/60 p-2.5">Tipe C</th>
@@ -1157,9 +1157,8 @@ export default function IcraConstructionTab() {
                               const rInfo = PATIENT_RISK_GROUPS.find((r) => r.code === rg);
                               return (
                                 <tr key={rg} className="hover:bg-indigo-950/30 transition-colors">
-                                  <td className="border border-indigo-900/60 p-2.5 text-left font-bold text-slate-200 bg-[#141638]">
-                                    <span className="font-extrabold text-white">{rInfo?.riskLabel}</span>
-                                    <span className="text-[10px] text-slate-400 ml-1.5">(Kelompok {rg})</span>
+                                  <td className="border border-indigo-900/60 p-2.5 text-center font-extrabold text-white bg-[#141638]">
+                                    {rInfo?.riskLabel}
                                   </td>
                                   {(['A', 'B', 'C', 'D'] as ConstructionType[]).map((tp) => {
                                     const cell = CONSTRUCTION_MATRIX[rg][tp];
@@ -1247,10 +1246,6 @@ export default function IcraConstructionTab() {
                             {CONSTRUCTION_CLASS_CONTROLS[projForm.kelas_tindakan].summary}
                           </p>
                         </div>
-                        <span className="text-[11px] px-3.5 py-1.5 rounded-full bg-[#12132e] text-emerald-300 border border-emerald-500/40 font-bold shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6)]">
-                          {projForm.checklist_pengendalian.filter((c) => c.checked).length} /{' '}
-                          {projForm.checklist_pengendalian.length} Wajib Dipenuhi
-                        </span>
                       </div>
 
                       {/* Tabel 2 Kolom Bersebelahan: Selama Proyek Konstruksi & Setelah Proyek Konstruksi */}
@@ -1265,47 +1260,23 @@ export default function IcraConstructionTab() {
                                 Selama Proyek Konstruksi
                               </span>
                             </div>
-                            <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#16173a] text-amber-200 border border-amber-500/30 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.6)]">
-                              {duringList.filter((x) => x.chk.checked).length} / {duringList.length} Poin Sesuai
-                            </span>
                           </div>
 
                           <div className="p-3.5 space-y-2.5">
                             {duringList.map(({ chk, originalIdx }, subIdx) => {
                               const cleanText = chk.label.replace(/^\[(Selama|Setelah) Konstruksi\]\s*/i, '');
                               return (
-                                <label
+                                <div
                                   key={chk.id || originalIdx}
-                                  className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all duration-200 cursor-pointer text-xs ${
-                                    chk.checked
-                                      ? 'bg-[#1c1d3c] border-amber-500/50 text-slate-100 shadow-[inset_1.5px_1.5px_3px_rgba(255,255,255,0.08),2px_3px_8px_rgba(0,0,0,0.5)]'
-                                      : 'bg-[#151635] border-[#25284f] text-slate-400 hover:border-amber-600/40 hover:bg-[#18193d] shadow-[-2px_-2px_6px_rgba(140,165,255,0.02),3px_4px_10px_rgba(0,0,0,0.5)]'
-                                  }`}
+                                  className="flex items-start gap-3 p-3.5 rounded-xl border border-amber-500/30 bg-[#16173a] text-slate-100 text-xs shadow-[-2px_-2px_6px_rgba(140,165,255,0.02),3px_4px_10px_rgba(0,0,0,0.5),inset_1px_1px_1px_rgba(255,255,255,0.06)] leading-relaxed"
                                 >
-                                  <input
-                                    type="checkbox"
-                                    checked={chk.checked}
-                                    onChange={(e) => {
-                                      const updated = [...projForm.checklist_pengendalian];
-                                      updated[originalIdx] = { ...updated[originalIdx], checked: e.target.checked };
-                                      setProjForm((p) => ({ ...p, checklist_pengendalian: updated }));
-                                    }}
-                                    className="mt-0.5 w-4 h-4 accent-amber-500 shrink-0 cursor-pointer"
-                                  />
-                                  <div className="flex-1 space-y-1">
-                                    <div className="flex items-center gap-2">
-                                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-400/20 text-amber-300 font-black text-[10px] border border-amber-400/30 shrink-0">
-                                        {subIdx + 1}
-                                      </span>
-                                      <span className="text-[10px] font-bold text-amber-300/90 uppercase tracking-wide">
-                                        Poin {subIdx + 1}
-                                      </span>
-                                    </div>
-                                    <div className="leading-relaxed text-slate-200 font-medium">
-                                      {cleanText}
-                                    </div>
+                                  <span className="font-black text-amber-400 shrink-0 select-none text-xs">
+                                    {subIdx + 1}.
+                                  </span>
+                                  <div className="flex-1 text-slate-200 font-medium leading-relaxed">
+                                    {cleanText}
                                   </div>
-                                </label>
+                                </div>
                               );
                             })}
                           </div>
@@ -1321,47 +1292,23 @@ export default function IcraConstructionTab() {
                                 Setelah Proyek Konstruksi
                               </span>
                             </div>
-                            <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#16173a] text-cyan-200 border border-cyan-500/30 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.6)]">
-                              {afterList.filter((x) => x.chk.checked).length} / {afterList.length} Poin Sesuai
-                            </span>
                           </div>
 
                           <div className="p-3.5 space-y-2.5">
                             {afterList.map(({ chk, originalIdx }, subIdx) => {
                               const cleanText = chk.label.replace(/^\[(Selama|Setelah) Konstruksi\]\s*/i, '');
                               return (
-                                <label
+                                <div
                                   key={chk.id || originalIdx}
-                                  className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all duration-200 cursor-pointer text-xs ${
-                                    chk.checked
-                                      ? 'bg-[#15233e] border-cyan-500/50 text-slate-100 shadow-[inset_1.5px_1.5px_3px_rgba(255,255,255,0.08),2px_3px_8px_rgba(0,0,0,0.5)]'
-                                      : 'bg-[#151635] border-[#25284f] text-slate-400 hover:border-cyan-600/40 hover:bg-[#18193d] shadow-[-2px_-2px_6px_rgba(140,165,255,0.02),3px_4px_10px_rgba(0,0,0,0.5)]'
-                                  }`}
+                                  className="flex items-start gap-3 p-3.5 rounded-xl border border-cyan-500/30 bg-[#141b3a] text-slate-100 text-xs shadow-[-2px_-2px_6px_rgba(140,165,255,0.02),3px_4px_10px_rgba(0,0,0,0.5),inset_1px_1px_1px_rgba(255,255,255,0.06)] leading-relaxed"
                                 >
-                                  <input
-                                    type="checkbox"
-                                    checked={chk.checked}
-                                    onChange={(e) => {
-                                      const updated = [...projForm.checklist_pengendalian];
-                                      updated[originalIdx] = { ...updated[originalIdx], checked: e.target.checked };
-                                      setProjForm((p) => ({ ...p, checklist_pengendalian: updated }));
-                                    }}
-                                    className="mt-0.5 w-4 h-4 accent-cyan-500 shrink-0 cursor-pointer"
-                                  />
-                                  <div className="flex-1 space-y-1">
-                                    <div className="flex items-center gap-2">
-                                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-cyan-400/20 text-cyan-300 font-black text-[10px] border border-cyan-400/30 shrink-0">
-                                        {subIdx + 1}
-                                      </span>
-                                      <span className="text-[10px] font-bold text-cyan-300/90 uppercase tracking-wide">
-                                        Poin {subIdx + 1}
-                                      </span>
-                                    </div>
-                                    <div className="leading-relaxed text-slate-200 font-medium">
-                                      {cleanText}
-                                    </div>
+                                  <span className="font-black text-cyan-400 shrink-0 select-none text-xs">
+                                    {subIdx + 1}.
+                                  </span>
+                                  <div className="flex-1 text-slate-200 font-medium leading-relaxed">
+                                    {cleanText}
                                   </div>
-                                </label>
+                                </div>
                               );
                             })}
                           </div>
