@@ -28,11 +28,11 @@ export default function IcraPage() {
 
           <div className="icra-header-inner relative z-10">
             <div className="min-w-0">
-              <h1 className="font-gta icra-title-fluid font-extrabold tracking-wide leading-tight sm:whitespace-nowrap flex flex-wrap sm:flex-nowrap items-baseline gap-2 sm:gap-2.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+              <h1 className="font-gta icra-title-fluid title-ultra-bold tracking-wide leading-tight sm:whitespace-nowrap flex flex-wrap sm:flex-nowrap items-baseline gap-2 sm:gap-2.5 drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)]">
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 uppercase font-black tracking-wider">
                   ICRA
                 </span>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-purple-300 to-indigo-300 italic font-bold pr-1.5">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-purple-300 to-indigo-300 italic font-black pr-1.5">
                   (Infection Control Risk Assessment)
                 </span>
               </h1>

@@ -95,12 +95,18 @@
   }
 
   .icra-title-fluid {
-    font-size: clamp(1.5rem, 2.85cqi, 2.25rem);
+    font-size: clamp(1.5rem, 2.75cqi, 2.25rem);
   }
 
   .icra-header-tabs {
     align-self: center;
   }
+}
+
+.title-ultra-bold {
+  font-weight: 900 !important;
+  -webkit-text-stroke: 0.75px rgba(147, 165, 255, 0.52);
+  paint-order: stroke fill;
 }
 
 @keyframes hero3dPopFloat {
