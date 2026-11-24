@@ -116,7 +116,7 @@ export default function IcraMonitoringModal({
   const postSections = getPostChecklistSections(kelas);
 
   // Handlers for Sheet 1 (PRE)
-  const updatePreItem = (id: string, patch: Partial<{ answer: PrePostAnswer; tanggal: string }>) => {
+  const updatePreItem = (id: string, patch: Partial<{ answer: PrePostAnswer; tanggal: string; keterangan: string }>) => {
     setPreForm((prev) =>
       prev
         ? {
@@ -133,7 +133,6 @@ export default function IcraMonitoringModal({
       prev
         ? {
             ...prev,
-            items: prev.items.map((it) => (it.answer ? { ...it, tanggal: it.tanggal || dt } : it)),
             signoffs: {
               ...prev.signoffs,
               ipsrs_tanggal: prev.signoffs.ipsrs_tanggal || dt,
@@ -247,7 +246,7 @@ export default function IcraMonitoringModal({
   };
 
   // Handlers for Sheet 3 (POST)
-  const updatePostItem = (id: string, patch: Partial<{ answer: PrePostAnswer; tanggal: string }>) => {
+  const updatePostItem = (id: string, patch: Partial<{ answer: PrePostAnswer; tanggal: string; keterangan: string }>) => {
     setPostForm((prev) =>
       prev
         ? {
@@ -264,7 +263,6 @@ export default function IcraMonitoringModal({
       prev
         ? {
             ...prev,
-            items: prev.items.map((it) => (it.answer ? { ...it, tanggal: it.tanggal || dt } : it)),
             signoffs: {
               ...prev.signoffs,
               ipsrs_tanggal: prev.signoffs.ipsrs_tanggal || dt,
@@ -424,7 +422,7 @@ export default function IcraMonitoringModal({
                     onClick={applyAllPreSurveyDate}
                     className="px-3 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/40 text-cyan-200 text-[11px] font-bold cursor-pointer"
                   >
-                    Isi Tanggal Otomatis
+                    Isi Tanggal Pengesahan
                   </button>
                 </div>
 
@@ -469,7 +467,7 @@ export default function IcraMonitoringModal({
                       </th>
                       <th className="border-b border-r border-indigo-800/60 py-3 px-2 text-center w-16">YA</th>
                       <th className="border-b border-r border-indigo-800/60 py-3 px-2 text-center w-20">TIDAK</th>
-                      <th className="border-b border-indigo-800/60 py-3 px-2 text-center w-36">TANGGAL</th>
+                      <th className="border-b border-indigo-800/60 py-3 px-3 text-left w-44">KETERANGAN</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -504,10 +502,11 @@ export default function IcraMonitoringModal({
                             </td>
                             <td className="border-b border-indigo-900/50 py-1.5 px-2">
                               <input
-                                type="date"
-                                value={item.tanggal || ''}
-                                onChange={(e) => updatePreItem(item.id, { tanggal: e.target.value })}
-                                className="w-full bg-[#0a0c20] border border-indigo-800/70 text-slate-200 rounded-lg px-2 py-1 text-[11px]"
+                                type="text"
+                                value={item.keterangan ?? item.tanggal ?? ''}
+                                onChange={(e) => updatePreItem(item.id, { keterangan: e.target.value })}
+                                placeholder="Keterangan..."
+                                className="w-full bg-[#121432] border border-indigo-800/60 text-slate-200 rounded-lg px-2 py-1 text-[11px]"
                               />
                             </td>
                           </tr>
@@ -552,10 +551,11 @@ export default function IcraMonitoringModal({
                               </td>
                               <td className="border-b border-indigo-900/40 py-1.5 px-2">
                                 <input
-                                  type="date"
-                                  value={item.tanggal || ''}
-                                  onChange={(e) => updatePreItem(item.id, { tanggal: e.target.value })}
-                                  className="w-full bg-[#0a0c20] border border-indigo-800/70 text-slate-200 rounded-lg px-2 py-1 text-[11px]"
+                                  type="text"
+                                  value={item.keterangan ?? item.tanggal ?? ''}
+                                  onChange={(e) => updatePreItem(item.id, { keterangan: e.target.value })}
+                                  placeholder="Keterangan..."
+                                  className="w-full bg-[#121432] border border-indigo-800/60 text-slate-200 rounded-lg px-2 py-1 text-[11px]"
                                 />
                               </td>
                             </tr>
@@ -926,7 +926,7 @@ export default function IcraMonitoringModal({
                     onClick={applyAllPostSurveyDate}
                     className="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/40 text-emerald-200 text-[11px] font-bold cursor-pointer"
                   >
-                    Isi Tanggal Otomatis
+                    Isi Tanggal Pengesahan
                   </button>
                 </div>
 
@@ -961,7 +961,7 @@ export default function IcraMonitoringModal({
                 </div>
               </div>
 
-              {/* Checklist Table: KEGIATAN | YA | TIDAK | TANGGAL */}
+              {/* Checklist Table: KEGIATAN | YA | TIDAK | KETERANGAN */}
               <div className="overflow-x-auto rounded-2xl border border-indigo-800/60 bg-[#0d0f27]">
                 <table className="w-full border-collapse text-xs">
                   <thead>
@@ -971,7 +971,7 @@ export default function IcraMonitoringModal({
                       </th>
                       <th className="border-b border-r border-indigo-800/60 py-3 px-2 text-center w-16">YA</th>
                       <th className="border-b border-r border-indigo-800/60 py-3 px-2 text-center w-20">TIDAK</th>
-                      <th className="border-b border-indigo-800/60 py-3 px-2 text-center w-36">TANGGAL</th>
+                      <th className="border-b border-indigo-800/60 py-3 px-3 text-left w-44">KETERANGAN</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1021,10 +1021,11 @@ export default function IcraMonitoringModal({
                               </td>
                               <td className="border-b border-indigo-900/40 py-1.5 px-2">
                                 <input
-                                  type="date"
-                                  value={item.tanggal || ''}
-                                  onChange={(e) => updatePostItem(item.id, { tanggal: e.target.value })}
-                                  className="w-full bg-[#0a0c20] border border-indigo-800/70 text-slate-200 rounded-lg px-2 py-1 text-[11px]"
+                                  type="text"
+                                  value={item.keterangan ?? item.tanggal ?? ''}
+                                  onChange={(e) => updatePostItem(item.id, { keterangan: e.target.value })}
+                                  placeholder="Keterangan..."
+                                  className="w-full bg-[#121432] border border-indigo-800/60 text-slate-200 rounded-lg px-2 py-1 text-[11px]"
                                 />
                               </td>
                             </tr>

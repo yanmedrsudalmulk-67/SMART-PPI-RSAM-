@@ -1439,17 +1439,17 @@ export default function IcraOfficialReport({
         <table className="w-full table-fixed border-collapse -mt-[1px] text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
           <thead>
             <tr className="bg-gray-100 text-center">
-              <th className="border border-black py-1.5 px-2.5 w-[56%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+              <th className="border border-black py-1.5 px-2.5 w-[53%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
                 KEGIATAN
               </th>
-              <th className="border border-black py-1.5 px-1 w-[9%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+              <th className="border border-black py-1.5 px-1 w-[8%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
                 YA
               </th>
-              <th className="border border-black py-1.5 px-1 w-[12%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+              <th className="border border-black py-1.5 px-1 w-[11%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
                 TIDAK
               </th>
-              <th className="border border-black py-1.5 px-1.5 w-[23%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
-                TANGGAL
+              <th className="border border-black py-1.5 px-2 w-[28%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                KETERANGAN
               </th>
             </tr>
           </thead>
@@ -1471,17 +1471,17 @@ export default function IcraOfficialReport({
             <table className="w-full table-fixed border-collapse -mt-[1px] text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
               <tbody>
                 <tr>
-                  <td className="border border-black py-1.5 px-2.5 w-[56%] align-top font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                  <td className="border border-black py-1.5 px-2.5 w-[53%] align-top font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
                     {sec.title}
                   </td>
-                  <td className="border border-black py-1.5 px-1 w-[9%] text-center align-middle font-normal">
+                  <td className="border border-black py-1.5 px-1 w-[8%] text-center align-middle font-normal">
                     {item.answer === 'YA' ? '✓' : ''}
                   </td>
-                  <td className="border border-black py-1.5 px-1 w-[12%] text-center align-middle font-normal">
+                  <td className="border border-black py-1.5 px-1 w-[11%] text-center align-middle font-normal">
                     {item.answer === 'TIDAK' ? '✓' : ''}
                   </td>
-                  <td className="border border-black py-1.5 px-1.5 w-[23%] text-center align-middle text-[11pt] font-normal">
-                    {item.tanggal ? formatIndonesianDate(item.tanggal) : ''}
+                  <td className="border border-black py-1.5 px-2 w-[28%] text-left align-top text-[11pt] font-normal">
+                    {item.keterangan ?? item.tanggal ?? ''}
                   </td>
                 </tr>
               </tbody>
@@ -1501,21 +1501,21 @@ export default function IcraOfficialReport({
           <table className="w-full table-fixed border-collapse -mt-[1px] text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
             <tbody>
               <tr>
-                <td className="border border-black py-1.5 px-2.5 w-[56%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                <td className="border border-black py-1.5 px-2.5 w-[53%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
                   {sec.title}
                 </td>
-                <td className="border border-black py-1.5 px-1 w-[9%]" />
-                <td className="border border-black py-1.5 px-1 w-[12%]" />
-                <td className="border border-black py-1.5 px-1.5 w-[23%]" />
+                <td className="border border-black py-1.5 px-1 w-[8%]" />
+                <td className="border border-black py-1.5 px-1 w-[11%]" />
+                <td className="border border-black py-1.5 px-2 w-[28%]" />
               </tr>
               {sec.subtitle && (
                 <tr>
-                  <td className="border border-black py-1.5 px-2.5 w-[56%] font-normal">
+                  <td className="border border-black py-1.5 px-2.5 w-[53%] font-normal">
                     {sec.subtitle}
                   </td>
-                  <td className="border border-black py-1.5 px-1 w-[9%]" />
-                  <td className="border border-black py-1.5 px-1 w-[12%]" />
-                  <td className="border border-black py-1.5 px-1.5 w-[23%]" />
+                  <td className="border border-black py-1.5 px-1 w-[8%]" />
+                  <td className="border border-black py-1.5 px-1 w-[11%]" />
+                  <td className="border border-black py-1.5 px-2 w-[28%]" />
                 </tr>
               )}
             </tbody>
@@ -1533,18 +1533,18 @@ export default function IcraOfficialReport({
             <table className="w-full table-fixed border-collapse -mt-[1px] text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
               <tbody>
                 <tr>
-                  <td className="border border-black py-1.5 px-2.5 pl-6 w-[56%] align-top font-normal">
+                  <td className="border border-black py-1.5 px-2.5 pl-6 w-[53%] align-top font-normal">
                     <span className="mr-1.5">{item.number}</span>
                     <span>{item.label}</span>
                   </td>
-                  <td className="border border-black py-1.5 px-1 w-[9%] text-center align-middle font-normal">
+                  <td className="border border-black py-1.5 px-1 w-[8%] text-center align-middle font-normal">
                     {item.answer === 'YA' ? '✓' : ''}
                   </td>
-                  <td className="border border-black py-1.5 px-1 w-[12%] text-center align-middle font-normal">
+                  <td className="border border-black py-1.5 px-1 w-[11%] text-center align-middle font-normal">
                     {item.answer === 'TIDAK' ? '✓' : ''}
                   </td>
-                  <td className="border border-black py-1.5 px-1.5 w-[23%] text-center align-middle text-[11pt] font-normal">
-                    {item.tanggal ? formatIndonesianDate(item.tanggal) : ''}
+                  <td className="border border-black py-1.5 px-2 w-[28%] text-left align-top text-[11pt] font-normal">
+                    {item.keterangan ?? item.tanggal ?? ''}
                   </td>
                 </tr>
               </tbody>
@@ -1816,17 +1816,17 @@ export default function IcraOfficialReport({
         <table className="w-full table-fixed border-collapse -mt-[1px] text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
           <thead>
             <tr className="bg-gray-100 text-center">
-              <th className="border border-black py-1.5 px-2.5 w-[56%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+              <th className="border border-black py-1.5 px-2.5 w-[53%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
                 KEGIATAN
               </th>
-              <th className="border border-black py-1.5 px-1 w-[9%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+              <th className="border border-black py-1.5 px-1 w-[8%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
                 YA
               </th>
-              <th className="border border-black py-1.5 px-1 w-[12%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+              <th className="border border-black py-1.5 px-1 w-[11%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
                 TIDAK
               </th>
-              <th className="border border-black py-1.5 px-1.5 w-[23%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
-                TANGGAL
+              <th className="border border-black py-1.5 px-2 w-[28%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                KETERANGAN
               </th>
             </tr>
           </thead>
@@ -1847,12 +1847,12 @@ export default function IcraOfficialReport({
           <table className="w-full table-fixed border-collapse -mt-[1px] text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
             <tbody>
               <tr>
-                <td className="border border-black py-1.5 px-2.5 w-[56%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                <td className="border border-black py-1.5 px-2.5 w-[53%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
                   {sec.title}
                 </td>
-                <td className="border border-black py-1.5 px-1 w-[9%]" />
-                <td className="border border-black py-1.5 px-1 w-[12%]" />
-                <td className="border border-black py-1.5 px-1.5 w-[23%]" />
+                <td className="border border-black py-1.5 px-1 w-[8%]" />
+                <td className="border border-black py-1.5 px-1 w-[11%]" />
+                <td className="border border-black py-1.5 px-2 w-[28%]" />
               </tr>
             </tbody>
           </table>
@@ -1869,7 +1869,7 @@ export default function IcraOfficialReport({
             <table className="w-full table-fixed border-collapse -mt-[1px] text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
               <tbody>
                 <tr>
-                  <td className="border border-black py-1.5 px-2.5 pl-6 w-[56%] align-top font-normal">
+                  <td className="border border-black py-1.5 px-2.5 pl-6 w-[53%] align-top font-normal">
                     <div>
                       <span className="mr-1.5">{item.number}</span>
                       <span>{item.label}</span>
@@ -1882,14 +1882,14 @@ export default function IcraOfficialReport({
                       </ul>
                     )}
                   </td>
-                  <td className="border border-black py-1.5 px-1 w-[9%] text-center align-middle font-normal">
+                  <td className="border border-black py-1.5 px-1 w-[8%] text-center align-middle font-normal">
                     {item.answer === 'YA' ? '✓' : ''}
                   </td>
-                  <td className="border border-black py-1.5 px-1 w-[12%] text-center align-middle font-normal">
+                  <td className="border border-black py-1.5 px-1 w-[11%] text-center align-middle font-normal">
                     {item.answer === 'TIDAK' ? '✓' : ''}
                   </td>
-                  <td className="border border-black py-1.5 px-1.5 w-[23%] text-center align-middle text-[11pt] font-normal">
-                    {item.tanggal ? formatIndonesianDate(item.tanggal) : ''}
+                  <td className="border border-black py-1.5 px-2 w-[28%] text-left align-top text-[11pt] font-normal">
+                    {item.keterangan ?? item.tanggal ?? ''}
                   </td>
                 </tr>
               </tbody>

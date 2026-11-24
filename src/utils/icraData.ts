@@ -53,6 +53,7 @@ export interface IcraPreFormItem {
   label: string;
   answer: PrePostAnswer;
   tanggal?: string;
+  keterangan?: string;
 }
 
 export interface IcraPreFormData {
@@ -79,6 +80,7 @@ export interface IcraPostFormItem {
   subNotes?: string[];
   answer: PrePostAnswer;
   tanggal?: string;
+  keterangan?: string;
 }
 
 export interface IcraPostFormData {
@@ -962,6 +964,7 @@ export function normalizePreChecklist(
         ...defItem,
         answer: (saved.answer === 'YA' || saved.answer === 'TIDAK' ? saved.answer : '') as PrePostAnswer,
         tanggal: saved.tanggal || '',
+        keterangan: saved.keterangan ?? saved.tanggal ?? '',
       };
     }),
     signoffs: {
@@ -1340,6 +1343,7 @@ export function normalizePostChecklist(
         ...defItem,
         answer: (saved.answer === 'YA' || saved.answer === 'TIDAK' ? saved.answer : '') as PrePostAnswer,
         tanggal: saved.tanggal || '',
+        keterangan: saved.keterangan ?? saved.tanggal ?? '',
       };
     }),
     signoffs: {
