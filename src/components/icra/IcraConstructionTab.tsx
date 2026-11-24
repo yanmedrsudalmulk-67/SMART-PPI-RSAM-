@@ -48,9 +48,13 @@ import {
   getConstructionClass,
   normalizeStringArray,
   normalizeChecklist,
+  normalizePreChecklist,
+  normalizePostChecklist,
+  normalizeIntraItems,
   toBool,
 } from '@/utils/icraData';
 import IcraConstructionPermitModal from './IcraConstructionPermitModal';
+import IcraMonitoringModal from './IcraMonitoringModal';
 
 const ROMAN_MONTHS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 
@@ -58,6 +62,17 @@ function normalizeKonstruksiRow(raw: any): IcraKonstruksiItem {
   const tipe = (raw.tipe_konstruksi || 'A') as ConstructionType;
   const risk = (String(raw.kelompok_risiko || '1')) as PatientRiskGroup;
   const kelas = (raw.kelas_tindakan || getConstructionClass(risk, tipe).classLevel) as ConstructionClass;
+  const baseProj: Partial<IcraKonstruksiItem> = {
+    nama_proyek: raw.nama_proyek || '',
+    lokasi_area: raw.lokasi_area || '',
+    tgl_mulai: raw.tgl_mulai || format(new Date(), 'yyyy-MM-dd'),
+    tgl_selesai_estimasi: raw.tgl_selesai_estimasi || format(new Date(), 'yyyy-MM-dd'),
+    kelas_tindakan: kelas,
+    nama_ipcn: raw.nama_ipcn || 'Adi Tresa Purnama, A.M.Kep',
+    nama_k3rs: raw.nama_k3rs || 'Tim K3RS RSUD Al-Mulk',
+    pj_proyek: raw.pj_proyek || '',
+    kontraktor_pelaksana: raw.kontraktor_pelaksana || '',
+  };
   return {
     id: String(raw.id),
     created_at: raw.created_at,
@@ -81,10 +96,22 @@ function normalizeKonstruksiRow(raw: any): IcraKonstruksiItem {
     nama_k3rs: raw.nama_k3rs || 'Tim K3RS RSUD Al-Mulk',
     ttd_ipcn: raw.ttd_ipcn || null,
     ttd_pelaksana: raw.ttd_pelaksana || null,
+    pre_checklist: raw.pre_checklist ? normalizePreChecklist(raw.pre_checklist, baseProj) : null,
+    post_checklist: raw.post_checklist ? normalizePostChecklist(raw.post_checklist, baseProj) : null,
   };
 }
 
 function normalizeMonitoringRow(raw: any): IcraMonitoringItem {
+  let parsedIntra: any = null;
+  if (Array.isArray(raw.intra_items) && raw.intra_items.length > 0) {
+    parsedIntra = raw.intra_items;
+  } else if (typeof raw.intra_items === 'string' && raw.intra_items.trim().startsWith('[')) {
+    try {
+      parsedIntra = JSON.parse(raw.intra_items);
+    } catch {
+      parsedIntra = null;
+    }
+  }
   return {
     id: String(raw.id),
     created_at: raw.created_at,
@@ -102,6 +129,8 @@ function normalizeMonitoringRow(raw: any): IcraMonitoringItem {
     tindakan_koreksi: raw.tindakan_koreksi || '',
     status_kepatuhan: raw.status_kepatuhan || 'Sesuai Standar',
     foto_monitoring: normalizeStringArray(raw.foto_monitoring),
+    area_renovasi: raw.area_renovasi || '',
+    intra_items: parsedIntra ? normalizeIntraItems(parsedIntra, 'III') : null,
   };
 }
 
@@ -163,23 +192,6 @@ export default function IcraConstructionTab() {
   const [existingTtdIpcn, setExistingTtdIpcn] = useState<string | null>(null);
   const [existingTtdPelaksana, setExistingTtdPelaksana] = useState<string | null>(null);
   const [showGuideline, setShowGuideline] = useState(false);
-
-  // Monitoring Form State
-  const [monForm, setMonForm] = useState({
-    tanggal_monitoring: todayIso,
-    jam_monitoring: format(new Date(), 'HH:mm'),
-    petugas_ipcn: 'Adi Tresa Purnama, A.M.Kep',
-    barier_tertutup: true,
-    tekanan_negatif_hepa: 'Ya' as 'Ya' | 'Tidak' | 'N/A',
-    keset_basah_pintu: true,
-    area_sekitar_bersih: true,
-    jalur_limbah_tertutup: true,
-    apd_pekerja: true,
-    temuan_lapangan: '',
-    tindakan_koreksi: '',
-    status_kepatuhan: 'Sesuai Standar' as IcraMonitoringItem['status_kepatuhan'],
-  });
-  const [monPhotos, setMonPhotos] = useState<DocImage[]>([]);
 
   const showToast = useCallback((text: string, type: 'success' | 'error' = 'success') => {
     setToastMsg({ text, type });
@@ -372,70 +384,12 @@ export default function IcraConstructionTab() {
 
   const openMonitoringModal = (proj: IcraKonstruksiItem) => {
     setMonitoringProject(proj);
-    setMonForm({
-      tanggal_monitoring: format(new Date(), 'yyyy-MM-dd'),
-      jam_monitoring: format(new Date(), 'HH:mm'),
-      petugas_ipcn: proj.nama_ipcn || 'Adi Tresa Purnama, A.M.Kep',
-      barier_tertutup: true,
-      tekanan_negatif_hepa: proj.kelas_tindakan === 'III' || proj.kelas_tindakan === 'IV' ? 'Ya' : 'N/A',
-      keset_basah_pintu: true,
-      area_sekitar_bersih: true,
-      jalur_limbah_tertutup: true,
-      apd_pekerja: true,
-      temuan_lapangan: '',
-      tindakan_koreksi: '',
-      status_kepatuhan: 'Sesuai Standar',
-    });
-    setMonPhotos([]);
   };
 
-  const handleSaveMonitoring = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!monitoringProject) return;
-    setSaving(true);
-    try {
-      const uploadedMonPhotos = await uploadImagesToSupabase(
-        supabase,
-        monPhotos,
-        'audit_images',
-        'icra-monitoring'
-      );
-      const row = {
-        id: `icra_mon_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-        created_at: new Date().toISOString(),
-        konstruksi_id: monitoringProject.id,
-        ...monForm,
-        foto_monitoring: uploadedMonPhotos,
-      };
-      const { error } = await supabase.from('icra_konstruksi_monitoring').insert([row]);
-      if (error) throw error;
-      showToast('Log monitoring harian proyek berhasil disimpan!');
-      setMonForm((m) => ({
-        ...m,
-        temuan_lapangan: '',
-        tindakan_koreksi: '',
-        jam_monitoring: format(new Date(), 'HH:mm'),
-      }));
-      setMonPhotos([]);
-      await fetchAll();
-    } catch (err: any) {
-      showToast(`Gagal menyimpan monitoring: ${err.message}`, 'error');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDeleteMonitoring = async (logId: string) => {
-    if (!confirm('Hapus catatan monitoring ini?')) return;
-    try {
-      const { error } = await supabase.from('icra_konstruksi_monitoring').delete().eq('id', logId);
-      if (error) throw error;
-      showToast('Catatan monitoring dihapus.');
-      await fetchAll();
-    } catch (err: any) {
-      showToast(`Gagal menghapus log: ${err.message}`, 'error');
-    }
-  };
+  const activeMonitoringProject = useMemo(() => {
+    if (!monitoringProject) return null;
+    return projects.find((p) => p.id === monitoringProject.id) || monitoringProject;
+  }, [projects, monitoringProject]);
 
   const handleExportExcel = () => {
     if (projects.length === 0) {
@@ -1393,228 +1347,17 @@ export default function IcraConstructionTab() {
       </AnimatePresence>
 
       {/* =================================================================== */}
-      {/* MODAL 2: MONITORING HARIAN PROYEK KONSTRUKSI OLEH IPCN               */}
+      {/* MODAL 2: MONITORING ICRA KONSTRUKSI (3 SHEET: PRA, INTRA & POST)    */}
       {/* =================================================================== */}
       <AnimatePresence>
-        {monitoringProject && (
-          <div className="fixed inset-0 z-[9990] flex items-center justify-center bg-slate-950/85 backdrop-blur-md p-2 sm:p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 12 }}
-              className="w-full max-w-5xl max-h-[94vh] bg-[#121432] border border-cyan-500/40 rounded-3xl shadow-2xl flex flex-col overflow-hidden"
-            >
-              <div className="flex items-center justify-between px-6 py-4 bg-[#171a42] border-b border-indigo-900/50 shrink-0">
-                <div className="flex items-center gap-2.5">
-                  <ClipboardList className="w-5 h-5 text-cyan-400" />
-                  <div>
-                    <h3 className="text-sm sm:text-base font-black uppercase tracking-wide text-white">
-                      Monitoring Harian Proyek Konstruksi
-                    </h3>
-                    <p className="text-xs text-cyan-300 truncate max-w-md">{monitoringProject.nama_proyek}</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setMonitoringProject(null)}
-                  className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-white/10 cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
-                {/* Form Input Monitoring Baru */}
-                <form
-                  onSubmit={handleSaveMonitoring}
-                  className="rounded-2xl bg-[#0c0e24] border border-cyan-500/30 p-4 space-y-4"
-                >
-                  <h4 className="text-xs font-black uppercase tracking-wider text-cyan-300">
-                    + Catat Hasil Inspeksi Harian Baru
-                  </h4>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-300 mb-1">Tanggal</label>
-                      <input
-                        type="date"
-                        value={monForm.tanggal_monitoring}
-                        onChange={(e) => setMonForm((m) => ({ ...m, tanggal_monitoring: e.target.value }))}
-                        className="w-full bg-[#141738] border border-indigo-800 text-white text-xs rounded-xl px-3 py-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-300 mb-1">Jam</label>
-                      <input
-                        type="time"
-                        value={monForm.jam_monitoring}
-                        onChange={(e) => setMonForm((m) => ({ ...m, jam_monitoring: e.target.value }))}
-                        className="w-full bg-[#141738] border border-indigo-800 text-white text-xs rounded-xl px-3 py-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-300 mb-1">Tekanan Negatif / HEPA</label>
-                      <select
-                        value={monForm.tekanan_negatif_hepa}
-                        onChange={(e) => setMonForm((m) => ({ ...m, tekanan_negatif_hepa: e.target.value as any }))}
-                        className="w-full bg-[#141738] border border-indigo-800 text-white text-xs rounded-xl px-3 py-2"
-                      >
-                        <option value="Ya">Ya (Berfungsi)</option>
-                        <option value="Tidak">Tidak Berfungsi</option>
-                        <option value="N/A">N/A (Tidak Wajib)</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-300 mb-1">Status Kepatuhan</label>
-                      <select
-                        value={monForm.status_kepatuhan}
-                        onChange={(e) => setMonForm((m) => ({ ...m, status_kepatuhan: e.target.value as any }))}
-                        className="w-full bg-[#141738] border border-indigo-800 text-white text-xs rounded-xl px-3 py-2"
-                      >
-                        <option value="Sesuai Standar">Sesuai Standar</option>
-                        <option value="Perlu Perbaikan">Perlu Perbaikan</option>
-                        <option value="Stop Pekerjaan">Stop Pekerjaan Sementara</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Checklist Cepat 5 Poin */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
-                    {[
-                      { key: 'barier_tertutup', label: 'Barier debu tertutup rapat & utuh' },
-                      { key: 'keset_basah_pintu', label: 'Keset basah / sticky mat tersedia' },
-                      { key: 'area_sekitar_bersih', label: 'Koridor sekitar bebas debu/puing' },
-                      { key: 'jalur_limbah_tertutup', label: 'Limbah diangkut wadah tertutup' },
-                      { key: 'apd_pekerja', label: 'Pekerja menggunakan APD sesuai' },
-                    ].map((item) => (
-                      <label
-                        key={item.key}
-                        className="flex items-center gap-2 p-2.5 rounded-xl bg-[#141738] border border-indigo-900/50 text-slate-200 cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={Boolean((monForm as any)[item.key])}
-                          onChange={(e) =>
-                            setMonForm((m) => ({ ...m, [item.key]: e.target.checked }))
-                          }
-                          className="w-4 h-4 accent-cyan-400"
-                        />
-                        <span>{item.label}</span>
-                      </label>
-                    ))}
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <textarea
-                      rows={2}
-                      value={monForm.temuan_lapangan}
-                      onChange={(e) => setMonForm((m) => ({ ...m, temuan_lapangan: e.target.value }))}
-                      placeholder="Temuan lapangan (jika ada celah debu, APD kurang, dll)..."
-                      className="w-full bg-[#141738] border border-indigo-800 text-white text-xs rounded-xl p-2.5"
-                    />
-                    <textarea
-                      rows={2}
-                      value={monForm.tindakan_koreksi}
-                      onChange={(e) => setMonForm((m) => ({ ...m, tindakan_koreksi: e.target.value }))}
-                      placeholder="Tindakan koreksi langsung / instruksi ke pekerja..."
-                      className="w-full bg-[#141738] border border-indigo-800 text-white text-xs rounded-xl p-2.5"
-                    />
-                  </div>
-
-                  <div className="bg-[#141738] rounded-xl p-3 border border-indigo-900/40">
-                    <DocumentationUploader images={monPhotos} setImages={setMonPhotos} />
-                  </div>
-
-                  <div className="flex justify-end">
-                    <button
-                      type="submit"
-                      disabled={saving}
-                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-black uppercase tracking-wider flex items-center gap-2 cursor-pointer disabled:opacity-60"
-                    >
-                      {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                      <span>Simpan Log Monitoring</span>
-                    </button>
-                  </div>
-                </form>
-
-                {/* Riwayat Monitoring Proyek Ini */}
-                <div className="space-y-3">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-indigo-300">
-                    Riwayat Monitoring ({currentProjectLogs.length} Catatan)
-                  </h4>
-                  {currentProjectLogs.length === 0 ? (
-                    <p className="text-xs text-slate-400 italic py-4 text-center bg-[#0c0e24] rounded-2xl border border-indigo-900/40">
-                      Belum ada log inspeksi harian untuk proyek ini.
-                    </p>
-                  ) : (
-                    <div className="space-y-2.5">
-                      {currentProjectLogs.map((log) => (
-                        <div
-                          key={log.id}
-                          className="rounded-2xl bg-[#0e1028] border border-indigo-900/50 p-3.5 text-xs space-y-2"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2">
-                              <span className="font-black text-white">
-                                {safeFormatDate(log.tanggal_monitoring)} • {log.jam_monitoring}
-                              </span>
-                              <span
-                                className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                                  log.status_kepatuhan === 'Sesuai Standar'
-                                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                                    : log.status_kepatuhan === 'Perlu Perbaikan'
-                                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                                    : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                                }`}
-                              >
-                                {log.status_kepatuhan}
-                              </span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteMonitoring(log.id)}
-                              className="p-1.5 rounded-lg bg-rose-500/15 text-rose-300 hover:bg-rose-500/30 cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-
-                          <div className="flex flex-wrap gap-2 text-[11px] text-slate-300">
-                            <span>Barier: <strong>{log.barier_tertutup ? 'Ya' : 'Tidak'}</strong></span>
-                            <span>• HEPA/Negatif: <strong>{log.tekanan_negatif_hepa}</strong></span>
-                            <span>• Keset: <strong>{log.keset_basah_pintu ? 'Ya' : 'Tidak'}</strong></span>
-                            <span>• Sekitar Bersih: <strong>{log.area_sekitar_bersih ? 'Ya' : 'Tidak'}</strong></span>
-                            <span>• APD: <strong>{log.apd_pekerja ? 'Ya' : 'Tidak'}</strong></span>
-                          </div>
-
-                          {(log.temuan_lapangan || log.tindakan_koreksi) && (
-                            <div className="text-slate-300 bg-[#141738] p-2.5 rounded-xl border border-indigo-900/40 space-y-1">
-                              {log.temuan_lapangan && <div><strong className="text-amber-300">Temuan:</strong> {log.temuan_lapangan}</div>}
-                              {log.tindakan_koreksi && <div><strong className="text-cyan-300">Koreksi:</strong> {log.tindakan_koreksi}</div>}
-                            </div>
-                          )}
-
-                          {log.foto_monitoring.length > 0 && (
-                            <div className="flex flex-wrap gap-2 pt-1">
-                              {log.foto_monitoring.map((u, idx) => (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  key={idx}
-                                  src={normalizeImageUrl(u)}
-                                  alt={`Monitoring ${idx + 1}`}
-                                  className="w-16 h-16 object-cover rounded-lg border border-indigo-500/40"
-                                />
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          </div>
+        {activeMonitoringProject && (
+          <IcraMonitoringModal
+            project={activeMonitoringProject}
+            projectLogs={currentProjectLogs}
+            onClose={() => setMonitoringProject(null)}
+            onSaved={fetchAll}
+            showToast={showToast}
+          />
         )}
       </AnimatePresence>
 

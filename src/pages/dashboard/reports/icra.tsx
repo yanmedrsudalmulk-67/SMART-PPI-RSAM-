@@ -38,6 +38,9 @@ import {
   getConstructionClass,
   normalizeStringArray,
   normalizeChecklist,
+  normalizePreChecklist,
+  normalizePostChecklist,
+  normalizeIntraItems,
   toBool,
 } from '@/utils/icraData';
 
@@ -45,6 +48,17 @@ function normalizeKonstruksiRow(raw: any): IcraKonstruksiItem {
   const tipe = (raw.tipe_konstruksi || 'C') as ConstructionType;
   const risk = String(raw.kelompok_risiko || '2') as PatientRiskGroup;
   const kelas = (raw.kelas_tindakan || getConstructionClass(risk, tipe).classLevel) as ConstructionClass;
+  const baseProj: Partial<IcraKonstruksiItem> = {
+    nama_proyek: raw.nama_proyek || '',
+    lokasi_area: raw.lokasi_area || '',
+    tgl_mulai: raw.tgl_mulai || format(new Date(), 'yyyy-MM-dd'),
+    tgl_selesai_estimasi: raw.tgl_selesai_estimasi || format(new Date(), 'yyyy-MM-dd'),
+    kelas_tindakan: kelas,
+    nama_ipcn: raw.nama_ipcn || 'Adi Tresa Purnama, A.M.Kep',
+    nama_k3rs: raw.nama_k3rs || 'Tim K3RS RSUD Al-Mulk',
+    pj_proyek: raw.pj_proyek || '',
+    kontraktor_pelaksana: raw.kontraktor_pelaksana || '',
+  };
   return {
     id: String(raw.id),
     created_at: raw.created_at,
@@ -68,10 +82,22 @@ function normalizeKonstruksiRow(raw: any): IcraKonstruksiItem {
     nama_k3rs: raw.nama_k3rs || 'Tim K3RS RSUD Al-Mulk',
     ttd_ipcn: raw.ttd_ipcn || null,
     ttd_pelaksana: raw.ttd_pelaksana || null,
+    pre_checklist: raw.pre_checklist ? normalizePreChecklist(raw.pre_checklist, baseProj) : null,
+    post_checklist: raw.post_checklist ? normalizePostChecklist(raw.post_checklist, baseProj) : null,
   };
 }
 
 function normalizeMonitoringRow(raw: any): IcraMonitoringItem {
+  let parsedIntra: any = null;
+  if (Array.isArray(raw.intra_items) && raw.intra_items.length > 0) {
+    parsedIntra = raw.intra_items;
+  } else if (typeof raw.intra_items === 'string' && raw.intra_items.trim().startsWith('[')) {
+    try {
+      parsedIntra = JSON.parse(raw.intra_items);
+    } catch {
+      parsedIntra = null;
+    }
+  }
   return {
     id: String(raw.id),
     created_at: raw.created_at,
@@ -89,6 +115,8 @@ function normalizeMonitoringRow(raw: any): IcraMonitoringItem {
     tindakan_koreksi: raw.tindakan_koreksi || '',
     status_kepatuhan: raw.status_kepatuhan || 'Sesuai Standar',
     foto_monitoring: normalizeStringArray(raw.foto_monitoring),
+    area_renovasi: raw.area_renovasi || '',
+    intra_items: parsedIntra ? normalizeIntraItems(parsedIntra, 'III') : null,
   };
 }
 

@@ -30,6 +30,65 @@ export interface IcraChecklistItem {
   checked: boolean;
 }
 
+export type PrePostAnswer = 'YA' | 'TIDAK' | '';
+export type IntraAnswer = 'YA' | 'TIDAK' | 'N/A' | '';
+
+export interface IcraChecklistSignoff {
+  ipsrs_nama?: string;
+  ipsrs_tanggal?: string;
+  ppi_nama?: string;
+  ppi_tanggal?: string;
+  kesling_nama?: string;
+  kesling_tanggal?: string;
+  k3rs_nama?: string;
+  k3rs_tanggal?: string;
+  pihak3_nama?: string;
+  pihak3_tanggal?: string;
+}
+
+export interface IcraPreFormItem {
+  id: string;
+  section: 'A' | 'B' | 'C' | 'D' | 'E';
+  number?: string;
+  label: string;
+  answer: PrePostAnswer;
+  tanggal?: string;
+}
+
+export interface IcraPreFormData {
+  tanggal_survey: string;
+  area: string;
+  proyek: string;
+  items: IcraPreFormItem[];
+  signoffs: IcraChecklistSignoff;
+}
+
+export interface IcraIntraItemAnswer {
+  id: string;
+  no: number;
+  kegiatan: string;
+  answer: IntraAnswer;
+  keterangan?: string;
+}
+
+export interface IcraPostFormItem {
+  id: string;
+  section: 'A' | 'B' | 'C' | 'D' | 'E';
+  number?: string;
+  label: string;
+  subNotes?: string[];
+  answer: PrePostAnswer;
+  tanggal?: string;
+}
+
+export interface IcraPostFormData {
+  tanggal_survey: string;
+  area: string;
+  proyek: string;
+  items: IcraPostFormItem[];
+  signoffs: IcraChecklistSignoff;
+}
+
 export interface IcraKonstruksiItem {
   id: string;
   created_at?: string;
@@ -53,6 +112,8 @@ export interface IcraKonstruksiItem {
   nama_k3rs?: string;
   ttd_ipcn?: string | null;
   ttd_pelaksana?: string | null;
+  pre_checklist?: IcraPreFormData | null;
+  post_checklist?: IcraPostFormData | null;
 }
 
 export interface IcraMonitoringItem {
@@ -72,6 +133,8 @@ export interface IcraMonitoringItem {
   tindakan_koreksi?: string;
   status_kepatuhan: 'Sesuai Standar' | 'Perlu Perbaikan' | 'Stop Pekerjaan';
   foto_monitoring: string[];
+  area_renovasi?: string;
+  intra_items?: IcraIntraItemAnswer[] | null;
 }
 
 export const ICRA_UNITS_LIST = [
@@ -625,4 +688,663 @@ export function normalizeChecklist(val: any, classLevel: ConstructionClass): Icr
     label,
     checked: true,
   }));
+}
+
+// =========================================================================
+// FORMULIR CEKLIST PRE, INTRA, DAN POST KONSTRUKSI (SESUAI MATRIKS & KELAS)
+// =========================================================================
+
+export function getPreChecklistSections(kelas: ConstructionClass): {
+  section: 'A' | 'B' | 'C' | 'D' | 'E';
+  title: string;
+  subtitle?: string;
+  isDirectQuestion?: boolean;
+}[] {
+  return [
+    {
+      section: 'A',
+      title: 'A. Apakah konstruksi dapat mempengaruhi akses keluar area perawatan yang berbatasan dengan lokasi pembangunan?',
+      isDirectQuestion: true,
+    },
+    {
+      section: 'B',
+      title: 'B. Apakah terdapat salah satu dari bahaya lingkungan di bawah ini?',
+    },
+    {
+      section: 'C',
+      title: 'C. Apakah salah satu dari sistem berikut ini dapat berdampak',
+    },
+    {
+      section: 'D',
+      title: 'D. Pengendalian Infeksi',
+      subtitle: `Melakukan edukasi kepada manajer, staf medis, petugas kesehatan lingkungan (Kewaspadaan Kelas ${kelas})`,
+    },
+    {
+      section: 'E',
+      title: 'E. Keselamatan Jiwa',
+    },
+  ];
+}
+
+export function buildDefaultPreItems(kelas: ConstructionClass): IcraPreFormItem[] {
+  const isHighClass = kelas === 'III' || kelas === 'IV';
+  const isMediumOrHigh = kelas === 'II' || isHighClass;
+
+  const base: IcraPreFormItem[] = [
+    // Section A
+    {
+      id: 'pre-A-1',
+      section: 'A',
+      label: 'Apakah konstruksi dapat mempengaruhi akses keluar area perawatan yang berbatasan dengan lokasi pembangunan?',
+      answer: '',
+      tanggal: '',
+    },
+    // Section B
+    { id: 'pre-B-1', section: 'B', number: '1.', label: 'Asbes', answer: '', tanggal: '' },
+    { id: 'pre-B-2', section: 'B', number: '2.', label: 'Bahan kimia berbahaya', answer: '', tanggal: '' },
+    { id: 'pre-B-3', section: 'B', number: '3.', label: 'Ruang sempit', answer: '', tanggal: '' },
+    { id: 'pre-B-4', section: 'B', number: '4.', label: 'Lainnya (misalnya masalah struktur/kebisingan/getaran)', answer: '', tanggal: '' },
+    // Section C
+    { id: 'pre-C-1', section: 'C', number: '1.', label: 'Alarm kebakaran', answer: '', tanggal: '' },
+    { id: 'pre-C-2', section: 'C', number: '2.', label: 'Sprinkler/penyemprot air', answer: '', tanggal: '' },
+    { id: 'pre-C-3', section: 'C', number: '3.', label: 'Listrik', answer: '', tanggal: '' },
+    { id: 'pre-C-4', section: 'C', number: '4.', label: 'Air domestic', answer: '', tanggal: '' },
+    { id: 'pre-C-5', section: 'C', number: '5.', label: 'Oksigen', answer: '', tanggal: '' },
+    { id: 'pre-C-6', section: 'C', number: '6.', label: 'Limbah', answer: '', tanggal: '' },
+    { id: 'pre-C-7', section: 'C', number: '7.', label: 'Heating ventilation air', answer: '', tanggal: '' },
+    // Section D (adapted by Kelas Kewaspadaan)
+    {
+      id: 'pre-D-1',
+      section: 'D',
+      number: '1.',
+      label: 'Kontraktor diberikan salinan, pengelolaan bahan berbahaya, definisi kode darurat, dan dokumentasi lainnya',
+      answer: 'YA',
+      tanggal: '',
+    },
+    {
+      id: 'pre-D-2',
+      section: 'D',
+      number: '2.',
+      label: 'Dokumen tersebut dikaji bersama kontraktor',
+      answer: 'YA',
+      tanggal: '',
+    },
+    {
+      id: 'pre-D-3',
+      section: 'D',
+      number: '3.',
+      label: isHighClass
+        ? 'Pengkajian lokasi dan metode pemasangan barrier debu kedap udara / kontrol kubus (Kelas III/IV)'
+        : 'Pengkajian lokasi dan metode pemasangan barrier debu',
+      answer: isMediumOrHigh ? 'YA' : '',
+      tanggal: '',
+    },
+    {
+      id: 'pre-D-4',
+      section: 'D',
+      number: '4.',
+      label: 'Menilai efisiensi yang berkaitan dengan kemampuan',
+      answer: 'YA',
+      tanggal: '',
+    },
+    {
+      id: 'pre-D-5',
+      section: 'D',
+      number: '5.',
+      label: 'Terdapat peralatan untuk menangkap partikulat',
+      answer: isMediumOrHigh ? 'YA' : '',
+      tanggal: '',
+    },
+    {
+      id: 'pre-D-6',
+      section: 'D',
+      number: '6.',
+      label: 'Evaluasi rencana pembersihan dan pengendalian',
+      answer: 'YA',
+      tanggal: '',
+    },
+    {
+      id: 'pre-D-7',
+      section: 'D',
+      number: '7.',
+      label: 'Pengkajian dan evaluasi pola kontrol sirkulasi',
+      answer: 'YA',
+      tanggal: '',
+    },
+    {
+      id: 'pre-D-8',
+      section: 'D',
+      number: '8.',
+      label: 'Pengkajian pembatasan / larangan untuk kegiatan',
+      answer: 'YA',
+      tanggal: '',
+    },
+    {
+      id: 'pre-D-9',
+      section: 'D',
+      number: '9.',
+      label: 'Terdapat exhaust fan dan berfungsi dengan baik',
+      answer: isMediumOrHigh ? 'YA' : '',
+      tanggal: '',
+    },
+    {
+      id: 'pre-D-10',
+      section: 'D',
+      number: '10.',
+      label: 'Terdapat unit filtrasi HEPA di daerah perawatan pasien yang berdekatan dengan area konstruksi',
+      answer: isHighClass ? 'YA' : 'TIDAK',
+      tanggal: '',
+    },
+    {
+      id: 'pre-D-11',
+      section: 'D',
+      number: '11.',
+      label: 'Tersedianya ruang isolasi yang memadai',
+      answer: isHighClass ? 'YA' : 'TIDAK',
+      tanggal: '',
+    },
+  ];
+
+  if (kelas === 'IV') {
+    base.push(
+      {
+        id: 'pre-D-12',
+        section: 'D',
+        number: '12.',
+        label: 'Persiapan anteroom serta penyegelan lubang, pipa, dan saluran (Wajib Kelas IV)',
+        answer: 'YA',
+        tanggal: '',
+      },
+      {
+        id: 'pre-D-13',
+        section: 'D',
+        number: '13.',
+        label: 'Ketersediaan penutup sepatu (shoe cover) dan vacuum HEPA di anteroom bagi pekerja (Wajib Kelas IV)',
+        answer: 'YA',
+        tanggal: '',
+      }
+    );
+  }
+
+  // Section E
+  base.push(
+    {
+      id: 'pre-E-1',
+      section: 'E',
+      number: '1.',
+      label: 'Apakah ada jalan keluar yang disetujui di blokir',
+      answer: 'TIDAK',
+      tanggal: '',
+    },
+    {
+      id: 'pre-E-2',
+      section: 'E',
+      number: '2.',
+      label: 'Apakah lalu lintas ke Emergency room di blokir? Jika ya, apakah itu kembali dialihkan?',
+      answer: 'TIDAK',
+      tanggal: '',
+    },
+    {
+      id: 'pre-E-3',
+      section: 'E',
+      number: '3.',
+      label: 'Apakah modifikasi signifikan terjadi untuk asap atau api dinding penghalang?',
+      answer: 'TIDAK',
+      tanggal: '',
+    },
+    {
+      id: 'pre-E-4',
+      section: 'E',
+      number: '4.',
+      label: 'Apakah proyek menambahkan selain struktur yang ada?',
+      answer: 'TIDAK',
+      tanggal: '',
+    }
+  );
+
+  return base;
+}
+
+export function buildDefaultPreChecklist(proj: Partial<IcraKonstruksiItem>): IcraPreFormData {
+  const kelas = (proj.kelas_tindakan || 'III') as ConstructionClass;
+  const surveyDate = proj.tgl_mulai || new Date().toISOString().slice(0, 10);
+  const ipcn = proj.nama_ipcn || 'Adi Tresa Purnama, A.M.Kep';
+  return {
+    tanggal_survey: surveyDate,
+    area: proj.lokasi_area || '',
+    proyek: proj.nama_proyek || '',
+    items: buildDefaultPreItems(kelas),
+    signoffs: {
+      ipsrs_nama: '',
+      ipsrs_tanggal: surveyDate,
+      ppi_nama: ipcn,
+      ppi_tanggal: surveyDate,
+      kesling_nama: '',
+      kesling_tanggal: surveyDate,
+      k3rs_nama: proj.nama_k3rs || '',
+      k3rs_tanggal: surveyDate,
+      pihak3_nama: proj.pj_proyek || proj.kontraktor_pelaksana || '',
+      pihak3_tanggal: surveyDate,
+    },
+  };
+}
+
+export function normalizePreChecklist(
+  raw: any,
+  proj: Partial<IcraKonstruksiItem>
+): IcraPreFormData {
+  const fallback = buildDefaultPreChecklist(proj);
+  let parsed = raw;
+  if (typeof raw === 'string' && raw.trim().startsWith('{')) {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      parsed = null;
+    }
+  }
+  if (!parsed || typeof parsed !== 'object') return fallback;
+
+  const savedMap = new Map<string, IcraPreFormItem>();
+  if (Array.isArray(parsed.items)) {
+    parsed.items.forEach((it: any) => {
+      if (it && it.id) savedMap.set(String(it.id), it);
+    });
+  }
+
+  return {
+    tanggal_survey: parsed.tanggal_survey || fallback.tanggal_survey,
+    area: parsed.area || fallback.area,
+    proyek: parsed.proyek || fallback.proyek,
+    items: fallback.items.map((defItem) => {
+      const saved = savedMap.get(defItem.id);
+      if (!saved) return defItem;
+      return {
+        ...defItem,
+        answer: (saved.answer === 'YA' || saved.answer === 'TIDAK' ? saved.answer : '') as PrePostAnswer,
+        tanggal: saved.tanggal || '',
+      };
+    }),
+    signoffs: {
+      ...fallback.signoffs,
+      ...(parsed.signoffs || {}),
+    },
+  };
+}
+
+export function buildDefaultIntraItems(kelas: ConstructionClass): IcraIntraItemAnswer[] {
+  let rows: string[] = [];
+
+  if (kelas === 'I') {
+    rows = [
+      'Melaksanakan pekerjaan dengan metode yang meminimalkan timbulnya debu dari aktivitas konstruksi',
+      'Segera memasang kembali plafon atau dinding yang dibuka untuk pemeriksaan visual',
+      'Melakukan pembersihan harian area kerja dan koridor sekitar',
+      'Memastikan pekerja menggunakan APD sesuai standar saat bekerja',
+      'Melakukan pengecekan rutin oleh tim PPI terkait kepatuhan terhadap protokol',
+      'Mengangkut limbah/sisa material dengan wadah tertutup',
+    ];
+  } else if (kelas === 'II') {
+    rows = [
+      'Menyediakan sarana aktif untuk mencegah penyebaran debu ke udara (misal penyemprotan kabut air)',
+      'Menyegel pintu yang tidak terpakai dengan lakban/perekat rapat',
+      'Menutup dan mengisolasi kisi-kisi ventilasi udara serta kisi AC/HVAC sementara waktu',
+      'Menempatkan keset debu basah / sticky mat di pintu masuk dan keluar area kerja',
+      'Melakukan pembersihan harian terhadap area luar barrier (koridor, jalur pasien)',
+      'Memastikan pekerja menggunakan APD lengkap saat bekerja',
+      'Melakukan pengecekan rutin oleh tim PPI terkait kepatuhan terhadap protokol',
+      'Menutup wadah atau gerobak transportasi limbah saat pengangkutan',
+      'Menyimpan bahan berbahaya (cat, semen, dll) di area aman dan terkunci',
+    ];
+  } else if (kelas === 'III') {
+    rows = [
+      'Menjaga barrier tetap tertutup rapat (atau metode kontrol kubus) dan area kerja tidak terbuka ke lingkungan pasien',
+      'Mengisolasi sistem HVAC di area kerja untuk mencegah kontaminasi sistem saluran',
+      'Menggunakan penyaring udara portabel (HEPA filter) dan menjaga tekanan udara negatif di area kerja',
+      'Melakukan pembersihan harian terhadap area luar barrier (koridor, jalur pasien)',
+      'Memastikan pekerja menggunakan APD lengkap saat bekerja',
+      'Melakukan pengecekan rutin oleh tim PPI terkait kepatuhan terhadap protokol',
+      'Mengangkut puing dan material menggunakan jalur khusus dan wadah tertutup',
+      'Menyediakan dan mengganti keset disinfektan di pintu masuk area kerja secara berkala',
+      'Menghindari pekerjaan yang menimbulkan debu berlebih saat pasien berada di ruangan',
+      'Menyimpan bahan berbahaya (cat, semen, dll) di area aman dan terkunci',
+    ];
+  } else {
+    // Kelas IV
+    rows = [
+      'Menjaga barrier kedap udara tetap tertutup rapat (metode kontrol kubus) dan area kerja terisolasi penuh',
+      'Mengisolasi sistem HVAC di area kerja untuk mencegah kontaminasi sistem saluran',
+      'Menggunakan penyaring udara portabel (HEPA filter) dan menjaga tekanan udara negatif dalam tempat kerja',
+      'Menyegel seluruh lubang, pipa, dan saluran yang berpotensi menyebarkan debu',
+      'Memastikan anteroom berfungsi serta semua personel divakum HEPA atau melepas pakaian kerja saat keluar area',
+      'Memastikan semua personel memakai penutup sepatu (shoe cover) dan menggantinya setiap keluar dari area kerja',
+      'Melakukan pembersihan harian terhadap area luar barrier (koridor, jalur pasien)',
+      'Memastikan pekerja menggunakan APD lengkap saat bekerja',
+      'Melakukan pengecekan rutin oleh tim PPI terkait kepatuhan terhadap protokol',
+      'Mengangkut puing dan material menggunakan jalur khusus dan wadah tertutup',
+      'Menyediakan dan mengganti keset disinfektan di pintu masuk area kerja secara berkala',
+      'Menghindari pekerjaan yang menimbulkan debu berlebih saat pasien berada di ruangan',
+      'Menyimpan bahan berbahaya (cat, semen, dll) di area aman dan terkunci',
+    ];
+  }
+
+  return rows.map((kegiatan, idx) => ({
+    id: `intra-${kelas}-${idx + 1}`,
+    no: idx + 1,
+    kegiatan,
+    answer: 'YA',
+    keterangan: '',
+  }));
+}
+
+export function normalizeIntraItems(raw: any, kelas: ConstructionClass): IcraIntraItemAnswer[] {
+  const fallback = buildDefaultIntraItems(kelas);
+  let parsed = raw;
+  if (typeof raw === 'string' && raw.trim().startsWith('[')) {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      parsed = null;
+    }
+  }
+  if (!Array.isArray(parsed) || parsed.length === 0) return fallback;
+
+  // Preserve saved class-specific items directly when valid
+  if (parsed[0] && typeof parsed[0].kegiatan === 'string' && parsed[0].kegiatan.trim().length > 0) {
+    return parsed.map((it: any, idx: number) => ({
+      id: String(it.id || `intra-${kelas}-${idx + 1}`),
+      no: Number(it.no) || idx + 1,
+      kegiatan: String(it.kegiatan),
+      answer: (it.answer === 'YA' || it.answer === 'TIDAK' || it.answer === 'N/A' ? it.answer : 'YA') as IntraAnswer,
+      keterangan: it.keterangan ? String(it.keterangan) : '',
+    }));
+  }
+
+  const mapById = new Map<string, any>();
+  parsed.forEach((it: any) => {
+    if (it && it.id) mapById.set(String(it.id), it);
+  });
+
+  return fallback.map((defItem, idx) => {
+    const saved = mapById.get(defItem.id) || parsed[idx];
+    if (!saved) return defItem;
+    const ans = saved.answer === 'YA' || saved.answer === 'TIDAK' || saved.answer === 'N/A' ? saved.answer : 'YA';
+    return {
+      ...defItem,
+      answer: ans as IntraAnswer,
+      keterangan: saved.keterangan || '',
+    };
+  });
+}
+
+export function getPostChecklistSections(kelas: ConstructionClass): {
+  section: 'A' | 'B' | 'C' | 'D' | 'E';
+  title: string;
+}[] {
+  return [
+    { section: 'A', title: `A. Penyelesaian proyek (Kewaspadaan Kelas ${kelas})` },
+    { section: 'B', title: 'B. Apakah sistem berikut ini diuji dan berfungsi dengan baik?' },
+    { section: 'C', title: 'C. Lingkungan' },
+    { section: 'D', title: 'D. Isolation Barrier' },
+    { section: 'E', title: 'E. Pengendalian Infeksi' },
+  ];
+}
+
+export function buildDefaultPostItems(kelas: ConstructionClass): IcraPostFormItem[] {
+  const isHighClass = kelas === 'III' || kelas === 'IV';
+
+  const sectionA: IcraPostFormItem[] = [
+    {
+      id: 'post-A-1',
+      section: 'A',
+      number: '1.',
+      label: 'Melakukan pembersihan akhir menyeluruh area proyek dan sekitarnya dengan disinfektan standar',
+      answer: 'YA',
+      tanggal: '',
+    },
+    {
+      id: 'post-A-2',
+      section: 'A',
+      number: '2.',
+      label: isHighClass
+        ? 'Melakukan pemeriksaan kualitas udara dan kebersihan permukaan oleh tim PPI'
+        : 'Melakukan pemeriksaan kebersihan permukaan area kerja oleh tim PPI',
+      answer: 'YA',
+      tanggal: '',
+    },
+    {
+      id: 'post-A-3',
+      section: 'A',
+      number: '3.',
+      label: 'Melakukan pemeriksaan fungsi sanitasi dan plumbing (air mengalir, tidak bocor, dll)',
+      answer: 'YA',
+      tanggal: '',
+    },
+    {
+      id: 'post-A-4',
+      section: 'A',
+      number: '4.',
+      label: 'Melakukan serah terima pekerjaan renovasi/konstruksi dari kontraktor ke pihak rumah sakit',
+      answer: 'YA',
+      tanggal: '',
+    },
+    {
+      id: 'post-A-5',
+      section: 'A',
+      number: '5.',
+      label: 'Memberikan edukasi kepada staf ruangan mengenai cara menjaga kebersihan area baru',
+      answer: 'YA',
+      tanggal: '',
+    },
+    {
+      id: 'post-A-6',
+      section: 'A',
+      number: '6.',
+      label: 'Membuka akses area setelah dinyatakan aman dan bersih oleh PPI',
+      answer: 'YA',
+      tanggal: '',
+    },
+    {
+      id: 'post-A-7',
+      section: 'A',
+      number: '7.',
+      label: 'Menyimpan dokumentasi proyek dan laporan ICRA untuk keperluan audit dan akreditasi',
+      answer: 'YA',
+      tanggal: '',
+    },
+    {
+      id: 'post-A-8',
+      section: 'A',
+      number: '8.',
+      label: 'Melakukan evaluasi pasca konstruksi/renovasi untuk menilai efektivitas pengendalian infeksi selama pekerjaan',
+      answer: 'YA',
+      tanggal: '',
+    },
+  ];
+
+  if (kelas === 'II' || isHighClass) {
+    sectionA.push({
+      id: 'post-A-9',
+      section: 'A',
+      number: '9.',
+      label: 'Setelah pekerjaan selesai, sistem ventilasi / HVAC dirapikan dan dipulihkan kembali',
+      answer: 'YA',
+      tanggal: '',
+    });
+  }
+
+  const sectionB: IcraPostFormItem[] = [
+    {
+      id: 'post-B-1',
+      section: 'B',
+      number: '1.',
+      label: 'Alarm kebakaran – lepaskan penutup detektor dan lakukan pengujian dari panel kontrol',
+      answer: 'YA',
+      tanggal: '',
+    },
+    {
+      id: 'post-B-2',
+      section: 'B',
+      number: '2.',
+      label: 'Listrik – pengujian switch tombol dan pengontrol',
+      answer: 'YA',
+      tanggal: '',
+    },
+    {
+      id: 'post-B-3',
+      section: 'B',
+      number: '3.',
+      label: 'Sumber air di buka dan di cek suhu',
+      answer: 'YA',
+      tanggal: '',
+    },
+    {
+      id: 'post-B-4',
+      section: 'B',
+      number: '4.',
+      label: 'Gas medis',
+      answer: 'YA',
+      tanggal: '',
+    },
+    {
+      id: 'post-B-5',
+      section: 'B',
+      number: '5.',
+      label: 'Limbah – hilangkan sumbatan',
+      answer: 'YA',
+      tanggal: '',
+    },
+  ];
+
+  const sectionC: IcraPostFormItem[] = [
+    {
+      id: 'post-C-1',
+      section: 'C',
+      number: '1.',
+      label: 'Bersihkan puing-puing, peralatan, perlengkapan dan bahan-bahan bangunan',
+      answer: 'YA',
+      tanggal: '',
+    },
+    {
+      id: 'post-C-2',
+      section: 'C',
+      number: '2.',
+      label: isHighClass
+        ? 'Melakukan vakum dengan penyaring HEPA dan pembersihan permukaan di semua area konstruksi untuk menghilangkan debu'
+        : 'Melakukan vakum dan melakukan pembersihan permukaan di semua area konstruksi untuk menghilangkan debu',
+      answer: isHighClass ? 'YA' : '',
+      tanggal: '',
+    },
+  ];
+
+  const sectionD: IcraPostFormItem[] = [
+    {
+      id: 'post-D-1',
+      section: 'D',
+      number: '1.',
+      label: 'Pelindung harus dipindahkan dengan hati-hati untuk meminimalkan penyebaran kotoran dan puing-puing (setelah diperiksa Komite K3 & KPPI)',
+      answer: kelas === 'I' ? 'TIDAK' : 'YA',
+      tanggal: '',
+    },
+    {
+      id: 'post-D-2',
+      section: 'D',
+      number: '2.',
+      label: 'Pelindung harus di lap basah, di sedot dengan HEPA',
+      answer: isHighClass ? 'YA' : 'TIDAK',
+      tanggal: '',
+    },
+  ];
+
+  const sectionE: IcraPostFormItem[] = [
+    {
+      id: 'post-E-1',
+      section: 'E',
+      number: '1.',
+      label: 'Setelah selesai pembangunan / renovasi ruang berisiko tinggi / mikrobiologi dilakukan kultur lingkungan (dengan pihak terkait, pihak K3 dan pemborong bangunan):',
+      subNotes: [
+        'Perlu ada kesepakatan di awal untuk uji kultur lingkungan setelah renovasi siapa yang akan membiayai uji kultur',
+      ],
+      answer: kelas === 'IV' ? 'YA' : 'TIDAK',
+      tanggal: '',
+    },
+    {
+      id: 'post-E-2',
+      section: 'E',
+      number: '2.',
+      label: 'Periksa daerah konstruksi setelah pembersihan akhir dan menyetujui penggunaannya:',
+      subNotes: [
+        'Ruang berisiko tinggi / mikrobiologi belum bisa digunakan apabila belum dilakukan general cleaning dan di uji kultur kualitas udara',
+      ],
+      answer: kelas === 'IV' ? 'YA' : 'TIDAK',
+      tanggal: '',
+    },
+  ];
+
+  return [...sectionA, ...sectionB, ...sectionC, ...sectionD, ...sectionE];
+}
+
+export function buildDefaultPostChecklist(proj: Partial<IcraKonstruksiItem>): IcraPostFormData {
+  const kelas = (proj.kelas_tindakan || 'III') as ConstructionClass;
+  const surveyDate = proj.tgl_selesai_estimasi || new Date().toISOString().slice(0, 10);
+  const ipcn = proj.nama_ipcn || 'Adi Tresa Purnama, A.M.Kep';
+  return {
+    tanggal_survey: surveyDate,
+    area: proj.lokasi_area || '',
+    proyek: proj.nama_proyek || '',
+    items: buildDefaultPostItems(kelas),
+    signoffs: {
+      ipsrs_nama: '',
+      ipsrs_tanggal: surveyDate,
+      ppi_nama: ipcn,
+      ppi_tanggal: surveyDate,
+      kesling_nama: '',
+      kesling_tanggal: surveyDate,
+      k3rs_nama: proj.nama_k3rs || '',
+      k3rs_tanggal: surveyDate,
+      pihak3_nama: proj.pj_proyek || proj.kontraktor_pelaksana || '',
+      pihak3_tanggal: surveyDate,
+    },
+  };
+}
+
+export function normalizePostChecklist(
+  raw: any,
+  proj: Partial<IcraKonstruksiItem>
+): IcraPostFormData {
+  const fallback = buildDefaultPostChecklist(proj);
+  let parsed = raw;
+  if (typeof raw === 'string' && raw.trim().startsWith('{')) {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      parsed = null;
+    }
+  }
+  if (!parsed || typeof parsed !== 'object') return fallback;
+
+  const savedMap = new Map<string, IcraPostFormItem>();
+  if (Array.isArray(parsed.items)) {
+    parsed.items.forEach((it: any) => {
+      if (it && it.id) savedMap.set(String(it.id), it);
+    });
+  }
+
+  return {
+    tanggal_survey: parsed.tanggal_survey || fallback.tanggal_survey,
+    area: parsed.area || fallback.area,
+    proyek: parsed.proyek || fallback.proyek,
+    items: fallback.items.map((defItem) => {
+      const saved = savedMap.get(defItem.id);
+      if (!saved) return defItem;
+      return {
+        ...defItem,
+        answer: (saved.answer === 'YA' || saved.answer === 'TIDAK' ? saved.answer : '') as PrePostAnswer,
+        tanggal: saved.tanggal || '',
+      };
+    }),
+    signoffs: {
+      ...fallback.signoffs,
+      ...(parsed.signoffs || {}),
+    },
+  };
 }

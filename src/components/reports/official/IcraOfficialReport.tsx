@@ -12,6 +12,13 @@ import {
   PATIENT_RISK_GROUPS,
   CONSTRUCTION_MATRIX,
   CONSTRUCTION_CLASS_CONTROLS,
+  IcraChecklistSignoff,
+  getPreChecklistSections,
+  getPostChecklistSections,
+  normalizePreChecklist,
+  normalizePostChecklist,
+  buildDefaultIntraItems,
+  normalizeIntraItems,
 } from '@/utils/icraData';
 import { normalizeImageUrl } from '@/utils/imageHelper';
 
@@ -280,6 +287,9 @@ export default function IcraOfficialReport({
     'rekomendasi': 7,
     'penutup': 8,
     'bukti-dokumentasi': 9,
+    'formulir-pre': 10,
+    'formulir-intra': 12,
+    'formulir-post': 13,
   });
 
   const handleChaptersResolved = useCallback((resolved: Record<string, number>) => {
@@ -504,6 +514,9 @@ export default function IcraOfficialReport({
                 { label: 'REKOMENDASI', page: String(chapterPages['rekomendasi'] ?? 7), indent: true },
                 { label: 'PENUTUP', page: String(chapterPages['penutup'] ?? 8), indent: true },
                 { label: 'BUKTI DOKUMENTASI', page: String(chapterPages['bukti-dokumentasi'] ?? 9), indent: true },
+                { label: 'FORMULIR PRE RENOVASI / KONSTRUKSI', page: String(chapterPages['formulir-pre'] ?? 10), indent: true },
+                { label: 'FORMULIR PEMANTAUAN INTRA RENOVASI / KONSTRUKSI', page: String(chapterPages['formulir-intra'] ?? 12), indent: true },
+                { label: 'FORMULIR POST RENOVASI / KONSTRUKSI', page: String(chapterPages['formulir-post'] ?? 13), indent: true },
               ].map((entry, i) => (
                 <div
                   key={i}
@@ -1329,11 +1342,571 @@ export default function IcraOfficialReport({
       'Belum ada foto dokumentasi pasca konstruksi atau renovasi.'
     );
 
+    // ==================== HELPER 5-PIHAK PENGESAHAN PRE / POST ====================
+    const pushFivePartySignoffs = (keyPrefix: string, signoffs: IcraChecklistSignoff) => {
+      const parties = [
+        { label: 'IPSRS', nama: signoffs.ipsrs_nama, tgl: signoffs.ipsrs_tanggal },
+        { label: 'PPI / IPCN', nama: signoffs.ppi_nama, tgl: signoffs.ppi_tanggal },
+        { label: 'Kesling', nama: signoffs.kesling_nama, tgl: signoffs.kesling_tanggal },
+        { label: 'K3 RS', nama: signoffs.k3rs_nama, tgl: signoffs.k3rs_tanggal },
+        { label: 'Pihak ke 3 Pembangunan', nama: signoffs.pihak3_nama, tgl: signoffs.pihak3_tanggal },
+      ];
+      b.push({
+        type: 'element',
+        key: `${keyPrefix}-signoffs`,
+        gapAfter: 10,
+        node: (
+          <div className="w-full pt-3 space-y-3 text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
+            {parties.map((pt, idx) => (
+              <div key={idx} className="grid grid-cols-12 items-baseline gap-2">
+                <div className="col-span-7 flex items-baseline">
+                  <span className="shrink-0 mr-1.5 font-normal">{pt.label}</span>
+                  <span className="flex-1 border-b border-dotted border-black text-center px-1 font-normal">
+                    {pt.nama ? pt.nama : ''}
+                  </span>
+                </div>
+                <div className="col-span-5 flex items-baseline">
+                  <span className="shrink-0 mr-1.5 font-normal">Tanggal</span>
+                  <span className="flex-1 border-b border-dotted border-black text-center px-1 font-normal">
+                    {pt.tgl ? formatIndonesianDate(pt.tgl) : ''}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ),
+      });
+    };
+
+    // ==================== 12. LAMPIRAN: FORMULIR PRE RENOVASI ====================
+    const preData = normalizePreChecklist(project.pre_checklist, project);
+    const preSections = getPreChecklistSections(kelasCode);
+
+    b.push({ type: 'pageBreak', key: 'pb-formulir-pre' });
+    b.push({
+      type: 'element',
+      key: 'formulir-pre-title',
+      chapterAnchor: 'formulir-pre',
+      keepWithNext: true,
+      gapAfter: 8,
+      node: (
+        <div className="text-center mb-1" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+          <h2 className="text-[12pt] leading-[1.5] font-bold uppercase text-black" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+            FORMULIR PRE RENOVASI
+          </h2>
+        </div>
+      ),
+    });
+
+    // Metadata + Table Header
+    b.push({
+      type: 'element',
+      key: 'formulir-pre-header-table',
+      keepWithNext: true,
+      gapAfter: 0,
+      node: (
+        <table className="w-full table-fixed border-collapse text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
+          <tbody>
+            <tr>
+              <td className="border border-black py-1 px-2.5 w-[34%] font-normal">Tanggal / Waktu Survey</td>
+              <td className="border border-black py-1 px-2.5 w-[66%] font-normal">
+                {formatIndonesianDate(preData.tanggal_survey)}
+              </td>
+            </tr>
+            <tr>
+              <td className="border border-black py-1 px-2.5 font-normal">Area</td>
+              <td className="border border-black py-1 px-2.5 font-normal">
+                {toSmartTitleCase(preData.area || lokasiTitleDisplay)}
+              </td>
+            </tr>
+            <tr>
+              <td className="border border-black py-1 px-2.5 font-normal">Proyek</td>
+              <td className="border border-black py-1 px-2.5 font-normal">
+                {toSmartTitleCase(preData.proyek || projectTitleDisplay)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      ),
+    });
+
+    b.push({
+      type: 'element',
+      key: 'formulir-pre-colhead',
+      keepWithNext: true,
+      gapAfter: 0,
+      node: (
+        <table className="w-full table-fixed border-collapse -mt-[1px] text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
+          <thead>
+            <tr className="bg-gray-100 text-center">
+              <th className="border border-black py-1.5 px-2.5 w-[56%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                KEGIATAN
+              </th>
+              <th className="border border-black py-1.5 px-1 w-[9%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                YA
+              </th>
+              <th className="border border-black py-1.5 px-1 w-[12%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                TIDAK
+              </th>
+              <th className="border border-black py-1.5 px-1.5 w-[23%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                TANGGAL
+              </th>
+            </tr>
+          </thead>
+        </table>
+      ),
+    });
+
+    preSections.forEach((sec, secIdx) => {
+      const secItems = preData.items.filter((it) => it.section === sec.section);
+      const isLastSec = secIdx === preSections.length - 1;
+
+      if (sec.isDirectQuestion && secItems[0]) {
+        const item = secItems[0];
+        b.push({
+          type: 'element',
+          key: `pre-form-row-${item.id}`,
+          gapAfter: 0,
+          node: (
+            <table className="w-full table-fixed border-collapse -mt-[1px] text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
+              <tbody>
+                <tr>
+                  <td className="border border-black py-1.5 px-2.5 w-[56%] align-top font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                    {sec.title}
+                  </td>
+                  <td className="border border-black py-1.5 px-1 w-[9%] text-center align-middle font-normal">
+                    {item.answer === 'YA' ? '✓' : ''}
+                  </td>
+                  <td className="border border-black py-1.5 px-1 w-[12%] text-center align-middle font-normal">
+                    {item.answer === 'TIDAK' ? '✓' : ''}
+                  </td>
+                  <td className="border border-black py-1.5 px-1.5 w-[23%] text-center align-middle text-[11pt] font-normal">
+                    {item.tanggal ? formatIndonesianDate(item.tanggal) : ''}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          ),
+        });
+        return;
+      }
+
+      // Section Header Row
+      b.push({
+        type: 'element',
+        key: `pre-form-sec-${sec.section}`,
+        keepWithNext: true,
+        gapAfter: 0,
+        node: (
+          <table className="w-full table-fixed border-collapse -mt-[1px] text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
+            <tbody>
+              <tr>
+                <td className="border border-black py-1.5 px-2.5 w-[56%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                  {sec.title}
+                </td>
+                <td className="border border-black py-1.5 px-1 w-[9%]" />
+                <td className="border border-black py-1.5 px-1 w-[12%]" />
+                <td className="border border-black py-1.5 px-1.5 w-[23%]" />
+              </tr>
+              {sec.subtitle && (
+                <tr>
+                  <td className="border border-black py-1.5 px-2.5 w-[56%] font-normal">
+                    {sec.subtitle}
+                  </td>
+                  <td className="border border-black py-1.5 px-1 w-[9%]" />
+                  <td className="border border-black py-1.5 px-1 w-[12%]" />
+                  <td className="border border-black py-1.5 px-1.5 w-[23%]" />
+                </tr>
+              )}
+            </tbody>
+          </table>
+        ),
+      });
+
+      secItems.forEach((item, idx) => {
+        const isLastItem = isLastSec && idx === secItems.length - 1;
+        b.push({
+          type: 'element',
+          key: `pre-form-item-${item.id}`,
+          gapAfter: isLastItem ? 10 : 0,
+          node: (
+            <table className="w-full table-fixed border-collapse -mt-[1px] text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
+              <tbody>
+                <tr>
+                  <td className="border border-black py-1.5 px-2.5 pl-6 w-[56%] align-top font-normal">
+                    <span className="mr-1.5">{item.number}</span>
+                    <span>{item.label}</span>
+                  </td>
+                  <td className="border border-black py-1.5 px-1 w-[9%] text-center align-middle font-normal">
+                    {item.answer === 'YA' ? '✓' : ''}
+                  </td>
+                  <td className="border border-black py-1.5 px-1 w-[12%] text-center align-middle font-normal">
+                    {item.answer === 'TIDAK' ? '✓' : ''}
+                  </td>
+                  <td className="border border-black py-1.5 px-1.5 w-[23%] text-center align-middle text-[11pt] font-normal">
+                    {item.tanggal ? formatIndonesianDate(item.tanggal) : ''}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          ),
+        });
+      });
+    });
+
+    pushFivePartySignoffs('pre-form', preData.signoffs);
+
+    // ==================== 13. LAMPIRAN: FORMULIR PEMANTAUAN INTRA RENOVASI ====================
+    const intraFormsToRender =
+      monitoringLogs.length > 0
+        ? monitoringLogs
+        : [
+            {
+              id: 'intra-template-default',
+              konstruksi_id: project.id,
+              tanggal_monitoring: project.tgl_mulai,
+              jam_monitoring: '',
+              petugas_ipcn: namaIpcn,
+              barier_tertutup: true,
+              tekanan_negatif_hepa: kelasCode === 'III' || kelasCode === 'IV' ? 'Ya' : 'N/A',
+              keset_basah_pintu: true,
+              area_sekitar_bersih: true,
+              jalur_limbah_tertutup: true,
+              apd_pekerja: true,
+              status_kepatuhan: 'Sesuai Standar' as const,
+              foto_monitoring: [],
+              area_renovasi: lokasiTitleDisplay,
+              intra_items: buildDefaultIntraItems(kelasCode),
+            },
+          ];
+
+    intraFormsToRender.forEach((log, logIdx) => {
+      b.push({ type: 'pageBreak', key: `pb-formulir-intra-${log.id}-${logIdx}` });
+
+      const formItems =
+        Array.isArray(log.intra_items) && log.intra_items.length > 0
+          ? normalizeIntraItems(log.intra_items, kelasCode)
+          : buildDefaultIntraItems(kelasCode).map((defItem) => {
+              const lower = defItem.kegiatan.toLowerCase();
+              let ans: 'YA' | 'TIDAK' | 'N/A' = 'YA';
+              if (lower.includes('barrier') || lower.includes('pembatas')) {
+                ans = log.barier_tertutup ? 'YA' : 'TIDAK';
+              } else if (lower.includes('hepa') || lower.includes('tekanan udara negatif')) {
+                ans =
+                  log.tekanan_negatif_hepa === 'Ya'
+                    ? 'YA'
+                    : log.tekanan_negatif_hepa === 'Tidak'
+                    ? 'TIDAK'
+                    : 'N/A';
+              } else if (lower.includes('keset')) {
+                ans = log.keset_basah_pintu ? 'YA' : 'TIDAK';
+              } else if (lower.includes('pembersihan harian')) {
+                ans = log.area_sekitar_bersih ? 'YA' : 'TIDAK';
+              } else if (lower.includes('limbah') || lower.includes('puing')) {
+                ans = log.jalur_limbah_tertutup ? 'YA' : 'TIDAK';
+              } else if (lower.includes('apd')) {
+                ans = log.apd_pekerja ? 'YA' : 'TIDAK';
+              }
+              return { ...defItem, answer: ans };
+            });
+
+      b.push({
+        type: 'element',
+        key: `formulir-intra-head-${log.id}-${logIdx}`,
+        chapterAnchor: logIdx === 0 ? 'formulir-intra' : undefined,
+        keepWithNext: true,
+        gapAfter: 6,
+        node: (
+          <div className="space-y-3 text-[12pt] leading-[1.5] text-black" style={BASE_TEXT_STYLE}>
+            <div className="text-center">
+              <h2
+                className="text-[12pt] leading-[1.5] font-bold uppercase text-black"
+                style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}
+              >
+                FORMULIR PEMANTAUAN SELAMA RENOVASI / KONSTRUKSI BANGUNAN
+              </h2>
+            </div>
+
+            <table className="w-full border-collapse text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
+              <tbody>
+                <tr>
+                  <td className="py-0.5 w-[28%] font-normal">Area renovasi</td>
+                  <td className="py-0.5 w-[3%] font-normal">:</td>
+                  <td className="py-0.5 font-normal">
+                    {toSmartTitleCase(log.area_renovasi || lokasiTitleDisplay)}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-0.5 font-normal">Tanggal pemantauan</td>
+                  <td className="py-0.5 font-normal">:</td>
+                  <td className="py-0.5 font-normal">
+                    {formatIndonesianDate(log.tanggal_monitoring)}
+                    {log.jam_monitoring ? ` (Pukul ${log.jam_monitoring} WIB)` : ''}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <p className="text-[12pt] leading-[1.5] font-bold uppercase text-black" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+              KATEGORI {kelasCode}
+            </p>
+          </div>
+        ),
+      });
+
+      formItems.forEach((it, idx) => {
+        const isFirst = idx === 0;
+        const isLast = idx === formItems.length - 1;
+        b.push({
+          type: 'element',
+          key: `formulir-intra-row-${log.id}-${idx}`,
+          gapAfter: isLast ? 12 : 0,
+          node: (
+            <table
+              className={`w-full table-fixed border-collapse text-[12pt] leading-[1.5] text-black font-normal ${
+                isFirst ? '' : '-mt-[1px]'
+              }`}
+              style={BASE_TEXT_STYLE}
+            >
+              {isFirst && (
+                <thead>
+                  <tr className="bg-gray-100 text-center">
+                    <th className="border border-black py-1.5 px-1 w-[7%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                      NO
+                    </th>
+                    <th className="border border-black py-1.5 px-2.5 w-[47%] text-center font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                      KEGIATAN
+                    </th>
+                    <th className="border border-black py-1.5 px-1 w-[7%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                      YA
+                    </th>
+                    <th className="border border-black py-1.5 px-1 w-[10%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                      TIDAK
+                    </th>
+                    <th className="border border-black py-1.5 px-1 w-[8%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                      N/A
+                    </th>
+                    <th className="border border-black py-1.5 px-2 w-[21%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                      KETERANGAN
+                    </th>
+                  </tr>
+                </thead>
+              )}
+              <tbody>
+                <tr>
+                  <td className="border border-black py-1.5 px-1 w-[7%] text-center align-top font-normal">
+                    {it.no}
+                  </td>
+                  <td className="border border-black py-1.5 px-2.5 w-[47%] align-top text-left font-normal">
+                    {it.kegiatan}
+                  </td>
+                  <td className="border border-black py-1.5 px-1 w-[7%] text-center align-middle font-normal">
+                    {it.answer === 'YA' ? '✓' : ''}
+                  </td>
+                  <td className="border border-black py-1.5 px-1 w-[10%] text-center align-middle font-normal">
+                    {it.answer === 'TIDAK' ? '✓' : ''}
+                  </td>
+                  <td className="border border-black py-1.5 px-1 w-[8%] text-center align-middle font-normal">
+                    {it.answer === 'N/A' ? '✓' : ''}
+                  </td>
+                  <td className="border border-black py-1.5 px-2 w-[21%] align-top text-left text-[11pt] font-normal">
+                    {it.keterangan || ''}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          ),
+        });
+      });
+
+      if (log.temuan_lapangan || log.tindakan_koreksi) {
+        b.push({
+          type: 'element',
+          key: `formulir-intra-notes-${log.id}-${logIdx}`,
+          gapAfter: 10,
+          node: (
+            <div className="border border-black p-2.5 text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
+              {log.temuan_lapangan && <p>Temuan lapangan: {log.temuan_lapangan}</p>}
+              {log.tindakan_koreksi && <p>Tindakan koreksi: {log.tindakan_koreksi}</p>}
+            </div>
+          ),
+        });
+      }
+
+      // Petugas yang mengobservasi block (Page 17-18 style)
+      b.push({
+        type: 'element',
+        key: `formulir-intra-obs-${log.id}-${logIdx}`,
+        gapAfter: 10,
+        node: (
+          <div className="flex justify-end pt-3 pr-4 text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
+            <div className="text-center w-[46%]">
+              <p className="font-normal">Petugas yang mengobservasi</p>
+              <div className="h-16 flex items-center justify-center my-1">
+                {project.ttd_ipcn && (log.petugas_ipcn === namaIpcn || !log.petugas_ipcn) ? (
+                  <img src={project.ttd_ipcn} alt="Tanda tangan petugas" className="max-h-14 object-contain" />
+                ) : null}
+              </div>
+              <p className="font-normal">
+                ( {log.petugas_ipcn || namaIpcn} )
+              </p>
+            </div>
+          </div>
+        ),
+      });
+    });
+
+    // ==================== 14. LAMPIRAN: FORMULIR POST RENOVASI ====================
+    const postData = normalizePostChecklist(project.post_checklist, project);
+    const postSections = getPostChecklistSections(kelasCode);
+
+    b.push({ type: 'pageBreak', key: 'pb-formulir-post' });
+    b.push({
+      type: 'element',
+      key: 'formulir-post-title',
+      chapterAnchor: 'formulir-post',
+      keepWithNext: true,
+      gapAfter: 8,
+      node: (
+        <div className="text-center mb-1" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+          <h2 className="text-[12pt] leading-[1.5] font-bold uppercase text-black" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+            FORMULIR POST RENOVASI
+          </h2>
+        </div>
+      ),
+    });
+
+    b.push({
+      type: 'element',
+      key: 'formulir-post-header-table',
+      keepWithNext: true,
+      gapAfter: 0,
+      node: (
+        <table className="w-full table-fixed border-collapse text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
+          <tbody>
+            <tr>
+              <td className="border border-black py-1 px-2.5 w-[34%] font-normal">Tanggal / Waktu Survey</td>
+              <td className="border border-black py-1 px-2.5 w-[66%] font-normal">
+                {formatIndonesianDate(postData.tanggal_survey)}
+              </td>
+            </tr>
+            <tr>
+              <td className="border border-black py-1 px-2.5 font-normal">Area</td>
+              <td className="border border-black py-1 px-2.5 font-normal">
+                {toSmartTitleCase(postData.area || lokasiTitleDisplay)}
+              </td>
+            </tr>
+            <tr>
+              <td className="border border-black py-1 px-2.5 font-normal">Proyek</td>
+              <td className="border border-black py-1 px-2.5 font-normal">
+                {toSmartTitleCase(postData.proyek || projectTitleDisplay)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      ),
+    });
+
+    b.push({
+      type: 'element',
+      key: 'formulir-post-colhead',
+      keepWithNext: true,
+      gapAfter: 0,
+      node: (
+        <table className="w-full table-fixed border-collapse -mt-[1px] text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
+          <thead>
+            <tr className="bg-gray-100 text-center">
+              <th className="border border-black py-1.5 px-2.5 w-[56%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                KEGIATAN
+              </th>
+              <th className="border border-black py-1.5 px-1 w-[9%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                YA
+              </th>
+              <th className="border border-black py-1.5 px-1 w-[12%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                TIDAK
+              </th>
+              <th className="border border-black py-1.5 px-1.5 w-[23%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                TANGGAL
+              </th>
+            </tr>
+          </thead>
+        </table>
+      ),
+    });
+
+    postSections.forEach((sec, secIdx) => {
+      const secItems = postData.items.filter((it) => it.section === sec.section);
+      const isLastSec = secIdx === postSections.length - 1;
+
+      b.push({
+        type: 'element',
+        key: `post-form-sec-${sec.section}`,
+        keepWithNext: true,
+        gapAfter: 0,
+        node: (
+          <table className="w-full table-fixed border-collapse -mt-[1px] text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
+            <tbody>
+              <tr>
+                <td className="border border-black py-1.5 px-2.5 w-[56%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                  {sec.title}
+                </td>
+                <td className="border border-black py-1.5 px-1 w-[9%]" />
+                <td className="border border-black py-1.5 px-1 w-[12%]" />
+                <td className="border border-black py-1.5 px-1.5 w-[23%]" />
+              </tr>
+            </tbody>
+          </table>
+        ),
+      });
+
+      secItems.forEach((item, idx) => {
+        const isLastItem = isLastSec && idx === secItems.length - 1;
+        b.push({
+          type: 'element',
+          key: `post-form-item-${item.id}`,
+          gapAfter: isLastItem ? 10 : 0,
+          node: (
+            <table className="w-full table-fixed border-collapse -mt-[1px] text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
+              <tbody>
+                <tr>
+                  <td className="border border-black py-1.5 px-2.5 pl-6 w-[56%] align-top font-normal">
+                    <div>
+                      <span className="mr-1.5">{item.number}</span>
+                      <span>{item.label}</span>
+                    </div>
+                    {item.subNotes && item.subNotes.length > 0 && (
+                      <ul className="list-disc pl-5 mt-1 space-y-0.5 font-normal">
+                        {item.subNotes.map((sn, snIdx) => (
+                          <li key={snIdx}>{sn}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </td>
+                  <td className="border border-black py-1.5 px-1 w-[9%] text-center align-middle font-normal">
+                    {item.answer === 'YA' ? '✓' : ''}
+                  </td>
+                  <td className="border border-black py-1.5 px-1 w-[12%] text-center align-middle font-normal">
+                    {item.answer === 'TIDAK' ? '✓' : ''}
+                  </td>
+                  <td className="border border-black py-1.5 px-1.5 w-[23%] text-center align-middle text-[11pt] font-normal">
+                    {item.tanggal ? formatIndonesianDate(item.tanggal) : ''}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          ),
+        });
+      });
+    });
+
+    pushFivePartySignoffs('post-form', postData.signoffs);
+
     return b;
   }, [
     project,
     projectTitleDisplay,
     projectProse,
+    lokasiTitleDisplay,
     lokasiProse,
     lokasiLengkapTable,
     lokasiLengkapProse,
