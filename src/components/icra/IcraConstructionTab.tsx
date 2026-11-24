@@ -754,12 +754,12 @@ export default function IcraConstructionTab() {
       {/* =================================================================== */}
       <AnimatePresence>
         {isProjectModalOpen && (
-          <div className="fixed inset-0 z-[9990] flex items-center justify-center bg-slate-950/85 backdrop-blur-md p-2 sm:p-4">
+          <div className="fixed inset-0 z-[9990] flex items-center justify-center bg-slate-950/85 backdrop-blur-md p-2 sm:p-4 lg:p-5">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 12 }}
-              className="w-full max-w-5xl max-h-[94vh] bg-[#121432] border border-indigo-500/40 rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+              className="w-full max-w-[1540px] max-h-[95vh] bg-[#121432] border border-indigo-500/40 rounded-3xl shadow-2xl flex flex-col overflow-hidden"
             >
               <div className="flex items-center justify-between px-6 py-4 bg-[#171a42] border-b border-indigo-900/50 shrink-0">
                 <div className="flex items-center gap-2.5">
@@ -1198,81 +1198,161 @@ export default function IcraConstructionTab() {
                 </div>
 
                 {/* Bagian 3: Checklist Pengendalian Infeksi (Tabel 13 PMK 27/2017) */}
-                <div className="space-y-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-900/50 pb-1.5">
-                    <div>
-                      <h4 className="text-xs font-black uppercase tracking-widest text-emerald-400">
-                        3. Intervensi PPI Berdasarkan Kelas (Tabel 13 Permenkes No. 27 Tahun 2017)
-                      </h4>
-                      <p className="text-[11px] text-slate-300 mt-0.5">
-                        {CONSTRUCTION_CLASS_CONTROLS[projForm.kelas_tindakan].title}:{' '}
-                        {CONSTRUCTION_CLASS_CONTROLS[projForm.kelas_tindakan].summary}
-                      </p>
-                    </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold">
-                      {projForm.checklist_pengendalian.filter((c) => c.checked).length} /{' '}
-                      {projForm.checklist_pengendalian.length} Wajib Dipenuhi
-                    </span>
-                  </div>
+                {(() => {
+                  const duringList = projForm.checklist_pengendalian
+                    .map((chk, originalIdx) => ({ chk, originalIdx }))
+                    .filter(({ chk }) => !chk.label.includes('[Setelah Konstruksi]'));
 
-                  <div className="space-y-2">
-                    {projForm.checklist_pengendalian.map((chk, idx) => {
-                      const isDuring = chk.label.includes('[Selama Konstruksi]');
-                      const isAfter = chk.label.includes('[Setelah Konstruksi]');
-                      const cleanText = chk.label.replace(/^\[(Selama|Setelah) Konstruksi\]\s*/i, '');
+                  const afterList = projForm.checklist_pengendalian
+                    .map((chk, originalIdx) => ({ chk, originalIdx }))
+                    .filter(({ chk }) => chk.label.includes('[Setelah Konstruksi]'));
 
-                      return (
-                        <label
-                          key={chk.id || idx}
-                          className={`flex items-start gap-2.5 p-3 rounded-2xl border transition-all cursor-pointer text-xs ${
-                            chk.checked
-                              ? 'bg-[#101438] border-emerald-500/40 text-slate-100 shadow-sm'
-                              : 'bg-[#0d0f26] border-indigo-900/40 text-slate-400 hover:border-indigo-700/50'
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={chk.checked}
-                            onChange={(e) => {
-                              const updated = [...projForm.checklist_pengendalian];
-                              updated[idx] = { ...updated[idx], checked: e.target.checked };
-                              setProjForm((p) => ({ ...p, checklist_pengendalian: updated }));
-                            }}
-                            className="mt-0.5 w-4 h-4 accent-emerald-500 shrink-0 cursor-pointer"
-                          />
-                          <div className="flex-1 space-y-1">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              {isDuring && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9.5px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                                  Selama Proyek Konstruksi
-                                </span>
-                              )}
-                              {isAfter && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9.5px] font-extrabold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                                  Setelah Proyek Konstruksi
-                                </span>
-                              )}
-                              <span className="font-bold text-[10.5px] text-slate-400">Poin {idx + 1}</span>
+                  return (
+                    <div className="space-y-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-900/50 pb-2">
+                        <div>
+                          <h4 className="text-xs sm:text-sm font-black uppercase tracking-widest text-emerald-400">
+                            3. Intervensi PPI Berdasarkan Kelas (Tabel 13 Permenkes No. 27 Tahun 2017)
+                          </h4>
+                          <p className="text-[11px] sm:text-xs text-slate-300 mt-0.5">
+                            {CONSTRUCTION_CLASS_CONTROLS[projForm.kelas_tindakan].title}:{' '}
+                            {CONSTRUCTION_CLASS_CONTROLS[projForm.kelas_tindakan].summary}
+                          </p>
+                        </div>
+                        <span className="text-[11px] px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold">
+                          {projForm.checklist_pengendalian.filter((c) => c.checked).length} /{' '}
+                          {projForm.checklist_pengendalian.length} Wajib Dipenuhi
+                        </span>
+                      </div>
+
+                      {/* Tabel 2 Kolom Bersebelahan: Selama Proyek Konstruksi & Setelah Proyek Konstruksi */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+                        {/* Kolom Kiri: Selama Proyek Konstruksi */}
+                        <div className="rounded-2xl border border-amber-500/40 bg-[#0c0f2b] overflow-hidden flex flex-col shadow-lg">
+                          <div className="bg-gradient-to-r from-amber-600/30 via-amber-500/20 to-transparent border-b border-amber-500/40 px-4 py-3 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <HardHat className="w-4 h-4 text-amber-400 shrink-0" />
+                              <span className="font-black text-xs uppercase tracking-wider text-amber-300">
+                                Selama Proyek Konstruksi
+                              </span>
                             </div>
-                            <div className="leading-relaxed text-slate-200 font-medium">{cleanText}</div>
+                            <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-200 border border-amber-500/30">
+                              {duringList.filter((x) => x.chk.checked).length} / {duringList.length} Poin Sesuai
+                            </span>
                           </div>
+
+                          <div className="p-3 space-y-2.5">
+                            {duringList.map(({ chk, originalIdx }, subIdx) => {
+                              const cleanText = chk.label.replace(/^\[(Selama|Setelah) Konstruksi\]\s*/i, '');
+                              return (
+                                <label
+                                  key={chk.id || originalIdx}
+                                  className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer text-xs ${
+                                    chk.checked
+                                      ? 'bg-amber-500/10 border-amber-500/50 text-slate-100 shadow-sm'
+                                      : 'bg-[#090b1e] border-indigo-900/40 text-slate-400 hover:border-indigo-700/50 hover:bg-[#0d1028]'
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={chk.checked}
+                                    onChange={(e) => {
+                                      const updated = [...projForm.checklist_pengendalian];
+                                      updated[originalIdx] = { ...updated[originalIdx], checked: e.target.checked };
+                                      setProjForm((p) => ({ ...p, checklist_pengendalian: updated }));
+                                    }}
+                                    className="mt-0.5 w-4 h-4 accent-amber-500 shrink-0 cursor-pointer"
+                                  />
+                                  <div className="flex-1 space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-400/20 text-amber-300 font-black text-[10px] border border-amber-400/30 shrink-0">
+                                        {subIdx + 1}
+                                      </span>
+                                      <span className="text-[10px] font-bold text-amber-300/90 uppercase tracking-wide">
+                                        Poin {subIdx + 1}
+                                      </span>
+                                    </div>
+                                    <div className="leading-relaxed text-slate-200 font-medium">
+                                      {cleanText}
+                                    </div>
+                                  </div>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Kolom Kanan: Setelah Proyek Konstruksi */}
+                        <div className="rounded-2xl border border-cyan-500/40 bg-[#0c0f2b] overflow-hidden flex flex-col shadow-lg">
+                          <div className="bg-gradient-to-r from-cyan-600/30 via-cyan-500/20 to-transparent border-b border-cyan-500/40 px-4 py-3 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
+                              <span className="font-black text-xs uppercase tracking-wider text-cyan-300">
+                                Setelah Proyek Konstruksi
+                              </span>
+                            </div>
+                            <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-200 border border-cyan-500/30">
+                              {afterList.filter((x) => x.chk.checked).length} / {afterList.length} Poin Sesuai
+                            </span>
+                          </div>
+
+                          <div className="p-3 space-y-2.5">
+                            {afterList.map(({ chk, originalIdx }, subIdx) => {
+                              const cleanText = chk.label.replace(/^\[(Selama|Setelah) Konstruksi\]\s*/i, '');
+                              return (
+                                <label
+                                  key={chk.id || originalIdx}
+                                  className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer text-xs ${
+                                    chk.checked
+                                      ? 'bg-cyan-500/10 border-cyan-500/50 text-slate-100 shadow-sm'
+                                      : 'bg-[#090b1e] border-indigo-900/40 text-slate-400 hover:border-indigo-700/50 hover:bg-[#0d1028]'
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={chk.checked}
+                                    onChange={(e) => {
+                                      const updated = [...projForm.checklist_pengendalian];
+                                      updated[originalIdx] = { ...updated[originalIdx], checked: e.target.checked };
+                                      setProjForm((p) => ({ ...p, checklist_pengendalian: updated }));
+                                    }}
+                                    className="mt-0.5 w-4 h-4 accent-cyan-500 shrink-0 cursor-pointer"
+                                  />
+                                  <div className="flex-1 space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-cyan-400/20 text-cyan-300 font-black text-[10px] border border-cyan-400/30 shrink-0">
+                                        {subIdx + 1}
+                                      </span>
+                                      <span className="text-[10px] font-bold text-cyan-300/90 uppercase tracking-wide">
+                                        Poin {subIdx + 1}
+                                      </span>
+                                    </div>
+                                    <div className="leading-relaxed text-slate-200 font-medium">
+                                      {cleanText}
+                                    </div>
+                                  </div>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1">
+                          Instruksi Khusus / Catatan Tambahan IPCN
                         </label>
-                      );
-                    })}
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1">
-                      Instruksi Khusus / Catatan Tambahan IPCN
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={projForm.persyaratan_khusus}
-                      onChange={(e) => setProjForm((p) => ({ ...p, persyaratan_khusus: e.target.value }))}
-                      placeholder="Contoh: Pekerjaan pengeboran hanya diperbolehkan pukul 14.00 - 17.00 WIB..."
-                      className="w-full bg-[#0d0f26] border border-indigo-800/60 text-white text-sm rounded-xl px-3 py-2 outline-none focus:border-cyan-400"
-                    />
-                  </div>
-                </div>
+                        <textarea
+                          rows={2}
+                          value={projForm.persyaratan_khusus}
+                          onChange={(e) => setProjForm((p) => ({ ...p, persyaratan_khusus: e.target.value }))}
+                          placeholder="Contoh: Pekerjaan pengeboran hanya diperbolehkan pukul 14.00 - 17.00 WIB..."
+                          className="w-full bg-[#0d0f26] border border-indigo-800/60 text-white text-sm rounded-xl px-3 py-2 outline-none focus:border-cyan-400"
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Bagian 4: Status, Dokumentasi Foto & TTD Digital */}
                 <div className="space-y-4">
@@ -1422,7 +1502,7 @@ export default function IcraConstructionTab() {
               initial={{ opacity: 0, scale: 0.95, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 12 }}
-              className="w-full max-w-4xl max-h-[92vh] bg-[#121432] border border-cyan-500/40 rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+              className="w-full max-w-5xl max-h-[94vh] bg-[#121432] border border-cyan-500/40 rounded-3xl shadow-2xl flex flex-col overflow-hidden"
             >
               <div className="flex items-center justify-between px-6 py-4 bg-[#171a42] border-b border-indigo-900/50 shrink-0">
                 <div className="flex items-center gap-2.5">
