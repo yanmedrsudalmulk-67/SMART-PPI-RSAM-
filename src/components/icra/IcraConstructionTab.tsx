@@ -311,7 +311,7 @@ export default function IcraConstructionTab() {
       }
 
       const payload = {
-        nomor_izin: projForm.nomor_izin.trim(),
+        nomor_izin: (projForm.nomor_izin?.trim() || generatePermitNumber()),
         nama_proyek: projForm.nama_proyek.trim(),
         lokasi_area: projForm.lokasi_area,
         area_terdampak: projForm.area_terdampak.trim(),
@@ -778,29 +778,18 @@ export default function IcraConstructionTab() {
                   <h4 className="text-xs font-black uppercase tracking-widest text-cyan-400 border-b border-indigo-900/50 pb-1.5">
                     1. Identitas Proyek Renovasi / Konstruksi
                   </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1">Nomor Izin PPI</label>
-                      <input
-                        type="text"
-                        value={projForm.nomor_izin}
-                        onChange={(e) => setProjForm((p) => ({ ...p, nomor_izin: e.target.value }))}
-                        className="w-full bg-[#0d0f26] border border-indigo-800/60 text-white text-sm font-mono rounded-xl px-3 py-2 outline-none focus:border-cyan-400"
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1">
-                        Nama Proyek / Uraian Pekerjaan *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={projForm.nama_proyek}
-                        onChange={(e) => setProjForm((p) => ({ ...p, nama_proyek: e.target.value }))}
-                        placeholder="Contoh: Pembongkaran & Penggantian Plafon Ruang Ranap Usman"
-                        className="w-full bg-[#0d0f26] border border-indigo-800/60 text-white text-sm rounded-xl px-3 py-2 outline-none focus:border-cyan-400"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1">
+                      Nama Proyek / Uraian Pekerjaan *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={projForm.nama_proyek}
+                      onChange={(e) => setProjForm((p) => ({ ...p, nama_proyek: e.target.value }))}
+                      placeholder="Contoh: Pembongkaran & Penggantian Plafon Ruang Ranap Usman"
+                      className="w-full bg-[#0d0f26] border border-indigo-800/60 text-white text-sm rounded-xl px-3 py-2 outline-none focus:border-cyan-400"
+                    />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
