@@ -35,14 +35,19 @@ export type IntraAnswer = 'YA' | 'TIDAK' | 'N/A' | '';
 
 export interface IcraChecklistSignoff {
   ipsrs_nama?: string;
+  ipsrs_paraf?: string;
   ipsrs_tanggal?: string;
   ppi_nama?: string;
+  ppi_paraf?: string;
   ppi_tanggal?: string;
   kesling_nama?: string;
+  kesling_paraf?: string;
   kesling_tanggal?: string;
   k3rs_nama?: string;
+  k3rs_paraf?: string;
   k3rs_tanggal?: string;
   pihak3_nama?: string;
+  pihak3_paraf?: string;
   pihak3_tanggal?: string;
 }
 
@@ -918,15 +923,15 @@ export function buildDefaultPreChecklist(proj: Partial<IcraKonstruksiItem>): Icr
     items: buildDefaultPreItems(kelas),
     signoffs: {
       ipsrs_nama: '',
-      ipsrs_tanggal: surveyDate,
+      ipsrs_paraf: '',
       ppi_nama: ipcn,
-      ppi_tanggal: surveyDate,
+      ppi_paraf: proj.ttd_ipcn || '',
       kesling_nama: '',
-      kesling_tanggal: surveyDate,
+      kesling_paraf: '',
       k3rs_nama: proj.nama_k3rs || '',
-      k3rs_tanggal: surveyDate,
+      k3rs_paraf: '',
       pihak3_nama: proj.pj_proyek || proj.kontraktor_pelaksana || '',
-      pihak3_tanggal: surveyDate,
+      pihak3_paraf: proj.ttd_pelaksana || '',
     },
   };
 }
@@ -1297,15 +1302,15 @@ export function buildDefaultPostChecklist(proj: Partial<IcraKonstruksiItem>): Ic
     items: buildDefaultPostItems(kelas),
     signoffs: {
       ipsrs_nama: '',
-      ipsrs_tanggal: surveyDate,
+      ipsrs_paraf: '',
       ppi_nama: ipcn,
-      ppi_tanggal: surveyDate,
+      ppi_paraf: proj.ttd_ipcn || '',
       kesling_nama: '',
-      kesling_tanggal: surveyDate,
+      kesling_paraf: '',
       k3rs_nama: proj.nama_k3rs || '',
-      k3rs_tanggal: surveyDate,
+      k3rs_paraf: '',
       pihak3_nama: proj.pj_proyek || proj.kontraktor_pelaksana || '',
-      pihak3_tanggal: surveyDate,
+      pihak3_paraf: proj.ttd_pelaksana || '',
     },
   };
 }

@@ -957,31 +957,37 @@ export default function IcraOfficialReport({
     // ==================== HELPER 5-PIHAK PENGESAHAN PRE / POST ====================
     const pushFivePartySignoffs = (keyPrefix: string, signoffs: IcraChecklistSignoff) => {
       const parties = [
-        { label: 'IPSRS', nama: signoffs.ipsrs_nama, tgl: signoffs.ipsrs_tanggal },
-        { label: 'PPI / IPCN', nama: signoffs.ppi_nama, tgl: signoffs.ppi_tanggal },
-        { label: 'Kesling', nama: signoffs.kesling_nama, tgl: signoffs.kesling_tanggal },
-        { label: 'K3 RS', nama: signoffs.k3rs_nama, tgl: signoffs.k3rs_tanggal },
-        { label: 'Pihak ke 3 Pembangunan', nama: signoffs.pihak3_nama, tgl: signoffs.pihak3_tanggal },
+        { label: 'IPSRS', nama: signoffs.ipsrs_nama, paraf: signoffs.ipsrs_paraf },
+        { label: 'PPI / IPCN', nama: signoffs.ppi_nama, paraf: signoffs.ppi_paraf },
+        { label: 'Kesling', nama: signoffs.kesling_nama, paraf: signoffs.kesling_paraf },
+        { label: 'K3 RS', nama: signoffs.k3rs_nama, paraf: signoffs.k3rs_paraf },
+        { label: 'Pihak ke 3 Pembangunan', nama: signoffs.pihak3_nama, paraf: signoffs.pihak3_paraf },
       ];
       b.push({
         type: 'element',
         key: `${keyPrefix}-signoffs`,
         gapAfter: 10,
         node: (
-          <div className="w-full pt-3 space-y-3 text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
+          <div className="w-full pt-4 space-y-4 text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
             {parties.map((pt, idx) => (
-              <div key={idx} className="grid grid-cols-12 items-baseline gap-2">
+              <div key={idx} className="grid grid-cols-12 items-end gap-3 min-h-[44px]">
                 <div className="col-span-7 flex items-baseline">
                   <span className="shrink-0 mr-1.5 font-normal">{pt.label}</span>
                   <span className="flex-1 border-b border-dotted border-black text-center px-1 font-normal">
                     {pt.nama ? pt.nama : ''}
                   </span>
                 </div>
-                <div className="col-span-5 flex items-baseline">
-                  <span className="shrink-0 mr-1.5 font-normal">Tanggal</span>
-                  <span className="flex-1 border-b border-dotted border-black text-center px-1 font-normal">
-                    {pt.tgl ? formatIndonesianDate(pt.tgl) : ''}
-                  </span>
+                <div className="col-span-5 flex items-end">
+                  <span className="shrink-0 mr-2 font-normal leading-none pb-0.5">Paraf</span>
+                  <div className="flex-1 border-b border-dotted border-black flex items-end justify-center min-h-[40px] px-1 pb-0.5">
+                    {pt.paraf ? (
+                      <img
+                        src={pt.paraf}
+                        alt={`Paraf ${pt.label}`}
+                        className="max-h-[38px] max-w-full object-contain"
+                      />
+                    ) : null}
+                  </div>
                 </div>
               </div>
             ))}

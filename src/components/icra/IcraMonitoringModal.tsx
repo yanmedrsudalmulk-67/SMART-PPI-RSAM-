@@ -20,6 +20,7 @@ import { supabase } from '@/lib/supabase';
 import { uploadImagesToSupabase } from '@/lib/upload';
 import { DocumentationUploader, DocImage } from '@/components/DocumentationUploader';
 import { normalizeImageUrl } from '@/utils/imageHelper';
+import ParafPadInput from './ParafPadInput';
 import {
   IcraKonstruksiItem,
   IcraMonitoringItem,
@@ -122,25 +123,6 @@ export default function IcraMonitoringModal({
         ? {
             ...prev,
             items: prev.items.map((it) => (it.id === id ? { ...it, ...patch } : it)),
-          }
-        : prev
-    );
-  };
-
-  const applyAllPreSurveyDate = () => {
-    const dt = preForm.tanggal_survey || todayIso;
-    setPreForm((prev) =>
-      prev
-        ? {
-            ...prev,
-            signoffs: {
-              ...prev.signoffs,
-              ipsrs_tanggal: prev.signoffs.ipsrs_tanggal || dt,
-              ppi_tanggal: prev.signoffs.ppi_tanggal || dt,
-              kesling_tanggal: prev.signoffs.kesling_tanggal || dt,
-              k3rs_tanggal: prev.signoffs.k3rs_tanggal || dt,
-              pihak3_tanggal: prev.signoffs.pihak3_tanggal || dt,
-            },
           }
         : prev
     );
@@ -252,25 +234,6 @@ export default function IcraMonitoringModal({
         ? {
             ...prev,
             items: prev.items.map((it) => (it.id === id ? { ...it, ...patch } : it)),
-          }
-        : prev
-    );
-  };
-
-  const applyAllPostSurveyDate = () => {
-    const dt = postForm.tanggal_survey || todayIso;
-    setPostForm((prev) =>
-      prev
-        ? {
-            ...prev,
-            signoffs: {
-              ...prev.signoffs,
-              ipsrs_tanggal: prev.signoffs.ipsrs_tanggal || dt,
-              ppi_tanggal: prev.signoffs.ppi_tanggal || dt,
-              kesling_tanggal: prev.signoffs.kesling_tanggal || dt,
-              k3rs_tanggal: prev.signoffs.k3rs_tanggal || dt,
-              pihak3_tanggal: prev.signoffs.pihak3_tanggal || dt,
-            },
           }
         : prev
     );
@@ -417,13 +380,6 @@ export default function IcraMonitoringModal({
                       Format standar pengkajian prakonstruksi RSUD Al-Mulk — otomatis dilampirkan setelah Foto Dokumentasi pada Laporan ICRA.
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={applyAllPreSurveyDate}
-                    className="px-3 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/40 text-cyan-200 text-[11px] font-bold cursor-pointer"
-                  >
-                    Isi Tanggal Pengesahan
-                  </button>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
@@ -581,30 +537,31 @@ export default function IcraMonitoringModal({
                     { key: 'pihak3', label: 'Pihak ke 3 Pembangunan' },
                   ].map((party) => {
                     const nameKey = `${party.key}_nama` as keyof typeof preForm.signoffs;
-                    const dateKey = `${party.key}_tanggal` as keyof typeof preForm.signoffs;
+                    const parafKey = `${party.key}_paraf` as keyof typeof preForm.signoffs;
                     return (
-                      <div key={party.key} className="grid grid-cols-12 gap-2 items-center bg-[#141738] p-2.5 rounded-xl border border-indigo-900/50">
-                        <span className="col-span-4 font-bold text-slate-200">{party.label}</span>
-                        <input
-                          type="text"
-                          placeholder="Nama Petugas"
-                          value={preForm.signoffs[nameKey] || ''}
-                          onChange={(e) =>
+                      <div key={party.key} className="bg-[#141738] p-3 rounded-xl border border-indigo-900/50 space-y-2.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-bold text-slate-200 shrink-0">{party.label}</span>
+                          <input
+                            type="text"
+                            placeholder="Nama Petugas"
+                            value={preForm.signoffs[nameKey] || ''}
+                            onChange={(e) =>
+                              setPreForm((p) =>
+                                p ? { ...p, signoffs: { ...p.signoffs, [nameKey]: e.target.value } } : p
+                              )
+                            }
+                            className="flex-1 max-w-[60%] bg-[#0a0c20] border border-indigo-800/70 text-white rounded-lg px-2.5 py-1.5 text-[11px]"
+                          />
+                        </div>
+                        <ParafPadInput
+                          label="Paraf / Tanda Tangan"
+                          value={preForm.signoffs[parafKey] || ''}
+                          onChange={(dataUrl) =>
                             setPreForm((p) =>
-                              p ? { ...p, signoffs: { ...p.signoffs, [nameKey]: e.target.value } } : p
+                              p ? { ...p, signoffs: { ...p.signoffs, [parafKey]: dataUrl } } : p
                             )
                           }
-                          className="col-span-4 bg-[#0a0c20] border border-indigo-800/70 text-white rounded-lg px-2.5 py-1.5 text-[11px]"
-                        />
-                        <input
-                          type="date"
-                          value={preForm.signoffs[dateKey] || ''}
-                          onChange={(e) =>
-                            setPreForm((p) =>
-                              p ? { ...p, signoffs: { ...p.signoffs, [dateKey]: e.target.value } } : p
-                            )
-                          }
-                          className="col-span-4 bg-[#0a0c20] border border-indigo-800/70 text-slate-200 rounded-lg px-2 py-1.5 text-[11px]"
                         />
                       </div>
                     );
@@ -921,13 +878,6 @@ export default function IcraMonitoringModal({
                       Format standar pengkajian pascakonstruksi RSUD Al-Mulk — otomatis dilampirkan di bagian akhir Laporan ICRA.
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={applyAllPostSurveyDate}
-                    className="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/40 text-emerald-200 text-[11px] font-bold cursor-pointer"
-                  >
-                    Isi Tanggal Pengesahan
-                  </button>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
@@ -1070,30 +1020,31 @@ export default function IcraMonitoringModal({
                     { key: 'pihak3', label: 'Pihak ke 3 Pembangunan' },
                   ].map((party) => {
                     const nameKey = `${party.key}_nama` as keyof typeof postForm.signoffs;
-                    const dateKey = `${party.key}_tanggal` as keyof typeof postForm.signoffs;
+                    const parafKey = `${party.key}_paraf` as keyof typeof postForm.signoffs;
                     return (
-                      <div key={party.key} className="grid grid-cols-12 gap-2 items-center bg-[#141738] p-2.5 rounded-xl border border-indigo-900/50">
-                        <span className="col-span-4 font-bold text-slate-200">{party.label}</span>
-                        <input
-                          type="text"
-                          placeholder="Nama Petugas"
-                          value={postForm.signoffs[nameKey] || ''}
-                          onChange={(e) =>
+                      <div key={party.key} className="bg-[#141738] p-3 rounded-xl border border-indigo-900/50 space-y-2.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-bold text-slate-200 shrink-0">{party.label}</span>
+                          <input
+                            type="text"
+                            placeholder="Nama Petugas"
+                            value={postForm.signoffs[nameKey] || ''}
+                            onChange={(e) =>
+                              setPostForm((p) =>
+                                p ? { ...p, signoffs: { ...p.signoffs, [nameKey]: e.target.value } } : p
+                              )
+                            }
+                            className="flex-1 max-w-[60%] bg-[#0a0c20] border border-indigo-800/70 text-white rounded-lg px-2.5 py-1.5 text-[11px]"
+                          />
+                        </div>
+                        <ParafPadInput
+                          label="Paraf / Tanda Tangan"
+                          value={postForm.signoffs[parafKey] || ''}
+                          onChange={(dataUrl) =>
                             setPostForm((p) =>
-                              p ? { ...p, signoffs: { ...p.signoffs, [nameKey]: e.target.value } } : p
+                              p ? { ...p, signoffs: { ...p.signoffs, [parafKey]: dataUrl } } : p
                             )
                           }
-                          className="col-span-4 bg-[#0a0c20] border border-indigo-800/70 text-white rounded-lg px-2.5 py-1.5 text-[11px]"
-                        />
-                        <input
-                          type="date"
-                          value={postForm.signoffs[dateKey] || ''}
-                          onChange={(e) =>
-                            setPostForm((p) =>
-                              p ? { ...p, signoffs: { ...p.signoffs, [dateKey]: e.target.value } } : p
-                            )
-                          }
-                          className="col-span-4 bg-[#0a0c20] border border-indigo-800/70 text-slate-200 rounded-lg px-2 py-1.5 text-[11px]"
                         />
                       </div>
                     );
