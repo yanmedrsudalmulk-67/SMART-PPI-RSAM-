@@ -1,17 +1,14 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import { format, parseISO } from 'date-fns';
-import { id as idLocale } from 'date-fns/locale';
+import { format } from 'date-fns';
 import ReportCover from './ReportCover';
 import AutoPaginatedF4Document, { FlowBlock, FrontMatterPageSpec } from './AutoPaginatedF4Document';
 import {
   IcraKonstruksiItem,
   IcraMonitoringItem,
   ConstructionType,
-  PatientRiskGroup,
   CONSTRUCTION_TYPES,
   PATIENT_RISK_GROUPS,
   CONSTRUCTION_MATRIX,
-  CONSTRUCTION_CLASS_CONTROLS,
   IcraChecklistSignoff,
   getPreChecklistSections,
   getPostChecklistSections,
@@ -20,6 +17,13 @@ import {
   buildDefaultIntraItems,
   normalizeIntraItems,
 } from '@/utils/icraData';
+import {
+  RISK_ROMAN,
+  toSmartTitleCase,
+  toMidSentenceProse,
+  formatIndonesianDate,
+  buildIcraReportNarrative,
+} from '@/utils/icraNarrative';
 import { normalizeImageUrl } from '@/utils/imageHelper';
 
 export interface IcraOfficialReportProps {
@@ -30,191 +34,6 @@ export interface IcraOfficialReportProps {
   documentId?: string;
 }
 
-const RISK_ROMAN: Record<PatientRiskGroup, string> = {
-  '1': 'I',
-  '2': 'II',
-  '3': 'III',
-  '4': 'IV',
-};
-
-const PRESERVED_ACRONYMS = new Set([
-  'RSUD',
-  'UOBK',
-  'RS',
-  'PPI',
-  'KPPI',
-  'ICRA',
-  'IPCN',
-  'IPCLN',
-  'IPSRS',
-  'IPRS',
-  'K3RS',
-  'K3',
-  'IGD',
-  'IGH',
-  'IRJ',
-  'ICU',
-  'ICCU',
-  'NICU',
-  'PICU',
-  'IBS',
-  'ISSB',
-  'CSSD',
-  'UTD',
-  'IP2K',
-  'VK',
-  'TPS',
-  'B3',
-  'APD',
-  'HEPA',
-  'HVAC',
-  'AC',
-  'SPO',
-  'SDM',
-  'STARKES',
-  'PMK',
-  'I',
-  'II',
-  'III',
-  'IV',
-]);
-
-const PROPER_NOUNS: Record<string, string> = {
-  'al-mulk': 'Al-Mulk',
-  almulk: 'Al-Mulk',
-  sukabumi: 'Sukabumi',
-  fatimah: 'Fatimah',
-  khadijah: 'Khadijah',
-  aisyah: 'Aisyah',
-  usman: 'Usman',
-  hais: 'HAIs',
-};
-
-function formatWordSmart(word: string, capitalizeFirst: boolean): string {
-  if (!word) return word;
-  // Preserve leading/trailing punctuation
-  const match = word.match(/^([^a-zA-Z0-9]*)([a-zA-Z0-9/-]+)([^a-zA-Z0-9]*)$/);
-  if (!match) return word;
-  const [, pre, core, post] = match;
-
-  if (core.includes('/')) {
-    const parts = core.split('/').map((p, idx) => formatWordSmart(p, capitalizeFirst && idx === 0));
-    return `${pre}${parts.join('/')}${post}`;
-  }
-
-  const lower = core.toLowerCase();
-  if (PROPER_NOUNS[lower]) {
-    return `${pre}${PROPER_NOUNS[lower]}${post}`;
-  }
-
-  const upper = core.toUpperCase();
-  if (PRESERVED_ACRONYMS.has(upper)) {
-    return `${pre}${upper}${post}`;
-  }
-
-  if (core.includes('-')) {
-    const hParts = core.split('-').map((p, idx) => formatWordSmart(p, capitalizeFirst && idx === 0));
-    return `${pre}${hParts.join('-')}${post}`;
-  }
-
-  if (capitalizeFirst) {
-    return `${pre}${lower.charAt(0).toUpperCase()}${lower.slice(1)}${post}`;
-  }
-  return `${pre}${lower}${post}`;
-}
-
-/**
- * Converts ALL-CAPS or mixed text to Title Case (for document subtitle / table labels)
- */
-function toSmartTitleCase(raw?: string): string {
-  if (!raw) return '';
-  const smallWords = new Set(['di', 'ke', 'dari', 'dan', 'atau', 'pada', 'untuk', 'dengan', 'yang', 's/d']);
-  return raw
-    .trim()
-    .split(/\s+/)
-    .map((w, idx) => {
-      const cleanLower = w.toLowerCase();
-      if (idx > 0 && smallWords.has(cleanLower)) return cleanLower;
-      return formatWordSmart(w, true);
-    })
-    .join(' ');
-}
-
-/**
- * Converts ALL-CAPS or mixed text into natural mid-sentence prose (no ALL-CAPS words in middle of paragraphs)
- */
-function toMidSentenceProse(raw?: string): string {
-  if (!raw) return '';
-  return raw
-    .trim()
-    .split(/\s+/)
-    .map((w) => formatWordSmart(w, false))
-    .join(' ');
-}
-
-/**
- * Strips trailing hospital name from project title so mid-sentence doesn't repeat "RSUD Al-Mulk"
- */
-function stripHospitalSuffix(raw: string): string {
-  return raw
-    .replace(/\s*(uobk\s+)?rsud\s+al[-\s]?mulk(\s+kota\s+sukabumi)?\s*$/i, '')
-    .trim();
-}
-
-function formatIndonesianDate(isoDate?: string): string {
-  if (!isoDate) return '-';
-  try {
-    return format(parseISO(isoDate), 'dd MMMM yyyy', { locale: idLocale });
-  } catch {
-    return isoDate;
-  }
-}
-
-function getYearFromDate(isoDate?: string): number {
-  if (!isoDate) return new Date().getFullYear();
-  try {
-    const y = parseISO(isoDate).getFullYear();
-    return Number.isFinite(y) ? y : new Date().getFullYear();
-  } catch {
-    return new Date().getFullYear();
-  }
-}
-
-function inferDuringPic(action: string): string {
-  const lower = action.toLowerCase();
-  if (lower.includes('hvac') || lower.includes('hepa') || lower.includes('tekanan') || lower.includes('ventilasi')) {
-    return 'Tim Teknik / IPSRS';
-  }
-  if (lower.includes('keset') || lower.includes('pembersihan') || lower.includes('pengepelan')) {
-    return 'Cleaning Service';
-  }
-  if (lower.includes('ppi') || lower.includes('ipcn') || lower.includes('kepatuhan')) {
-    return 'IPCN / Tim PPI';
-  }
-  return 'Kontraktor, Pengawas Teknik';
-}
-
-function inferAfterPic(action: string): string {
-  const lower = action.toLowerCase();
-  if (lower.includes('hvac') || lower.includes('ventilasi') || lower.includes('plumbing') || lower.includes('sanitasi')) {
-    return 'Tim Teknik / IPSRS';
-  }
-  if (lower.includes('pembatas') || lower.includes('limbah') || lower.includes('gerobak')) {
-    return 'Kontraktor, Komite K3 dan KPPI';
-  }
-  if (lower.includes('vakum') || lower.includes('pengepelan') || lower.includes('disinfektan') || lower.includes('bersihkan')) {
-    return 'Cleaning Service RS';
-  }
-  return 'Tim PPI dan Manajemen';
-}
-
-function stripPhasePrefix(label: string): string {
-  return label
-    .replace(/^\[(Selama|Setelah)\s+Konstruksi\]\s*/i, '')
-    .replace(/^\[(Selama|Setelah)\s+Proyek[^\]]*\]\s*/i, '')
-    .trim();
-}
-
 const BASE_TEXT_STYLE: React.CSSProperties = {
   fontFamily: 'Arial, Helvetica, sans-serif',
   fontSize: '12pt',
@@ -223,6 +42,16 @@ const BASE_TEXT_STYLE: React.CSSProperties = {
   color: '#000000',
 };
 
+function renderNarrativeText(text: string): React.ReactNode {
+  const parts = text.split(/(\*[^*]+\*)/g);
+  return parts.map((part, idx) => {
+    if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
+      return <em key={idx}>{part.slice(1, -1)}</em>;
+    }
+    return <React.Fragment key={idx}>{part}</React.Fragment>;
+  });
+}
+
 export default function IcraOfficialReport({
   project,
   monitoringLogs = [],
@@ -230,50 +59,44 @@ export default function IcraOfficialReport({
   signDate,
   documentId = 'print-area-icra',
 }: IcraOfficialReportProps) {
-  const projectYear = getYearFromDate(project.tgl_mulai);
-  const rawProjectName = project.nama_proyek?.trim() || 'Kegiatan Konstruksi / Renovasi';
-  const cleanedBaseName = stripHospitalSuffix(rawProjectName) || rawProjectName;
+  const narrative = useMemo(
+    () => buildIcraReportNarrative(project, monitoringLogs),
+    [project, monitoringLogs]
+  );
 
-  // Title-cased name for headings/tables, and lowercase natural prose for mid-paragraph sentences
-  const projectTitleDisplay = toSmartTitleCase(cleanedBaseName);
-  const projectProse = toMidSentenceProse(cleanedBaseName);
+  const {
+    projectYear,
+    cleanedBaseName,
+    projectTitleDisplay,
+    lokasiTitleDisplay,
+    lokasiLengkapTable,
+    kontraktorDisplay,
+    pjProyekDisplay,
+    namaIpcn,
+    tipeCode,
+    riskCode,
+    kelasCode,
+    riskRoman,
+    riskLabelLower,
+    typeInfo,
+    riskInfo,
+    classControl,
+    kataPengantarParagraphs,
+    latarBelakangParagraphs,
+    tujuanText,
+    ruangLingkupText,
+    matriksResultText,
+    praActions,
+    saatActions,
+    pascaActions,
+    kesimpulanParagraphs,
+    rekomendasiIntro,
+    rekomendasiSections,
+    rekomendasiClosing,
+    penutupParagraphs,
+  } = narrative;
 
-  const rawLokasi = project.lokasi_area?.trim() || 'Lingkungan Rumah Sakit';
-  const lokasiTitleDisplay = toSmartTitleCase(rawLokasi);
-  const lokasiProse = toMidSentenceProse(rawLokasi);
-
-  const rawAreaTerdampak = project.area_terdampak?.trim() || '';
-  const areaTerdampakProse = toMidSentenceProse(rawAreaTerdampak);
-  const areaTerdampakTitle = toSmartTitleCase(rawAreaTerdampak);
-
-  const rawKontraktor = project.kontraktor_pelaksana?.trim() || 'IPSRS RSUD Al-Mulk';
-  const kontraktorDisplay = toSmartTitleCase(rawKontraktor);
-  const kontraktorProse = toMidSentenceProse(rawKontraktor);
-
-  const pjProyekDisplay = toSmartTitleCase(project.pj_proyek?.trim() || '');
-  const namaIpcn = project.nama_ipcn?.trim() || 'Adi Tresa Purnama, A.M.Kep';
   const tglPengesahan = formatIndonesianDate(signDate || project.tgl_mulai || format(new Date(), 'yyyy-MM-dd'));
-
-  const tipeCode = project.tipe_konstruksi || 'C';
-  const riskCode = project.kelompok_risiko || '2';
-  const kelasCode = project.kelas_tindakan || 'III';
-  const riskRoman = RISK_ROMAN[riskCode] || 'II';
-
-  const typeInfo = CONSTRUCTION_TYPES.find((t) => t.code === tipeCode) || CONSTRUCTION_TYPES[2];
-  const riskInfo = PATIENT_RISK_GROUPS.find((r) => r.code === riskCode) || PATIENT_RISK_GROUPS[1];
-  const classControl = CONSTRUCTION_CLASS_CONTROLS[kelasCode] || CONSTRUCTION_CLASS_CONTROLS.III;
-
-  const riskLabelLower = riskInfo.riskLabel.toLowerCase();
-  const lokasiLengkapTable = areaTerdampakTitle
-    ? `${lokasiTitleDisplay} (Area terdampak sekitar: ${areaTerdampakTitle})`
-    : lokasiTitleDisplay;
-  const lokasiLengkapProse = areaTerdampakProse
-    ? `${lokasiProse} yang berdekatan dengan ${areaTerdampakProse}`
-    : lokasiProse;
-
-  const isDemolition = /bongkar|pembongkaran/i.test(rawProjectName);
-  const activityNoun = isDemolition ? 'pembongkaran' : 'renovasi dan konstruksi';
-  const activityNounCap = isDemolition ? 'Pembongkaran' : 'Renovasi dan Konstruksi';
 
   const [chapterPages, setChapterPages] = useState<Record<string, number>>({
     'latar-belakang': 1,
@@ -295,113 +118,6 @@ export default function IcraOfficialReport({
   const handleChaptersResolved = useCallback((resolved: Record<string, number>) => {
     setChapterPages((prev) => ({ ...prev, ...resolved }));
   }, []);
-
-  // Build Tindakan tables integrating exact ICRA Konstruksi checklist items
-  const { praActions, saatActions, pascaActions } = useMemo(() => {
-    const pra: { tindakan: string; pj: string }[] = [
-      {
-        tindakan: 'Melakukan rapat koordinasi antara tim teknis (IPSRS), Komite PPI, kontraktor, dan manajemen ruangan atau unit terdampak.',
-        pj: 'Manajemen RS, Tim PPI, Teknik',
-      },
-      {
-        tindakan: 'Menyusun dan mengesahkan dokumen pengkajian ICRA serta rencana kerja pelaksanaan proyek.',
-        pj: 'Tim PPI, Teknik',
-      },
-      {
-        tindakan: `Melakukan identifikasi dan klasifikasi risiko pasien pada lokasi ${lokasiProse}${areaTerdampakProse ? ` serta area sekitar (${areaTerdampakProse})` : ''}.`,
-        pj: 'IPCN dan PJ Ruangan',
-      },
-      {
-        tindakan: `Menyusun jadwal kerja ${activityNoun} agar tidak mengganggu jam-jam kritis pelayanan rumah sakit.`,
-        pj: 'Teknik dan Manajemen Ruang',
-      },
-      {
-        tindakan: 'Menyiapkan barier fisik (penyekat plastik kedap debu atau partisi gypsum) sesuai kelas kewaspadaan di area kerja.',
-        pj: 'Kontraktor, Teknik',
-      },
-      {
-        tindakan: 'Melakukan pemberitahuan resmi kepada pasien, keluarga, dan staf unit sekitar mengenai jadwal kegiatan.',
-        pj: 'Humas RS, PPI',
-      },
-      {
-        tindakan: 'Menutup, menyegel, atau mengalihkan sistem ventilasi dan HVAC yang terhubung ke area pekerjaan.',
-        pj: 'Tim Teknik / IPSRS',
-      },
-      {
-        tindakan: 'Memastikan jalur khusus untuk keluar masuk material bangunan dan pengangkutan limbah atau puing konstruksi.',
-        pj: 'Teknik dan Kontraktor',
-      },
-      {
-        tindakan: 'Memastikan ketersediaan dan kepatuhan penggunaan APD bagi seluruh pekerja konstruksi.',
-        pj: 'Kontraktor',
-      },
-      {
-        tindakan: 'Menyediakan alat pembersih, keset basah, dan cairan disinfektan di sekitar area kerja.',
-        pj: 'Cleaning Service RS',
-      },
-    ];
-
-    const checklist = Array.isArray(project.checklist_pengendalian) ? project.checklist_pengendalian : [];
-    const duringFromChecklist = checklist
-      .filter((c) => /^\[Selama/i.test(c.label))
-      .map((c) => stripPhasePrefix(c.label))
-      .filter(Boolean);
-    const afterFromChecklist = checklist
-      .filter((c) => /^\[Setelah/i.test(c.label))
-      .map((c) => stripPhasePrefix(c.label))
-      .filter(Boolean);
-
-    const baseDuring = duringFromChecklist.length > 0 ? duringFromChecklist : classControl.duringItems;
-    const baseAfter = afterFromChecklist.length > 0 ? afterFromChecklist : classControl.afterItems;
-
-    const saat: { tindakan: string; pj: string }[] = [
-      ...baseDuring.map((item) => ({
-        tindakan: item,
-        pj: inferDuringPic(item),
-      })),
-      {
-        tindakan: 'Melakukan pembersihan harian terhadap area luar barier (koridor dan jalur akses sekitar proyek).',
-        pj: 'Cleaning Service',
-      },
-      {
-        tindakan: 'Memastikan seluruh pekerja menggunakan APD lengkap selama berada di area kerja.',
-        pj: 'Kontraktor',
-      },
-      {
-        tindakan: 'Melakukan pengecekan dan monitoring rutin oleh IPCN terkait kepatuhan terhadap protokol pengendalian infeksi.',
-        pj: 'IPCN',
-      },
-      {
-        tindakan: 'Menyimpan bahan material berbahaya (cat, semen, pelarut, dan sejenisnya) di area yang aman dan terkunci.',
-        pj: 'Kontraktor',
-      },
-    ];
-
-    const pasca: { tindakan: string; pj: string }[] = [
-      ...baseAfter.map((item) => ({
-        tindakan: item,
-        pj: inferAfterPic(item),
-      })),
-      {
-        tindakan: 'Melakukan pemeriksaan kebersihan permukaan, kelayakan fungsi sarana, dan keamanan lingkungan oleh Tim PPI dan Teknik.',
-        pj: 'Tim PPI, Teknik',
-      },
-      {
-        tindakan: 'Melakukan serah terima pekerjaan secara formal dari pelaksana atau kontraktor kepada pihak rumah sakit.',
-        pj: 'Teknik, Manajemen RS',
-      },
-      {
-        tindakan: 'Membuka kembali akses area setelah dinyatakan aman dan bersih oleh Komite PPI dan Manajemen.',
-        pj: 'PPI dan Manajemen Ruangan',
-      },
-      {
-        tindakan: 'Menyimpan dokumentasi lengkap proyek dan laporan ICRA untuk keperluan audit, evaluasi pascaproyek, dan akreditasi.',
-        pj: 'Tim PPI, Sekretariat RS',
-      },
-    ];
-
-    return { praActions: pra, saatActions: saat, pascaActions: pasca };
-  }, [project.checklist_pengendalian, classControl, lokasiProse, areaTerdampakProse, activityNoun]);
 
   // Collect Photos across Pre (foto_sebelum), Intra (monitoringLogs.foto_monitoring), Post (foto_sesudah)
   const prePhotos = useMemo(
@@ -453,21 +169,11 @@ export default function IcraOfficialReport({
                 </h2>
               </div>
               <div className="space-y-3 font-normal" style={BASE_TEXT_STYLE}>
-                <p className="indent-8 font-normal">
-                  Puji syukur kami panjatkan ke hadirat Tuhan Yang Maha Esa atas segala rahmat dan karunia-Nya sehingga laporan <em>Infection Control Risk Assessment</em> (ICRA) untuk kegiatan {projectProse} di UOBK RSUD Al-Mulk Kota Sukabumi tahun {projectYear} dapat disusun dengan baik.
-                </p>
-                <p className="indent-8 font-normal">
-                  Laporan ini disusun sebagai bentuk komitmen Komite PPI dalam penerapan prinsip pencegahan dan pengendalian infeksi pada kegiatan {activityNoun} di lingkungan rumah sakit. Berdasarkan hasil pengkajian awal, lokasi kegiatan berada di {lokasiLengkapProse}. Area tersebut termasuk dalam klasifikasi kelompok risiko {riskLabelLower} dengan tipe pekerjaan {tipeCode}, sehingga pekerjaan berpotensi menimbulkan debu dan kontaminasi lingkungan yang perlu dikendalikan, terutama apabila aktivitas pelayanan rumah sakit tetap berjalan.
-                </p>
-                <p className="indent-8 font-normal">
-                  Dokumen ini memuat latar belakang, tujuan dan ruang lingkup, perencanaan proyek, klasifikasi tipe konstruksi, kategori risiko pasien, matriks ICRA, rencana tindakan pengendalian infeksi sebelum, selama, dan setelah pekerjaan, pemantauan pelaksanaan, kesimpulan, rekomendasi, penutup, serta bukti dokumentasi.
-                </p>
-                <p className="indent-8 font-normal">
-                  Penyusunan dan pelaksanaan ICRA memerlukan kerja sama antara Komite PPI, manajemen rumah sakit, IPSRS, K3RS, kesehatan lingkungan, penanggung jawab area terdampak, serta pihak pelaksana ({kontraktorProse}). Seluruh proses pengendalian dipantau melalui survei lapangan dan koordinasi lintas unit sampai kegiatan selesai dilaksanakan.
-                </p>
-                <p className="indent-8 font-normal">
-                  Semoga dokumen ini dapat digunakan sebagai pedoman pelaksanaan kegiatan {activityNoun} yang aman, terkendali, dan selaras dengan upaya peningkatan mutu pelayanan serta keselamatan pasien di UOBK RSUD Al-Mulk Kota Sukabumi.
-                </p>
+                {kataPengantarParagraphs.map((pText, idx) => (
+                  <p key={idx} className="indent-8 font-normal">
+                    {renderNarrativeText(pText)}
+                  </p>
+                ))}
               </div>
             </div>
 
@@ -532,7 +238,7 @@ export default function IcraOfficialReport({
         ),
       },
     ],
-    [projectProse, projectYear, activityNoun, lokasiLengkapProse, riskLabelLower, tipeCode, kontraktorProse, chapterPages]
+    [kataPengantarParagraphs, chapterPages]
   );
 
   // Build Atomic Flow Blocks for AutoPaginatedF4Document (Arial 12pt, line-height 1.5, 2.5cm margins)
@@ -625,25 +331,13 @@ export default function IcraOfficialReport({
 
     // ==================== 1. LATAR BELAKANG ====================
     pushHeading('sec-latar-belakang', 'LATAR BELAKANG', 'latar-belakang');
-    pushParagraph(
-      'lb-1',
-      'Rumah sakit sebagai institusi pelayanan kesehatan memiliki tanggung jawab dalam menyediakan lingkungan pelayanan yang aman bagi pasien, tenaga kesehatan, pegawai, pengunjung, dan masyarakat sekitar. Pemeliharaan serta pengembangan sarana dan prasarana rumah sakit merupakan salah satu upaya untuk mendukung mutu pelayanan. Setiap kegiatan pembongkaran, konstruksi, atau renovasi yang dilaksanakan di lingkungan rumah sakit harus memperhatikan aspek pencegahan dan pengendalian infeksi (PPI).'
-    );
-    pushParagraph(
-      'lb-2',
-      `UOBK RSUD Al-Mulk Kota Sukabumi merencanakan dan melaksanakan kegiatan ${projectProse} yang berlokasi di ${lokasiLengkapProse} bersama pelaksana ${kontraktorProse}. Lingkup teknis pekerjaan, batas area kerja, metode pelaksanaan, kondisi bangunan, serta jadwal kegiatan dikoordinasikan bersama manajemen rumah sakit dan tim teknis terkait.`
-    );
-    pushParagraph(
-      'lb-3',
-      <>
-        Aktivitas {activityNoun} berpotensi menghasilkan debu, partikel material bangunan, dan spora jamur, termasuk <em>Aspergillus</em>, yang dapat menyebar melalui udara, pintu, jendela, atau sistem ventilasi. Selain itu, mobilisasi pekerja dan pengangkutan puing berpotensi menyebabkan kontaminasi lingkungan. Gangguan jaringan air, listrik, drainase, dan akses pelayanan juga dinilai bersama tim terkait melalui pengkajian prakonstruksi.
-      </>
-    );
-    pushParagraph(
-      'lb-4',
-      'Oleh karena itu diperlukan ICRA sebagai proses terdokumentasi sebelum pekerjaan dimulai. Pengkajian ini mengacu pada Permenkes Nomor 27 Tahun 2017, Lampiran I halaman 137–146, untuk menetapkan tipe proyek, kelompok pasien berisiko, kelas kewaspadaan, dan intervensi pengendalian infeksi. Pelaksanaan dan efektivitas tindakan tersebut selanjutnya dipantau serta dievaluasi sampai pekerjaan selesai.',
-      12
-    );
+    latarBelakangParagraphs.forEach((pText, idx) => {
+      pushParagraph(
+        `lb-${idx + 1}`,
+        renderNarrativeText(pText),
+        idx === latarBelakangParagraphs.length - 1 ? 12 : 8
+      );
+    });
 
     // ==================== 2. TUJUAN DAN RUANG LINGKUP ====================
     pushHeading('sec-tujuan', 'TUJUAN DAN RUANG LINGKUP', 'tujuan-ruang-lingkup');
@@ -654,7 +348,7 @@ export default function IcraOfficialReport({
       gapAfter: 8,
       node: (
         <p className="pl-5 text-[12pt] leading-[1.5] text-justify text-black font-normal" style={BASE_TEXT_STYLE}>
-          Mengidentifikasi, menilai, dan mengendalikan risiko infeksi akibat kegiatan {projectProse} di {lokasiProse} agar paparan debu dan kontaminasi lingkungan dapat diminimalkan serta kegiatan pelayanan rumah sakit tetap berlangsung secara aman. Secara khusus, ICRA bertujuan menetapkan kelas kewaspadaan, intervensi pengendalian infeksi, tanggung jawab lintas unit, serta mekanisme monitoring dan tindak lanjut.
+          {renderNarrativeText(tujuanText)}
         </p>
       ),
     });
@@ -666,7 +360,7 @@ export default function IcraOfficialReport({
       gapAfter: 12,
       node: (
         <p className="pl-5 text-[12pt] leading-[1.5] text-justify text-black font-normal" style={BASE_TEXT_STYLE}>
-          Mencakup persiapan dan pengamanan area kerja di {lokasiProse}, pelaksanaan {activityNoun} sesuai ruang lingkup teknis yang disetujui, pemindahan material dan puing melalui jalur terkendali, perlindungan area sekitar{areaTerdampakProse ? ` (${areaTerdampakProse})` : ''} serta area lain yang terdampak, pembersihan akhir, dan evaluasi pascapekerjaan.
+          {renderNarrativeText(ruangLingkupText)}
         </p>
       ),
     });
@@ -934,7 +628,7 @@ export default function IcraOfficialReport({
       gapAfter: 12,
       node: (
         <p className="text-[12pt] leading-[1.5] text-justify text-black font-normal" style={BASE_TEXT_STYLE}>
-          Hasil untuk proyek ini: → kombinasi tipe {tipeCode} dan risiko kategori {riskRoman} (risiko {riskLabelLower}) → kategori {kelasCode} pengendalian infeksi diperlukan.
+          {renderNarrativeText(matriksResultText)}
         </p>
       ),
     });
@@ -993,7 +687,7 @@ export default function IcraOfficialReport({
                     {idx + 1}
                   </td>
                   <td className="border border-black py-1.5 px-2.5 align-top text-justify w-[63%] font-normal">
-                    {r.tindakan}
+                    {renderNarrativeText(r.tindakan)}
                   </td>
                   <td className="border border-black py-1.5 px-2.5 align-top text-left w-[28%] font-normal">
                     {r.pj}
@@ -1100,84 +794,19 @@ export default function IcraOfficialReport({
 
     // ==================== 8. KESIMPULAN ====================
     pushHeading('sec-kesimpulan', 'KESIMPULAN', 'kesimpulan');
-    pushParagraph(
-      'kes-1',
-      `Kegiatan ${projectProse} di ${lokasiProse} merupakan langkah penting dan strategis dalam rangka meningkatkan kualitas fasilitas sarana prasarana serta kenyamanan pelayanan bagi pasien, keluarga, dan tenaga kesehatan di lingkungan UOBK RSUD Al-Mulk Kota Sukabumi. Namun, karena pelaksanaan kegiatan berada di lingkungan rumah sakit aktif${areaTerdampakProse ? ` yang berdekatan dengan ${areaTerdampakProse}` : ''}, maka terdapat potensi risiko penularan infeksi yang harus diantisipasi secara cermat dan terstruktur.`
-    );
-    pushParagraph(
-      'kes-2',
-      <>
-        Melalui proses <em>Infection Control Risk Assessment</em> (ICRA), proyek ini dikategorikan sebagai tipe {tipeCode} ({typeInfo.shortDesc.toLowerCase()}) dengan risiko pasien pada kategori {riskRoman} (risiko {riskLabelLower}). Berdasarkan klasifikasi matriks ICRA, kombinasi ini menghasilkan kategori {kelasCode} pengendalian infeksi, yang mengharuskan penerapan tindakan pencegahan terstandar seperti {classControl.summary.toLowerCase()}
-      </>
-    );
-    pushParagraph(
-      'kes-3',
-      `Langkah-langkah yang dilakukan sebelum, selama, dan sesudah ${activityNoun} telah dirancang untuk meminimalkan potensi paparan debu maupun mikroorganisme patogen, mencegah infeksi silang, serta memastikan tidak terganggunya operasional layanan medis yang sedang berjalan. Prosedur ini menjadi bagian dari komitmen rumah sakit terhadap penerapan prinsip pencegahan dan pengendalian infeksi (PPI) secara konsisten dan berkelanjutan.`
-    );
-    pushParagraph(
-      'kes-4',
-      `Dengan dilaksanakannya ICRA secara menyeluruh dan dipatuhinya seluruh protokol pengendalian infeksi selama pekerjaan berlangsung, diharapkan kegiatan ${projectProse} dapat terselesaikan dengan baik, aman, dan tanpa menimbulkan dampak negatif terhadap keselamatan pasien, staf, maupun lingkungan rumah sakit.`,
-      12
-    );
+    kesimpulanParagraphs.forEach((pText, idx) => {
+      pushParagraph(
+        `kes-${idx + 1}`,
+        renderNarrativeText(pText),
+        idx === kesimpulanParagraphs.length - 1 ? 12 : 8
+      );
+    });
 
     // ==================== 9. REKOMENDASI (ATOMIC PER-BULLET) ====================
     pushHeading('sec-rekomendasi', 'REKOMENDASI', 'rekomendasi');
-    pushParagraph(
-      'rek-intro',
-      <>
-        Berdasarkan hasil analisis risiko infeksi dan klasifikasi proyek melalui proses <em>Infection Control Risk Assessment</em> (ICRA), disampaikan beberapa rekomendasi penting sebagai panduan dan langkah tindak lanjut dalam pelaksanaan kegiatan {projectProse}, sebagai berikut:
-      </>,
-      6,
-      false
-    );
+    pushParagraph('rek-intro', renderNarrativeText(rekomendasiIntro), 6, false);
 
-    const recSections: { title: string; items: string[] }[] = [
-      {
-        title: `1. Pelaksanaan ${activityNounCap}`,
-        items: [
-          `Kegiatan harus dilaksanakan dengan mengikuti kategori pengendalian infeksi kelas ${kelasCode}, sesuai hasil klasifikasi ICRA untuk proyek tipe ${tipeCode} dan risiko pasien kategori ${riskRoman}.`,
-          'Pekerjaan harus dilakukan oleh tenaga kerja yang menggunakan alat pelindung diri (APD) lengkap serta memahami protokol pengendalian infeksi di rumah sakit.',
-          kelasCode === 'III' || kelasCode === 'IV'
-            ? 'Barikade fisik yang tertutup rapat dan kedap debu harus dipasang mengelilingi area pekerjaan sebelum kegiatan dimulai untuk mencegah penyebaran partikel ke area pelayanan sekitar.'
-            : 'Area kerja harus diamankan dengan pembatas kerja yang rapi dan metode pengendalian debu sesuai standar kelas kewaspadaan.',
-          'Akses keluar-masuk material dan limbah proyek harus melalui jalur khusus, tidak melintasi jalur pasien, dan menggunakan wadah tertutup rapat.',
-        ],
-      },
-      {
-        title: '2. Pencegahan Risiko Infeksi',
-        items: [
-          'Diperlukan monitoring berkala oleh tim PPI untuk mengevaluasi kepatuhan terhadap pengendalian infeksi dan mengidentifikasi potensi risiko baru selama proyek berlangsung.',
-          kelasCode === 'III' || kelasCode === 'IV'
-            ? 'Disarankan menjaga tekanan udara negatif dalam area kerja menggunakan penyaring udara HEPA portabel serta mengisolasi sistem ventilasi atau HVAC yang terhubung.'
-            : 'Mengisolasi sementara kisi ventilasi atau AC di sekitar lokasi pekerjaan serta menyediakan sarana pengendalian debu aktif.',
-          'Pekerjaan yang menimbulkan debu harus dijadwalkan di luar jam pelayanan padat dan dilakukan dengan metode basah untuk mengurangi sebaran debu.',
-        ],
-      },
-      {
-        title: '3. Komunikasi dan Edukasi',
-        items: [
-          `Perlu dilakukan sosialisasi dan pemberitahuan resmi kepada pasien, keluarga pasien, dan seluruh staf yang bertugas di sekitar area kegiatan${areaTerdampakProse ? ` (${areaTerdampakProse})` : ''}.`,
-          'Tim ruangan dan petugas kebersihan diberikan edukasi tambahan mengenai protokol pembersihan harian serta pengelolaan limbah di sekitar lokasi proyek.',
-        ],
-      },
-      {
-        title: `4. Setelah ${activityNounCap}`,
-        items: [
-          'Setelah pekerjaan selesai, lakukan pembersihan akhir dan disinfeksi menyeluruh terhadap seluruh permukaan area pekerjaan.',
-          'Sebelum area dinyatakan siap difungsikan kembali, lakukan verifikasi dan validasi kelayakan fungsi serta pemeriksaan kebersihan oleh tim PPI dan tim teknik.',
-          'Pekerjaan dinyatakan selesai dan aman digunakan hanya setelah dilakukan serah terima formal serta dinyatakan bebas risiko infeksi oleh tim PPI.',
-        ],
-      },
-      {
-        title: '5. Dokumentasi dan Evaluasi',
-        items: [
-          'Seluruh proses pelaksanaan proyek dan tindakan pengendalian yang telah dilakukan harus didokumentasikan secara lengkap, termasuk catatan monitoring PPI.',
-          'Perlu dilakukan evaluasi pascapekerjaan untuk mengukur efektivitas pengendalian risiko serta menjadi bahan pembelajaran untuk kegiatan konstruksi berikutnya di rumah sakit.',
-        ],
-      },
-    ];
-
-    recSections.forEach((sec, sIdx) => {
+    rekomendasiSections.forEach((sec, sIdx) => {
       pushSubHeading(`rek-sec-${sIdx}-head`, sec.title);
       sec.items.forEach((it, idx) => {
         const isLast = idx === sec.items.length - 1;
@@ -1191,41 +820,24 @@ export default function IcraOfficialReport({
               style={BASE_TEXT_STYLE}
             >
               <span className="shrink-0 font-normal">•</span>
-              <span className="flex-1 text-justify font-normal">{it}</span>
+              <span className="flex-1 text-justify font-normal">{renderNarrativeText(it)}</span>
             </div>
           ),
         });
       });
     });
 
-    pushParagraph(
-      'rek-closing',
-      'Rekomendasi ini diharapkan dapat menjadi acuan dalam menjamin pelaksanaan pekerjaan yang aman, terkendali, dan sesuai standar keselamatan pasien serta mutu pelayanan rumah sakit.',
-      12,
-      false
-    );
+    pushParagraph('rek-closing', renderNarrativeText(rekomendasiClosing), 12, false);
 
     // ==================== 10. PENUTUP & PENGESAHAN ====================
     pushHeading('sec-penutup', 'PENUTUP', 'penutup');
-    pushParagraph(
-      'pen-1',
-      <>
-        Demikian laporan <em>Infection Control Risk Assessment</em> (ICRA) untuk kegiatan {projectProse} di {lokasiProse} ini disusun sebagai bentuk komitmen UOBK RSUD Al-Mulk Kota Sukabumi dalam menjaga keselamatan pasien, tenaga kesehatan, dan seluruh pihak yang berada di lingkungan rumah sakit selama berlangsungnya aktivitas konstruksi.
-      </>
-    );
-    pushParagraph(
-      'pen-2',
-      `Penyusunan laporan ini melibatkan berbagai pihak lintas unit, seperti tim pencegahan dan pengendalian infeksi (PPI), instalasi pemeliharaan sarana rumah sakit (IPSRS), tim K3RS, tim manajemen risiko, serta pihak pelaksana teknis (${kontraktorProse}). Setiap langkah yang tertuang dalam dokumen ini telah disesuaikan dengan pedoman pencegahan infeksi nasional dan standar akreditasi rumah sakit yang berlaku, guna memastikan bahwa pekerjaan konstruksi tidak menjadi sumber penyebaran infeksi nosokomial.`
-    );
-    pushParagraph(
-      'pen-3',
-      'Kami berharap seluruh pihak terkait dapat menjalankan peran dan tanggung jawabnya dengan baik sesuai dengan ketentuan dalam dokumen ini. Monitoring secara berkala oleh tim PPI serta komunikasi aktif antar unit menjadi kunci keberhasilan dalam menjaga lingkungan rumah sakit tetap aman dan bebas risiko infeksi selama dan setelah kegiatan berlangsung.'
-    );
-    pushParagraph(
-      'pen-4',
-      `Akhir kata, semoga kegiatan ${projectProse} ini dapat selesai tepat waktu, dengan hasil yang optimal, serta memberikan manfaat nyata dalam peningkatan kualitas pelayanan dan keselamatan pasien di UOBK RSUD Al-Mulk Kota Sukabumi.`,
-      14
-    );
+    penutupParagraphs.forEach((pText, idx) => {
+      pushParagraph(
+        `pen-${idx + 1}`,
+        renderNarrativeText(pText),
+        idx === penutupParagraphs.length - 1 ? 14 : 8
+      );
+    });
 
     // Signature Block — Arial 12pt, line-height 1.5, normal weight
     b.push({
@@ -1905,30 +1517,28 @@ export default function IcraOfficialReport({
   }, [
     project,
     projectTitleDisplay,
-    projectProse,
     lokasiTitleDisplay,
-    lokasiProse,
     lokasiLengkapTable,
-    lokasiLengkapProse,
-    areaTerdampakProse,
     kontraktorDisplay,
-    kontraktorProse,
     pjProyekDisplay,
     namaIpcn,
     ketuaPpiName,
     tglPengesahan,
     tipeCode,
     riskCode,
-    riskRoman,
-    riskLabelLower,
     kelasCode,
-    typeInfo,
-    classControl,
-    activityNoun,
-    activityNounCap,
+    latarBelakangParagraphs,
+    tujuanText,
+    ruangLingkupText,
+    matriksResultText,
     praActions,
     saatActions,
     pascaActions,
+    kesimpulanParagraphs,
+    rekomendasiIntro,
+    rekomendasiSections,
+    rekomendasiClosing,
+    penutupParagraphs,
     monitoringLogs,
     prePhotos,
     intraPhotos,
