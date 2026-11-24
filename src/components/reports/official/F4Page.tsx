@@ -46,6 +46,7 @@ export default function F4Page({
         width: isLandscape ? '330mm' : '215mm',
         minHeight: isLandscape ? '215mm' : '330mm',
         height: isLandscape ? '215mm' : '330mm',
+        padding: padding ? undefined : isCover ? '0mm' : '25mm',
         boxSizing: 'border-box',
         marginBottom: '36px',
         backgroundColor: '#ffffff',

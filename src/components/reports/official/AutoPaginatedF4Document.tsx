@@ -147,7 +147,8 @@ export default function AutoPaginatedF4Document({
     measuredNodes.forEach((node) => {
       const k = node.getAttribute('data-measure-block-key');
       if (k) {
-        heightMap.set(k, node.offsetHeight);
+        const rectH = node.getBoundingClientRect().height;
+        heightMap.set(k, Math.ceil(rectH > 0 ? rectH : node.offsetHeight));
       }
     });
 
@@ -316,6 +317,8 @@ export default function AutoPaginatedF4Document({
         >
           {/* Offscreen Measurement Sandbox (exact F4 Portrait printable width: 215mm - 50mm = 165mm) */}
           <div
+            data-pdf-page="true"
+            className="f4-page official-pdf-page"
             style={{
               width: '215mm',
               paddingLeft: '25mm',
