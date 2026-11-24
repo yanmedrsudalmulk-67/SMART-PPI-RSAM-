@@ -759,32 +759,49 @@ export default function IcraConstructionTab() {
               initial={{ opacity: 0, scale: 0.95, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 12 }}
-              className="w-full max-w-[1540px] max-h-[95vh] bg-[#121432] border border-indigo-500/40 rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+              className="relative w-full max-w-[1540px] max-h-[95vh] bg-[#141638] border border-[#2d3164] rounded-[32px] shadow-[-10px_-10px_35px_rgba(140,165,255,0.05),15px_20px_50px_rgba(0,0,0,0.85),inset_1px_1px_2px_rgba(255,255,255,0.15)] flex flex-col overflow-hidden"
             >
-              <div className="flex items-center justify-between px-6 py-4 bg-[#171a42] border-b border-indigo-900/50 shrink-0">
-                <div className="flex items-center gap-2.5">
-                  <HardHat className="w-5 h-5 text-amber-400" />
-                  <h3 className="text-sm sm:text-base font-black uppercase tracking-wide text-white">
-                    {editingProject ? 'Edit Pengkajian ICRA Konstruksi' : 'Pengkajian Baru ICRA Konstruksi & Izin Kerja PPI'}
-                  </h3>
+              {/* Top Bevel Highlight for Modal Dialog */}
+              <div className="absolute top-0 inset-x-12 h-[2px] bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none z-20" />
+
+              <div className="relative flex items-center justify-between px-6 py-4.5 bg-gradient-to-r from-[#181a44] via-[#1c1f4e] to-[#181a44] border-b border-[#2b2e5c] shrink-0 shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-2xl bg-[#12132e] border border-amber-500/30 text-amber-400 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.06)]">
+                    <HardHat className="w-5 h-5 text-amber-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-black uppercase tracking-wide text-white">
+                      {editingProject ? 'Edit Pengkajian ICRA Konstruksi' : 'Pengkajian Baru ICRA Konstruksi & Izin Kerja PPI'}
+                    </h3>
+                    <p className="text-[11px] text-slate-400">Formulir Pengkajian Risiko & Pengendalian Infeksi Konstruksi</p>
+                  </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsProjectModalOpen(false)}
-                  className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-white/10 cursor-pointer"
+                  className="p-2.5 text-slate-400 hover:text-white rounded-xl bg-[#12132e] border border-white/5 hover:border-white/20 shadow-[-2px_-2px_6px_rgba(140,165,255,0.05),3px_3px_8px_rgba(0,0,0,0.5)] cursor-pointer transition-all active:scale-95"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               <form onSubmit={handleSaveProject} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
-                {/* Bagian 1: Identitas Proyek */}
-                <div className="space-y-4">
-                  <h4 className="text-xs font-black uppercase tracking-widest text-cyan-400 border-b border-indigo-900/50 pb-1.5">
-                    1. Identitas Proyek Renovasi / Konstruksi
-                  </h4>
+                {/* Bagian 1: Identitas Proyek - Neumorphic Card */}
+                <div className="relative bg-[#18193b] rounded-[28px] p-5 sm:p-6 border border-[#2b2d56] shadow-[-6px_-6px_20px_rgba(140,165,255,0.05),10px_12px_32px_rgba(0,0,0,0.65),inset_1px_1px_1.5px_rgba(255,255,255,0.15),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] overflow-hidden space-y-4">
+                  {/* Top Bevel Highlight */}
+                  <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+                  <div className="flex items-center gap-2 border-b border-indigo-900/40 pb-2.5">
+                    <span className="px-3 py-1 rounded-full bg-[#12132e] border border-cyan-500/30 text-[10px] font-black uppercase tracking-wider text-cyan-400 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6)]">
+                      BAGIAN 1
+                    </span>
+                    <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-white">
+                      Identitas Proyek Renovasi / Konstruksi
+                    </h4>
+                  </div>
+
                   <div>
-                    <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1">
+                    <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1.5">
                       Nama Proyek / Uraian Pekerjaan *
                     </label>
                     <input
@@ -793,25 +810,25 @@ export default function IcraConstructionTab() {
                       value={projForm.nama_proyek}
                       onChange={(e) => setProjForm((p) => ({ ...p, nama_proyek: e.target.value }))}
                       placeholder="Contoh: Pembongkaran & Penggantian Plafon Ruang Ranap Usman"
-                      className="w-full bg-[#0d0f26] border border-indigo-800/60 text-white text-sm rounded-xl px-3 py-2 outline-none focus:border-cyan-400"
+                      className="w-full bg-[#12132e] border border-black/40 text-white text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-400/60 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] transition-all placeholder-slate-500"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1">Lokasi / Unit Kerja</label>
+                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1.5">Lokasi / Unit Kerja</label>
                       <select
                         value={projForm.lokasi_area}
                         onChange={(e) => setProjForm((p) => ({ ...p, lokasi_area: e.target.value }))}
-                        className="w-full bg-[#0d0f26] border border-indigo-800/60 text-white text-sm rounded-xl px-3 py-2 outline-none focus:border-cyan-400"
+                        className="w-full bg-[#12132e] border border-black/40 text-white text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-400/60 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] transition-all cursor-pointer"
                       >
                         {ICRA_UNITS_LIST.map((u) => (
-                          <option key={u} value={u}>{u}</option>
+                          <option key={u} value={u} className="bg-[#18193b] text-white">{u}</option>
                         ))}
                       </select>
                     </div>
                     <div className="sm:col-span-2">
-                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1">
+                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1.5">
                         Area Terdampak Sekitar (Atas / Bawah / Samping)
                       </label>
                       <input
@@ -819,62 +836,70 @@ export default function IcraConstructionTab() {
                         value={projForm.area_terdampak}
                         onChange={(e) => setProjForm((p) => ({ ...p, area_terdampak: e.target.value }))}
                         placeholder="Contoh: Koridor Ranap, Ruang Tindakan, dan Nurse Station"
-                        className="w-full bg-[#0d0f26] border border-indigo-800/60 text-white text-sm rounded-xl px-3 py-2 outline-none focus:border-cyan-400"
+                        className="w-full bg-[#12132e] border border-black/40 text-white text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-400/60 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] transition-all placeholder-slate-500"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                     <div>
-                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1">Pelaksana / Kontraktor</label>
+                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1.5">Pelaksana / Kontraktor</label>
                       <input
                         type="text"
                         value={projForm.kontraktor_pelaksana}
                         onChange={(e) => setProjForm((p) => ({ ...p, kontraktor_pelaksana: e.target.value }))}
-                        className="w-full bg-[#0d0f26] border border-indigo-800/60 text-white text-sm rounded-xl px-3 py-2 outline-none focus:border-cyan-400"
+                        className="w-full bg-[#12132e] border border-black/40 text-white text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-400/60 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] transition-all placeholder-slate-500"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1">Penanggung Jawab Proyek</label>
+                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1.5">Penanggung Jawab Proyek</label>
                       <input
                         type="text"
                         value={projForm.pj_proyek}
                         onChange={(e) => setProjForm((p) => ({ ...p, pj_proyek: e.target.value }))}
                         placeholder="Nama pengawas / teknisi"
-                        className="w-full bg-[#0d0f26] border border-indigo-800/60 text-white text-sm rounded-xl px-3 py-2 outline-none focus:border-cyan-400"
+                        className="w-full bg-[#12132e] border border-black/40 text-white text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-400/60 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] transition-all placeholder-slate-500"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1">Tanggal Mulai</label>
+                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1.5">Tanggal Mulai</label>
                       <input
                         type="date"
                         value={projForm.tgl_mulai}
                         onChange={(e) => setProjForm((p) => ({ ...p, tgl_mulai: e.target.value }))}
-                        className="w-full bg-[#0d0f26] border border-indigo-800/60 text-white text-sm rounded-xl px-3 py-2 outline-none focus:border-cyan-400"
+                        className="w-full bg-[#12132e] border border-black/40 text-white text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-400/60 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] transition-all"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1">Estimasi Selesai</label>
+                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1.5">Estimasi Selesai</label>
                       <input
                         type="date"
                         value={projForm.tgl_selesai_estimasi}
                         onChange={(e) => setProjForm((p) => ({ ...p, tgl_selesai_estimasi: e.target.value }))}
-                        className="w-full bg-[#0d0f26] border border-indigo-800/60 text-white text-sm rounded-xl px-3 py-2 outline-none focus:border-cyan-400"
+                        className="w-full bg-[#12132e] border border-black/40 text-white text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-400/60 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] transition-all"
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* Bagian 2: Penentuan Matriks Otomatis Tipe A-D & Kelompok Risiko 1-4 */}
-                <div className="space-y-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-900/50 pb-2">
-                    <h4 className="text-xs font-black uppercase tracking-widest text-amber-400">
-                      2. Matriks Penilaian Risiko (Standar Permenkes No. 27 Tahun 2017)
-                    </h4>
+                {/* Bagian 2: Penentuan Matriks Otomatis Tipe A-D & Kelompok Risiko 1-4 - Neumorphic Card */}
+                <div className="relative bg-[#18193b] rounded-[28px] p-5 sm:p-6 border border-[#2b2d56] shadow-[-6px_-6px_20px_rgba(140,165,255,0.05),10px_12px_32px_rgba(0,0,0,0.65),inset_1px_1px_1.5px_rgba(255,255,255,0.15),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] overflow-hidden space-y-5">
+                  {/* Top Bevel Highlight */}
+                  <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-900/40 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="px-3 py-1 rounded-full bg-[#12132e] border border-amber-500/30 text-[10px] font-black uppercase tracking-wider text-amber-400 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6)]">
+                        BAGIAN 2
+                      </span>
+                      <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-white">
+                        2. Matriks Penilaian Risiko
+                      </h4>
+                    </div>
                     <button
                       type="button"
                       onClick={() => setShowGuideline((v) => !v)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-300 hover:text-white text-[11px] font-bold transition-all cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#141535] hover:bg-[#1a1b42] border border-[#2c2f5d] text-indigo-300 hover:text-white text-[11px] font-bold shadow-[-2px_-2px_6px_rgba(140,165,255,0.04),3px_4px_8px_rgba(0,0,0,0.5)] transition-all cursor-pointer active:scale-95"
                     >
                       <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
                       <span>{showGuideline ? 'Tutup Panduan PMK 27' : 'Pelajari Alur & Definisi ICRA (PMK 27/2017)'}</span>
@@ -946,17 +971,16 @@ export default function IcraConstructionTab() {
                     )}
                   </AnimatePresence>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {/* Pilihan Tipe Konstruksi (Tabel 10) */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    {/* Pilihan Tipe Konstruksi */}
                     <div className="space-y-2.5">
                       <div className="flex items-center justify-between">
                         <label className="block text-[11px] font-black uppercase tracking-wider text-amber-400">
-                          Langkah A: Tipe Proyek Konstruksi (Tabel 10)
+                          Langkah A: Tipe Proyek Konstruksi
                         </label>
-                        <span className="text-[10px] text-slate-400">Pilih 1 tipe pekerjaan</span>
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="space-y-2.5">
                         {CONSTRUCTION_TYPES.map((t) => {
                           const selected = projForm.tipe_konstruksi === t.code;
                           return (
@@ -964,17 +988,18 @@ export default function IcraConstructionTab() {
                               key={t.code}
                               type="button"
                               onClick={() => handleMatrixChange(projForm.kelompok_risiko, t.code)}
-                              className={`w-full text-left p-3 rounded-2xl border transition-all cursor-pointer relative ${
+                              className={`w-full text-left p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer relative overflow-hidden ${
                                 selected
-                                  ? 'bg-amber-500/15 border-amber-400 ring-2 ring-amber-400/40 text-white shadow-lg'
-                                  : 'bg-[#0c0e24] border-indigo-900/40 text-slate-300 hover:border-indigo-600/60 hover:bg-[#101332]'
+                                  ? 'bg-gradient-to-b from-[#2a2448] to-[#1c1836] border-amber-400 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.7),inset_-1px_-1px_2px_rgba(255,255,255,0.1),0_0_16px_rgba(251,191,36,0.2)] ring-1 ring-amber-400/60 text-white'
+                                  : 'bg-[#141535] border-[#292c57] text-slate-300 hover:border-indigo-500/50 hover:bg-[#18193d] shadow-[-3px_-3px_10px_rgba(140,165,255,0.03),4px_6px_14px_rgba(0,0,0,0.5),inset_1px_1px_1px_rgba(255,255,255,0.08)]'
                               }`}
                             >
-                              <div className="flex items-start justify-between gap-2 mb-1">
+                              <div className="absolute top-0 inset-x-4 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none" />
+                              <div className="flex items-start justify-between gap-2 mb-1.5">
                                 <div className="flex items-center gap-2">
                                   <span
                                     className={`inline-flex items-center justify-center px-2 py-0.5 rounded-lg text-[10px] font-black ${
-                                      selected ? 'bg-amber-400 text-slate-950' : 'bg-indigo-900/60 text-amber-300'
+                                      selected ? 'bg-amber-400 text-slate-950 shadow-sm' : 'bg-[#1b1d42] border border-amber-500/30 text-amber-300'
                                     }`}
                                   >
                                     TIPE {t.code}
@@ -1002,16 +1027,16 @@ export default function IcraConstructionTab() {
                       </div>
                     </div>
 
-                    {/* Pilihan Kelompok Risiko Pasien (Tabel 11) */}
+                    {/* Pilihan Kelompok Risiko Pasien */}
                     <div className="space-y-2.5">
                       <div className="flex items-center justify-between">
                         <label className="block text-[11px] font-black uppercase tracking-wider text-cyan-400">
-                          Langkah B: Kelompok Pasien Berisiko (Tabel 11)
+                          Langkah B: Kelompok Pasien Berisiko
                         </label>
-                        <span className="text-[10px] text-slate-400">Area terdampak</span>
+                        <span className="text-[10px] text-slate-400 font-medium">Area terdampak</span>
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="space-y-2.5">
                         {PATIENT_RISK_GROUPS.map((r) => {
                           const selected = projForm.kelompok_risiko === r.code;
                           const badgeColor =
@@ -1028,13 +1053,14 @@ export default function IcraConstructionTab() {
                               key={r.code}
                               type="button"
                               onClick={() => handleMatrixChange(r.code, projForm.tipe_konstruksi)}
-                              className={`w-full text-left p-3 rounded-2xl border transition-all cursor-pointer relative ${
+                              className={`w-full text-left p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer relative overflow-hidden ${
                                 selected
-                                  ? 'bg-cyan-500/15 border-cyan-400 ring-2 ring-cyan-400/40 text-white shadow-lg'
-                                  : 'bg-[#0c0e24] border-indigo-900/40 text-slate-300 hover:border-indigo-600/60 hover:bg-[#101332]'
+                                  ? 'bg-gradient-to-b from-[#182a4d] to-[#111e3b] border-cyan-400 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.7),inset_-1px_-1px_2px_rgba(255,255,255,0.1),0_0_16px_rgba(34,211,238,0.2)] ring-1 ring-cyan-400/60 text-white'
+                                  : 'bg-[#141535] border-[#292c57] text-slate-300 hover:border-indigo-500/50 hover:bg-[#18193d] shadow-[-3px_-3px_10px_rgba(140,165,255,0.03),4px_6px_14px_rgba(0,0,0,0.5),inset_1px_1px_1px_rgba(255,255,255,0.08)]'
                               }`}
                             >
-                              <div className="flex items-start justify-between gap-2 mb-1">
+                              <div className="absolute top-0 inset-x-4 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none" />
+                              <div className="flex items-start justify-between gap-2 mb-1.5">
                                 <div className="flex items-center gap-2">
                                   <span
                                     className={`inline-flex items-center justify-center px-2 py-0.5 rounded-lg text-[10px] font-black border ${badgeColor}`}
@@ -1056,8 +1082,8 @@ export default function IcraConstructionTab() {
                     </div>
                   </div>
 
-                  {/* Catatan Penting Permenkes 27/2017 (Tabel 11 Note) */}
-                  <div className="p-3 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 flex items-start gap-2.5 text-xs text-cyan-200">
+                  {/* Catatan Penting Permenkes 27/2017 */}
+                  <div className="p-3.5 rounded-2xl bg-[#12132e] border border-cyan-500/30 flex items-start gap-2.5 text-xs text-cyan-200 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
                     <Info className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
                     <div className="leading-snug">
                       <strong className="text-cyan-300">Catatan Penting Permenkes No. 27 Tahun 2017:</strong>{' '}
@@ -1065,8 +1091,8 @@ export default function IcraConstructionTab() {
                     </div>
                   </div>
 
-                  {/* Matriks Visual & Penetapan Kelas (Tabel 12) */}
-                  <div className="rounded-2xl bg-[#0b0d21] border border-indigo-800/50 p-4 space-y-3.5">
+                  {/* Matriks Visual & Penetapan Kelas (Tabel 12) - Recessed Neumorphic Box */}
+                  <div className="relative rounded-[24px] bg-[#12132e] border border-black/40 p-4 sm:p-5 space-y-4 shadow-[inset_2px_2px_8px_rgba(0,0,0,0.85),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
                     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-indigo-900/40 pb-3">
                       <div>
                         <span className="text-[11px] font-bold uppercase text-slate-400">
@@ -1076,23 +1102,18 @@ export default function IcraConstructionTab() {
                         <div className="text-lg font-black text-white mt-0.5 flex flex-wrap items-center gap-2">
                           <span>Penetapan Izin Kerja:</span>
                           <span
-                            className={`px-2.5 py-0.5 rounded-xl border text-base font-black ${
+                            className={`px-3 py-1 rounded-xl border text-sm font-black shadow-md ${
                               projForm.kelas_tindakan === 'IV'
-                                ? 'bg-rose-500/20 text-rose-300 border-rose-500/50'
+                                ? 'bg-rose-500/25 text-rose-300 border-rose-500/60 shadow-[0_0_12px_rgba(244,63,94,0.3)]'
                                 : projForm.kelas_tindakan === 'III'
-                                ? 'bg-orange-500/20 text-orange-300 border-orange-500/50'
+                                ? 'bg-orange-500/25 text-orange-300 border-orange-500/60 shadow-[0_0_12px_rgba(249,115,22,0.3)]'
                                 : projForm.kelas_tindakan === 'II'
-                                ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
-                                : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
+                                ? 'bg-amber-500/25 text-amber-300 border-amber-500/60 shadow-[0_0_12px_rgba(245,158,11,0.3)]'
+                                : 'bg-emerald-500/25 text-emerald-300 border-emerald-500/60 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
                             }`}
                           >
                             KELAS {projForm.kelas_tindakan}
                           </span>
-                          {calcResult.isAmbiguousIIIorIV && (
-                            <span className="text-[11px] font-semibold text-cyan-300">
-                              (Matriks III/IV: IPCN dapat menetapkan Kelas III atau IV sesuai kondisi lapangan)
-                            </span>
-                          )}
                         </div>
                       </div>
 
@@ -1103,10 +1124,10 @@ export default function IcraConstructionTab() {
                             key={cls}
                             type="button"
                             onClick={() => handleOverrideClass(cls)}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-black border cursor-pointer transition-all ${
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-black border cursor-pointer transition-all active:scale-95 ${
                               projForm.kelas_tindakan === cls
-                                ? 'bg-amber-500 text-slate-950 border-amber-300 shadow-md ring-2 ring-amber-400/50'
-                                : 'bg-[#141738] text-slate-300 border-indigo-800 hover:text-white hover:bg-indigo-900/50'
+                                ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-300 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.3),2px_3px_8px_rgba(0,0,0,0.5)] ring-2 ring-amber-400/50'
+                                : 'bg-[#18193d] text-slate-300 border-[#2b2d5a] shadow-[-2px_-2px_6px_rgba(140,165,255,0.04),3px_4px_8px_rgba(0,0,0,0.5)] hover:text-white hover:bg-[#1f214d]'
                             }`}
                           >
                             {cls}
@@ -1117,19 +1138,18 @@ export default function IcraConstructionTab() {
 
                     {/* Tabel 12: Kelas Kewaspadaan */}
                     <div>
-                      <div className="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5 flex items-center justify-between">
-                        <span>Tabel 12. Kelas Kewaspadaan (Klik sel matriks untuk memilih langsung)</span>
-                        <span className="text-[10px] text-slate-400 lowercase">permenkes no. 27 tahun 2017</span>
+                      <div className="text-[11px] font-black text-slate-300 uppercase tracking-wider mb-2 flex items-center justify-between">
+                        <span>Tabel 12. Kelas Kewaspadaan</span>
                       </div>
-                      <div className="overflow-x-auto rounded-xl border border-indigo-900/60">
+                      <div className="overflow-x-auto rounded-2xl border border-[#2b2e5c] shadow-[inset_1.5px_1.5px_4px_rgba(0,0,0,0.6)]">
                         <table className="w-full text-center border-collapse text-[11px]">
                           <thead>
-                            <tr className="bg-[#141738] text-indigo-200 font-extrabold uppercase">
-                              <th className="border border-indigo-900/60 p-2 text-left w-1/4">Kelompok Pasien Berisiko</th>
-                              <th className="border border-indigo-900/60 p-2">Tipe A</th>
-                              <th className="border border-indigo-900/60 p-2">Tipe B</th>
-                              <th className="border border-indigo-900/60 p-2">Tipe C</th>
-                              <th className="border border-indigo-900/60 p-2">Tipe D</th>
+                            <tr className="bg-[#181a42] text-indigo-200 font-extrabold uppercase">
+                              <th className="border border-indigo-900/60 p-2.5 text-left w-1/4">Kelompok Pasien Berisiko</th>
+                              <th className="border border-indigo-900/60 p-2.5">Tipe A</th>
+                              <th className="border border-indigo-900/60 p-2.5">Tipe B</th>
+                              <th className="border border-indigo-900/60 p-2.5">Tipe C</th>
+                              <th className="border border-indigo-900/60 p-2.5">Tipe D</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1137,7 +1157,7 @@ export default function IcraConstructionTab() {
                               const rInfo = PATIENT_RISK_GROUPS.find((r) => r.code === rg);
                               return (
                                 <tr key={rg} className="hover:bg-indigo-950/30 transition-colors">
-                                  <td className="border border-indigo-900/60 p-2 text-left font-bold text-slate-200 bg-[#0e112d]">
+                                  <td className="border border-indigo-900/60 p-2.5 text-left font-bold text-slate-200 bg-[#141638]">
                                     <span className="font-extrabold text-white">{rInfo?.riskLabel}</span>
                                     <span className="text-[10px] text-slate-400 ml-1.5">(Kelompok {rg})</span>
                                   </td>
@@ -1160,7 +1180,7 @@ export default function IcraConstructionTab() {
                                       <td
                                         key={tp}
                                         onClick={() => handleMatrixChange(rg, tp)}
-                                        className={`border border-indigo-900/60 p-2 cursor-pointer font-bold transition-all ${
+                                        className={`border border-indigo-900/60 p-2.5 cursor-pointer font-bold transition-all ${
                                           active
                                             ? 'bg-amber-400 text-slate-950 font-black ring-2 ring-white shadow-lg'
                                             : cellBg
@@ -1177,19 +1197,19 @@ export default function IcraConstructionTab() {
                         </table>
                       </div>
 
-                      {/* Keterangan Kelas (Sesuai Gambar 3) */}
-                      <div className="flex flex-wrap items-center gap-2 mt-2.5 text-[10.5px]">
+                      {/* Keterangan Kelas */}
+                      <div className="flex flex-wrap items-center gap-2 mt-3 text-[10.5px]">
                         <span className="text-slate-400 font-bold mr-1">Keterangan Kelas:</span>
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-black">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#141638] border border-emerald-500/30 text-emerald-300 font-black shadow-[-2px_-2px_5px_rgba(140,165,255,0.03),2px_3px_6px_rgba(0,0,0,0.5)]">
                           <span className="w-2 h-2 rounded-full bg-emerald-400"></span> = Kelas I
                         </span>
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 font-black">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#141638] border border-amber-500/30 text-amber-300 font-black shadow-[-2px_-2px_5px_rgba(140,165,255,0.03),2px_3px_6px_rgba(0,0,0,0.5)]">
                           <span className="w-2 h-2 rounded-full bg-amber-400"></span> = Kelas II
                         </span>
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-500/15 border border-orange-500/30 text-orange-300 font-black">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#141638] border border-orange-500/30 text-orange-300 font-black shadow-[-2px_-2px_5px_rgba(140,165,255,0.03),2px_3px_6px_rgba(0,0,0,0.5)]">
                           <span className="w-2 h-2 rounded-full bg-orange-400"></span> = Kelas III
                         </span>
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-300 font-black">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#141638] border border-rose-500/30 text-rose-300 font-black shadow-[-2px_-2px_5px_rgba(140,165,255,0.03),2px_3px_6px_rgba(0,0,0,0.5)]">
                           <span className="w-2 h-2 rounded-full bg-rose-400"></span> = Kelas IV
                         </span>
                       </div>
@@ -1197,7 +1217,7 @@ export default function IcraConstructionTab() {
                   </div>
                 </div>
 
-                {/* Bagian 3: Checklist Pengendalian Infeksi (Tabel 13 PMK 27/2017) */}
+                {/* Bagian 3: Checklist Pengendalian Infeksi - Neumorphic Card */}
                 {(() => {
                   const duringList = projForm.checklist_pengendalian
                     .map((chk, originalIdx) => ({ chk, originalIdx }))
@@ -1208,49 +1228,58 @@ export default function IcraConstructionTab() {
                     .filter(({ chk }) => chk.label.includes('[Setelah Konstruksi]'));
 
                   return (
-                    <div className="space-y-4">
-                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-900/50 pb-2">
+                    <div className="relative bg-[#18193b] rounded-[28px] p-5 sm:p-6 border border-[#2b2d56] shadow-[-6px_-6px_20px_rgba(140,165,255,0.05),10px_12px_32px_rgba(0,0,0,0.65),inset_1px_1px_1.5px_rgba(255,255,255,0.15),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] overflow-hidden space-y-5">
+                      {/* Top Bevel Highlight */}
+                      <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-900/40 pb-2.5">
                         <div>
-                          <h4 className="text-xs sm:text-sm font-black uppercase tracking-widest text-emerald-400">
-                            3. Intervensi PPI Berdasarkan Kelas (Tabel 13 Permenkes No. 27 Tahun 2017)
-                          </h4>
-                          <p className="text-[11px] sm:text-xs text-slate-300 mt-0.5">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="px-3 py-1 rounded-full bg-[#12132e] border border-emerald-500/30 text-[10px] font-black uppercase tracking-wider text-emerald-400 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6)]">
+                              BAGIAN 3
+                            </span>
+                            <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-white">
+                              3. Intervensi PPI Berdasarkan Kelas
+                            </h4>
+                          </div>
+                          <p className="text-[11px] sm:text-xs text-slate-300">
                             {CONSTRUCTION_CLASS_CONTROLS[projForm.kelas_tindakan].title}:{' '}
                             {CONSTRUCTION_CLASS_CONTROLS[projForm.kelas_tindakan].summary}
                           </p>
                         </div>
-                        <span className="text-[11px] px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold">
+                        <span className="text-[11px] px-3.5 py-1.5 rounded-full bg-[#12132e] text-emerald-300 border border-emerald-500/40 font-bold shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6)]">
                           {projForm.checklist_pengendalian.filter((c) => c.checked).length} /{' '}
                           {projForm.checklist_pengendalian.length} Wajib Dipenuhi
                         </span>
                       </div>
 
                       {/* Tabel 2 Kolom Bersebelahan: Selama Proyek Konstruksi & Setelah Proyek Konstruksi */}
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
                         {/* Kolom Kiri: Selama Proyek Konstruksi */}
-                        <div className="rounded-2xl border border-amber-500/40 bg-[#0c0f2b] overflow-hidden flex flex-col shadow-lg">
-                          <div className="bg-gradient-to-r from-amber-600/30 via-amber-500/20 to-transparent border-b border-amber-500/40 px-4 py-3 flex items-center justify-between">
+                        <div className="relative rounded-2xl border border-amber-500/35 bg-[#12132e] overflow-hidden flex flex-col shadow-[-4px_-4px_14px_rgba(140,165,255,0.03),6px_8px_20px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.08)]">
+                          <div className="absolute top-0 inset-x-6 h-[1px] bg-gradient-to-r from-transparent via-amber-400/30 to-transparent pointer-events-none" />
+                          <div className="bg-gradient-to-r from-amber-600/25 via-amber-500/15 to-transparent border-b border-amber-500/30 px-4 py-3 flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <HardHat className="w-4 h-4 text-amber-400 shrink-0" />
                               <span className="font-black text-xs uppercase tracking-wider text-amber-300">
                                 Selama Proyek Konstruksi
                               </span>
                             </div>
-                            <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-200 border border-amber-500/30">
+                            <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#16173a] text-amber-200 border border-amber-500/30 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.6)]">
                               {duringList.filter((x) => x.chk.checked).length} / {duringList.length} Poin Sesuai
                             </span>
                           </div>
 
-                          <div className="p-3 space-y-2.5">
+                          <div className="p-3.5 space-y-2.5">
                             {duringList.map(({ chk, originalIdx }, subIdx) => {
                               const cleanText = chk.label.replace(/^\[(Selama|Setelah) Konstruksi\]\s*/i, '');
                               return (
                                 <label
                                   key={chk.id || originalIdx}
-                                  className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer text-xs ${
+                                  className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all duration-200 cursor-pointer text-xs ${
                                     chk.checked
-                                      ? 'bg-amber-500/10 border-amber-500/50 text-slate-100 shadow-sm'
-                                      : 'bg-[#090b1e] border-indigo-900/40 text-slate-400 hover:border-indigo-700/50 hover:bg-[#0d1028]'
+                                      ? 'bg-[#1c1d3c] border-amber-500/50 text-slate-100 shadow-[inset_1.5px_1.5px_3px_rgba(255,255,255,0.08),2px_3px_8px_rgba(0,0,0,0.5)]'
+                                      : 'bg-[#151635] border-[#25284f] text-slate-400 hover:border-amber-600/40 hover:bg-[#18193d] shadow-[-2px_-2px_6px_rgba(140,165,255,0.02),3px_4px_10px_rgba(0,0,0,0.5)]'
                                   }`}
                                 >
                                   <input
@@ -1283,29 +1312,30 @@ export default function IcraConstructionTab() {
                         </div>
 
                         {/* Kolom Kanan: Setelah Proyek Konstruksi */}
-                        <div className="rounded-2xl border border-cyan-500/40 bg-[#0c0f2b] overflow-hidden flex flex-col shadow-lg">
-                          <div className="bg-gradient-to-r from-cyan-600/30 via-cyan-500/20 to-transparent border-b border-cyan-500/40 px-4 py-3 flex items-center justify-between">
+                        <div className="relative rounded-2xl border border-cyan-500/35 bg-[#12132e] overflow-hidden flex flex-col shadow-[-4px_-4px_14px_rgba(140,165,255,0.03),6px_8px_20px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.08)]">
+                          <div className="absolute top-0 inset-x-6 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent pointer-events-none" />
+                          <div className="bg-gradient-to-r from-cyan-600/25 via-cyan-500/15 to-transparent border-b border-cyan-500/30 px-4 py-3 flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
                               <span className="font-black text-xs uppercase tracking-wider text-cyan-300">
                                 Setelah Proyek Konstruksi
                               </span>
                             </div>
-                            <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-200 border border-cyan-500/30">
+                            <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#16173a] text-cyan-200 border border-cyan-500/30 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.6)]">
                               {afterList.filter((x) => x.chk.checked).length} / {afterList.length} Poin Sesuai
                             </span>
                           </div>
 
-                          <div className="p-3 space-y-2.5">
+                          <div className="p-3.5 space-y-2.5">
                             {afterList.map(({ chk, originalIdx }, subIdx) => {
                               const cleanText = chk.label.replace(/^\[(Selama|Setelah) Konstruksi\]\s*/i, '');
                               return (
                                 <label
                                   key={chk.id || originalIdx}
-                                  className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer text-xs ${
+                                  className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all duration-200 cursor-pointer text-xs ${
                                     chk.checked
-                                      ? 'bg-cyan-500/10 border-cyan-500/50 text-slate-100 shadow-sm'
-                                      : 'bg-[#090b1e] border-indigo-900/40 text-slate-400 hover:border-indigo-700/50 hover:bg-[#0d1028]'
+                                      ? 'bg-[#15233e] border-cyan-500/50 text-slate-100 shadow-[inset_1.5px_1.5px_3px_rgba(255,255,255,0.08),2px_3px_8px_rgba(0,0,0,0.5)]'
+                                      : 'bg-[#151635] border-[#25284f] text-slate-400 hover:border-cyan-600/40 hover:bg-[#18193d] shadow-[-2px_-2px_6px_rgba(140,165,255,0.02),3px_4px_10px_rgba(0,0,0,0.5)]'
                                   }`}
                                 >
                                   <input
@@ -1339,7 +1369,7 @@ export default function IcraConstructionTab() {
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1">
+                        <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1.5">
                           Instruksi Khusus / Catatan Tambahan IPCN
                         </label>
                         <textarea
@@ -1347,61 +1377,69 @@ export default function IcraConstructionTab() {
                           value={projForm.persyaratan_khusus}
                           onChange={(e) => setProjForm((p) => ({ ...p, persyaratan_khusus: e.target.value }))}
                           placeholder="Contoh: Pekerjaan pengeboran hanya diperbolehkan pukul 14.00 - 17.00 WIB..."
-                          className="w-full bg-[#0d0f26] border border-indigo-800/60 text-white text-sm rounded-xl px-3 py-2 outline-none focus:border-cyan-400"
+                          className="w-full bg-[#12132e] border border-black/40 text-white text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-400/60 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] transition-all placeholder-slate-500"
                         />
                       </div>
                     </div>
                   );
                 })()}
 
-                {/* Bagian 4: Status, Dokumentasi Foto & TTD Digital */}
-                <div className="space-y-4">
-                  <h4 className="text-xs font-black uppercase tracking-widest text-indigo-300 border-b border-indigo-900/50 pb-1.5">
-                    4. Status Proyek, Dokumentasi Kondisi & Pengesahan
-                  </h4>
+                {/* Bagian 4: Status, Dokumentasi Foto & TTD Digital - Neumorphic Card */}
+                <div className="relative bg-[#18193b] rounded-[28px] p-5 sm:p-6 border border-[#2b2d56] shadow-[-6px_-6px_20px_rgba(140,165,255,0.05),10px_12px_32px_rgba(0,0,0,0.65),inset_1px_1px_1.5px_rgba(255,255,255,0.15),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.5)] overflow-hidden space-y-5">
+                  {/* Top Bevel Highlight */}
+                  <div className="absolute top-0 inset-x-8 h-[1.5px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+                  <div className="flex items-center gap-2 border-b border-indigo-900/40 pb-2.5">
+                    <span className="px-3 py-1 rounded-full bg-[#12132e] border border-indigo-500/30 text-[10px] font-black uppercase tracking-wider text-indigo-300 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.6)]">
+                      BAGIAN 4
+                    </span>
+                    <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-white">
+                      Status Proyek, Dokumentasi Kondisi & Pengesahan
+                    </h4>
+                  </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1">Status Proyek</label>
+                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1.5">Status Proyek</label>
                       <select
                         value={projForm.status_proyek}
                         onChange={(e) => setProjForm((p) => ({ ...p, status_proyek: e.target.value as any }))}
-                        className="w-full bg-[#0d0f26] border border-indigo-800/60 text-white text-sm rounded-xl px-3 py-2 outline-none"
+                        className="w-full bg-[#12132e] border border-black/40 text-white text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-400/60 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] transition-all cursor-pointer"
                       >
-                        <option value="Menunggu Izin">Menunggu Izin</option>
-                        <option value="Aktif Berjalan">Aktif Berjalan</option>
-                        <option value="Selesai">Selesai (Lulus Inspeksi)</option>
+                        <option value="Menunggu Izin" className="bg-[#18193b] text-white">Menunggu Izin</option>
+                        <option value="Aktif Berjalan" className="bg-[#18193b] text-white">Aktif Berjalan</option>
+                        <option value="Selesai" className="bg-[#18193b] text-white">Selesai (Lulus Inspeksi)</option>
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1">Nama IPCN</label>
+                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1.5">Nama IPCN</label>
                       <input
                         type="text"
                         value={projForm.nama_ipcn}
                         onChange={(e) => setProjForm((p) => ({ ...p, nama_ipcn: e.target.value }))}
-                        className="w-full bg-[#0d0f26] border border-indigo-800/60 text-white text-sm rounded-xl px-3 py-2 outline-none"
+                        className="w-full bg-[#12132e] border border-black/40 text-white text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-400/60 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] transition-all placeholder-slate-500"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1">Mengetahui Tim K3RS</label>
+                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1.5">Mengetahui Tim K3RS</label>
                       <input
                         type="text"
                         value={projForm.nama_k3rs}
                         onChange={(e) => setProjForm((p) => ({ ...p, nama_k3rs: e.target.value }))}
-                        className="w-full bg-[#0d0f26] border border-indigo-800/60 text-white text-sm rounded-xl px-3 py-2 outline-none"
+                        className="w-full bg-[#12132e] border border-black/40 text-white text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-400/60 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] transition-all placeholder-slate-500"
                       />
                     </div>
                   </div>
 
                   {/* Foto Sebelum & Sesudah */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="rounded-2xl bg-[#0d0f26] border border-indigo-900/40 p-4">
+                    <div className="rounded-2xl bg-[#12132e] border border-black/40 p-4 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
                       <span className="text-[11px] font-black uppercase text-amber-300 block mb-2">
                         Foto Sebelum Pekerjaan / Kondisi Awal
                       </span>
                       <DocumentationUploader images={fotoSebelum} setImages={setFotoSebelum} />
                     </div>
-                    <div className="rounded-2xl bg-[#0d0f26] border border-indigo-900/40 p-4">
+                    <div className="rounded-2xl bg-[#12132e] border border-black/40 p-4 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
                       <span className="text-[11px] font-black uppercase text-emerald-300 block mb-2">
                         Foto Sesudah Selesai / Terminal Cleaning
                       </span>
@@ -1411,7 +1449,7 @@ export default function IcraConstructionTab() {
 
                   {/* Tanda Tangan Digital */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="rounded-2xl bg-[#0d0f26] border border-indigo-900/40 p-3 space-y-2">
+                    <div className="rounded-2xl bg-[#12132e] border border-black/40 p-4 space-y-2 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
                       <div className="flex items-center justify-between">
                         <span className="text-[11px] font-bold uppercase text-slate-300">TTD Pelaksana / IPSRS (Opsional)</span>
                         <button
@@ -1420,12 +1458,12 @@ export default function IcraConstructionTab() {
                             sigPelaksanaRef.current?.clear();
                             setExistingTtdPelaksana(null);
                           }}
-                          className="text-[11px] text-rose-400 hover:text-rose-300 flex items-center gap-1 cursor-pointer"
+                          className="text-[11px] text-rose-400 hover:text-rose-300 flex items-center gap-1 cursor-pointer transition-colors"
                         >
                           <Eraser className="w-3.5 h-3.5" /> Hapus
                         </button>
                       </div>
-                      <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden h-28 flex items-center justify-center relative">
+                      <div className="bg-[#0b0c20] rounded-xl border border-indigo-950/80 overflow-hidden h-28 flex items-center justify-center relative shadow-[inset_2px_2px_6px_rgba(0,0,0,0.9)]">
                         <SignatureCanvas
                           ref={sigPelaksanaRef}
                           penColor="#38bdf8"
@@ -1439,7 +1477,7 @@ export default function IcraConstructionTab() {
                       </div>
                     </div>
 
-                    <div className="rounded-2xl bg-[#0d0f26] border border-indigo-900/40 p-3 space-y-2">
+                    <div className="rounded-2xl bg-[#12132e] border border-black/40 p-4 space-y-2 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
                       <div className="flex items-center justify-between">
                         <span className="text-[11px] font-bold uppercase text-slate-300">TTD IPCN / Tim PPI (Opsional)</span>
                         <button
@@ -1448,12 +1486,12 @@ export default function IcraConstructionTab() {
                             sigIpcnRef.current?.clear();
                             setExistingTtdIpcn(null);
                           }}
-                          className="text-[11px] text-rose-400 hover:text-rose-300 flex items-center gap-1 cursor-pointer"
+                          className="text-[11px] text-rose-400 hover:text-rose-300 flex items-center gap-1 cursor-pointer transition-colors"
                         >
                           <Eraser className="w-3.5 h-3.5" /> Hapus
                         </button>
                       </div>
-                      <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden h-28 flex items-center justify-center relative">
+                      <div className="bg-[#0b0c20] rounded-xl border border-indigo-950/80 overflow-hidden h-28 flex items-center justify-center relative shadow-[inset_2px_2px_6px_rgba(0,0,0,0.9)]">
                         <SignatureCanvas
                           ref={sigIpcnRef}
                           penColor="#38bdf8"
@@ -1469,21 +1507,23 @@ export default function IcraConstructionTab() {
                   </div>
                 </div>
 
+                {/* Footer Modal: Tombol Aksi */}
                 <div className="flex items-center justify-end gap-3 pt-4 border-t border-indigo-900/50">
                   <button
                     type="button"
                     onClick={() => setIsProjectModalOpen(false)}
-                    className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold cursor-pointer"
+                    className="px-6 py-3 rounded-2xl bg-[#141535] hover:bg-[#1a1b42] text-slate-300 hover:text-white text-xs font-black uppercase tracking-wider border border-[#2c2f5d] shadow-[-3px_-3px_10px_rgba(140,165,255,0.03),4px_6px_14px_rgba(0,0,0,0.5)] active:scale-95 transition-all cursor-pointer"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
                     disabled={saving}
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-lg cursor-pointer disabled:opacity-60"
+                    className="relative group px-8 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-2.5 shadow-[-4px_-4px_14px_rgba(255,255,255,0.12),6px_8px_20px_rgba(0,0,0,0.6),inset_0_1px_1.5px_rgba(255,255,255,0.4)] hover:shadow-[-5px_-5px_18px_rgba(255,255,255,0.18),8px_10px_25px_rgba(0,0,0,0.7),inset_0_1px_2px_rgba(255,255,255,0.5)] active:shadow-[inset_2px_2px_6px_rgba(0,0,0,0.7)] active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60 overflow-hidden"
                   >
-                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    <span>{editingProject ? 'Simpan Perubahan Proyek' : 'Simpan & Terbitkan Izin PPI'}</span>
+                    <div className="absolute top-0 inset-x-4 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none" />
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin text-slate-950" /> : <Save className="w-4 h-4 text-slate-950" />}
+                    <span className="font-black tracking-widest text-slate-950">SIMPAN DATA</span>
                   </button>
                 </div>
               </form>
