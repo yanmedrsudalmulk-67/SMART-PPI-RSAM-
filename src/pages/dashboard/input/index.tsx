@@ -33,15 +33,15 @@ const STATIC_MODULES = [
     desc: "Audit Kewaspadaan Standar, Transmisi & Monitoring lainnya",
     icon: Shield,
     colorTheme: {
-      bgActive: "bg-gradient-to-r from-[#2563EB] to-[#1D4ED8]",
+      bgActive: "bg-gradient-to-r from-[#2563EB] via-[#3B82F6] to-[#1D4ED8]",
       textActive: "text-blue-400",
-      shadowActive: "shadow-[0_12px_24px_-6px_rgba(37,99,235,0.45)]",
+      shadowActive: "shadow-[0_12px_28px_rgba(37,99,235,0.45)]",
       btnHoverBg: "group-hover:bg-[#2563EB]",
       watermark: "text-blue-500/10",
       progressColor: "bg-gradient-to-r from-blue-500 to-indigo-500",
-      mainIconBox: "bg-gradient-to-br from-blue-500/25 via-[#232752] to-[#141634] border border-blue-400/30 text-blue-400 shadow-[-3px_-3px_8px_rgba(100,150,255,0.15),5px_5px_14px_rgba(0,0,0,0.55),inset_1px_1px_1.5px_rgba(255,255,255,0.2)]",
+      mainIconBox: "bg-gradient-to-br from-[#3b82f6] via-[#2563eb] to-[#1d4ed8] text-white border border-blue-300/40 shadow-[-3px_-3px_10px_rgba(140,180,255,0.25),8px_10px_24px_rgba(0,0,0,0.65),inset_0_1.5px_2px_rgba(255,255,255,0.5),inset_0_-2px_4px_rgba(0,0,0,0.35)]",
       colBorder: "border-blue-400/20 group-hover:border-blue-400/35",
-      colIconBox: "bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-400/25 text-blue-400 shadow-[inset_1px_1px_1px_rgba(255,255,255,0.15),2px_2px_5px_rgba(0,0,0,0.35)]"
+      colIconBox: "bg-gradient-to-br from-blue-500/25 to-blue-600/15 border border-blue-400/30 text-blue-400 shadow-[inset_1px_1px_1.5px_rgba(255,255,255,0.2),2px_3px_6px_rgba(0,0,0,0.4)]"
     },
     href: "/dashboard/input/isolasi",
     standard: 85,
@@ -53,15 +53,15 @@ const STATIC_MODULES = [
     desc: "Input kasus Phlebitis, ISK, IDO, VAP",
     icon: Activity,
     colorTheme: {
-      bgActive: "bg-gradient-to-r from-[#10B981] to-[#059669]",
+      bgActive: "bg-gradient-to-r from-[#059669] via-[#10B981] to-[#047857]",
       textActive: "text-emerald-400",
-      shadowActive: "shadow-[0_12px_24px_-6px_rgba(16,185,129,0.45)]",
+      shadowActive: "shadow-[0_12px_28px_rgba(16,185,129,0.45)]",
       btnHoverBg: "group-hover:bg-[#10B981]",
       watermark: "text-emerald-500/10",
       progressColor: "bg-gradient-to-r from-emerald-500 to-teal-500",
-      mainIconBox: "bg-gradient-to-br from-emerald-500/25 via-[#1d2d46] to-[#141634] border border-emerald-400/30 text-emerald-400 shadow-[-3px_-3px_8px_rgba(100,255,180,0.15),5px_5px_14px_rgba(0,0,0,0.55),inset_1px_1px_1.5px_rgba(255,255,255,0.2)]",
+      mainIconBox: "bg-gradient-to-br from-[#10b981] via-[#059669] to-[#047857] text-white border border-emerald-300/40 shadow-[-3px_-3px_10px_rgba(110,255,200,0.25),8px_10px_24px_rgba(0,0,0,0.65),inset_0_1.5px_2px_rgba(255,255,255,0.5),inset_0_-2px_4px_rgba(0,0,0,0.35)]",
       colBorder: "border-emerald-400/20 group-hover:border-emerald-400/35",
-      colIconBox: "bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-400/25 text-emerald-400 shadow-[inset_1px_1px_1px_rgba(255,255,255,0.15),2px_2px_5px_rgba(0,0,0,0.35)]"
+      colIconBox: "bg-gradient-to-br from-emerald-500/25 to-emerald-600/15 border border-emerald-400/30 text-emerald-400 shadow-[inset_1px_1px_1.5px_rgba(255,255,255,0.2),2px_3px_6px_rgba(0,0,0,0.4)]"
     },
     href: "/dashboard/input/surveilans",
     standard: 1.5,
@@ -73,15 +73,15 @@ const STATIC_MODULES = [
     desc: "Monitoring kepatuhan bundle HAIs",
     icon: Package,
     colorTheme: {
-      bgActive: "bg-gradient-to-r from-[#7C3AED] to-[#6D28D9]",
+      bgActive: "bg-gradient-to-r from-[#7C3AED] via-[#8B5CF6] to-[#6D28D9]",
       textActive: "text-purple-400",
-      shadowActive: "shadow-[0_12px_24px_-6px_rgba(124,58,237,0.45)]",
+      shadowActive: "shadow-[0_12px_28px_rgba(124,58,237,0.45)]",
       btnHoverBg: "group-hover:bg-[#7C3AED]",
       watermark: "text-purple-500/10",
       progressColor: "bg-gradient-to-r from-purple-500 to-indigo-500",
-      mainIconBox: "bg-gradient-to-br from-purple-500/25 via-[#2b224e] to-[#141634] border border-purple-400/30 text-purple-400 shadow-[-3px_-3px_8px_rgba(180,120,255,0.15),5px_5px_14px_rgba(0,0,0,0.55),inset_1px_1px_1.5px_rgba(255,255,255,0.2)]",
+      mainIconBox: "bg-gradient-to-br from-[#8b5cf6] via-[#7c3aed] to-[#6d28d9] text-white border border-purple-300/40 shadow-[-3px_-3px_10px_rgba(180,140,255,0.25),8px_10px_24px_rgba(0,0,0,0.65),inset_0_1.5px_2px_rgba(255,255,255,0.5),inset_0_-2px_4px_rgba(0,0,0,0.35)]",
       colBorder: "border-purple-400/20 group-hover:border-purple-400/35",
-      colIconBox: "bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-400/25 text-purple-400 shadow-[inset_1px_1px_1px_rgba(255,255,255,0.15),2px_2px_5px_rgba(0,0,0,0.35)]"
+      colIconBox: "bg-gradient-to-br from-purple-500/25 to-purple-600/15 border border-purple-400/30 text-purple-400 shadow-[inset_1px_1px_1.5px_rgba(255,255,255,0.2),2px_3px_6px_rgba(0,0,0,0.4)]"
     },
     href: "/dashboard/input/bundles",
     standard: 90,
@@ -93,15 +93,15 @@ const STATIC_MODULES = [
     desc: "Input dokumentasi Pendidikan & Pelatihan Staff",
     icon: GraduationCap,
     colorTheme: {
-      bgActive: "bg-gradient-to-r from-[#F59E0B] to-[#D97706]",
+      bgActive: "bg-gradient-to-r from-[#D97706] via-[#F59E0B] to-[#B45309]",
       textActive: "text-amber-400",
-      shadowActive: "shadow-[0_12px_24px_-6px_rgba(245,158,11,0.45)]",
+      shadowActive: "shadow-[0_12px_28px_rgba(245,158,11,0.45)]",
       btnHoverBg: "group-hover:bg-[#F59E0B]",
       watermark: "text-amber-500/10",
       progressColor: "bg-gradient-to-r from-amber-500 to-orange-500",
-      mainIconBox: "bg-gradient-to-br from-amber-500/25 via-[#34293f] to-[#141634] border border-amber-400/30 text-amber-400 shadow-[-3px_-3px_8px_rgba(255,200,100,0.15),5px_5px_14px_rgba(0,0,0,0.55),inset_1px_1px_1.5px_rgba(255,255,255,0.2)]",
+      mainIconBox: "bg-gradient-to-br from-[#f59e0b] via-[#d97706] to-[#b45309] text-white border border-amber-300/40 shadow-[-3px_-3px_10px_rgba(255,200,100,0.25),8px_10px_24px_rgba(0,0,0,0.65),inset_0_1.5px_2px_rgba(255,255,255,0.5),inset_0_-2px_4px_rgba(0,0,0,0.35)]",
       colBorder: "border-amber-400/20 group-hover:border-amber-400/35",
-      colIconBox: "bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-400/25 text-amber-400 shadow-[inset_1px_1px_1px_rgba(255,255,255,0.15),2px_2px_5px_rgba(0,0,0,0.35)]"
+      colIconBox: "bg-gradient-to-br from-amber-500/25 to-amber-600/15 border border-amber-400/30 text-amber-400 shadow-[inset_1px_1px_1.5px_rgba(255,255,255,0.2),2px_3px_6px_rgba(0,0,0,0.4)]"
     },
     href: "/dashboard/input/diklat",
     standard: 80,
@@ -724,7 +724,7 @@ export default function InputIndexPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-7 lg:gap-9">
         {modules.map((mod) => (
           <div
             key={mod.id}
@@ -733,32 +733,35 @@ export default function InputIndexPage() {
             <Link
               href={mod.href}
               prefetch={false}
-              className="relative group p-6 sm:p-7 rounded-[30px] bg-gradient-to-br from-[#1e1c3e] via-[#161733] to-[#0f1026] border border-indigo-300/15 flex flex-col overflow-hidden shadow-[-6px_-6px_20px_rgba(130,145,230,0.06),12px_12px_28px_rgba(0,0,0,0.65),inset_1px_1px_1.5px_rgba(255,255,255,0.12),inset_-1px_-1px_1.5px_rgba(0,0,0,0.35)] hover:-translate-y-1 hover:border-indigo-300/30 hover:shadow-[-8px_-8px_24px_rgba(130,145,230,0.1),16px_16px_36px_rgba(0,0,0,0.75)] transition-all duration-200 ease-out transform-gpu w-full"
+              className="relative group p-6 sm:p-8 rounded-[36px] bg-gradient-to-b from-[#1d2042] via-[#171936] to-[#12132a] border border-[#2e3362]/70 flex flex-col overflow-hidden shadow-[-10px_-10px_28px_rgba(140,165,255,0.06),18px_24px_50px_rgba(0,0,0,0.82),inset_1px_1.5px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.5)] hover:-translate-y-1.5 hover:border-[#3d4482]/90 hover:shadow-[-12px_-12px_32px_rgba(140,165,255,0.1),22px_28px_60px_rgba(0,0,0,0.9),inset_1px_1.5px_2px_rgba(255,255,255,0.28)] transition-all duration-300 ease-out transform-gpu w-full"
             >
-              {/* Top Neumorphic Specular Highlight Bevel */}
-              <div className="absolute top-0 inset-x-8 h-[1px] bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
+              {/* Top Neumorphic Specular Highlight Bevel Line */}
+              <div className="absolute top-0 inset-x-12 h-[1.5px] bg-gradient-to-r from-transparent via-white/35 to-transparent pointer-events-none rounded-t-full" />
 
-              {/* Hardware-friendly corner radial glow without heavy blur filters */}
+              {/* Hardware-friendly ambient radial corner glow */}
               <div
-                className="absolute top-0 right-0 w-48 h-48 pointer-events-none rounded-bl-full opacity-15 transition-opacity duration-300 group-hover:opacity-30 bg-[radial-gradient(ellipse_at_top_right,rgba(99,102,241,0.25),transparent_70%)]"
+                className="absolute -top-12 -right-12 w-56 h-56 pointer-events-none rounded-full opacity-25 transition-opacity duration-300 group-hover:opacity-40 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.35),transparent_70%)]"
               />
 
               <div className="flex justify-between items-start gap-4 mb-6 relative z-10 flex-1">
-                <div className="flex gap-4 flex-1 min-w-0 items-center">
-                  {/* Neumorphic Extruded Convex Icon Box */}
+                <div className="flex gap-4 sm:gap-5 flex-1 min-w-0 items-center">
+                  {/* 3D Convex Pill/Squircle Icon Box */}
                   <div
-                    className={`w-14 h-14 rounded-[20px] flex flex-shrink-0 items-center justify-center ${mod.colorTheme.mainIconBox}`}
+                    className={`relative w-15 h-15 rounded-[22px] flex flex-shrink-0 items-center justify-center overflow-hidden ${mod.colorTheme.mainIconBox}`}
                   >
+                    {/* Inner 3D specular highlight arc */}
+                    <div className="absolute top-1 inset-x-2.5 h-[1.5px] bg-gradient-to-r from-transparent via-white/70 to-transparent rounded-full pointer-events-none" />
+                    <div className="absolute bottom-0 inset-x-0 h-2 bg-black/25 rounded-b-[22px] pointer-events-none" />
                     <mod.icon
-                      className="w-7 h-7"
-                      strokeWidth={2.3}
+                      className="w-7 h-7 relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
+                      strokeWidth={2.4}
                     />
                   </div>
                   <div className="pt-0.5 flex-1 min-w-0">
-                    <h2 className="text-[clamp(18px,2vw,24px)] font-bold text-white leading-tight mb-1 group-hover:text-indigo-200 transition-colors break-words whitespace-normal drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]">
+                    <h2 className="text-[clamp(19px,2vw,24px)] font-black text-white leading-tight mb-1 group-hover:text-indigo-200 transition-colors break-words whitespace-normal drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] tracking-tight">
                       {mod.title}
                     </h2>
-                    <p className="text-[clamp(12px,1.2vw,14px)] text-slate-300/80 font-medium break-words whitespace-normal leading-snug">
+                    <p className="text-[clamp(12px,1.2vw,14px)] text-slate-300/85 font-medium break-words whitespace-normal leading-snug">
                       {mod.desc}
                     </p>
                   </div>
@@ -766,72 +769,79 @@ export default function InputIndexPage() {
               </div>
 
               {/* Stats Block */}
-              <div className="flex justify-between items-end mb-5">
+              <div className="flex justify-between items-end mb-5 relative z-10">
                 <div>
                   <div
-                    className={`text-4xl sm:text-5xl font-black ${mod.colorTheme.textActive} leading-none mb-1 drop-shadow-[0_3px_8px_rgba(0,0,0,0.5)]`}
+                    className={`text-4xl sm:text-5xl font-black ${mod.colorTheme.textActive} leading-none mb-1.5 drop-shadow-[0_4px_10px_rgba(0,0,0,0.6)]`}
                   >
                     {mod.computed.mainCount}
                   </div>
                   <div
-                    className={`text-[10px] sm:text-xs font-bold uppercase tracking-wider ${mod.colorTheme.textActive}`}
+                    className={`text-[10px] sm:text-xs font-black uppercase tracking-wider ${mod.colorTheme.textActive}`}
                   >
                     {mod.computed.mainLabel}
                   </div>
                 </div>
-                {/* Neumorphic Raised Status Badge */}
+                {/* 3D Tactile Recessed Status Badge */}
                 <div
-                  className={`inline-flex max-w-fit px-3.5 py-1.5 rounded-full items-center justify-center gap-1.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.12em] bg-gradient-to-br from-[#1e1c3c] to-[#111226] border shadow-[-2px_-2px_6px_rgba(255,255,255,0.05),3px_3px_8px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.1)] ${mod.passStandard ? "border-emerald-500/40 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.25)]" : "border-red-500/40 text-red-400 shadow-[0_0_12px_rgba(239,68,68,0.25)]"}`}
+                  className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-[0.14em] bg-gradient-to-b from-[#14162e] to-[#0e1022] border shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.85),inset_-1px_-1px_2px_rgba(255,255,255,0.08),0_4px_10px_rgba(0,0,0,0.4)] ${mod.passStandard ? "border-emerald-500/40 text-emerald-400" : "border-rose-500/40 text-rose-400"}`}
                 >
-                  {mod.computed.standardLabel || (mod.passStandard ? "DI ATAS STANDAR" : "DI BAWAH STANDAR")}
+                  <span
+                    className={`w-2 h-2 rounded-full ${mod.passStandard ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse" : "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.9)] animate-pulse"}`}
+                  />
+                  <span>
+                    {mod.computed.standardLabel || (mod.passStandard ? "SESUAI STANDAR" : "DI BAWAH STANDAR")}
+                  </span>
                 </div>
               </div>
 
-              {/* Progress Bar Container - Neumorphic Sunken Groove */}
+              {/* Progress Bar Container - 3D Sunken Groove */}
               <div className="mb-6 relative z-10 w-full shrink-0">
-                <div className="flex justify-between items-center mb-1.5 px-0.5 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                <div className="flex justify-between items-center mb-1.5 px-0.5 text-[10px] font-black uppercase text-slate-400 tracking-wider">
                   <span>Progress Realtime</span>
-                  <span className="text-slate-300 font-semibold">
+                  <span className="text-slate-200 font-bold">
                     {Number(mod.computed.progress).toFixed(2)}%
                   </span>
                 </div>
-                <div className="h-2.5 w-full bg-[#0d0f22] rounded-full overflow-hidden p-[1px] border border-white/5 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.85)]">
+                <div className="h-3 w-full bg-[#0a0c1a] rounded-full overflow-hidden p-[2.5px] border border-black/60 shadow-[inset_2.5px_2.5px_6px_rgba(0,0,0,0.95),inset_-1px_-1px_2px_rgba(255,255,255,0.06)]">
                   <div
-                    className={`h-full rounded-full transition-[width] duration-700 ease-out shadow-[0_0_10px_currentColor] ${mod.computed.progressColor}`}
+                    className={`h-full rounded-full transition-[width] duration-700 ease-out shadow-[0_0_12px_currentColor,inset_0_1px_1.5px_rgba(255,255,255,0.45)] ${mod.computed.progressColor}`}
                     style={{ width: `${Math.max(mod.computed.progress, 2)}%` }}
                   />
                 </div>
               </div>
 
-              {/* Stats Bar - 3 Neumorphic Inset Wells */}
-              <div className="grid grid-cols-3 gap-2.5 sm:gap-3 mb-6">
+              {/* Stats Bar - 3 Deep Sunken Wells */}
+              <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5 mb-6 relative z-10">
                 {mod.computed.subStats.map((stat, idx) => (
                   <div
                     key={idx}
-                    className="flex flex-col items-center bg-gradient-to-b from-[#13152c] to-[#181a38] rounded-2xl py-3 px-2 border border-indigo-300/10 shadow-[inset_1.5px_1.5px_4px_rgba(0,0,0,0.6),inset_-1px_-1px_3px_rgba(140,150,230,0.04)] group-hover:border-indigo-300/25 transition-colors duration-200"
+                    className="flex flex-col items-center bg-gradient-to-b from-[#101227] via-[#131530] to-[#171938] rounded-[22px] py-3.5 px-2 border border-black/50 shadow-[inset_2px_2.5px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2.5px_rgba(255,255,255,0.06),0_2px_4px_rgba(0,0,0,0.3)] group-hover:border-indigo-400/25 transition-all duration-200"
                   >
                     <div
-                      className={`w-8 h-8 flex items-center justify-center rounded-xl ${stat.iconColor} mb-2 shadow-[inset_1px_1px_1px_rgba(255,255,255,0.15),2px_2px_6px_rgba(0,0,0,0.4)]`}
+                      className={`w-8 h-8 flex items-center justify-center rounded-xl ${stat.iconColor} mb-2 shadow-[-2px_-2px_6px_rgba(140,165,255,0.08),3px_4px_8px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.3)]`}
                     >
                       <stat.icon className="w-4 h-4" />
                     </div>
-                    <span className="text-[10px] text-slate-400 font-medium">
+                    <span className="text-[10px] text-slate-400 font-semibold tracking-wide text-center">
                       {stat.label}
                     </span>
-                    <span className="text-sm sm:text-base font-bold text-white tracking-tight">
+                    <span className="text-sm sm:text-base font-black text-white tracking-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
                       {stat.value}
                     </span>
                   </div>
                 ))}
               </div>
 
-              {/* Action Button - Neumorphic Tactile CTA */}
-              <div className="mt-0 pt-2 shrink-0">
+              {/* Action Button - 3D Tactile CTA Pill */}
+              <div className="mt-0 pt-1 shrink-0 relative z-10">
                 <div
-                  className={`w-full py-3.5 rounded-full flex items-center justify-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.2em] transition-all duration-200 ${mod.colorTheme.bgActive} text-white shadow-[-3px_-3px_8px_rgba(130,150,255,0.2),6px_8px_20px_rgba(0,0,0,0.5),inset_1px_1px_2px_rgba(255,255,255,0.35),inset_-1px_-1px_2px_rgba(0,0,0,0.3)] hover:brightness-110 active:translate-y-0.5 ${mod.colorTheme.shadowActive}`}
+                  className={`relative overflow-hidden w-full py-4 rounded-[22px] flex items-center justify-center gap-2.5 text-xs font-black uppercase tracking-[0.2em] transition-all duration-200 text-white ${mod.colorTheme.bgActive} shadow-[-3px_-3px_10px_rgba(255,255,255,0.2),8px_12px_26px_rgba(0,0,0,0.65),inset_0_2px_2.5px_rgba(255,255,255,0.5),inset_0_-2.5px_5px_rgba(0,0,0,0.4)] hover:brightness-110 active:translate-y-1 active:shadow-[inset_2px_3px_6px_rgba(0,0,0,0.8)] ${mod.colorTheme.shadowActive}`}
                 >
+                  {/* Top specular highlight line on button */}
+                  <div className="absolute top-0 inset-x-8 h-[1px] bg-white/40 pointer-events-none rounded-t-full" />
                   <span>INPUT SEKARANG</span>
-                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1.5" strokeWidth={2.5} />
                 </div>
               </div>
             </Link>
