@@ -224,16 +224,23 @@ export default function IcraConstructionPermitModal({
                     Persyaratan Pengendalian Infeksi Wajib Dipatuhi ({classInfo.title})
                   </div>
                   <div className="p-2.5 space-y-1.5 text-[8.2pt] leading-snug">
-                    {project.checklist_pengendalian.map((chk, idx) => (
-                      <div key={chk.id || idx} className="flex items-start gap-2">
-                        <span className="inline-flex items-center justify-center w-4 h-4 border border-black font-black text-[8pt] shrink-0 mt-0.5">
-                          {chk.checked ? '✓' : ''}
-                        </span>
-                        <span className="flex-1 text-justify">
-                          <strong>{idx + 1}.</strong> {chk.label}
-                        </span>
-                      </div>
-                    ))}
+                    {project.checklist_pengendalian.map((chk, idx) => {
+                      const isDuring = chk.label.includes('[Selama Konstruksi]');
+                      const isAfter = chk.label.includes('[Setelah Konstruksi]');
+                      const cleanLabel = chk.label.replace(/^\[(Selama|Setelah) Konstruksi\]\s*/i, '');
+                      return (
+                        <div key={chk.id || idx} className="flex items-start gap-2">
+                          <span className="inline-flex items-center justify-center w-4 h-4 border border-black font-black text-[8pt] shrink-0 mt-0.5">
+                            {chk.checked ? '✓' : ''}
+                          </span>
+                          <span className="flex-1 text-justify">
+                            {isDuring && <strong className="text-slate-900 mr-1.5">[Selama Proyek]</strong>}
+                            {isAfter && <strong className="text-slate-900 mr-1.5">[Setelah Proyek]</strong>}
+                            <span>{cleanLabel}</span>
+                          </span>
+                        </div>
+                      );
+                    })}
                     {project.persyaratan_khusus && (
                       <div className="mt-2 pt-1.5 border-t border-dashed border-slate-400 text-[8pt]">
                         <strong>Instruksi Tambahan IPCN:</strong> {project.persyaratan_khusus}

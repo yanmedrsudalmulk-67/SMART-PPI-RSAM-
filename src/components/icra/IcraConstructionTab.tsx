@@ -23,6 +23,8 @@ import {
   FileSpreadsheet,
   Eraser,
   ShieldAlert,
+  Info,
+  BookOpen,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { uploadImagesToSupabase } from '@/lib/upload';
@@ -38,6 +40,8 @@ import {
   ICRA_UNITS_LIST,
   CONSTRUCTION_TYPES,
   PATIENT_RISK_GROUPS,
+  PATIENT_RISK_NOTE,
+  ICRA_CONSTRUCTION_GUIDELINE,
   CONSTRUCTION_MATRIX,
   CONSTRUCTION_CLASS_CONTROLS,
   getConstructionClass,
@@ -157,6 +161,7 @@ export default function IcraConstructionTab() {
   const [fotoSesudah, setFotoSesudah] = useState<DocImage[]>([]);
   const [existingTtdIpcn, setExistingTtdIpcn] = useState<string | null>(null);
   const [existingTtdPelaksana, setExistingTtdPelaksana] = useState<string | null>(null);
+  const [showGuideline, setShowGuideline] = useState(false);
 
   // Monitoring Form State
   const [monForm, setMonForm] = useState({
@@ -862,81 +867,237 @@ export default function IcraConstructionTab() {
 
                 {/* Bagian 2: Penentuan Matriks Otomatis Tipe A-D & Kelompok Risiko 1-4 */}
                 <div className="space-y-4">
-                  <h4 className="text-xs font-black uppercase tracking-widest text-amber-400 border-b border-indigo-900/50 pb-1.5">
-                    2. Matriks Penilaian Risiko (Standar PMK 27 Tahun 2017)
-                  </h4>
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-900/50 pb-2">
+                    <h4 className="text-xs font-black uppercase tracking-widest text-amber-400">
+                      2. Matriks Penilaian Risiko (Standar Permenkes No. 27 Tahun 2017)
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={() => setShowGuideline((v) => !v)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-300 hover:text-white text-[11px] font-bold transition-all cursor-pointer"
+                    >
+                      <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>{showGuideline ? 'Tutup Panduan PMK 27' : 'Pelajari Alur & Definisi ICRA (PMK 27/2017)'}</span>
+                    </button>
+                  </div>
+
+                  {/* Panduan Alur ICRA 6 Langkah & Definisi Permenkes 27/2017 */}
+                  <AnimatePresence>
+                    {showGuideline && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="rounded-2xl bg-gradient-to-br from-indigo-950/80 via-[#0e1234] to-[#0c0e29] border border-cyan-500/30 p-4 space-y-4 text-xs shadow-xl overflow-hidden"
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="bg-[#131742]/70 rounded-xl p-3 border border-indigo-800/40">
+                            <div className="flex items-center gap-2 font-black text-cyan-300 text-xs uppercase mb-1">
+                              <Info className="w-4 h-4 text-cyan-400 shrink-0" />
+                              Pengertian ICRA Konstruksi
+                            </div>
+                            <p className="text-slate-300 text-[11px] leading-relaxed text-justify">
+                              {ICRA_CONSTRUCTION_GUIDELINE.definition}
+                            </p>
+                          </div>
+
+                          <div className="bg-[#131742]/70 rounded-xl p-3 border border-indigo-800/40">
+                            <div className="font-black text-amber-300 text-xs uppercase mb-1.5">
+                              Tujuan Utama Pengkajian ICRA:
+                            </div>
+                            <ul className="space-y-1 text-[11px] text-slate-300">
+                              {ICRA_CONSTRUCTION_GUIDELINE.purposes.map((p, idx) => (
+                                <li key={idx} className="flex items-start gap-1.5">
+                                  <span className="text-emerald-400 font-bold shrink-0">✓</span>
+                                  <span>{p}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+
+                        {/* Alur 6 Langkah */}
+                        <div className="bg-[#131742]/60 rounded-xl p-3 border border-indigo-800/40">
+                          <div className="font-black text-indigo-300 text-[11px] uppercase tracking-wider mb-2">
+                            Alur 6 Langkah ICRA Berdasarkan Permenkes No. 27 Tahun 2017:
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                            {ICRA_CONSTRUCTION_GUIDELINE.workflowSteps.map((st) => (
+                              <div
+                                key={st.step}
+                                className="bg-[#0b0d22] border border-indigo-700/40 rounded-xl p-2 flex flex-col items-center text-center justify-between"
+                              >
+                                <div className="w-6 h-6 rounded-full bg-cyan-500/20 border border-cyan-400 text-cyan-300 font-black text-xs flex items-center justify-center mb-1">
+                                  {st.step}
+                                </div>
+                                <div className="text-[10.5px] font-medium text-slate-200 leading-snug">
+                                  {st.label}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-[11px]">
+                          <Info className="w-4 h-4 text-amber-400 shrink-0" />
+                          <span>ICRA penting dilakukan sebelum proyek dimulai, terutama bila area pelayanan pasien tetap beroperasi.</span>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {/* Pilihan Tipe Konstruksi */}
-                    <div className="space-y-2">
-                      <label className="block text-[11px] font-bold uppercase text-slate-300">
-                        Langkah A: Pilih Tipe Aktivitas Konstruksi
-                      </label>
-                      {CONSTRUCTION_TYPES.map((t) => {
-                        const selected = projForm.tipe_konstruksi === t.code;
-                        return (
-                          <button
-                            key={t.code}
-                            type="button"
-                            onClick={() => handleMatrixChange(projForm.kelompok_risiko, t.code)}
-                            className={`w-full text-left p-3 rounded-2xl border transition-all cursor-pointer ${
-                              selected
-                                ? 'bg-amber-500/15 border-amber-400 text-white shadow-lg'
-                                : 'bg-[#0c0e24] border-indigo-900/40 text-slate-300 hover:border-indigo-600/60'
-                            }`}
-                          >
-                            <div className="font-black text-xs text-amber-300">{t.title}</div>
-                            <div className="text-[11px] text-slate-300 mt-0.5 leading-snug">{t.examples}</div>
-                          </button>
-                        );
-                      })}
+                    {/* Pilihan Tipe Konstruksi (Tabel 10) */}
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-[11px] font-black uppercase tracking-wider text-amber-400">
+                          Langkah A: Tipe Proyek Konstruksi (Tabel 10)
+                        </label>
+                        <span className="text-[10px] text-slate-400">Pilih 1 tipe pekerjaan</span>
+                      </div>
+
+                      <div className="space-y-2">
+                        {CONSTRUCTION_TYPES.map((t) => {
+                          const selected = projForm.tipe_konstruksi === t.code;
+                          return (
+                            <button
+                              key={t.code}
+                              type="button"
+                              onClick={() => handleMatrixChange(projForm.kelompok_risiko, t.code)}
+                              className={`w-full text-left p-3 rounded-2xl border transition-all cursor-pointer relative ${
+                                selected
+                                  ? 'bg-amber-500/15 border-amber-400 ring-2 ring-amber-400/40 text-white shadow-lg'
+                                  : 'bg-[#0c0e24] border-indigo-900/40 text-slate-300 hover:border-indigo-600/60 hover:bg-[#101332]'
+                              }`}
+                            >
+                              <div className="flex items-start justify-between gap-2 mb-1">
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className={`inline-flex items-center justify-center px-2 py-0.5 rounded-lg text-[10px] font-black ${
+                                      selected ? 'bg-amber-400 text-slate-950' : 'bg-indigo-900/60 text-amber-300'
+                                    }`}
+                                  >
+                                    TIPE {t.code}
+                                  </span>
+                                  <span className="font-bold text-xs text-white">
+                                    {t.title.split(': ')[1] || t.title}
+                                  </span>
+                                </div>
+                                {selected && <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />}
+                              </div>
+                              <div className="text-[11px] text-slate-300 font-medium mb-1.5 leading-snug">
+                                {t.criteria}
+                              </div>
+                              <ul className="space-y-0.5 pl-3 border-l-2 border-indigo-800/40">
+                                {t.items.map((it, idx) => (
+                                  <li key={idx} className="text-[10.5px] text-slate-300 flex items-start gap-1">
+                                    <span className="text-amber-400/80">•</span>
+                                    <span>{it}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
 
-                    {/* Pilihan Kelompok Risiko Pasien */}
-                    <div className="space-y-2">
-                      <label className="block text-[11px] font-bold uppercase text-slate-300">
-                        Langkah B: Pilih Kelompok Risiko Pasien di Area Terdampak
-                      </label>
-                      {PATIENT_RISK_GROUPS.map((r) => {
-                        const selected = projForm.kelompok_risiko === r.code;
-                        return (
-                          <button
-                            key={r.code}
-                            type="button"
-                            onClick={() => handleMatrixChange(r.code, projForm.tipe_konstruksi)}
-                            className={`w-full text-left p-3 rounded-2xl border transition-all cursor-pointer ${
-                              selected
-                                ? 'bg-cyan-500/15 border-cyan-400 text-white shadow-lg'
-                                : 'bg-[#0c0e24] border-indigo-900/40 text-slate-300 hover:border-indigo-600/60'
-                            }`}
-                          >
-                            <div className="font-black text-xs text-cyan-300">{r.title}</div>
-                            <div className="text-[11px] text-slate-300 mt-0.5 leading-snug">{r.areas}</div>
-                          </button>
-                        );
-                      })}
+                    {/* Pilihan Kelompok Risiko Pasien (Tabel 11) */}
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-[11px] font-black uppercase tracking-wider text-cyan-400">
+                          Langkah B: Kelompok Pasien Berisiko (Tabel 11)
+                        </label>
+                        <span className="text-[10px] text-slate-400">Area terdampak</span>
+                      </div>
+
+                      <div className="space-y-2">
+                        {PATIENT_RISK_GROUPS.map((r) => {
+                          const selected = projForm.kelompok_risiko === r.code;
+                          const badgeColor =
+                            r.code === '4'
+                              ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                              : r.code === '3'
+                              ? 'bg-orange-500/20 text-orange-300 border-orange-500/40'
+                              : r.code === '2'
+                              ? 'bg-sky-500/20 text-sky-300 border-sky-500/40'
+                              : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+
+                          return (
+                            <button
+                              key={r.code}
+                              type="button"
+                              onClick={() => handleMatrixChange(r.code, projForm.tipe_konstruksi)}
+                              className={`w-full text-left p-3 rounded-2xl border transition-all cursor-pointer relative ${
+                                selected
+                                  ? 'bg-cyan-500/15 border-cyan-400 ring-2 ring-cyan-400/40 text-white shadow-lg'
+                                  : 'bg-[#0c0e24] border-indigo-900/40 text-slate-300 hover:border-indigo-600/60 hover:bg-[#101332]'
+                              }`}
+                            >
+                              <div className="flex items-start justify-between gap-2 mb-1">
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className={`inline-flex items-center justify-center px-2 py-0.5 rounded-lg text-[10px] font-black border ${badgeColor}`}
+                                  >
+                                    {r.riskLabel.toUpperCase()}
+                                  </span>
+                                  <span className="font-bold text-xs text-white">{r.title}</span>
+                                </div>
+                                {selected && <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />}
+                              </div>
+                              <div className="text-[11px] text-slate-300 font-medium leading-relaxed">
+                                <span className="text-slate-400">Daftar Area/Ruangan: </span>
+                                {r.areas}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Matriks Visual & Penetapan Kelas */}
-                  <div className="rounded-2xl bg-[#0b0d21] border border-indigo-800/50 p-4 space-y-3">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
+                  {/* Catatan Penting Permenkes 27/2017 (Tabel 11 Note) */}
+                  <div className="p-3 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 flex items-start gap-2.5 text-xs text-cyan-200">
+                    <Info className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                    <div className="leading-snug">
+                      <strong className="text-cyan-300">Catatan Penting Permenkes No. 27 Tahun 2017:</strong>{' '}
+                      {PATIENT_RISK_NOTE}
+                    </div>
+                  </div>
+
+                  {/* Matriks Visual & Penetapan Kelas (Tabel 12) */}
+                  <div className="rounded-2xl bg-[#0b0d21] border border-indigo-800/50 p-4 space-y-3.5">
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-indigo-900/40 pb-3">
                       <div>
                         <span className="text-[11px] font-bold uppercase text-slate-400">
-                          Hasil Kombinasi Matriks (Tipe {projForm.tipe_konstruksi} × Kelompok {projForm.kelompok_risiko})
+                          Hasil Kombinasi Matriks (Tipe {projForm.tipe_konstruksi} × Kelompok {projForm.kelompok_risiko} -{' '}
+                          {PATIENT_RISK_GROUPS.find((r) => r.code === projForm.kelompok_risiko)?.riskLabel})
                         </span>
-                        <div className="text-lg font-black text-white mt-0.5">
-                          Penetapan Izin Kerja: <span className="text-amber-400">KELAS {projForm.kelas_tindakan}</span>
+                        <div className="text-lg font-black text-white mt-0.5 flex flex-wrap items-center gap-2">
+                          <span>Penetapan Izin Kerja:</span>
+                          <span
+                            className={`px-2.5 py-0.5 rounded-xl border text-base font-black ${
+                              projForm.kelas_tindakan === 'IV'
+                                ? 'bg-rose-500/20 text-rose-300 border-rose-500/50'
+                                : projForm.kelas_tindakan === 'III'
+                                ? 'bg-orange-500/20 text-orange-300 border-orange-500/50'
+                                : projForm.kelas_tindakan === 'II'
+                                ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
+                                : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
+                            }`}
+                          >
+                            KELAS {projForm.kelas_tindakan}
+                          </span>
                           {calcResult.isAmbiguousIIIorIV && (
-                            <span className="ml-2 text-[11px] font-semibold text-cyan-300">
-                              (Matriks III/IV: IPCN dapat memilih Kelas III atau IV)
+                            <span className="text-[11px] font-semibold text-cyan-300">
+                              (Matriks III/IV: IPCN dapat menetapkan Kelas III atau IV sesuai kondisi lapangan)
                             </span>
                           )}
                         </div>
                       </div>
 
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[11px] text-slate-400 mr-1">Sesuaikan Kelas:</span>
+                        <span className="text-[11px] text-slate-400 mr-1 font-bold">Sesuaikan Kelas:</span>
                         {(['I', 'II', 'III', 'IV'] as ConstructionClass[]).map((cls) => (
                           <button
                             key={cls}
@@ -944,8 +1105,8 @@ export default function IcraConstructionTab() {
                             onClick={() => handleOverrideClass(cls)}
                             className={`px-3 py-1.5 rounded-xl text-xs font-black border cursor-pointer transition-all ${
                               projForm.kelas_tindakan === cls
-                                ? 'bg-amber-500 text-slate-950 border-amber-300 shadow'
-                                : 'bg-[#141738] text-slate-300 border-indigo-800 hover:text-white'
+                                ? 'bg-amber-500 text-slate-950 border-amber-300 shadow-md ring-2 ring-amber-400/50'
+                                : 'bg-[#141738] text-slate-300 border-indigo-800 hover:text-white hover:bg-indigo-900/50'
                             }`}
                           >
                             {cls}
@@ -954,74 +1115,150 @@ export default function IcraConstructionTab() {
                       </div>
                     </div>
 
-                    {/* Mini Tabel Matriks Interaktif */}
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-center border-collapse text-[11px]">
-                        <thead>
-                          <tr className="bg-[#141738] text-indigo-300 font-bold">
-                            <th className="border border-indigo-900/60 p-1.5 text-left">Kelompok Risiko</th>
-                            <th className="border border-indigo-900/60 p-1.5">Tipe A</th>
-                            <th className="border border-indigo-900/60 p-1.5">Tipe B</th>
-                            <th className="border border-indigo-900/60 p-1.5">Tipe C</th>
-                            <th className="border border-indigo-900/60 p-1.5">Tipe D</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(['1', '2', '3', '4'] as PatientRiskGroup[]).map((rg) => (
-                            <tr key={rg}>
-                              <td className="border border-indigo-900/60 p-1.5 text-left font-bold text-slate-200">
-                                Kelompok {rg}
-                              </td>
-                              {(['A', 'B', 'C', 'D'] as ConstructionType[]).map((tp) => {
-                                const cell = CONSTRUCTION_MATRIX[rg][tp];
-                                const active =
-                                  projForm.kelompok_risiko === rg && projForm.tipe_konstruksi === tp;
-                                return (
-                                  <td
-                                    key={tp}
-                                    onClick={() => handleMatrixChange(rg, tp)}
-                                    className={`border border-indigo-900/60 p-1.5 cursor-pointer transition-all ${
-                                      active
-                                        ? 'bg-amber-500 text-slate-950 font-black ring-2 ring-white'
-                                        : 'text-slate-300 hover:bg-indigo-900/40'
-                                    }`}
-                                  >
-                                    {cell.isAmbiguousIIIorIV ? 'III / IV' : cell.classLevel}
-                                  </td>
-                                );
-                              })}
+                    {/* Tabel 12: Kelas Kewaspadaan */}
+                    <div>
+                      <div className="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                        <span>Tabel 12. Kelas Kewaspadaan (Klik sel matriks untuk memilih langsung)</span>
+                        <span className="text-[10px] text-slate-400 lowercase">permenkes no. 27 tahun 2017</span>
+                      </div>
+                      <div className="overflow-x-auto rounded-xl border border-indigo-900/60">
+                        <table className="w-full text-center border-collapse text-[11px]">
+                          <thead>
+                            <tr className="bg-[#141738] text-indigo-200 font-extrabold uppercase">
+                              <th className="border border-indigo-900/60 p-2 text-left w-1/4">Kelompok Pasien Berisiko</th>
+                              <th className="border border-indigo-900/60 p-2">Tipe A</th>
+                              <th className="border border-indigo-900/60 p-2">Tipe B</th>
+                              <th className="border border-indigo-900/60 p-2">Tipe C</th>
+                              <th className="border border-indigo-900/60 p-2">Tipe D</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {(['1', '2', '3', '4'] as PatientRiskGroup[]).map((rg) => {
+                              const rInfo = PATIENT_RISK_GROUPS.find((r) => r.code === rg);
+                              return (
+                                <tr key={rg} className="hover:bg-indigo-950/30 transition-colors">
+                                  <td className="border border-indigo-900/60 p-2 text-left font-bold text-slate-200 bg-[#0e112d]">
+                                    <span className="font-extrabold text-white">{rInfo?.riskLabel}</span>
+                                    <span className="text-[10px] text-slate-400 ml-1.5">(Kelompok {rg})</span>
+                                  </td>
+                                  {(['A', 'B', 'C', 'D'] as ConstructionType[]).map((tp) => {
+                                    const cell = CONSTRUCTION_MATRIX[rg][tp];
+                                    const active =
+                                      projForm.kelompok_risiko === rg && projForm.tipe_konstruksi === tp;
+                                    const cellVal = cell.isAmbiguousIIIorIV ? 'III / IV' : cell.classLevel;
+
+                                    const cellBg =
+                                      cellVal === 'I'
+                                        ? 'bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
+                                        : cellVal === 'II'
+                                        ? 'bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
+                                        : cellVal === 'III'
+                                        ? 'bg-orange-500/10 text-orange-300 hover:bg-orange-500/20'
+                                        : 'bg-rose-500/10 text-rose-300 hover:bg-rose-500/20';
+
+                                    return (
+                                      <td
+                                        key={tp}
+                                        onClick={() => handleMatrixChange(rg, tp)}
+                                        className={`border border-indigo-900/60 p-2 cursor-pointer font-bold transition-all ${
+                                          active
+                                            ? 'bg-amber-400 text-slate-950 font-black ring-2 ring-white shadow-lg'
+                                            : cellBg
+                                        }`}
+                                      >
+                                        {cellVal}
+                                      </td>
+                                    );
+                                  })}
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Keterangan Kelas (Sesuai Gambar 3) */}
+                      <div className="flex flex-wrap items-center gap-2 mt-2.5 text-[10.5px]">
+                        <span className="text-slate-400 font-bold mr-1">Keterangan Kelas:</span>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-black">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400"></span> = Kelas I
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 font-black">
+                          <span className="w-2 h-2 rounded-full bg-amber-400"></span> = Kelas II
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-500/15 border border-orange-500/30 text-orange-300 font-black">
+                          <span className="w-2 h-2 rounded-full bg-orange-400"></span> = Kelas III
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-300 font-black">
+                          <span className="w-2 h-2 rounded-full bg-rose-400"></span> = Kelas IV
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Bagian 3: Checklist Pengendalian Infeksi */}
+                {/* Bagian 3: Checklist Pengendalian Infeksi (Tabel 13 PMK 27/2017) */}
                 <div className="space-y-3">
-                  <h4 className="text-xs font-black uppercase tracking-widest text-emerald-400 border-b border-indigo-900/50 pb-1.5">
-                    3. Persyaratan Wajib Pengendalian Infeksi ({CONSTRUCTION_CLASS_CONTROLS[projForm.kelas_tindakan].title})
-                  </h4>
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-900/50 pb-1.5">
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-widest text-emerald-400">
+                        3. Intervensi PPI Berdasarkan Kelas (Tabel 13 Permenkes No. 27 Tahun 2017)
+                      </h4>
+                      <p className="text-[11px] text-slate-300 mt-0.5">
+                        {CONSTRUCTION_CLASS_CONTROLS[projForm.kelas_tindakan].title}:{' '}
+                        {CONSTRUCTION_CLASS_CONTROLS[projForm.kelas_tindakan].summary}
+                      </p>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold">
+                      {projForm.checklist_pengendalian.filter((c) => c.checked).length} /{' '}
+                      {projForm.checklist_pengendalian.length} Wajib Dipenuhi
+                    </span>
+                  </div>
+
                   <div className="space-y-2">
-                    {projForm.checklist_pengendalian.map((chk, idx) => (
-                      <label
-                        key={chk.id}
-                        className="flex items-start gap-2.5 p-2.5 rounded-xl bg-[#0d0f26] border border-indigo-900/40 hover:border-indigo-600/50 cursor-pointer text-xs text-slate-200"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={chk.checked}
-                          onChange={(e) => {
-                            const updated = [...projForm.checklist_pengendalian];
-                            updated[idx] = { ...updated[idx], checked: e.target.checked };
-                            setProjForm((p) => ({ ...p, checklist_pengendalian: updated }));
-                          }}
-                          className="mt-0.5 w-4 h-4 accent-emerald-500 shrink-0"
-                        />
-                        <span className="leading-relaxed">{chk.label}</span>
-                      </label>
-                    ))}
+                    {projForm.checklist_pengendalian.map((chk, idx) => {
+                      const isDuring = chk.label.includes('[Selama Konstruksi]');
+                      const isAfter = chk.label.includes('[Setelah Konstruksi]');
+                      const cleanText = chk.label.replace(/^\[(Selama|Setelah) Konstruksi\]\s*/i, '');
+
+                      return (
+                        <label
+                          key={chk.id || idx}
+                          className={`flex items-start gap-2.5 p-3 rounded-2xl border transition-all cursor-pointer text-xs ${
+                            chk.checked
+                              ? 'bg-[#101438] border-emerald-500/40 text-slate-100 shadow-sm'
+                              : 'bg-[#0d0f26] border-indigo-900/40 text-slate-400 hover:border-indigo-700/50'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={chk.checked}
+                            onChange={(e) => {
+                              const updated = [...projForm.checklist_pengendalian];
+                              updated[idx] = { ...updated[idx], checked: e.target.checked };
+                              setProjForm((p) => ({ ...p, checklist_pengendalian: updated }));
+                            }}
+                            className="mt-0.5 w-4 h-4 accent-emerald-500 shrink-0 cursor-pointer"
+                          />
+                          <div className="flex-1 space-y-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {isDuring && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9.5px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                  Selama Proyek Konstruksi
+                                </span>
+                              )}
+                              {isAfter && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9.5px] font-extrabold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                                  Setelah Proyek Konstruksi
+                                </span>
+                              )}
+                              <span className="font-bold text-[10.5px] text-slate-400">Poin {idx + 1}</span>
+                            </div>
+                            <div className="leading-relaxed text-slate-200 font-medium">{cleanText}</div>
+                          </div>
+                        </label>
+                      );
+                    })}
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1">

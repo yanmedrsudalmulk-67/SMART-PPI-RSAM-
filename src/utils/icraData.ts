@@ -267,38 +267,92 @@ export const DEFAULT_PROGRAM_RISK_TEMPLATES: Omit<
 ];
 
 // =========================================================================
-// ICRA KONSTRUKSI / RENOVASI (MATRIKS PMK NO. 27 TAHUN 2017 & APIC)
+// ICRA KONSTRUKSI / RENOVASI (STANDAR PERMENKES NO. 27 TAHUN 2017)
 // =========================================================================
+
+export const ICRA_CONSTRUCTION_GUIDELINE = {
+  title: 'ICRA Renovasi / Konstruksi Gedung Baru',
+  subtitle: 'Ringkasan Bab ICRA – Permenkes No. 27 Tahun 2017',
+  definition:
+    'Infection Control Risk Assessment (ICRA) adalah proses terdokumentasi yang dilakukan sebelum pemeliharaan, perbaikan, pembongkaran, konstruksi, maupun renovasi untuk mengetahui risiko dan dampaknya terhadap kualitas udara dengan mempertimbangkan potensi pajanan pada pasien.',
+  purposes: [
+    'Mengidentifikasi risiko infeksi akibat proyek konstruksi/renovasi',
+    'Melindungi pasien, petugas, dan pengunjung',
+    'Menjaga kualitas udara dan keamanan lingkungan pelayanan',
+    'Menentukan tindakan pengendalian infeksi sebelum proyek dimulai',
+  ],
+  workflowSteps: [
+    { step: 1, label: 'Identifikasi tipe/jenis konstruksi' },
+    { step: 2, label: 'Identifikasi kelompok risiko pasien' },
+    { step: 3, label: 'Gunakan matriks pengendalian infeksi' },
+    { step: 4, label: 'Tetapkan kelas/tingkat kewaspadaan' },
+    { step: 5, label: 'Tentukan tindakan pengendalian infeksi' },
+    { step: 6, label: 'Lakukan pemantauan pelaksanaan' },
+  ],
+  importantNotes: [
+    'ICRA penting dilakukan sebelum proyek dimulai, terutama bila area pelayanan pasien tetap beroperasi.',
+    'Bila terdapat lebih dari satu kelompok pasien berisiko, pilih kelompok dengan tingkat risiko tertinggi.',
+    'Pada semua kelas konstruksi, pasien harus dipindahkan saat pekerjaan dilakukan.',
+  ],
+};
 
 export const CONSTRUCTION_TYPES: {
   code: ConstructionType;
   title: string;
   shortDesc: string;
+  criteria: string;
   examples: string;
+  items: string[];
 }[] = [
   {
     code: 'A',
-    title: 'Tipe A: Inspeksi & Non-Invasif',
-    shortDesc: 'Pekerjaan tidak menimbulkan debu atau sangat minimal.',
-    examples: 'Membuka panel plafon untuk pemeriksaan visual (< 1 petak per 5 m²), pengecatan ringan (tanpa amplas), perbaikan listrik/pipa minor tanpa memotong dinding.',
+    title: 'Tipe A: Risiko Rendah (Debu Minimal)',
+    shortDesc: 'Pemeriksaan konstruksi dengan risiko rendah (debu minimal)',
+    criteria: 'Pemeriksaan konstruksi dengan risiko rendah (debu minimal), seperti:',
+    examples: '• Pemindahan plafon untuk pemeriksaan visual.\n• Pengecatan (bukan pemlesteran).\n• Merapikan pekerjaan listrik, pemasangan pipa kecil, dan aktivitas tanpa menimbulkan debu.',
+    items: [
+      'Pemindahan plafon untuk pemeriksaan visual',
+      'Pengecatan (bukan pemlesteran)',
+      'Merapikan pekerjaan listrik, pemasangan pipa kecil, dan aktivitas tanpa menimbulkan debu',
+    ],
   },
   {
     code: 'B',
-    title: 'Tipe B: Skala Kecil & Durasi Singkat',
-    shortDesc: 'Pekerjaan menimbulkan debu dalam jumlah minimal dan durasi pendek.',
-    examples: 'Pemasangan kabel telepon/komputer menembus dinding, akses ke ruang utilitas tertutup, pengamplasan dinding area sempit yang dapat dikontrol debunya.',
+    title: 'Tipe B: Skala Kecil, Durasi Pendek (Debu Minimal)',
+    shortDesc: 'Kegiatan noninvasif skala kecil, durasi pendek, debu minimal',
+    criteria: 'Kegiatan noninvasif skala kecil, durasi pendek, debu minimal, seperti:',
+    examples: '• Instalasi kabel telepon/komputer.\n• Mengakses chase spaces.\n• Pemotongan dinding/plafon dengan penyebaran debu terkendali.',
+    items: [
+      'Instalasi kabel telepon/komputer',
+      'Mengakses chase spaces',
+      'Pemotongan dinding/plafon dengan penyebaran debu terkendali',
+    ],
   },
   {
     code: 'C',
-    title: 'Tipe C: Debu Sedang - Tinggi / Pembongkaran Terbatas',
-    shortDesc: 'Menimbulkan debu sedang–tinggi atau pembongkaran komponen bangunan.',
-    examples: 'Pengamplasan luas untuk cat/wallcover, pembongkaran keramik lantai, bongkar plafon > 1 petak, bobok dinding partisi, perbaikan saluran ducting AC/HVAC.',
+    title: 'Tipe C: Debu Tingkat Tinggi (Risiko Sedang–Tinggi)',
+    shortDesc: 'Pembongkaran/perbaikan gedung dengan debu tingkat tinggi, risiko sedang–tinggi',
+    criteria: 'Pembongkaran/perbaikan gedung dengan debu tingkat tinggi, risiko sedang–tinggi, seperti:',
+    examples: '• Pemlesteran dinding, pemasangan lantai/plafon.\n• Konstruksi dinding baru.\n• Pekerjaan pipa kecil atau pemasangan listrik di atas plafon.\n• Pemasangan kabel besar.\n• Kegiatan tipe A, B, atau C yang tidak dapat diselesaikan dalam 1 shift.',
+    items: [
+      'Pemlesteran dinding, pemasangan lantai/plafon',
+      'Konstruksi dinding baru',
+      'Pekerjaan pipa kecil atau pemasangan listrik di atas plafon',
+      'Pemasangan kabel besar',
+      'Kegiatan tipe A, B, atau C yang tidak dapat diselesaikan dalam 1 shift',
+    ],
   },
   {
     code: 'D',
-    title: 'Tipe D: Pembongkaran Besar & Konstruksi Baru',
-    shortDesc: 'Proyek pembongkaran besar atau pembangunan gedung/ruang baru.',
-    examples: 'Pembongkaran struktur dinding lengkap, renovasi total satu bangsal/ruangan, konstruksi gedung baru bertingkat atau perluasan instalasi.',
+    title: 'Tipe D: Skala Besar & Konstruksi Baru',
+    shortDesc: 'Pembangunan/pembongkaran gedung skala besar',
+    criteria: 'Pembangunan/pembongkaran gedung skala besar, seperti:',
+    examples: '• Pembongkaran gedung secara besar-besaran.\n• Pemasangan/pemindahan sistem perkabelan.\n• Konstruksi baru atau pembangunan gedung baru.',
+    items: [
+      'Pembongkaran gedung secara besar-besaran',
+      'Pemasangan/pemindahan sistem perkabelan',
+      'Konstruksi baru atau pembangunan gedung baru',
+    ],
   },
 ];
 
@@ -307,32 +361,62 @@ export const PATIENT_RISK_GROUPS: {
   title: string;
   riskLabel: string;
   areas: string;
+  items: string[];
 }[] = [
   {
     code: '1',
     title: 'Kelompok 1 (Risiko Rendah)',
     riskLabel: 'Rendah',
-    areas: 'Area perkantoran, administrasi, manajemen, ruang rapat, ruang arsip, koridor non-klinis.',
+    areas: 'Area perkantoran administrasi.',
+    items: ['Area perkantoran administrasi'],
   },
   {
     code: '2',
     title: 'Kelompok 2 (Risiko Sedang)',
     riskLabel: 'Sedang',
-    areas: 'Area rawat jalan/poliklinik umum, ruang tunggu pasien, rehabilitasi medik, area radiologi non-intervensi, pendaftaran.',
+    areas: 'Fisioterapi, IRJ (Instalasi Rawat Jalan), IGH (Instalasi Gawat Husada), Instalasi gizi.',
+    items: ['Fisioterapi', 'IRJ (Instalasi Rawat Jalan)', 'IGH (Instalasi Gawat Husada)', 'Instalasi gizi'],
   },
   {
     code: '3',
     title: 'Kelompok 3 (Risiko Tinggi)',
     riskLabel: 'Tinggi',
-    areas: 'IGD, Ruang Rawat Inap Umum (Dewasa, Anak, Kebidanan, Bedah), Laboratorium Klinik, Farmasi non-steril, Kamar Jenazah.',
+    areas: 'IGD, VK (Kamar Bersalin), Laboratorium (specimen), Poli bedah, IBS (Instalasi Bedah Sentral), Ruang perawatan pasien, IP2K, Stroke Unit, High Care, ICCU, UTD.',
+    items: [
+      'IGD',
+      'VK (Kamar Bersalin)',
+      'Laboratorium (specimen)',
+      'Poli bedah',
+      'IBS (Instalasi Bedah Sentral)',
+      'Ruang perawatan pasien',
+      'IP2K',
+      'Stroke Unit',
+      'High Care',
+      'ICCU',
+      'UTD',
+    ],
   },
   {
     code: '4',
-    title: 'Kelompok 4 (Risiko Tertinggi)',
-    riskLabel: 'Tertinggi',
-    areas: 'Kamar Operasi (IBS), ICU / HCU / NICU / PICU, CSSD / Sterilisasi, Ruang Isolasi Airborne, Unit Hemodialisa, Pasien Immunocompromised, Kemoterapi.',
+    title: 'Kelompok 4 (Risiko Sangat Tinggi)',
+    riskLabel: 'Sangat Tinggi',
+    areas: 'Area pasien immunocompromised, Unit luka bakar, Cath lab, ISSB, ICU, NICU/PICU, Ruang isolasi tekanan negatif, Onkologi, Ruang operasi.',
+    items: [
+      'Area pasien immunocompromised',
+      'Unit luka bakar',
+      'Cath lab',
+      'ISSB',
+      'ICU',
+      'NICU/PICU',
+      'Ruang isolasi tekanan negatif',
+      'Onkologi',
+      'Ruang operasi',
+    ],
   },
 ];
+
+export const PATIENT_RISK_NOTE =
+  'Bila terdapat lebih dari satu kelompok pasien berisiko, pilih kelompok dengan tingkat risiko tertinggi. Pada semua kelas konstruksi, pasien harus dipindahkan saat pekerjaan dilakukan.';
 
 export const CONSTRUCTION_MATRIX: Record<
   PatientRiskGroup,
@@ -377,59 +461,123 @@ export const CONSTRUCTION_CLASS_CONTROLS: Record<
     title: string;
     color: string;
     summary: string;
+    duringItems: string[];
+    afterItems: string[];
     items: string[];
   }
 > = {
   I: {
-    title: 'KELAS I (Pengendalian Minimal / Ringan)',
+    title: 'KELAS I (Tingkat Kewaspadaan I)',
     color: 'emerald',
-    summary: 'Pekerjaan non-invasif dengan risiko penyebaran debu minimal. Tetap wajib pembersihan pasca kerja.',
+    summary: 'Pekerjaan konstruksi dengan risiko rendah / debu minimal.',
+    duringItems: [
+      'Laksanakan pekerjaan dengan metode yang meminimalkan timbulnya debu dari aktivitas konstruksi.',
+      'Segera pasang kembali plafon/dinding yang dibuka untuk pemeriksaan visual.',
+    ],
+    afterItems: [
+      'Bersihkan area kerja dan lakukan pembersihan permukaan segera setelah pekerjaan selesai.',
+    ],
     items: [
-      'Lakukan pekerjaan dengan metode yang meminimalkan timbulnya debu.',
-      'Segera pasang kembali panel plafon/dinding yang dibuka setelah inspeksi visual selesai.',
-      'Bersihkan seluruh permukaan kerja dan lantai segera setelah pekerjaan selesai.',
+      '[Selama Konstruksi] Laksanakan pekerjaan dengan metode yang meminimalkan timbulnya debu dari aktivitas konstruksi.',
+      '[Selama Konstruksi] Segera pasang kembali plafon/dinding yang dibuka untuk pemeriksaan visual.',
+      '[Setelah Konstruksi] Bersihkan area kerja dan lakukan pembersihan permukaan segera setelah pekerjaan selesai.',
     ],
   },
   II: {
-    title: 'KELAS II (Pengendalian Debu Aktif)',
+    title: 'KELAS II (Tingkat Kewaspadaan II)',
     color: 'amber',
-    summary: 'Wajib mencegah sebaran debu ke udara, menutup akses tidak terpakai, dan menggunakan keset debu.',
+    summary: 'Pengendalian debu aktif untuk mencegah penyebaran ke area pelayanan sekitar.',
+    duringItems: [
+      'Sediakan sarana aktif untuk mencegah penyebaran debu ke udara (misal penyemprotan kabut air).',
+      'Segel pintu yang tidak terpakai dengan lakban/perekat rapat.',
+      'Tutup dan isolasi kisi-kisi ventilasi udara serta kisi AC/HVAC sementara waktu.',
+      'Tempatkan keset debu basah / sticky mat di pintu masuk dan keluar area kerja.',
+      'Tutup wadah atau gerobak transportasi limbah saat pengangkutan.',
+    ],
+    afterItems: [
+      'Lap seluruh permukaan kerja dengan cairan pembersih/disinfektan.',
+      'Masukkan limbah konstruksi dalam wadah tertutup rapat sebelum dibuang.',
+      'Lakukan pengepelan basah atau vakum HEPA sebelum meninggalkan area kerja.',
+      'Pulihkan kembali sistem ventilasi/HVAC setelah pekerjaan selesai dan dinyatakan bersih.',
+    ],
     items: [
-      'Terapkan metode aktif pengendalian debu agar tidak menyebar ke udara (misal penyemprotan kabut air saat memotong).',
-      'Tutup dan segel pintu penghubung yang tidak digunakan dengan lakban/perekat rapat.',
-      'Tutup/blokir seluruh lubang ventilasi udara dan kisi AC sementara waktu.',
-      'Sediakan keset basah / keset perekat debu (dust mat) di pintu masuk dan keluar area kerja.',
-      'Lap seluruh permukaan kerja dengan cairan disinfektan atau vakum HEPA di akhir shift.',
-      'Angkut puing/limbah konstruksi menggunakan wadah tertutup rapat sebelum keluar proyek.',
-      'Lepaskan isolasi ventilasi dan segel pintu setelah area dinyatakan bersih.',
+      '[Selama Konstruksi] Sediakan sarana aktif untuk mencegah penyebaran debu ke udara (misal penyemprotan kabut air).',
+      '[Selama Konstruksi] Segel pintu yang tidak terpakai dengan lakban/perekat rapat.',
+      '[Selama Konstruksi] Tutup dan isolasi kisi-kisi ventilasi udara serta kisi AC/HVAC sementara waktu.',
+      '[Selama Konstruksi] Tempatkan keset debu basah / sticky mat di pintu masuk dan keluar area kerja.',
+      '[Selama Konstruksi] Tutup wadah atau gerobak transportasi limbah saat pengangkutan.',
+      '[Setelah Konstruksi] Lap seluruh permukaan kerja dengan cairan pembersih/disinfektan.',
+      '[Setelah Konstruksi] Masukkan limbah konstruksi dalam wadah tertutup rapat sebelum dibuang.',
+      '[Setelah Konstruksi] Lakukan pengepelan basah atau vakum HEPA sebelum meninggalkan area kerja.',
+      '[Setelah Konstruksi] Pulihkan kembali sistem ventilasi/HVAC setelah pekerjaan selesai dan dinyatakan bersih.',
     ],
   },
   III: {
-    title: 'KELAS III (Isolasi Barier Ketat & Tekanan Negatif)',
+    title: 'KELAS III (Tingkat Kewaspadaan III)',
     color: 'orange',
-    summary: 'Wajib memasang barier kedap debu lantai-ke-plafon, mengisolasi HVAC, dan mempertahankan tekanan negatif.',
+    summary: 'Isolasi sistem HVAC, pembatas area kerja / metode kontrol kubus, dan tekanan udara negatif HEPA.',
+    duringItems: [
+      'Mengisolasi sistem HVAC di area kerja untuk mencegah kontaminasi sistem saluran.',
+      'Siapkan pembatas area kerja atau terapkan metode kontrol kubus (menutup area kerja dengan plastik dan menyegel dengan vakum HEPA untuk menyedot debu keluar) sebelum konstruksi dimulai.',
+      'Menjaga tekanan udara negatif dalam tempat kerja dengan menggunakan unit penyaringan udara HEPA.',
+      'Letakkan limbah konstruksi dalam wadah yang tertutup rapat sebelum dibuang.',
+      'Tutup wadah atau gerobak transportasi limbah.',
+    ],
+    afterItems: [
+      'Pembatas area kerja harus tetap dipasang sampai proyek selesai diperiksa oleh Komite K3, KPPI, dan dilakukan pembersihan oleh petugas kebersihan.',
+      'Lakukan pembongkaran bahan-bahan pembatas area kerja dengan hati-hati untuk meminimalkan penyebaran kotoran dan puing-puing konstruksi.',
+      'Vakum area kerja dengan penyaring HEPA.',
+      'Lakukan pengepelan basah dengan pembersih/disinfektan.',
+      'Setelah pekerjaan selesai, rapikan kembali sistem HVAC.',
+    ],
     items: [
-      'Isolasi penuh sistem tata udara (HVAC/AC) di area kerja untuk mencegah kontaminasi udara ke ruang klinis.',
-      'Pasang partisi / barier debu kedap udara (plastik/triplek bersegel rapat dari lantai hingga plafon) sebelum pekerjaan dimulai.',
-      'Pertahankan tekanan udara negatif di dalam area kerja menggunakan mesin filtrasi HEPA portabel / exhaust terfilter.',
-      'Jangan membuka atau membongkar barier hingga proyek selesai 100%, dibersihkan menyeluruh, dan diperiksa Tim PPI.',
-      'Sediakan keset basah/sticky mat di pintu masuk-keluar pekerja dan bersihkan debu pada alas kaki/pakaian kerja.',
-      'Angkut material dan limbah konstruksi dalam troli/wadah tertutup rapat melalui jalur khusus di luar jam padat pasien.',
-      'Lakukan pembersihan terminal (vakum HEPA dan pel basah disinfektan) sebelum barier dilepas.',
+      '[Selama Konstruksi] Mengisolasi sistem HVAC di area kerja untuk mencegah kontaminasi sistem saluran.',
+      '[Selama Konstruksi] Siapkan pembatas area kerja atau terapkan metode kontrol kubus (menutup area kerja dengan plastik dan menyegel dengan vakum HEPA untuk menyedot debu keluar) sebelum konstruksi dimulai.',
+      '[Selama Konstruksi] Menjaga tekanan udara negatif dalam tempat kerja dengan menggunakan unit penyaringan udara HEPA.',
+      '[Selama Konstruksi] Letakkan limbah konstruksi dalam wadah yang tertutup rapat sebelum dibuang.',
+      '[Selama Konstruksi] Tutup wadah atau gerobak transportasi limbah.',
+      '[Setelah Konstruksi] Pembatas area kerja harus tetap dipasang sampai proyek selesai diperiksa oleh Komite K3, KPPI, dan dilakukan pembersihan oleh petugas kebersihan.',
+      '[Setelah Konstruksi] Lakukan pembongkaran bahan-bahan pembatas area kerja dengan hati-hati untuk meminimalkan penyebaran kotoran dan puing-puing konstruksi.',
+      '[Setelah Konstruksi] Vakum area kerja dengan penyaring HEPA.',
+      '[Setelah Konstruksi] Lakukan pengepelan basah dengan pembersih/disinfektan.',
+      '[Setelah Konstruksi] Setelah pekerjaan selesai, rapikan kembali sistem HVAC.',
     ],
   },
   IV: {
-    title: 'KELAS IV (Isolasi Maksimal, Anteroom & Pengawasan Harian Wajib)',
+    title: 'KELAS IV (Tingkat Kewaspadaan IV)',
     color: 'rose',
-    summary: 'Risiko penularan infeksi jamur/Aspergillus sangat tinggi. Wajib Anteroom, tekanan negatif kontinu, APD penuh pekerja, dan inspeksi ketat IPCN.',
+    summary: 'Isolasi maksimal, barier kedap udara, tekanan negatif HEPA, anteroom, dan penutup sepatu.',
+    duringItems: [
+      'Mengisolasi sistem HVAC di area kerja untuk mencegah kontaminasi sistem saluran.',
+      'Siapkan pembatas area kerja atau terapkan metode kontrol kubus (menutup area kerja dengan plastik dan menyegel dengan vakum HEPA untuk menyedot debu keluar) sebelum konstruksi dimulai.',
+      'Menjaga tekanan udara negatif dalam tempat kerja dengan menggunakan unit penyaringan udara HEPA.',
+      'Menyegel lubang, pipa, dan saluran.',
+      'Membuat anteroom dan mewajibkan semua personel untuk melewati ruangan ini sehingga mereka dapat disedot menggunakan vacuum cleaner HEPA sebelum meninggalkan tempat kerja atau mereka bisa memakai pakaian kerja yang lepas setiap kali mereka meninggalkan tempat kerja.',
+      'Semua personil memasuki tempat kerja diwajibkan untuk memakai penutup sepatu. Sepatu harus diganti setiap kali keluar dari area kerja.',
+    ],
+    afterItems: [
+      'Pembatas area kerja harus tetap dipasang sampai proyek selesai diperiksa oleh Komite K3, KPPI, dan dilakukan pembersihan oleh petugas kebersihan.',
+      'Lakukan pembongkaran bahan-bahan pembatas area kerja dengan hati-hati untuk meminimalkan penyebaran kotoran dan puing-puing konstruksi.',
+      'Letakkan limbah konstruksi dalam wadah yang tertutup rapat sebelum dibuang.',
+      'Tutup wadah atau gerobak transportasi limbah.',
+      'Vakum area kerja dengan penyaring HEPA.',
+      'Lakukan pengepelan basah dengan pembersih/disinfektan.',
+      'Setelah pekerjaan selesai, rapikan kembali sistem HVAC.',
+    ],
     items: [
-      'Seluruh persyaratan Kelas III (isolasi HVAC total, barier kedap udara lantai-plafon, tekanan negatif HEPA kontinu) WAJIB diterapkan penuh.',
-      'Segel seluruh lubang pipa, celah listrik, dan penetrasi dinding secara kedap udara tanpa celah.',
-      'Wajib menyediakan Ruang Antara (Anteroom) di pintu akses area kerja; seluruh pekerja wajib membersihkan debu (vakum HEPA) dan melepas APD/baju pelindung di anteroom sebelum keluar.',
-      'Seluruh pekerja konstruksi wajib menggunakan APD lengkap (pakaian pelindung/coverall, penutup kepala, masker N95/medis, penutup sepatu) saat berada di zona proyek.',
-      'Gunakan troli tertutup rapat yang disegel lakban dan bersihkan roda troli sebelum keluar dari zona anteroom.',
-      'Jalur pembuangan puing harus terpisah total dari jalur pasien, alat steril, dan makanan RS.',
-      'DILARANG keras membongkar barier sebelum dilakukan terminal cleaning menyeluruh, pembersihan sistem ventilasi, serta dinyatakan LULUS inspeksi tertulis oleh IPCN.',
+      '[Selama Konstruksi] Mengisolasi sistem HVAC di area kerja untuk mencegah kontaminasi sistem saluran.',
+      '[Selama Konstruksi] Siapkan pembatas area kerja atau terapkan metode kontrol kubus (menutup area kerja dengan plastik dan menyegel dengan vakum HEPA untuk menyedot debu keluar) sebelum konstruksi dimulai.',
+      '[Selama Konstruksi] Menjaga tekanan udara negatif dalam tempat kerja dengan menggunakan unit penyaringan udara HEPA.',
+      '[Selama Konstruksi] Menyegel lubang, pipa, dan saluran.',
+      '[Selama Konstruksi] Membuat anteroom dan mewajibkan semua personel untuk melewati ruangan ini sehingga mereka dapat disedot menggunakan vacuum cleaner HEPA sebelum meninggalkan tempat kerja atau mereka bisa memakai pakaian kerja yang lepas setiap kali mereka meninggalkan tempat kerja.',
+      '[Selama Konstruksi] Semua personil memasuki tempat kerja diwajibkan untuk memakai penutup sepatu. Sepatu harus diganti setiap kali keluar dari area kerja.',
+      '[Setelah Konstruksi] Pembatas area kerja harus tetap dipasang sampai proyek selesai diperiksa oleh Komite K3, KPPI, dan dilakukan pembersihan oleh petugas kebersihan.',
+      '[Setelah Konstruksi] Lakukan pembongkaran bahan-bahan pembatas area kerja dengan hati-hati untuk meminimalkan penyebaran kotoran dan puing-puing konstruksi.',
+      '[Setelah Konstruksi] Letakkan limbah konstruksi dalam wadah yang tertutup rapat sebelum dibuang.',
+      '[Setelah Konstruksi] Tutup wadah atau gerobak transportasi limbah.',
+      '[Setelah Konstruksi] Vakum area kerja dengan penyaring HEPA.',
+      '[Setelah Konstruksi] Lakukan pengepelan basah dengan pembersih/disinfektan.',
+      '[Setelah Konstruksi] Setelah pekerjaan selesai, rapikan kembali sistem HVAC.',
     ],
   },
 };
