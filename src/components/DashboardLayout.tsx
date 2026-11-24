@@ -75,6 +75,7 @@ const navItems: NavItemData[] = [
       { name: 'Rekap Laporan PPI', href: '/dashboard/reports' },
       { name: 'Laporan PPI', href: '/dashboard/reports/resmi' },
       { name: 'Bukti Supervisi', href: '/dashboard/reports/supervisi' },
+      { name: 'Laporan ICRA', href: '/dashboard/reports/icra' },
     ]
   },
   { 
@@ -586,7 +587,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               ? 'p-2 sm:p-3 lg:p-3.5'
               : 'p-3.5 sm:p-5 lg:p-6 xl:p-7'
           } pb-32 sm:pb-10 relative scroll-container-120fps w-full max-w-full z-10 ${
-            pathname.startsWith('/dashboard/reports/resmi') ? 'resmi-report-scroll-container' : ''
+            pathname.startsWith('/dashboard/reports/resmi') || pathname.startsWith('/dashboard/reports/icra')
+              ? 'resmi-report-scroll-container'
+              : ''
           }`}
         >
           {/* Header Desktop & Landscape saat Sidebar Minimized */}

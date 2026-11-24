@@ -1,7 +1,7 @@
 import React from 'react';
 
 export interface ReportCoverProps {
-  reportType?: 'monthly' | 'quarterly' | 'semester' | 'annual';
+  reportType?: 'monthly' | 'quarterly' | 'semester' | 'annual' | 'icra';
   title?: string;
   subtitle?: string;
   periodText?: string;
@@ -21,9 +21,11 @@ export default function ReportCover({
   const displayYear = String(year);
 
   // Auto-detect report type if not explicitly supplied
-  const detectedType: 'monthly' | 'quarterly' | 'semester' | 'annual' =
+  const detectedType: 'monthly' | 'quarterly' | 'semester' | 'annual' | 'icra' =
     reportType ||
-    (title?.toUpperCase().includes('TRIWULAN')
+    (title?.toUpperCase().includes('ICRA')
+      ? 'icra'
+      : title?.toUpperCase().includes('TRIWULAN')
       ? 'quarterly'
       : title?.toUpperCase().includes('SEMESTER')
       ? 'semester'
@@ -218,6 +220,66 @@ export default function ReportCover({
                 PENGENDALIAN INFEKSI (PPI)
               </h3>
             </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* FORMAT 4: LAPORAN ICRA KONSTRUKSI / RENOVASI              */}
+        {/* Line 1: LAPORAN INFECTION CONTROL RISK ASSESSMENT (ICRA)  */}
+        {/* Line 2: [NAMA PROYEK]                                     */}
+        {/* Line 3: UOBK RSUD AL-MULK KOTA SUKABUMI                   */}
+        {/* Line 4: TAHUN [TAHUN]                                     */}
+        {/* ========================================================= */}
+        {detectedType === 'icra' && (
+          <div className="flex flex-col items-center justify-center text-center px-3">
+            <h1
+              className="cover-title-text font-bold uppercase tracking-wide font-sans text-center"
+              style={{
+                fontSize: '17.5pt',
+                lineHeight: '1.2',
+                color: '#ffffff',
+                WebkitTextFillColor: '#ffffff',
+                textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+              }}
+            >
+              {title || 'LAPORAN INFECTION CONTROL RISK ASSESSMENT (ICRA)'}
+            </h1>
+            <h2
+              className="cover-title-text font-bold uppercase tracking-wide font-sans text-center mt-1.5"
+              style={{
+                fontSize: subtitle && subtitle.length > 44 ? '14pt' : '16.5pt',
+                lineHeight: '1.2',
+                color: '#ffffff',
+                WebkitTextFillColor: '#ffffff',
+                textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+              }}
+            >
+              {subtitle || 'PROYEK KONSTRUKSI / RENOVASI'}
+            </h2>
+            <h3
+              className="cover-title-text font-bold uppercase tracking-wide font-sans text-center mt-1.5"
+              style={{
+                fontSize: '15.5pt',
+                lineHeight: '1.2',
+                color: '#ffffff',
+                WebkitTextFillColor: '#ffffff',
+                textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+              }}
+            >
+              {hospitalText}
+            </h3>
+            <p
+              className="cover-title-text font-bold uppercase tracking-wider font-sans text-center mt-1"
+              style={{
+                fontSize: '15.5pt',
+                lineHeight: '1.15',
+                color: '#ffffff',
+                WebkitTextFillColor: '#ffffff',
+                textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+              }}
+            >
+              TAHUN {displayYear}
+            </p>
           </div>
         )}
       </div>

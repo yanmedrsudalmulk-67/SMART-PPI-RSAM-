@@ -42,6 +42,13 @@ export const REPORT_SUB_ITEMS: ReportSubItem[] = [
     icon: ShieldCheck,
     badge: 'Bukti Fisik',
   },
+  {
+    name: 'Laporan ICRA',
+    desc: 'Laporan resmi ICRA Konstruksi & Renovasi (F4)',
+    href: '/dashboard/reports/icra',
+    icon: ShieldAlert,
+    badge: 'ICRA F4',
+  },
 ];
 
 export const ICRA_SUB_ITEMS: ReportSubItem[] = [

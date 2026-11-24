@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, parseISO } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
@@ -727,6 +728,14 @@ export default function IcraConstructionTab() {
                       <ClipboardList className="w-4 h-4 text-cyan-400" />
                       <span>Monitoring ({projLogs.length})</span>
                     </button>
+
+                    <Link
+                      href={`/dashboard/reports/icra?projectId=${proj.id}`}
+                      className="px-4 py-2.5 rounded-2xl bg-gradient-to-b from-[#1f1c45] to-[#131230] border border-indigo-400/45 text-indigo-200 text-xs font-black shadow-[-2px_-2px_6px_rgba(140,165,255,0.06),3px_4px_10px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:brightness-115 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                      <BookOpen className="w-4 h-4 text-amber-300" />
+                      <span>Laporan ICRA</span>
+                    </Link>
                   </div>
 
                   <div className="flex items-center gap-2">
