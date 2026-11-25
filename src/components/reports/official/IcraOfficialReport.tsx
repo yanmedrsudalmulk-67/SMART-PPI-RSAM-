@@ -898,6 +898,7 @@ export default function IcraOfficialReport({
     }
 
     // ==================== 8. KESIMPULAN ====================
+    b.push({ type: 'pageBreak', key: 'pb-kesimpulan' });
     pushHeading('sec-kesimpulan', 'KESIMPULAN', 'kesimpulan');
     kesimpulanParagraphs.forEach((pText, idx) => {
       pushParagraph(
@@ -935,6 +936,7 @@ export default function IcraOfficialReport({
     pushParagraph('rek-closing', renderNarrativeText(rekomendasiClosing), 12, false);
 
     // ==================== 10. PENUTUP & PENGESAHAN ====================
+    b.push({ type: 'pageBreak', key: 'pb-penutup' });
     pushHeading('sec-penutup', 'PENUTUP', 'penutup');
     penutupParagraphs.forEach((pText, idx) => {
       pushParagraph(
@@ -1094,7 +1096,7 @@ export default function IcraOfficialReport({
         { label: 'IPSRS', nama: signoffs.ipsrs_nama, paraf: signoffs.ipsrs_paraf },
         { label: 'PPI / IPCN', nama: signoffs.ppi_nama, paraf: signoffs.ppi_paraf },
         { label: 'Kesling', nama: signoffs.kesling_nama, paraf: signoffs.kesling_paraf },
-        { label: 'K3 RS', nama: signoffs.k3rs_nama, paraf: signoffs.k3rs_paraf },
+        { label: 'K3RS', nama: signoffs.k3rs_nama, paraf: signoffs.k3rs_paraf },
         { label: 'Kontraktor', nama: signoffs.pihak3_nama, paraf: signoffs.pihak3_paraf },
       ];
       b.push({
