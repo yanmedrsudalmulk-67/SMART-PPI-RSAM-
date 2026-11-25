@@ -529,7 +529,7 @@ export default function IcraMonitoringModal({
                     { key: 'ppi', label: 'PPI / IPCN' },
                     { key: 'kesling', label: 'Kesling' },
                     { key: 'k3rs', label: 'K3 RS' },
-                    { key: 'pihak3', label: 'Pihak ke 3 Pembangunan' },
+                    { key: 'pihak3', label: 'Kontraktor' },
                   ].map((party) => {
                     const nameKey = `${party.key}_nama` as keyof typeof preForm.signoffs;
                     const parafKey = `${party.key}_paraf` as keyof typeof preForm.signoffs;
@@ -1008,7 +1008,7 @@ export default function IcraMonitoringModal({
                     { key: 'ppi', label: 'PPI / IPCN' },
                     { key: 'kesling', label: 'Kesling' },
                     { key: 'k3rs', label: 'K3 RS' },
-                    { key: 'pihak3', label: 'Pihak ke 3 Pembangunan' },
+                    { key: 'pihak3', label: 'Kontraktor' },
                   ].map((party) => {
                     const nameKey = `${party.key}_nama` as keyof typeof postForm.signoffs;
                     const parafKey = `${party.key}_paraf` as keyof typeof postForm.signoffs;

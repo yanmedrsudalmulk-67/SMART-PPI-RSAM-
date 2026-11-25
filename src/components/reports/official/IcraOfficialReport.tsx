@@ -1095,7 +1095,7 @@ export default function IcraOfficialReport({
         { label: 'PPI / IPCN', nama: signoffs.ppi_nama, paraf: signoffs.ppi_paraf },
         { label: 'Kesling', nama: signoffs.kesling_nama, paraf: signoffs.kesling_paraf },
         { label: 'K3 RS', nama: signoffs.k3rs_nama, paraf: signoffs.k3rs_paraf },
-        { label: 'Pihak ke 3 Pembangunan', nama: signoffs.pihak3_nama, paraf: signoffs.pihak3_paraf },
+        { label: 'Kontraktor', nama: signoffs.pihak3_nama, paraf: signoffs.pihak3_paraf },
       ];
       b.push({
         type: 'element',
