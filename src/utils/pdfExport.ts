@@ -433,8 +433,12 @@ export function injectPrintStyles(clonedDoc: Document, isLandscape: boolean = fa
     th, td {
       box-sizing: border-box !important;
       vertical-align: middle !important;
-      line-height: 1.25 !important;
       background-clip: padding-box !important;
+    }
+
+    th:not(.f4-page th),
+    td:not(.f4-page td) {
+      line-height: 1.25 !important;
     }
 
     /* Prevent html2canvas tr-background bleeding into rowspanned cells */
@@ -569,10 +573,13 @@ export function sanitizeTableStylesForPdf(rootEl: HTMLElement, clonedDoc: Docume
         rowBg.toLowerCase().includes('00a651') ||
         trEl.classList.contains('bg-[#00a651]');
 
+      const isF4Root = rootEl.classList.contains('f4-page') || rootEl.closest('.f4-page') !== null;
       const cells = trEl.querySelectorAll<HTMLElement>('th, td');
       cells.forEach((cell) => {
         cell.style.boxSizing = 'border-box';
-        cell.style.lineHeight = '1.25';
+        if (!isF4Root && !cell.style.lineHeight) {
+          cell.style.lineHeight = '1.25';
+        }
         if (!cell.classList.contains('align-top') && !cell.getAttribute('class')?.includes('align-top')) {
           cell.style.verticalAlign = 'middle';
         }
@@ -907,7 +914,7 @@ export async function exportElementToA4Pdf(
                 const isSignature =
                   img.closest('.signature-block, [data-pdf-signature], [data-pdf-block="signature"]') !== null ||
                   img.hasAttribute('data-pdf-signature-img') ||
-                  (img.alt && (img.alt.includes('TTD') || img.alt.includes('Tanda Tangan'))) ||
+                  (img.alt && (img.alt.includes('TTD') || img.alt.includes('Tanda Tangan') || img.alt.includes('Paraf'))) ||
                   img.className.includes('brightness-0');
 
                 if (isSignature) {

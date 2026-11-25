@@ -68,6 +68,39 @@ function renderNarrativeText(text: string): React.ReactNode {
   });
 }
 
+/**
+ * Renders numbered/lettered items ("1.", "2.", "A.", "B.") with proper hanging indent
+ * so wrapped lines align straight under the first character of the text, never under the number.
+ */
+function renderHangingItem(
+  marker: string,
+  body: React.ReactNode,
+  bold = false,
+  baseStyle: React.CSSProperties = BASE_TEXT_STYLE
+): React.ReactNode {
+  return (
+    <div
+      className={`flex items-start text-left ${bold ? 'font-bold' : 'font-normal'}`}
+      style={{ ...baseStyle, fontWeight: bold ? 700 : 400, textAlign: 'left' }}
+    >
+      <span className="shrink-0 w-6">{marker}</span>
+      <div className="flex-1 text-left" style={{ textAlign: 'left' }}>
+        {body}
+      </div>
+    </div>
+  );
+}
+
+function renderAutoHangingTitle(
+  rawTitle: string,
+  bold = true,
+  baseStyle: React.CSSProperties = BASE_TEXT_STYLE
+): React.ReactNode {
+  const m = rawTitle.match(/^([0-9]+\.|[A-Z]\.)\s+(.*)$/);
+  if (!m) return rawTitle;
+  return renderHangingItem(m[1], m[2], bold, baseStyle);
+}
+
 export default function IcraOfficialReport({
   project,
   monitoringLogs = [],
@@ -298,7 +331,7 @@ export default function IcraOfficialReport({
       });
     };
 
-    // Sub-heading (BOLD)
+    // Sub-heading (BOLD, supports automatic hanging indent for "1. ...", "A. ...")
     const pushSubHeading = (key: string, title: string) => {
       b.push({
         type: 'element',
@@ -306,12 +339,12 @@ export default function IcraOfficialReport({
         keepWithNext: true,
         gapAfter: 4,
         node: (
-          <p
-            className="text-[12pt] leading-[1.5] font-bold text-black mt-1"
-            style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}
+          <div
+            className="text-[12pt] leading-[1.5] font-bold text-black mt-1 text-left"
+            style={{ ...BASE_TEXT_STYLE, fontWeight: 700, textAlign: 'left' }}
           >
-            {title}
-          </p>
+            {renderAutoHangingTitle(title, true, BASE_TEXT_STYLE)}
+          </div>
         ),
       });
     };
@@ -381,7 +414,7 @@ export default function IcraOfficialReport({
       key: 'tujuan-body-1',
       gapAfter: 8,
       node: (
-        <p className="pl-5 text-[12pt] leading-[1.5] text-justify text-black font-normal" style={BASE_TEXT_STYLE}>
+        <p className="pl-6 text-[12pt] leading-[1.5] text-justify text-black font-normal" style={BASE_TEXT_STYLE}>
           {renderNarrativeText(tujuanText)}
         </p>
       ),
@@ -393,7 +426,7 @@ export default function IcraOfficialReport({
       key: 'tujuan-body-2',
       gapAfter: 12,
       node: (
-        <p className="pl-5 text-[12pt] leading-[1.5] text-justify text-black font-normal" style={BASE_TEXT_STYLE}>
+        <p className="pl-6 text-[12pt] leading-[1.5] text-justify text-black font-normal" style={BASE_TEXT_STYLE}>
           {renderNarrativeText(ruangLingkupText)}
         </p>
       ),
@@ -407,35 +440,35 @@ export default function IcraOfficialReport({
       gapAfter: 12,
       node: (
         <table
-          className="w-full border-collapse text-[12pt] leading-[1.5] text-black font-normal"
-          style={BASE_TEXT_STYLE}
+          className="w-full border-collapse text-[12pt] leading-[1.5] text-black text-left font-normal"
+          style={{ ...BASE_TEXT_STYLE, textAlign: 'left' }}
         >
           <tbody>
             <tr>
-              <td className="py-1 px-1.5 align-top w-8 font-normal">1.</td>
-              <td className="py-1 px-1.5 align-top w-44 font-normal">Tanggal</td>
-              <td className="py-1 px-1 align-top w-4 font-normal">:</td>
-              <td className="py-1 px-1.5 align-top font-normal">
+              <td className="py-1 px-1.5 align-top w-8 text-left font-normal">1.</td>
+              <td className="py-1 px-1.5 align-top w-44 text-left font-normal">Tanggal</td>
+              <td className="py-1 px-1 align-top w-4 text-left font-normal">:</td>
+              <td className="py-1 px-1.5 align-top text-left font-normal">
                 {formatIndonesianDate(project.tgl_mulai)} s/d {formatIndonesianDate(project.tgl_selesai_estimasi)}
               </td>
             </tr>
             <tr>
-              <td className="py-1 px-1.5 align-top font-normal">2.</td>
-              <td className="py-1 px-1.5 align-top font-normal">Lokasi</td>
-              <td className="py-1 px-1 align-top font-normal">:</td>
-              <td className="py-1 px-1.5 align-top font-normal">{lokasiLengkapTable}</td>
+              <td className="py-1 px-1.5 align-top text-left font-normal">2.</td>
+              <td className="py-1 px-1.5 align-top text-left font-normal">Lokasi</td>
+              <td className="py-1 px-1 align-top text-left font-normal">:</td>
+              <td className="py-1 px-1.5 align-top text-left font-normal">{lokasiLengkapTable}</td>
             </tr>
             <tr>
-              <td className="py-1 px-1.5 align-top font-normal">3.</td>
-              <td className="py-1 px-1.5 align-top font-normal">Kegiatan</td>
-              <td className="py-1 px-1 align-top font-normal">:</td>
-              <td className="py-1 px-1.5 align-top font-normal">{projectTitleDisplay}</td>
+              <td className="py-1 px-1.5 align-top text-left font-normal">3.</td>
+              <td className="py-1 px-1.5 align-top text-left font-normal">Kegiatan</td>
+              <td className="py-1 px-1 align-top text-left font-normal">:</td>
+              <td className="py-1 px-1.5 align-top text-left font-normal">{projectTitleDisplay}</td>
             </tr>
             <tr>
-              <td className="py-1 px-1.5 align-top font-normal">4.</td>
-              <td className="py-1 px-1.5 align-top font-normal">Pelaksana / PJ</td>
-              <td className="py-1 px-1 align-top font-normal">:</td>
-              <td className="py-1 px-1.5 align-top font-normal">
+              <td className="py-1 px-1.5 align-top text-left font-normal">4.</td>
+              <td className="py-1 px-1.5 align-top text-left font-normal">Pelaksana / PJ</td>
+              <td className="py-1 px-1 align-top text-left font-normal">:</td>
+              <td className="py-1 px-1.5 align-top text-left font-normal">
                 {kontraktorDisplay}{pjProyekDisplay ? ` (Penanggung Jawab: ${pjProyekDisplay})` : ''}
               </td>
             </tr>
@@ -452,7 +485,7 @@ export default function IcraOfficialReport({
       keepWithNext: true,
       gapAfter: 6,
       node: (
-        <p className="text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
+        <p className="text-[12pt] leading-[1.5] text-left text-black font-normal" style={{ ...BASE_TEXT_STYLE, textAlign: 'left' }}>
           Berdasarkan pedoman ICRA, tipe proyek diklasifikasikan sebagai berikut:
         </p>
       ),
@@ -477,14 +510,14 @@ export default function IcraOfficialReport({
               <thead>
                 <tr className="bg-gray-100 text-center">
                   <th
-                    className="border border-black py-1.5 px-2.5 w-[24%] font-bold"
-                    style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}
+                    className="border border-black py-1.5 px-2.5 w-[24%] text-center font-bold"
+                    style={{ ...BASE_TEXT_STYLE, fontWeight: 700, textAlign: 'center' }}
                   >
                     Tipe Proyek
                   </th>
                   <th
-                    className="border border-black py-1.5 px-2.5 w-[76%] text-left font-bold"
-                    style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}
+                    className="border border-black py-1.5 px-2.5 w-[76%] text-center font-bold"
+                    style={{ ...BASE_TEXT_STYLE, fontWeight: 700, textAlign: 'center' }}
                   >
                     Deskripsi
                   </th>
@@ -493,10 +526,17 @@ export default function IcraOfficialReport({
             )}
             <tbody>
               <tr style={{ backgroundColor: isSelected ? '#fef9c3' : '#ffffff' }}>
-                <td className="border border-black py-1.5 px-2.5 w-[24%] align-top text-center font-normal">
-                  Tipe {ct.code}{isSelected ? ' (Dipilih)' : ''}
+                <td
+                  className="border border-black py-1.5 px-2.5 w-[24%] align-top text-left font-normal"
+                  style={{ ...BASE_TEXT_STYLE, textAlign: 'left' }}
+                >
+                  <div>Tipe {ct.code}</div>
+                  {isSelected && <div>Dipilih</div>}
                 </td>
-                <td className="border border-black py-1.5 px-2.5 w-[76%] align-top text-left font-normal">
+                <td
+                  className="border border-black py-1.5 px-2.5 w-[76%] align-top text-left font-normal"
+                  style={{ ...BASE_TEXT_STYLE, textAlign: 'left' }}
+                >
                   {ct.shortDesc}: {ct.items.join('; ')}.
                 </td>
               </tr>
@@ -515,7 +555,7 @@ export default function IcraOfficialReport({
       keepWithNext: true,
       gapAfter: 6,
       node: (
-        <p className="text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
+        <p className="text-[12pt] leading-[1.5] text-left text-black font-normal" style={{ ...BASE_TEXT_STYLE, textAlign: 'left' }}>
           Klasifikasi risiko pasien dibagi menjadi:
         </p>
       ),
@@ -541,14 +581,14 @@ export default function IcraOfficialReport({
               <thead>
                 <tr className="bg-gray-100 text-center">
                   <th
-                    className="border border-black py-1.5 px-2.5 w-[36%] text-left font-bold"
-                    style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}
+                    className="border border-black py-1.5 px-2.5 w-[36%] text-center font-bold"
+                    style={{ ...BASE_TEXT_STYLE, fontWeight: 700, textAlign: 'center' }}
                   >
                     Kategori Risiko
                   </th>
                   <th
-                    className="border border-black py-1.5 px-2.5 w-[64%] text-left font-bold"
-                    style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}
+                    className="border border-black py-1.5 px-2.5 w-[64%] text-center font-bold"
+                    style={{ ...BASE_TEXT_STYLE, fontWeight: 700, textAlign: 'center' }}
                   >
                     Deskripsi Unit
                   </th>
@@ -557,10 +597,20 @@ export default function IcraOfficialReport({
             )}
             <tbody>
               <tr style={{ backgroundColor: isSelected ? '#fef9c3' : '#ffffff' }}>
-                <td className="border border-black py-1.5 px-2.5 w-[36%] align-top text-left font-normal">
-                  Kategori {roman} (Risiko {rg.riskLabel}){isSelected ? ' — Dipilih' : ''}
+                <td
+                  className="border border-black py-1.5 px-2.5 w-[36%] align-top text-left font-normal"
+                  style={{ ...BASE_TEXT_STYLE, textAlign: 'left' }}
+                >
+                  <div>Kategori {roman}</div>
+                  <div>
+                    Risiko {rg.riskLabel}
+                    {isSelected ? ' - Dipilih' : ''}
+                  </div>
                 </td>
-                <td className="border border-black py-1.5 px-2.5 w-[64%] align-top text-left font-normal">
+                <td
+                  className="border border-black py-1.5 px-2.5 w-[64%] align-top text-left font-normal"
+                  style={{ ...BASE_TEXT_STYLE, textAlign: 'left' }}
+                >
                   {rg.areas}
                 </td>
               </tr>
@@ -578,7 +628,7 @@ export default function IcraOfficialReport({
       gapAfter: 8,
       node: (
         <div className="space-y-2 text-black font-normal" style={BASE_TEXT_STYLE}>
-          <p className="text-[12pt] leading-[1.5] font-normal">
+          <p className="text-[12pt] leading-[1.5] text-left font-normal" style={{ ...BASE_TEXT_STYLE, textAlign: 'left' }}>
             (Menentukan Kategori Pengendalian Berdasarkan Kombinasi Tipe Proyek dan Risiko Pasien)
           </p>
           <table
@@ -588,8 +638,8 @@ export default function IcraOfficialReport({
             <thead>
               <tr className="bg-gray-100 text-center">
                 <th
-                  className="border border-black py-1.5 px-2.5 text-left w-[44%] font-bold"
-                  style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}
+                  className="border border-black py-1.5 px-2.5 text-center w-[44%] font-bold"
+                  style={{ ...BASE_TEXT_STYLE, fontWeight: 700, textAlign: 'center' }}
                 >
                   Risiko Pasien / Tipe Proyek
                 </th>
@@ -687,22 +737,22 @@ export default function IcraOfficialReport({
             >
               {isFirst && (
                 <thead>
-                  <tr className="bg-gray-100">
+                  <tr className="bg-gray-100 text-center">
                     <th
                       className="border border-black py-1 px-1.5 text-center w-[8%] font-bold"
-                      style={{ ...COMPACT_TABLE_STYLE, fontWeight: 700 }}
+                      style={{ ...COMPACT_TABLE_STYLE, fontWeight: 700, textAlign: 'center' }}
                     >
                       No
                     </th>
                     <th
-                      className="border border-black py-1 px-2 text-left w-[64%] font-bold"
-                      style={{ ...COMPACT_TABLE_STYLE, fontWeight: 700 }}
+                      className="border border-black py-1 px-2 text-center w-[64%] font-bold"
+                      style={{ ...COMPACT_TABLE_STYLE, fontWeight: 700, textAlign: 'center' }}
                     >
                       Tindakan
                     </th>
                     <th
-                      className="border border-black py-1 px-2 text-left w-[28%] font-bold"
-                      style={{ ...COMPACT_TABLE_STYLE, fontWeight: 700 }}
+                      className="border border-black py-1 px-2 text-center w-[28%] font-bold"
+                      style={{ ...COMPACT_TABLE_STYLE, fontWeight: 700, textAlign: 'center' }}
                     >
                       Penanggung Jawab
                     </th>
@@ -711,13 +761,22 @@ export default function IcraOfficialReport({
               )}
               <tbody>
                 <tr>
-                  <td className="border border-black py-1 px-1.5 text-center align-top w-[8%] font-normal">
+                  <td
+                    className="border border-black py-1 px-1.5 text-center align-top w-[8%] font-normal"
+                    style={{ ...COMPACT_TABLE_STYLE, textAlign: 'center' }}
+                  >
                     {idx + 1}
                   </td>
-                  <td className="border border-black py-1 px-2 align-top text-justify w-[64%] font-normal">
+                  <td
+                    className="border border-black py-1 px-2 align-top text-left w-[64%] font-normal"
+                    style={{ ...COMPACT_TABLE_STYLE, textAlign: 'left' }}
+                  >
                     {renderNarrativeText(r.tindakan)}
                   </td>
-                  <td className="border border-black py-1 px-2 align-top text-left w-[28%] font-normal">
+                  <td
+                    className="border border-black py-1 px-2 align-top text-left w-[28%] font-normal"
+                    style={{ ...COMPACT_TABLE_STYLE, textAlign: 'left' }}
+                  >
                     {r.pj}
                   </td>
                 </tr>
@@ -744,7 +803,19 @@ export default function IcraOfficialReport({
 
     if (project.persyaratan_khusus && project.persyaratan_khusus.trim()) {
       pushSubHeading('persyaratan-khusus-title', 'Catatan dan Persyaratan Khusus Lapangan');
-      pushParagraph('persyaratan-khusus-body', toMidSentenceProse(project.persyaratan_khusus.trim()), 10, false);
+      const noteParagraphs = project.persyaratan_khusus
+        .trim()
+        .split(/\n+/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+      noteParagraphs.forEach((np, npIdx) => {
+        pushParagraph(
+          `persyaratan-khusus-body-${npIdx}`,
+          toMidSentenceProse(np),
+          npIdx === noteParagraphs.length - 1 ? 10 : 6,
+          false
+        );
+      });
     }
 
     if (chronologicalLogs.length > 0) {
@@ -752,7 +823,7 @@ export default function IcraOfficialReport({
         'monitoring-summary-title',
         `Ringkasan Pemantauan Harian IPCN (${chronologicalLogs.length} Kunjungan)`
       );
-      const shownLogs = chronologicalLogs.slice(0, 12);
+      const shownLogs = chronologicalLogs;
       shownLogs.forEach((m, idx) => {
         const isFirst = idx === 0;
         const isLast = idx === shownLogs.length - 1;
@@ -771,26 +842,26 @@ export default function IcraOfficialReport({
                 <thead>
                   <tr className="bg-gray-100 text-center">
                     <th
-                      className="border border-black py-1.5 px-1.5 w-[9%] font-bold"
-                      style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}
+                      className="border border-black py-1.5 px-1.5 w-[9%] text-center font-bold"
+                      style={{ ...BASE_TEXT_STYLE, fontWeight: 700, textAlign: 'center' }}
                     >
                       No
                     </th>
                     <th
-                      className="border border-black py-1.5 px-2 w-[25%] font-bold"
-                      style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}
+                      className="border border-black py-1.5 px-2 w-[25%] text-center font-bold"
+                      style={{ ...BASE_TEXT_STYLE, fontWeight: 700, textAlign: 'center' }}
                     >
                       Tanggal
                     </th>
                     <th
-                      className="border border-black py-1.5 px-2 w-[22%] font-bold"
-                      style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}
+                      className="border border-black py-1.5 px-2 w-[22%] text-center font-bold"
+                      style={{ ...BASE_TEXT_STYLE, fontWeight: 700, textAlign: 'center' }}
                     >
                       Status
                     </th>
                     <th
-                      className="border border-black py-1.5 px-2 w-[44%] text-left font-bold"
-                      style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}
+                      className="border border-black py-1.5 px-2 w-[44%] text-center font-bold"
+                      style={{ ...BASE_TEXT_STYLE, fontWeight: 700, textAlign: 'center' }}
                     >
                       Temuan dan Tindak Lanjut
                     </th>
@@ -808,7 +879,10 @@ export default function IcraOfficialReport({
                   <td className="border border-black py-1.5 px-2 w-[22%] text-center align-top font-normal">
                     {m.status_kepatuhan}
                   </td>
-                  <td className="border border-black py-1.5 px-2 w-[44%] text-left align-top font-normal">
+                  <td
+                    className="border border-black py-1.5 px-2 w-[44%] text-left align-top font-normal"
+                    style={{ ...BASE_TEXT_STYLE, textAlign: 'left' }}
+                  >
                     {m.temuan_lapangan
                       ? `Temuan: ${m.temuan_lapangan}`
                       : 'Sesuai protokol pengendalian infeksi PPI.'}
@@ -888,6 +962,7 @@ export default function IcraOfficialReport({
                   <img
                     src={project.ttd_ipcn}
                     alt="Tanda Tangan IPCN"
+                    data-pdf-signature-img="true"
                     className="max-h-16 object-contain"
                   />
                 ) : null}
@@ -947,21 +1022,30 @@ export default function IcraOfficialReport({
               {pair.map((photo, idx) => (
                 <div
                   key={idx}
-                  className="border border-black/30 bg-white p-1.5 flex flex-col items-center"
+                  data-pdf-photo="true"
+                  className="border border-black/30 bg-white p-1.5 flex flex-col items-center break-inside-avoid"
                 >
                   {photo.caption && (
                     <div
                       className="w-full text-center text-[10.5pt] leading-[1.3] text-black pb-1 font-normal"
-                      style={{ ...BASE_TEXT_STYLE, fontSize: '10.5pt', lineHeight: '1.3' }}
+                      style={{ ...BASE_TEXT_STYLE, fontSize: '10.5pt', lineHeight: '1.3', textAlign: 'center' }}
                     >
                       {photo.caption}
                     </div>
                   )}
-                  <div className="w-full h-[190px] overflow-hidden bg-gray-100 flex items-center justify-center">
+                  <div
+                    className="relative w-full h-[190px] overflow-hidden bg-gray-100 flex items-center justify-center"
+                    style={{
+                      backgroundImage: `url("${photo.url}")`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      backgroundRepeat: 'no-repeat',
+                    }}
+                  >
                     <img
                       src={photo.url}
                       alt={`${phaseTitle} ${i + idx + 1}`}
-                      className="w-full h-full object-cover"
+                      className="opacity-0 w-px h-px pointer-events-none absolute"
                     />
                   </div>
                 </div>
@@ -1034,6 +1118,7 @@ export default function IcraOfficialReport({
                       <img
                         src={pt.paraf}
                         alt={`Paraf ${pt.label}`}
+                        data-pdf-signature-img="true"
                         className="max-h-[38px] max-w-full object-contain"
                       />
                     ) : null}
@@ -1138,8 +1223,11 @@ export default function IcraOfficialReport({
             <table className="w-full table-fixed border-collapse -mt-[1px] text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
               <tbody>
                 <tr>
-                  <td className="border border-black py-1.5 px-2.5 w-[53%] align-top font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
-                    {sec.title}
+                  <td
+                    className="border border-black py-1.5 px-2.5 w-[53%] align-top text-left font-bold"
+                    style={{ ...BASE_TEXT_STYLE, fontWeight: 700, textAlign: 'left' }}
+                  >
+                    {renderAutoHangingTitle(sec.title, true, BASE_TEXT_STYLE)}
                   </td>
                   <td className="border border-black py-1.5 px-1 w-[8%] text-center align-middle font-normal">
                     {item.answer === 'YA' ? '✓' : ''}
@@ -1147,7 +1235,10 @@ export default function IcraOfficialReport({
                   <td className="border border-black py-1.5 px-1 w-[11%] text-center align-middle font-normal">
                     {item.answer === 'TIDAK' ? '✓' : ''}
                   </td>
-                  <td className="border border-black py-1.5 px-2 w-[28%] text-left align-top text-[11pt] font-normal">
+                  <td
+                    className="border border-black py-1.5 px-2 w-[28%] text-left align-top text-[11pt] font-normal"
+                    style={{ ...BASE_TEXT_STYLE, fontSize: '11pt', textAlign: 'left' }}
+                  >
                     {item.keterangan ?? item.tanggal ?? ''}
                   </td>
                 </tr>
@@ -1168,8 +1259,11 @@ export default function IcraOfficialReport({
           <table className="w-full table-fixed border-collapse -mt-[1px] text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
             <tbody>
               <tr>
-                <td className="border border-black py-1.5 px-2.5 w-[53%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
-                  {sec.title}
+                <td
+                  className="border border-black py-1.5 px-2.5 w-[53%] text-left font-bold"
+                  style={{ ...BASE_TEXT_STYLE, fontWeight: 700, textAlign: 'left' }}
+                >
+                  {renderAutoHangingTitle(sec.title, true, BASE_TEXT_STYLE)}
                 </td>
                 <td className="border border-black py-1.5 px-1 w-[8%]" />
                 <td className="border border-black py-1.5 px-1 w-[11%]" />
@@ -1177,7 +1271,10 @@ export default function IcraOfficialReport({
               </tr>
               {sec.subtitle && (
                 <tr>
-                  <td className="border border-black py-1.5 px-2.5 w-[53%] font-normal">
+                  <td
+                    className="border border-black py-1.5 px-2.5 pl-8 w-[53%] text-left font-normal"
+                    style={{ ...BASE_TEXT_STYLE, textAlign: 'left' }}
+                  >
                     {sec.subtitle}
                   </td>
                   <td className="border border-black py-1.5 px-1 w-[8%]" />
@@ -1200,9 +1297,13 @@ export default function IcraOfficialReport({
             <table className="w-full table-fixed border-collapse -mt-[1px] text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
               <tbody>
                 <tr>
-                  <td className="border border-black py-1.5 px-2.5 pl-6 w-[53%] align-top font-normal">
-                    <span className="mr-1.5">{item.number}</span>
-                    <span>{item.label}</span>
+                  <td
+                    className="border border-black py-1.5 px-2.5 pl-6 w-[53%] align-top text-left font-normal"
+                    style={{ ...BASE_TEXT_STYLE, textAlign: 'left' }}
+                  >
+                    {item.number
+                      ? renderHangingItem(item.number, item.label, false, BASE_TEXT_STYLE)
+                      : item.label}
                   </td>
                   <td className="border border-black py-1.5 px-1 w-[8%] text-center align-middle font-normal">
                     {item.answer === 'YA' ? '✓' : ''}
@@ -1210,7 +1311,10 @@ export default function IcraOfficialReport({
                   <td className="border border-black py-1.5 px-1 w-[11%] text-center align-middle font-normal">
                     {item.answer === 'TIDAK' ? '✓' : ''}
                   </td>
-                  <td className="border border-black py-1.5 px-2 w-[28%] text-left align-top text-[11pt] font-normal">
+                  <td
+                    className="border border-black py-1.5 px-2 w-[28%] text-left align-top text-[11pt] font-normal"
+                    style={{ ...BASE_TEXT_STYLE, fontSize: '11pt', textAlign: 'left' }}
+                  >
                     {item.keterangan ?? item.tanggal ?? ''}
                   </td>
                 </tr>
@@ -1411,7 +1515,7 @@ export default function IcraOfficialReport({
               <p className="font-normal">Petugas yang mengobservasi</p>
               <div className="h-14 flex items-center justify-center my-0.5">
                 {project.ttd_ipcn && (log.petugas_ipcn === namaIpcn || !log.petugas_ipcn) ? (
-                  <img src={project.ttd_ipcn} alt="Tanda tangan petugas" className="max-h-12 object-contain" />
+                  <img src={project.ttd_ipcn} alt="Tanda tangan petugas" data-pdf-signature-img="true" className="max-h-12 object-contain" />
                 ) : null}
               </div>
               <p className="font-normal">
@@ -1513,8 +1617,11 @@ export default function IcraOfficialReport({
           <table className="w-full table-fixed border-collapse -mt-[1px] text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
             <tbody>
               <tr>
-                <td className="border border-black py-1.5 px-2.5 w-[53%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
-                  {sec.title}
+                <td
+                  className="border border-black py-1.5 px-2.5 w-[53%] text-left font-bold"
+                  style={{ ...BASE_TEXT_STYLE, fontWeight: 700, textAlign: 'left' }}
+                >
+                  {renderAutoHangingTitle(sec.title, true, BASE_TEXT_STYLE)}
                 </td>
                 <td className="border border-black py-1.5 px-1 w-[8%]" />
                 <td className="border border-black py-1.5 px-1 w-[11%]" />
@@ -1527,6 +1634,18 @@ export default function IcraOfficialReport({
 
       secItems.forEach((item, idx) => {
         const isLastItem = isLastSec && idx === secItems.length - 1;
+        const itemBody = (
+          <>
+            <div>{item.label}</div>
+            {item.subNotes && item.subNotes.length > 0 && (
+              <ul className="list-disc pl-5 mt-1 space-y-0.5 text-left font-normal" style={{ textAlign: 'left' }}>
+                {item.subNotes.map((sn, snIdx) => (
+                  <li key={snIdx}>{sn}</li>
+                ))}
+              </ul>
+            )}
+          </>
+        );
         b.push({
           type: 'element',
           key: `post-form-item-${item.id}`,
@@ -1535,18 +1654,13 @@ export default function IcraOfficialReport({
             <table className="w-full table-fixed border-collapse -mt-[1px] text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
               <tbody>
                 <tr>
-                  <td className="border border-black py-1.5 px-2.5 pl-6 w-[53%] align-top font-normal">
-                    <div>
-                      <span className="mr-1.5">{item.number}</span>
-                      <span>{item.label}</span>
-                    </div>
-                    {item.subNotes && item.subNotes.length > 0 && (
-                      <ul className="list-disc pl-5 mt-1 space-y-0.5 font-normal">
-                        {item.subNotes.map((sn, snIdx) => (
-                          <li key={snIdx}>{sn}</li>
-                        ))}
-                      </ul>
-                    )}
+                  <td
+                    className="border border-black py-1.5 px-2.5 pl-6 w-[53%] align-top text-left font-normal"
+                    style={{ ...BASE_TEXT_STYLE, textAlign: 'left' }}
+                  >
+                    {item.number
+                      ? renderHangingItem(item.number, itemBody, false, BASE_TEXT_STYLE)
+                      : itemBody}
                   </td>
                   <td className="border border-black py-1.5 px-1 w-[8%] text-center align-middle font-normal">
                     {item.answer === 'YA' ? '✓' : ''}
@@ -1554,7 +1668,10 @@ export default function IcraOfficialReport({
                   <td className="border border-black py-1.5 px-1 w-[11%] text-center align-middle font-normal">
                     {item.answer === 'TIDAK' ? '✓' : ''}
                   </td>
-                  <td className="border border-black py-1.5 px-2 w-[28%] text-left align-top text-[11pt] font-normal">
+                  <td
+                    className="border border-black py-1.5 px-2 w-[28%] text-left align-top text-[11pt] font-normal"
+                    style={{ ...BASE_TEXT_STYLE, fontSize: '11pt', textAlign: 'left' }}
+                  >
                     {item.keterangan ?? item.tanggal ?? ''}
                   </td>
                 </tr>

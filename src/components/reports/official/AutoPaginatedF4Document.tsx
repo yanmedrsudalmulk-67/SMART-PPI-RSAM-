@@ -279,18 +279,21 @@ export default function AutoPaginatedF4Document({
     }
 
     let rafId: number | null = null;
-    const ro = new ResizeObserver(() => {
+    const scheduleMeasure = () => {
       if (rafId !== null) cancelAnimationFrame(rafId);
       rafId = requestAnimationFrame(() => {
         if (!cancelled) computePagination();
       });
-    });
+    };
 
+    const ro = new ResizeObserver(scheduleMeasure);
     ro.observe(measureRoot);
+    measureRoot.addEventListener('load', scheduleMeasure, true);
 
     return () => {
       cancelled = true;
       if (rafId !== null) cancelAnimationFrame(rafId);
+      measureRoot.removeEventListener('load', scheduleMeasure, true);
       ro.disconnect();
     };
   }, [isMounted, computePagination]);
