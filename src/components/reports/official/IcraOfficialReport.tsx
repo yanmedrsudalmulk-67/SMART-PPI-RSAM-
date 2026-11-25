@@ -75,9 +75,24 @@ export default function IcraOfficialReport({
   signDate,
   documentId = 'print-area-icra',
 }: IcraOfficialReportProps) {
+  const chronologicalLogs = useMemo(() => {
+    return [...monitoringLogs].sort((a, b) => {
+      const da = a.tanggal_monitoring || '';
+      const db = b.tanggal_monitoring || '';
+      if (da !== db) return da.localeCompare(db);
+      const ja = a.jam_monitoring || '';
+      const jb = b.jam_monitoring || '';
+      if (ja !== jb) return ja.localeCompare(jb);
+      const ca = a.created_at || '';
+      const cb = b.created_at || '';
+      if (ca !== cb) return ca.localeCompare(cb);
+      return (a.id || '').localeCompare(b.id || '');
+    });
+  }, [monitoringLogs]);
+
   const narrative = useMemo(
-    () => buildIcraReportNarrative(project, monitoringLogs),
-    [project, monitoringLogs]
+    () => buildIcraReportNarrative(project, chronologicalLogs),
+    [project, chronologicalLogs]
   );
 
   const {
@@ -144,7 +159,7 @@ export default function IcraOfficialReport({
   const intraPhotos = useMemo(() => {
     const all: { url: string; caption?: string }[] = [];
     const seen = new Set<string>();
-    monitoringLogs.forEach((log) => {
+    chronologicalLogs.forEach((log) => {
       const dateLabel = log.tanggal_monitoring
         ? `Tanggal: ${formatIndonesianDate(log.tanggal_monitoring)}`
         : '';
@@ -160,7 +175,7 @@ export default function IcraOfficialReport({
       });
     });
     return all;
-  }, [monitoringLogs]);
+  }, [chronologicalLogs]);
 
   const postPhotos = useMemo(
     () => (project.foto_sesudah || []).map((u) => normalizeImageUrl(u)).filter(Boolean),
@@ -732,12 +747,12 @@ export default function IcraOfficialReport({
       pushParagraph('persyaratan-khusus-body', toMidSentenceProse(project.persyaratan_khusus.trim()), 10, false);
     }
 
-    if (monitoringLogs.length > 0) {
+    if (chronologicalLogs.length > 0) {
       pushSubHeading(
         'monitoring-summary-title',
-        `Ringkasan Pemantauan Harian IPCN (${monitoringLogs.length} Kunjungan)`
+        `Ringkasan Pemantauan Harian IPCN (${chronologicalLogs.length} Kunjungan)`
       );
-      const shownLogs = monitoringLogs.slice(0, 12);
+      const shownLogs = chronologicalLogs.slice(0, 12);
       shownLogs.forEach((m, idx) => {
         const isFirst = idx === 0;
         const isLast = idx === shownLogs.length - 1;
@@ -1210,8 +1225,8 @@ export default function IcraOfficialReport({
 
     // ==================== 13. LAMPIRAN: FORMULIR PEMANTAUAN INTRA RENOVASI ====================
     const intraFormsToRender =
-      monitoringLogs.length > 0
-        ? monitoringLogs
+      chronologicalLogs.length > 0
+        ? chronologicalLogs
         : [
             {
               id: 'intra-template-default',
@@ -1578,7 +1593,7 @@ export default function IcraOfficialReport({
     rekomendasiSections,
     rekomendasiClosing,
     penutupParagraphs,
-    monitoringLogs,
+    chronologicalLogs,
     prePhotos,
     intraPhotos,
     postPhotos,
