@@ -969,14 +969,18 @@ export default function IcraOfficialReport({
                   />
                 ) : null}
               </div>
-              <p className="font-normal underline">{namaIpcn}</p>
-              <p className="font-normal">Infection Prevention Control Nurse</p>
+              <div className="leading-[1.1]" style={{ lineHeight: '1.1' }}>
+                <p className="font-normal underline" style={{ margin: 0, lineHeight: '1.1' }}>{namaIpcn}</p>
+                <p className="font-normal" style={{ margin: 0, lineHeight: '1.1' }}>Infection Prevention Control Nurse</p>
+              </div>
             </div>
             <div className="flex flex-col items-center">
               <p className="font-normal">Mengetahui</p>
               <div className="h-20 flex items-center justify-center my-1" />
-              <p className="font-normal underline">{ketuaPpiName}</p>
-              <p className="font-normal">Ketua PPI</p>
+              <div className="leading-[1.1]" style={{ lineHeight: '1.1' }}>
+                <p className="font-normal underline" style={{ margin: 0, lineHeight: '1.1' }}>{ketuaPpiName}</p>
+                <p className="font-normal" style={{ margin: 0, lineHeight: '1.1' }}>Ketua PPI</p>
+              </div>
             </div>
           </div>
         </div>
@@ -1405,14 +1409,24 @@ export default function IcraOfficialReport({
               <tbody>
                 <tr>
                   <td className="py-0.5 w-[26%] font-normal">Area renovasi</td>
-                  <td className="py-0.5 w-[3%] font-normal">:</td>
+                  <td
+                    className="py-0.5 w-[4%] text-center align-middle font-normal"
+                    style={{ textAlign: 'center', verticalAlign: 'middle' }}
+                  >
+                    :
+                  </td>
                   <td className="py-0.5 font-normal">
                     {toSmartTitleCase(log.area_renovasi || lokasiTitleDisplay)}
                   </td>
                 </tr>
                 <tr>
                   <td className="py-0.5 font-normal">Tanggal pemantauan</td>
-                  <td className="py-0.5 font-normal">:</td>
+                  <td
+                    className="py-0.5 text-center align-middle font-normal"
+                    style={{ textAlign: 'center', verticalAlign: 'middle' }}
+                  >
+                    :
+                  </td>
                   <td className="py-0.5 font-normal">
                     {formatIndonesianDate(log.tanggal_monitoring)}
                     {log.jam_monitoring ? ` (Pukul ${log.jam_monitoring} WIB)` : ''}
