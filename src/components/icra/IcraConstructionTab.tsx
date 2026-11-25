@@ -9,8 +9,6 @@ import {
   Plus,
   Search,
   HardHat,
-  FileCheck2,
-  ClipboardList,
   Edit3,
   Trash2,
   X,
@@ -655,27 +653,24 @@ export default function IcraConstructionTab() {
                     <button
                       type="button"
                       onClick={() => setPermitProject(proj)}
-                      className="px-3 py-2 rounded-2xl bg-gradient-to-b from-[#2a1322] to-[#1c0d17] border border-rose-500/40 text-rose-300 text-[11px] font-black shadow-[-2px_-2px_6px_rgba(255,150,180,0.05),3px_4px_10px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
+                      className="px-3.5 py-2 rounded-2xl bg-gradient-to-b from-[#2a1322] to-[#1c0d17] border border-rose-500/40 text-rose-300 text-[11px] font-black shadow-[-2px_-2px_6px_rgba(255,150,180,0.05),3px_4px_10px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:brightness-110 active:scale-95 transition-all cursor-pointer whitespace-nowrap"
                     >
-                      <FileCheck2 className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                      <span>Surat Izin (F4)</span>
+                      Surat Izin
                     </button>
 
                     <button
                       type="button"
                       onClick={() => openMonitoringModal(proj)}
-                      className="px-3 py-2 rounded-2xl bg-gradient-to-b from-[#122238] to-[#0c1626] border border-cyan-500/40 text-cyan-300 text-[11px] font-black shadow-[-2px_-2px_6px_rgba(100,200,255,0.05),3px_4px_10px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
+                      className="px-3.5 py-2 rounded-2xl bg-gradient-to-b from-[#122238] to-[#0c1626] border border-cyan-500/40 text-cyan-300 text-[11px] font-black shadow-[-2px_-2px_6px_rgba(100,200,255,0.05),3px_4px_10px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:brightness-110 active:scale-95 transition-all cursor-pointer whitespace-nowrap"
                     >
-                      <ClipboardList className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                      <span>Monitoring ({projLogs.length})</span>
+                      Monitoring ({projLogs.length})
                     </button>
 
                     <Link
                       href={`/dashboard/reports/icra?projectId=${proj.id}`}
-                      className="px-3 py-2 rounded-2xl bg-gradient-to-b from-[#1f1c45] to-[#131230] border border-indigo-400/45 text-indigo-200 text-[11px] font-black shadow-[-2px_-2px_6px_rgba(140,165,255,0.06),3px_4px_10px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:brightness-115 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
+                      className="px-3.5 py-2 rounded-2xl bg-gradient-to-b from-[#1f1c45] to-[#131230] border border-indigo-400/45 text-indigo-200 text-[11px] font-black shadow-[-2px_-2px_6px_rgba(140,165,255,0.06),3px_4px_10px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:brightness-115 active:scale-95 transition-all cursor-pointer whitespace-nowrap"
                     >
-                      <BookOpen className="w-3.5 h-3.5 text-amber-300 shrink-0" />
-                      <span>Laporan ICRA</span>
+                      Laporan ICRA
                     </Link>
                   </div>
 
