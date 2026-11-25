@@ -145,13 +145,16 @@ export default function IcraOfficialReport({
     const all: { url: string; caption?: string }[] = [];
     const seen = new Set<string>();
     monitoringLogs.forEach((log) => {
+      const dateLabel = log.tanggal_monitoring
+        ? `Tanggal: ${formatIndonesianDate(log.tanggal_monitoring)}`
+        : '';
       (log.foto_monitoring || []).forEach((u) => {
         const norm = normalizeImageUrl(u);
         if (norm && !seen.has(norm)) {
           seen.add(norm);
           all.push({
             url: norm,
-            caption: `Monitoring ${formatIndonesianDate(log.tanggal_monitoring)}`,
+            caption: dateLabel || undefined,
           });
         }
       });
@@ -931,7 +934,15 @@ export default function IcraOfficialReport({
                   key={idx}
                   className="border border-black/30 bg-white p-1.5 flex flex-col items-center"
                 >
-                  <div className="w-full h-[205px] overflow-hidden bg-gray-100 flex items-center justify-center">
+                  {photo.caption && (
+                    <div
+                      className="w-full text-center text-[10.5pt] leading-[1.3] text-black pb-1 font-normal"
+                      style={{ ...BASE_TEXT_STYLE, fontSize: '10.5pt', lineHeight: '1.3' }}
+                    >
+                      {photo.caption}
+                    </div>
+                  )}
+                  <div className="w-full h-[190px] overflow-hidden bg-gray-100 flex items-center justify-center">
                     <img
                       src={photo.url}
                       alt={`${phaseTitle} ${i + idx + 1}`}
@@ -946,10 +957,18 @@ export default function IcraOfficialReport({
       }
     };
 
+    const preData = normalizePreChecklist(project.pre_checklist, project);
+    const postData = normalizePostChecklist(project.post_checklist, project);
+    const preDateFormatted = formatIndonesianDate(preData.tanggal_survey || project.tgl_mulai);
+    const postDateFormatted = formatIndonesianDate(postData.tanggal_survey || project.tgl_selesai_estimasi);
+
     pushPhotoSection(
       'doc-pre',
       '1. Pre Renovasi / Konstruksi',
-      prePhotos.map((url) => ({ url })),
+      prePhotos.map((url) => ({
+        url,
+        caption: preDateFormatted && preDateFormatted !== '-' ? `Tanggal: ${preDateFormatted}` : undefined,
+      })),
       'Belum ada foto dokumentasi pra konstruksi atau renovasi yang diunggah.'
     );
 
@@ -963,7 +982,10 @@ export default function IcraOfficialReport({
     pushPhotoSection(
       'doc-post',
       '3. Post Renovasi / Konstruksi',
-      postPhotos.map((url) => ({ url })),
+      postPhotos.map((url) => ({
+        url,
+        caption: postDateFormatted && postDateFormatted !== '-' ? `Tanggal: ${postDateFormatted}` : undefined,
+      })),
       'Belum ada foto dokumentasi pasca konstruksi atau renovasi.'
     );
 
@@ -1010,7 +1032,6 @@ export default function IcraOfficialReport({
     };
 
     // ==================== 12. LAMPIRAN: FORMULIR PRE RENOVASI ====================
-    const preData = normalizePreChecklist(project.pre_checklist, project);
     const preSections = getPreChecklistSections(kelasCode);
 
     b.push({ type: 'pageBreak', key: 'pb-formulir-pre' });
@@ -1388,7 +1409,6 @@ export default function IcraOfficialReport({
     });
 
     // ==================== 14. LAMPIRAN: FORMULIR POST RENOVASI ====================
-    const postData = normalizePostChecklist(project.post_checklist, project);
     const postSections = getPostChecklistSections(kelasCode);
 
     b.push({ type: 'pageBreak', key: 'pb-formulir-post' });
