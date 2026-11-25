@@ -590,14 +590,9 @@ export default function IcraConstructionTab() {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
           {filteredProjects.map((proj) => {
             const projLogs = monitoringLogs.filter((m) => m.konstruksi_id === proj.id);
-            const classBadge =
-              proj.kelas_tindakan === 'IV'
-                ? 'bg-rose-500/25 text-rose-300 border-rose-500/60 shadow-[0_0_10px_rgba(244,63,94,0.3)]'
-                : proj.kelas_tindakan === 'III'
-                ? 'bg-orange-500/25 text-orange-300 border-orange-500/60 shadow-[0_0_10px_rgba(249,115,22,0.3)]'
-                : proj.kelas_tindakan === 'II'
-                ? 'bg-amber-500/25 text-amber-300 border-amber-500/60 shadow-[0_0_10px_rgba(245,158,11,0.3)]'
-                : 'bg-emerald-500/25 text-emerald-300 border-emerald-500/60 shadow-[0_0_10px_rgba(16,185,129,0.3)]';
+            const riskLabel =
+              PATIENT_RISK_GROUPS.find((g) => g.code === proj.kelompok_risiko)?.riskLabel ||
+              `Kelompok ${proj.kelompok_risiko}`;
 
             const statusBadge =
               proj.status_proyek === 'Selesai'
@@ -615,18 +610,10 @@ export default function IcraConstructionTab() {
                 <div className="absolute top-0 inset-x-10 h-[1.5px] bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none rounded-t-full" />
 
                 <div className="space-y-3.5 relative z-10">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-[11px] font-mono font-bold px-3 py-1.5 rounded-xl bg-[#0c0e22] text-indigo-300 border border-indigo-800/60 shadow-[inset_1.5px_1.5px_3px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
-                      {proj.nomor_izin || 'NO-IZIN'}
+                  <div className="flex items-center justify-end gap-2">
+                    <span className={`text-[10px] font-extrabold px-3 py-1 rounded-full border ${statusBadge}`}>
+                      {proj.status_proyek}
                     </span>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-black uppercase px-3 py-1 rounded-full border ${classBadge}`}>
-                        Kelas {proj.kelas_tindakan}
-                      </span>
-                      <span className={`text-[10px] font-extrabold px-3 py-1 rounded-full border ${statusBadge}`}>
-                        {proj.status_proyek}
-                      </span>
-                    </div>
                   </div>
 
                   <div>
@@ -647,17 +634,17 @@ export default function IcraConstructionTab() {
 
                   {/* 3 Deep Sunken Sub-stats Wells */}
                   <div className="grid grid-cols-3 gap-2.5 text-[11px] bg-[#0c0e22] p-3.5 rounded-[22px] border border-black/50 shadow-[inset_2px_2.5px_6px_rgba(0,0,0,0.85),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
-                    <div className="flex flex-col">
+                    <div className="flex flex-col items-center text-center">
                       <span className="text-slate-400 text-[10px] uppercase font-bold block mb-0.5">Tipe Aktivitas</span>
                       <span className="font-black text-white text-xs">Tipe {proj.tipe_konstruksi}</span>
                     </div>
-                    <div className="flex flex-col">
+                    <div className="flex flex-col items-center text-center">
                       <span className="text-slate-400 text-[10px] uppercase font-bold block mb-0.5">Risiko Pasien</span>
-                      <span className="font-black text-white text-xs">Kelompok {proj.kelompok_risiko}</span>
+                      <span className="font-black text-white text-xs">{riskLabel}</span>
                     </div>
-                    <div className="flex flex-col">
-                      <span className="text-slate-400 text-[10px] uppercase font-bold block mb-0.5">Pelaksana / PJ</span>
-                      <span className="font-black text-white text-xs truncate block">{proj.kontraktor_pelaksana}</span>
+                    <div className="flex flex-col items-center text-center">
+                      <span className="text-slate-400 text-[10px] uppercase font-bold block mb-0.5">Kelas Kewaspadaan</span>
+                      <span className="font-black text-white text-xs truncate block max-w-full">Kelas {proj.kelas_tindakan}</span>
                     </div>
                   </div>
                 </div>

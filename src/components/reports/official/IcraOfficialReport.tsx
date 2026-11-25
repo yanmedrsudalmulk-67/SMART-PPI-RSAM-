@@ -421,14 +421,6 @@ export default function IcraOfficialReport({
                 {kontraktorDisplay}{pjProyekDisplay ? ` (Penanggung Jawab: ${pjProyekDisplay})` : ''}
               </td>
             </tr>
-            {project.nomor_izin && (
-              <tr>
-                <td className="py-1 px-1.5 align-top font-normal">5.</td>
-                <td className="py-1 px-1.5 align-top font-normal">Nomor Izin ICRA</td>
-                <td className="py-1 px-1 align-top font-normal">:</td>
-                <td className="py-1 px-1.5 align-top font-normal">{project.nomor_izin}</td>
-              </tr>
-            )}
           </tbody>
         </table>
       ),
