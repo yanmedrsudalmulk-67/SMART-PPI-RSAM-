@@ -1297,12 +1297,13 @@ export default function IcraConstructionTab() {
                     </h4>
                   </div>
 
-                  {/* Foto Dokumentasi Pra Konstruksi / Renovasi (Maksimal 3 Foto) */}
+                  {/* Foto Dokumentasi Pra Konstruksi / Renovasi (Maksimal 6 Foto) */}
                   <div className="rounded-2xl bg-[#12132e] border border-black/40 p-4 sm:p-5 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)]">
                     <DocumentationUploader
                       images={fotoSebelum}
                       setImages={setFotoSebelum}
-                      maxImages={3}
+                      maxImages={6}
+                      columns={2}
                       hideTitle={true}
                     />
                   </div>

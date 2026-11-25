@@ -733,7 +733,7 @@ export default function IcraMonitoringModal({
                   <p className="text-[11px] font-bold uppercase tracking-wider text-amber-300 mb-2">
                     Foto Dokumentasi Intra Konstruksi (Otomatis Masuk ke Bagian Intra Laporan ICRA)
                   </p>
-                  <DocumentationUploader images={monPhotos} setImages={setMonPhotos} hideTitle />
+                  <DocumentationUploader images={monPhotos} setImages={setMonPhotos} maxImages={6} columns={2} hideTitle />
                 </div>
 
                 <div className="flex justify-end">
@@ -828,15 +828,19 @@ export default function IcraMonitoringModal({
                           )}
 
                           {log.foto_monitoring.length > 0 && (
-                            <div className="flex flex-wrap gap-2 pt-1">
+                            <div className="grid grid-cols-2 gap-3 max-w-2xl pt-1.5">
                               {log.foto_monitoring.map((u, idx) => (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
+                                <div
                                   key={idx}
-                                  src={normalizeImageUrl(u)}
-                                  alt={`Monitoring ${idx + 1}`}
-                                  className="w-16 h-16 object-cover rounded-lg border border-indigo-500/40"
-                                />
+                                  className="aspect-video overflow-hidden rounded-xl border border-indigo-500/40 bg-black/30"
+                                >
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={normalizeImageUrl(u)}
+                                    alt={`Monitoring ${idx + 1}`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
                               ))}
                             </div>
                           )}
@@ -990,7 +994,7 @@ export default function IcraMonitoringModal({
                     <span>Tandai Status Proyek: SELESAI</span>
                   </label>
                 </div>
-                <DocumentationUploader images={postPhotos} setImages={setPostPhotos} maxImages={6} hideTitle />
+                <DocumentationUploader images={postPhotos} setImages={setPostPhotos} maxImages={6} columns={2} hideTitle />
               </div>
 
               {/* 5-Party Verification Block matching Page 20 of PDF */}

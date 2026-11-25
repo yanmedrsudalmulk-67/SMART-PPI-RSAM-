@@ -11,12 +11,21 @@ interface DocumentationUploaderProps {
   images: (DocImage | any)[];
   setImages: React.Dispatch<React.SetStateAction<DocImage[]>> | React.Dispatch<React.SetStateAction<any[]>>;
   maxImages?: number;
+  columns?: 2 | 3;
   label?: string;
   helperText?: string;
   hideTitle?: boolean;
 }
 
-export function DocumentationUploader({ images, setImages, maxImages, label, helperText, hideTitle }: DocumentationUploaderProps) {
+export function DocumentationUploader({
+  images,
+  setImages,
+  maxImages = 6,
+  columns,
+  label,
+  helperText,
+  hideTitle,
+}: DocumentationUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -110,30 +119,43 @@ export function DocumentationUploader({ images, setImages, maxImages, label, hel
     });
   };
 
-  const isMaxReached = Boolean(maxImages && validImages.length >= maxImages);
+  const effectiveMax = maxImages && maxImages > 0 ? maxImages : 6;
+  const isMaxReached = validImages.length >= effectiveMax;
+  const gridColsClass =
+    columns === 2 || effectiveMax > 3
+      ? 'grid-cols-2 gap-4'
+      : 'grid-cols-1 sm:grid-cols-3 gap-3.5';
 
   return (
     <>
-      <div className={`flex flex-col sm:flex-row ${hideTitle ? 'justify-end' : 'justify-between'} items-start sm:items-center gap-4 w-full`}>
-        {!hideTitle && (
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
+        {!hideTitle ? (
           <div>
             <div className="flex items-center gap-2.5">
               <label className="text-[11px] font-black uppercase tracking-widest text-slate-300 flex items-center gap-2">
                 <Camera className="w-4 h-4 text-cyan-400" /> {label || 'Foto Dokumentasi'}
               </label>
-              {maxImages && (
-                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider border ${
-                  isMaxReached 
-                    ? 'bg-amber-500/15 border-amber-500/40 text-amber-300' 
-                    : 'bg-cyan-500/15 border-cyan-400/30 text-cyan-300'
-                }`}>
-                  {validImages.length} / {maxImages} Foto
-                </span>
-              )}
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider border ${
+                isMaxReached
+                  ? 'bg-amber-500/15 border-amber-500/40 text-amber-300'
+                  : 'bg-cyan-500/15 border-cyan-400/30 text-cyan-300'
+              }`}>
+                {validImages.length} / {effectiveMax} Foto
+              </span>
             </div>
             {helperText && (
               <p className="text-[11px] text-slate-400 mt-1">{helperText}</p>
             )}
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold tracking-wider border ${
+              isMaxReached
+                ? 'bg-amber-500/15 border-amber-500/40 text-amber-300'
+                : 'bg-cyan-500/15 border-cyan-400/30 text-cyan-300'
+            }`}>
+              {validImages.length} / {effectiveMax} Foto
+            </span>
           </div>
         )}
         <div className="flex gap-3 w-full sm:w-auto">
@@ -158,35 +180,37 @@ export function DocumentationUploader({ images, setImages, maxImages, label, hel
         <input type="file" ref={cameraInputRef} className="hidden" accept="image/*" capture="environment" onChange={handleFileUpload} />
       </div>
 
-      <div className={`grid ${maxImages && maxImages <= 3 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-5'} gap-3.5 mt-4 w-full`}>
-        <AnimatePresence>
-          {validImages.map((img, idx) => {
-            const url = getImageUrl(img);
-            return (
-              <motion.div layout initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} key={url || idx} 
-                className="relative aspect-video rounded-2xl overflow-hidden border border-white/10 group shadow-2xl bg-black/40"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={url} alt={`Doc ${idx}`} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                    <button type="button" onClick={() => setPreviewImage(url)} className="p-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-xl transition-all cursor-pointer">
-                      <Eye className="w-3.5 h-3.5" />
-                    </button>
-                    <button type="button" onClick={() => removeImage(idx)} className="p-2 bg-red-600 hover:bg-red-500 text-white rounded-xl shadow-xl transition-all cursor-pointer">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                </div>
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
-      </div>
-        
+      {validImages.length > 0 && (
+        <div className={`grid ${gridColsClass} mt-4 w-full`}>
+          <AnimatePresence>
+            {validImages.map((img, idx) => {
+              const url = getImageUrl(img);
+              return (
+                <motion.div layout initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} key={url || idx}
+                  className="relative aspect-video rounded-2xl overflow-hidden border border-white/10 group shadow-2xl bg-black/40"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt={`Doc ${idx}`} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <button type="button" onClick={() => setPreviewImage(url)} className="p-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-xl transition-all cursor-pointer">
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                      <button type="button" onClick={() => removeImage(idx)} className="p-2 bg-red-600 hover:bg-red-500 text-white rounded-xl shadow-xl transition-all cursor-pointer">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
+      )}
+
       {validImages.length === 0 && (
         <div className="py-9 border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center text-slate-400 gap-2 bg-black/20 w-full mt-3">
           <Camera className="w-7 h-7 opacity-30 text-cyan-400" />
           <p className="text-[11px] font-bold uppercase tracking-wider opacity-60">Belum ada foto dokumentasi</p>
-          <span className="text-[10px] text-slate-500">Dapat mengunggah 1 hingga {maxImages || 3} foto</span>
+          <span className="text-[10px] text-slate-500">Dapat mengunggah 1 hingga {effectiveMax} foto</span>
         </div>
       )}
 
