@@ -969,17 +969,25 @@ export default function IcraOfficialReport({
                   />
                 ) : null}
               </div>
-              <div className="leading-[1.1]" style={{ lineHeight: '1.1' }}>
-                <p className="font-normal underline" style={{ margin: 0, lineHeight: '1.1' }}>{namaIpcn}</p>
-                <p className="font-normal" style={{ margin: 0, lineHeight: '1.1' }}>Infection Prevention Control Nurse</p>
+              <div style={{ fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '12pt', lineHeight: '1.05' }}>
+                <div className="font-normal underline underline-offset-[2px]" style={{ margin: 0, lineHeight: '1.05' }}>
+                  {namaIpcn}
+                </div>
+                <div className="font-normal italic" style={{ margin: 0, lineHeight: '1.05' }}>
+                  Infection Prevention Control Nurse
+                </div>
               </div>
             </div>
             <div className="flex flex-col items-center">
               <p className="font-normal">Mengetahui</p>
               <div className="h-20 flex items-center justify-center my-1" />
-              <div className="leading-[1.1]" style={{ lineHeight: '1.1' }}>
-                <p className="font-normal underline" style={{ margin: 0, lineHeight: '1.1' }}>{ketuaPpiName}</p>
-                <p className="font-normal" style={{ margin: 0, lineHeight: '1.1' }}>Ketua PPI</p>
+              <div style={{ fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '12pt', lineHeight: '1.05' }}>
+                <div className="font-normal underline underline-offset-[2px]" style={{ margin: 0, lineHeight: '1.05' }}>
+                  {ketuaPpiName}
+                </div>
+                <div className="font-normal" style={{ margin: 0, lineHeight: '1.05' }}>
+                  Ketua PPI
+                </div>
               </div>
             </div>
           </div>
