@@ -739,20 +739,20 @@ export default function IcraOfficialReport({
                 <thead>
                   <tr className="bg-gray-100 text-center">
                     <th
-                      className="border border-black py-1 px-1.5 text-center w-[8%] font-bold"
-                      style={{ ...COMPACT_TABLE_STYLE, fontWeight: 700, textAlign: 'center' }}
+                      className="border border-black py-1 px-1.5 text-center align-middle w-[8%] font-bold"
+                      style={{ ...COMPACT_TABLE_STYLE, fontWeight: 700, textAlign: 'center', verticalAlign: 'middle' }}
                     >
                       No
                     </th>
                     <th
-                      className="border border-black py-1 px-2 text-center w-[64%] font-bold"
-                      style={{ ...COMPACT_TABLE_STYLE, fontWeight: 700, textAlign: 'center' }}
+                      className="border border-black py-1 px-2 text-center align-middle w-[64%] font-bold"
+                      style={{ ...COMPACT_TABLE_STYLE, fontWeight: 700, textAlign: 'center', verticalAlign: 'middle' }}
                     >
                       Tindakan
                     </th>
                     <th
-                      className="border border-black py-1 px-2 text-center w-[28%] font-bold"
-                      style={{ ...COMPACT_TABLE_STYLE, fontWeight: 700, textAlign: 'center' }}
+                      className="border border-black py-1 px-2 text-center align-middle w-[28%] font-bold"
+                      style={{ ...COMPACT_TABLE_STYLE, fontWeight: 700, textAlign: 'center', verticalAlign: 'middle' }}
                     >
                       Penanggung Jawab
                     </th>
@@ -762,20 +762,20 @@ export default function IcraOfficialReport({
               <tbody>
                 <tr>
                   <td
-                    className="border border-black py-1 px-1.5 text-center align-top w-[8%] font-normal"
-                    style={{ ...COMPACT_TABLE_STYLE, textAlign: 'center' }}
+                    className="border border-black py-1 px-1.5 text-center align-middle w-[8%] font-normal"
+                    style={{ ...COMPACT_TABLE_STYLE, textAlign: 'center', verticalAlign: 'middle' }}
                   >
                     {idx + 1}
                   </td>
                   <td
-                    className="border border-black py-1 px-2 align-top text-left w-[64%] font-normal"
-                    style={{ ...COMPACT_TABLE_STYLE, textAlign: 'left' }}
+                    className="border border-black py-1 px-2 align-middle text-left w-[64%] font-normal"
+                    style={{ ...COMPACT_TABLE_STYLE, textAlign: 'left', verticalAlign: 'middle' }}
                   >
                     {renderNarrativeText(r.tindakan)}
                   </td>
                   <td
-                    className="border border-black py-1 px-2 align-top text-left w-[28%] font-normal"
-                    style={{ ...COMPACT_TABLE_STYLE, textAlign: 'left' }}
+                    className="border border-black py-1 px-2 align-middle text-left w-[28%] font-normal"
+                    style={{ ...COMPACT_TABLE_STYLE, textAlign: 'left', verticalAlign: 'middle' }}
                   >
                     {r.pj}
                   </td>
