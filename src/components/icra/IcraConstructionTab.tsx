@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, parseISO } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
-import { utils, writeFile } from 'xlsx';
 import SignatureCanvas from 'react-signature-canvas';
 import {
   Plus,
@@ -19,7 +18,6 @@ import {
   Calendar,
   Building2,
   Camera,
-  FileSpreadsheet,
   Eraser,
   ShieldAlert,
   Info,
@@ -389,34 +387,6 @@ export default function IcraConstructionTab() {
     return projects.find((p) => p.id === monitoringProject.id) || monitoringProject;
   }, [projects, monitoringProject]);
 
-  const handleExportExcel = () => {
-    if (projects.length === 0) {
-      showToast('Belum ada proyek ICRA Konstruksi untuk diekspor.', 'error');
-      return;
-    }
-    const rows = projects.map((p, idx) => ({
-      No: idx + 1,
-      'Nomor Izin': p.nomor_izin,
-      'Nama Proyek': p.nama_proyek,
-      Lokasi: p.lokasi_area,
-      'Area Terdampak': p.area_terdampak,
-      Pelaksana: p.kontraktor_pelaksana,
-      'PJ Proyek': p.pj_proyek,
-      'Tanggal Mulai': p.tgl_mulai,
-      'Estimasi Selesai': p.tgl_selesai_estimasi,
-      'Tipe Konstruksi': `Tipe ${p.tipe_konstruksi}`,
-      'Kelompok Risiko': `Kelompok ${p.kelompok_risiko}`,
-      'Kelas Tindakan': `Kelas ${p.kelas_tindakan}`,
-      Status: p.status_proyek,
-      'Jumlah Log Monitoring': monitoringLogs.filter((m) => m.konstruksi_id === p.id).length,
-    }));
-    const ws = utils.json_to_sheet(rows);
-    const wb = utils.book_new();
-    utils.book_append_sheet(wb, ws, 'ICRA_Konstruksi');
-    writeFile(wb, `Rekap_ICRA_Konstruksi_RSUD_Al_Mulk.xlsx`);
-    showToast('File Excel rekap ICRA Konstruksi berhasil diunduh!');
-  };
-
   const filteredProjects = useMemo(() => {
     return projects.filter((p) => {
       if (filterStatus !== 'Semua' && p.status_proyek !== filterStatus) return false;
@@ -537,20 +507,10 @@ export default function IcraConstructionTab() {
         <div className="flex flex-wrap items-center gap-2.5">
           <button
             type="button"
-            onClick={handleExportExcel}
-            className="px-4 py-2.5 rounded-2xl bg-gradient-to-b from-[#162e2c] to-[#0e2020] border border-emerald-500/40 text-emerald-300 text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-[-2px_-2px_6px_rgba(140,255,200,0.08),3px_4px_10px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:brightness-110 active:scale-95 transition-all cursor-pointer"
-          >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-            <span>Rekap Excel</span>
-          </button>
-
-          <button
-            type="button"
             onClick={openAddProject}
-            className="relative overflow-hidden group px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-[-3px_-3px_10px_rgba(255,255,255,0.2),6px_8px_20px_rgba(0,0,0,0.6),inset_0_1.5px_2px_rgba(255,255,255,0.5),inset_0_-2px_3px_rgba(0,0,0,0.35)] active:scale-95 transition-all cursor-pointer"
+            className="relative overflow-hidden group px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 text-xs font-black uppercase tracking-wider flex items-center justify-center shadow-[-3px_-3px_10px_rgba(255,255,255,0.2),6px_8px_20px_rgba(0,0,0,0.6),inset_0_1.5px_2px_rgba(255,255,255,0.5),inset_0_-2px_3px_rgba(0,0,0,0.35)] active:scale-95 transition-all cursor-pointer"
           >
             <div className="absolute top-0 inset-x-4 h-[1px] bg-white/40 pointer-events-none rounded-t-full" />
-            <Plus className="w-4 h-4 text-slate-950" strokeWidth={2.5} />
             <span className="text-slate-950 font-black">Ajukan ICRA Konstruksi Baru</span>
           </button>
         </div>
