@@ -1104,14 +1104,15 @@ export default function IcraOfficialReport({
         node: (
           <div className="w-full pt-4 space-y-4 text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
             {parties.map((pt, idx) => (
-              <div key={idx} className="grid grid-cols-12 items-end gap-3 min-h-[44px]">
-                <div className="col-span-7 flex items-baseline">
-                  <span className="shrink-0 mr-1.5 font-normal">{pt.label}</span>
-                  <span className="flex-1 border-b border-dotted border-black text-center px-1 font-normal">
+              <div key={idx} className="flex items-end gap-4 min-h-[44px]">
+                <div className="flex-1 min-w-0 flex items-baseline">
+                  <span className="shrink-0 w-[98px] text-left font-normal">{pt.label}</span>
+                  <span className="shrink-0 w-3.5 text-left font-normal">:</span>
+                  <span className="flex-1 min-w-0 border-b border-dotted border-black text-left pl-1.5 pr-1 font-normal">
                     {pt.nama ? pt.nama : ''}
                   </span>
                 </div>
-                <div className="col-span-5 flex items-end">
+                <div className="w-[195px] shrink-0 flex items-end">
                   <span className="shrink-0 mr-2 font-normal leading-none pb-0.5">Paraf</span>
                   <div className="flex-1 border-b border-dotted border-black flex items-end justify-center min-h-[40px] px-1 pb-0.5">
                     {pt.paraf ? (
