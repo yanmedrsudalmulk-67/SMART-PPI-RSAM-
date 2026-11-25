@@ -11,7 +11,6 @@ import {
   FileCheck,
   HardHat,
   CheckCircle2,
-  CheckCheck,
   Calendar,
   MapPin,
   ShieldAlert,
@@ -149,10 +148,6 @@ export default function IcraMonitoringModal({
   // Handlers for Sheet 2 (INTRA)
   const updateIntraItem = (id: string, patch: Partial<{ answer: IntraAnswer; keterangan: string }>) => {
     setIntraItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)));
-  };
-
-  const markAllIntraYes = () => {
-    setIntraItems((prev) => prev.map((it) => ({ ...it, answer: 'YA' })));
   };
 
   const handleSaveIntra = async (e: React.FormEvent) => {
@@ -600,14 +595,6 @@ export default function IcraMonitoringModal({
                       Daftar ceklist menyesuaikan otomatis dengan Matriks Grading Risiko &amp; Kelas Kewaspadaan {kelas}.
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={markAllIntraYes}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/40 text-emerald-200 text-[11px] font-bold cursor-pointer"
-                  >
-                    <CheckCheck className="w-3.5 h-3.5" />
-                    <span>Centang Semua YA</span>
-                  </button>
                 </div>
 
                 {/* Header Metadata */}
