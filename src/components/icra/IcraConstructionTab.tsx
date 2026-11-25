@@ -604,7 +604,7 @@ export default function IcraConstructionTab() {
             return (
               <div
                 key={proj.id}
-                className="relative group rounded-[32px] bg-gradient-to-b from-[#1c1e42] via-[#161836] to-[#11122a] border border-[#2c3060]/80 p-6 sm:p-7 shadow-[-8px_-8px_24px_rgba(140,165,255,0.05),14px_18px_40px_rgba(0,0,0,0.8),inset_1px_1.5px_2px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.4)] flex flex-col justify-between gap-5 hover:-translate-y-1.5 hover:border-[#3d4482] transition-all duration-300 overflow-hidden"
+                className="relative group rounded-[32px] bg-gradient-to-b from-[#1c1e42] via-[#161836] to-[#11122a] border border-[#2c3060]/80 p-5 sm:p-6 shadow-[-8px_-8px_24px_rgba(140,165,255,0.05),14px_18px_40px_rgba(0,0,0,0.8),inset_1px_1.5px_2px_rgba(255,255,255,0.18),inset_-1.5px_-1.5px_3px_rgba(0,0,0,0.4)] flex flex-col justify-between gap-5 hover:-translate-y-1.5 hover:border-[#3d4482] transition-all duration-300 overflow-hidden"
               >
                 {/* Top Specular Highlight Line */}
                 <div className="absolute top-0 inset-x-10 h-[1.5px] bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none rounded-t-full" />
@@ -616,11 +616,11 @@ export default function IcraConstructionTab() {
                     </span>
                   </div>
 
-                  <div>
+                  <div className="text-center">
                     <h4 className="text-base sm:text-lg font-black text-white leading-snug drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] group-hover:text-amber-200 transition-colors">
                       {proj.nama_proyek}
                     </h4>
-                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-slate-300 mt-2 font-medium">
+                    <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-xs text-slate-300 mt-2 font-medium">
                       <span className="flex items-center gap-1.5">
                         <Building2 className="w-4 h-4 text-cyan-400" />
                         <span className="font-semibold text-slate-200">{proj.lokasi_area}</span>
@@ -649,41 +649,41 @@ export default function IcraConstructionTab() {
                   </div>
                 </div>
 
-                {/* Action Footer */}
-                <div className="flex flex-wrap items-center justify-between gap-2.5 pt-3.5 border-t border-indigo-950/70 relative z-10">
-                  <div className="flex flex-wrap items-center gap-2">
+                {/* Action Footer - All buttons aligned neatly in 1 row */}
+                <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-1.5 sm:gap-2 pt-3.5 border-t border-indigo-950/70 relative z-10">
+                  <div className="flex flex-wrap sm:flex-nowrap items-center gap-1.5 sm:gap-2 min-w-0">
                     <button
                       type="button"
                       onClick={() => setPermitProject(proj)}
-                      className="px-4 py-2.5 rounded-2xl bg-gradient-to-b from-[#2a1322] to-[#1c0d17] border border-rose-500/40 text-rose-300 text-xs font-black shadow-[-2px_-2px_6px_rgba(255,150,180,0.05),3px_4px_10px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+                      className="px-3 py-2 rounded-2xl bg-gradient-to-b from-[#2a1322] to-[#1c0d17] border border-rose-500/40 text-rose-300 text-[11px] font-black shadow-[-2px_-2px_6px_rgba(255,150,180,0.05),3px_4px_10px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
                     >
-                      <FileCheck2 className="w-4 h-4 text-rose-400" />
+                      <FileCheck2 className="w-3.5 h-3.5 text-rose-400 shrink-0" />
                       <span>Surat Izin (F4)</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => openMonitoringModal(proj)}
-                      className="px-4 py-2.5 rounded-2xl bg-gradient-to-b from-[#122238] to-[#0c1626] border border-cyan-500/40 text-cyan-300 text-xs font-black shadow-[-2px_-2px_6px_rgba(100,200,255,0.05),3px_4px_10px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+                      className="px-3 py-2 rounded-2xl bg-gradient-to-b from-[#122238] to-[#0c1626] border border-cyan-500/40 text-cyan-300 text-[11px] font-black shadow-[-2px_-2px_6px_rgba(100,200,255,0.05),3px_4px_10px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
                     >
-                      <ClipboardList className="w-4 h-4 text-cyan-400" />
+                      <ClipboardList className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                       <span>Monitoring ({projLogs.length})</span>
                     </button>
 
                     <Link
                       href={`/dashboard/reports/icra?projectId=${proj.id}`}
-                      className="px-4 py-2.5 rounded-2xl bg-gradient-to-b from-[#1f1c45] to-[#131230] border border-indigo-400/45 text-indigo-200 text-xs font-black shadow-[-2px_-2px_6px_rgba(140,165,255,0.06),3px_4px_10px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:brightness-115 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+                      className="px-3 py-2 rounded-2xl bg-gradient-to-b from-[#1f1c45] to-[#131230] border border-indigo-400/45 text-indigo-200 text-[11px] font-black shadow-[-2px_-2px_6px_rgba(140,165,255,0.06),3px_4px_10px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:brightness-115 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
                     >
-                      <BookOpen className="w-4 h-4 text-amber-300" />
+                      <BookOpen className="w-3.5 h-3.5 text-amber-300 shrink-0" />
                       <span>Laporan ICRA</span>
                     </Link>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 shrink-0">
                     <button
                       type="button"
                       onClick={() => openEditProject(proj)}
-                      className="p-2.5 rounded-xl bg-[#141635] hover:bg-[#1a1c42] text-indigo-300 hover:text-white border border-[#2b2d56] shadow-[-2px_-2px_6px_rgba(140,165,255,0.03),3px_3px_8px_rgba(0,0,0,0.5),inset_1px_1px_1px_rgba(255,255,255,0.1)] transition-all cursor-pointer"
+                      className="p-2 rounded-xl bg-[#141635] hover:bg-[#1a1c42] text-indigo-300 hover:text-white border border-[#2b2d56] shadow-[-2px_-2px_6px_rgba(140,165,255,0.03),3px_3px_8px_rgba(0,0,0,0.5),inset_1px_1px_1px_rgba(255,255,255,0.1)] transition-all cursor-pointer"
                       title="Edit Proyek & Checklist"
                     >
                       <Edit3 className="w-4 h-4" />
@@ -691,7 +691,7 @@ export default function IcraConstructionTab() {
                     <button
                       type="button"
                       onClick={() => handleDeleteProject(proj.id)}
-                      className="p-2.5 rounded-xl bg-[#26131c] hover:bg-[#321724] text-rose-400 hover:text-rose-300 border border-rose-500/30 shadow-[-2px_-2px_6px_rgba(255,100,120,0.03),3px_3px_8px_rgba(0,0,0,0.5),inset_1px_1px_1px_rgba(255,255,255,0.1)] transition-all cursor-pointer"
+                      className="p-2 rounded-xl bg-[#26131c] hover:bg-[#321724] text-rose-400 hover:text-rose-300 border border-rose-500/30 shadow-[-2px_-2px_6px_rgba(255,100,120,0.03),3px_3px_8px_rgba(0,0,0,0.5),inset_1px_1px_1px_rgba(255,255,255,0.1)] transition-all cursor-pointer"
                       title="Hapus Proyek"
                     >
                       <Trash2 className="w-4 h-4" />
