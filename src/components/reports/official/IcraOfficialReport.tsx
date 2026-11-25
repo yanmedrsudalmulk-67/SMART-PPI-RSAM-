@@ -42,6 +42,22 @@ const BASE_TEXT_STYLE: React.CSSProperties = {
   color: '#000000',
 };
 
+const COMPACT_TABLE_STYLE: React.CSSProperties = {
+  fontFamily: 'Arial, Helvetica, sans-serif',
+  fontSize: '11pt',
+  lineHeight: '1.35',
+  fontWeight: 400,
+  color: '#000000',
+};
+
+const INTRA_FORM_STYLE: React.CSSProperties = {
+  fontFamily: 'Arial, Helvetica, sans-serif',
+  fontSize: '10.5pt',
+  lineHeight: '1.3',
+  fontWeight: 400,
+  color: '#000000',
+};
+
 function renderNarrativeText(text: string): React.ReactNode {
   const parts = text.split(/(\*[^*]+\*)/g);
   return parts.map((part, idx) => {
@@ -481,6 +497,7 @@ export default function IcraOfficialReport({
     });
 
     // ==================== 5. KATEGORI RISIKO PASIEN (ATOMIC ROWS) ====================
+    b.push({ type: 'pageBreak', key: 'pb-kategori-risiko' });
     pushHeading('sec-kategori-risiko', 'KATEGORI RISIKO PASIEN', 'kategori-risiko');
     b.push({
       type: 'element',
@@ -634,6 +651,7 @@ export default function IcraOfficialReport({
     });
 
     // ==================== 7. RENCANA TINDAKAN PENGENDALIAN INFEKSI (ATOMIC PER-ROW) ====================
+    b.push({ type: 'pageBreak', key: 'pb-rencana-tindakan' });
     pushHeading('sec-rencana-tindakan', 'RENCANA TINDAKAN PENGENDALIAN INFEKSI', 'rencana-tindakan');
 
     const pushAtomicActionTable = (
@@ -652,29 +670,29 @@ export default function IcraOfficialReport({
           gapAfter: isLast ? 10 : 0,
           node: (
             <table
-              className={`w-full table-fixed border-collapse text-[12pt] leading-[1.5] text-black font-normal ${
+              className={`w-full table-fixed border-collapse text-[11pt] leading-[1.35] text-black font-normal ${
                 isFirst ? '' : '-mt-[1px]'
               }`}
-              style={BASE_TEXT_STYLE}
+              style={COMPACT_TABLE_STYLE}
             >
               {isFirst && (
                 <thead>
                   <tr className="bg-gray-100">
                     <th
-                      className="border border-black py-1.5 px-2 text-center w-[9%] font-bold"
-                      style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}
+                      className="border border-black py-1 px-1.5 text-center w-[8%] font-bold"
+                      style={{ ...COMPACT_TABLE_STYLE, fontWeight: 700 }}
                     >
                       No
                     </th>
                     <th
-                      className="border border-black py-1.5 px-2.5 text-left w-[63%] font-bold"
-                      style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}
+                      className="border border-black py-1 px-2 text-left w-[64%] font-bold"
+                      style={{ ...COMPACT_TABLE_STYLE, fontWeight: 700 }}
                     >
                       Tindakan
                     </th>
                     <th
-                      className="border border-black py-1.5 px-2.5 text-left w-[28%] font-bold"
-                      style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}
+                      className="border border-black py-1 px-2 text-left w-[28%] font-bold"
+                      style={{ ...COMPACT_TABLE_STYLE, fontWeight: 700 }}
                     >
                       Penanggung Jawab
                     </th>
@@ -683,13 +701,13 @@ export default function IcraOfficialReport({
               )}
               <tbody>
                 <tr>
-                  <td className="border border-black py-1.5 px-2 text-center align-top w-[9%] font-normal">
+                  <td className="border border-black py-1 px-1.5 text-center align-top w-[8%] font-normal">
                     {idx + 1}
                   </td>
-                  <td className="border border-black py-1.5 px-2.5 align-top text-justify w-[63%] font-normal">
+                  <td className="border border-black py-1 px-2 align-top text-justify w-[64%] font-normal">
                     {renderNarrativeText(r.tindakan)}
                   </td>
-                  <td className="border border-black py-1.5 px-2.5 align-top text-left w-[28%] font-normal">
+                  <td className="border border-black py-1 px-2 align-top text-left w-[28%] font-normal">
                     {r.pj}
                   </td>
                 </tr>
@@ -701,11 +719,13 @@ export default function IcraOfficialReport({
     };
 
     pushAtomicActionTable('pra', 'Tindakan Pra-Renovasi (Sebelum Pekerjaan)', praActions);
+    b.push({ type: 'pageBreak', key: 'pb-tindakan-saat' });
     pushAtomicActionTable(
       'saat',
       `Tindakan Saat Renovasi — Kelas ${kelasCode} (Selama Pekerjaan)`,
       saatActions
     );
+    b.push({ type: 'pageBreak', key: 'pb-tindakan-pasca' });
     pushAtomicActionTable(
       'pasca',
       `Tindakan Pasca-Renovasi — Kelas ${kelasCode} (Setelah Pekerjaan)`,
@@ -793,6 +813,7 @@ export default function IcraOfficialReport({
     }
 
     // ==================== 8. KESIMPULAN ====================
+    b.push({ type: 'pageBreak', key: 'pb-kesimpulan' });
     pushHeading('sec-kesimpulan', 'KESIMPULAN', 'kesimpulan');
     kesimpulanParagraphs.forEach((pText, idx) => {
       pushParagraph(
@@ -1233,22 +1254,22 @@ export default function IcraOfficialReport({
         key: `formulir-intra-head-${log.id}-${logIdx}`,
         chapterAnchor: logIdx === 0 ? 'formulir-intra' : undefined,
         keepWithNext: true,
-        gapAfter: 6,
+        gapAfter: 4,
         node: (
-          <div className="space-y-3 text-[12pt] leading-[1.5] text-black" style={BASE_TEXT_STYLE}>
+          <div className="space-y-1.5 text-[10.5pt] leading-[1.3] text-black" style={INTRA_FORM_STYLE}>
             <div className="text-center">
               <h2
-                className="text-[12pt] leading-[1.5] font-bold uppercase text-black"
-                style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}
+                className="text-[11.5pt] leading-[1.35] font-bold uppercase text-black"
+                style={{ ...INTRA_FORM_STYLE, fontSize: '11.5pt', fontWeight: 700, letterSpacing: '0.02em' }}
               >
                 FORMULIR PEMANTAUAN SELAMA RENOVASI / KONSTRUKSI BANGUNAN
               </h2>
             </div>
 
-            <table className="w-full border-collapse text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
+            <table className="w-full border-collapse text-[10.5pt] leading-[1.3] text-black font-normal" style={INTRA_FORM_STYLE}>
               <tbody>
                 <tr>
-                  <td className="py-0.5 w-[28%] font-normal">Area renovasi</td>
+                  <td className="py-0.5 w-[26%] font-normal">Area renovasi</td>
                   <td className="py-0.5 w-[3%] font-normal">:</td>
                   <td className="py-0.5 font-normal">
                     {toSmartTitleCase(log.area_renovasi || lokasiTitleDisplay)}
@@ -1265,7 +1286,7 @@ export default function IcraOfficialReport({
               </tbody>
             </table>
 
-            <p className="text-[12pt] leading-[1.5] font-bold uppercase text-black" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+            <p className="text-[10.5pt] leading-[1.3] font-bold uppercase text-black" style={{ ...INTRA_FORM_STYLE, fontWeight: 700 }}>
               KATEGORI {kelasCode}
             </p>
           </div>
@@ -1278,33 +1299,33 @@ export default function IcraOfficialReport({
         b.push({
           type: 'element',
           key: `formulir-intra-row-${log.id}-${idx}`,
-          gapAfter: isLast ? 12 : 0,
+          gapAfter: isLast ? 6 : 0,
           node: (
             <table
-              className={`w-full table-fixed border-collapse text-[12pt] leading-[1.5] text-black font-normal ${
+              className={`w-full table-fixed border-collapse text-[10.5pt] leading-[1.3] text-black font-normal ${
                 isFirst ? '' : '-mt-[1px]'
               }`}
-              style={BASE_TEXT_STYLE}
+              style={INTRA_FORM_STYLE}
             >
               {isFirst && (
                 <thead>
                   <tr className="bg-gray-100 text-center">
-                    <th className="border border-black py-1.5 px-1 w-[7%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                    <th className="border border-black py-1 px-1 w-[6%] font-bold" style={{ ...INTRA_FORM_STYLE, fontWeight: 700 }}>
                       NO
                     </th>
-                    <th className="border border-black py-1.5 px-2.5 w-[47%] text-center font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                    <th className="border border-black py-1 px-2 w-[48%] text-center font-bold" style={{ ...INTRA_FORM_STYLE, fontWeight: 700 }}>
                       KEGIATAN
                     </th>
-                    <th className="border border-black py-1.5 px-1 w-[7%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                    <th className="border border-black py-1 px-1 w-[7%] font-bold" style={{ ...INTRA_FORM_STYLE, fontWeight: 700 }}>
                       YA
                     </th>
-                    <th className="border border-black py-1.5 px-1 w-[10%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                    <th className="border border-black py-1 px-1 w-[10%] font-bold" style={{ ...INTRA_FORM_STYLE, fontWeight: 700 }}>
                       TIDAK
                     </th>
-                    <th className="border border-black py-1.5 px-1 w-[8%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                    <th className="border border-black py-1 px-1 w-[8%] font-bold" style={{ ...INTRA_FORM_STYLE, fontWeight: 700 }}>
                       N/A
                     </th>
-                    <th className="border border-black py-1.5 px-2 w-[21%] font-bold" style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}>
+                    <th className="border border-black py-1 px-1.5 w-[21%] font-bold" style={{ ...INTRA_FORM_STYLE, fontWeight: 700 }}>
                       KETERANGAN
                     </th>
                   </tr>
@@ -1312,22 +1333,22 @@ export default function IcraOfficialReport({
               )}
               <tbody>
                 <tr>
-                  <td className="border border-black py-1.5 px-1 w-[7%] text-center align-top font-normal">
+                  <td className="border border-black py-1 px-1 w-[6%] text-center align-top font-normal">
                     {it.no}
                   </td>
-                  <td className="border border-black py-1.5 px-2.5 w-[47%] align-top text-left font-normal">
+                  <td className="border border-black py-1 px-2 w-[48%] align-top text-left font-normal">
                     {it.kegiatan}
                   </td>
-                  <td className="border border-black py-1.5 px-1 w-[7%] text-center align-middle font-normal">
+                  <td className="border border-black py-1 px-1 w-[7%] text-center align-middle font-normal">
                     {it.answer === 'YA' ? '✓' : ''}
                   </td>
-                  <td className="border border-black py-1.5 px-1 w-[10%] text-center align-middle font-normal">
+                  <td className="border border-black py-1 px-1 w-[10%] text-center align-middle font-normal">
                     {it.answer === 'TIDAK' ? '✓' : ''}
                   </td>
-                  <td className="border border-black py-1.5 px-1 w-[8%] text-center align-middle font-normal">
+                  <td className="border border-black py-1 px-1 w-[8%] text-center align-middle font-normal">
                     {it.answer === 'N/A' ? '✓' : ''}
                   </td>
-                  <td className="border border-black py-1.5 px-2 w-[21%] align-top text-left text-[11pt] font-normal">
+                  <td className="border border-black py-1 px-1.5 w-[21%] align-top text-left text-[10pt] font-normal">
                     {it.keterangan || ''}
                   </td>
                 </tr>
@@ -1341,9 +1362,9 @@ export default function IcraOfficialReport({
         b.push({
           type: 'element',
           key: `formulir-intra-notes-${log.id}-${logIdx}`,
-          gapAfter: 10,
+          gapAfter: 6,
           node: (
-            <div className="border border-black p-2.5 text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
+            <div className="border border-black p-2 text-[10.5pt] leading-[1.3] text-black font-normal" style={INTRA_FORM_STYLE}>
               {log.temuan_lapangan && <p>Temuan lapangan: {log.temuan_lapangan}</p>}
               {log.tindakan_koreksi && <p>Tindakan koreksi: {log.tindakan_koreksi}</p>}
             </div>
@@ -1351,18 +1372,18 @@ export default function IcraOfficialReport({
         });
       }
 
-      // Petugas yang mengobservasi block (Page 17-18 style)
+      // Petugas yang mengobservasi block (compact so whole Intra form stays on 1 F4 page)
       b.push({
         type: 'element',
         key: `formulir-intra-obs-${log.id}-${logIdx}`,
-        gapAfter: 10,
+        gapAfter: 4,
         node: (
-          <div className="flex justify-end pt-3 pr-4 text-[12pt] leading-[1.5] text-black font-normal" style={BASE_TEXT_STYLE}>
+          <div className="flex justify-end pt-2 pr-4 text-[10.5pt] leading-[1.3] text-black font-normal" style={INTRA_FORM_STYLE}>
             <div className="text-center w-[46%]">
               <p className="font-normal">Petugas yang mengobservasi</p>
-              <div className="h-16 flex items-center justify-center my-1">
+              <div className="h-12 flex items-center justify-center my-0.5">
                 {project.ttd_ipcn && (log.petugas_ipcn === namaIpcn || !log.petugas_ipcn) ? (
-                  <img src={project.ttd_ipcn} alt="Tanda tangan petugas" className="max-h-14 object-contain" />
+                  <img src={project.ttd_ipcn} alt="Tanda tangan petugas" className="max-h-11 object-contain" />
                 ) : null}
               </div>
               <p className="font-normal">
