@@ -9,7 +9,7 @@ import SemesterOfficialReport from '@/components/reports/official/SemesterOffici
 import AnnualOfficialReport from '@/components/reports/official/AnnualOfficialReport';
 import { useOfficialReportData } from '@/hooks/useOfficialReportData';
 import { 
-  FileText, Calendar, BarChart3, TrendingUp, Award, ChevronDown, Check
+  Calendar, BarChart3, TrendingUp, Award, ChevronDown, Check
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -255,11 +255,8 @@ export default function LaporanResmiPage() {
         {/* ================= UNIFIED SINGLE HEADER CARD (1 BARIS) ================= */}
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3.5 sm:p-4 bg-[#151736] border border-indigo-900/40 rounded-2xl shadow-[-4px_-4px_12px_rgba(140,165,255,0.06),6px_8px_20px_rgba(0,0,0,0.6)] no-print relative z-50">
           
-          {/* Left: Title & Logo Icon */}
-          <div className="flex items-center gap-3">
-            <span className="p-2 sm:p-2.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 shadow-sm flex-shrink-0">
-              <FileText className="w-5 h-5 sm:w-6 sm:h-6" />
-            </span>
+          {/* Left: Title */}
+          <div className="flex items-center">
             <h1 className="font-gta title-ultra-bold text-2xl sm:text-3xl font-black tracking-wide leading-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase whitespace-nowrap drop-shadow-[0_2px_10px_rgba(99,102,241,0.35)]">
               LAPORAN PPI
             </h1>

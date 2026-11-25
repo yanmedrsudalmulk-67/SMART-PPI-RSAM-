@@ -640,21 +640,16 @@ export default function KlbPage() {
         <div className="rounded-3xl bg-gradient-to-br from-[#191b42] via-[#131535] to-[#0d0f26] border border-indigo-500/30 p-5 sm:p-6 shadow-[0_12px_36px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.12)] relative overflow-hidden">
           <div className="absolute -right-12 -top-12 w-48 h-48 rounded-full bg-rose-500/10 blur-2xl pointer-events-none" />
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-10">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-rose-500/25 via-amber-500/20 to-indigo-500/20 border border-rose-400/40 flex items-center justify-center text-rose-300 shadow-[0_8px_20px_rgba(0,0,0,0.5)] shrink-0">
-                <Activity className="w-6 h-6 sm:w-7 sm:h-7" />
+            <div>
+              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-rose-500/15 border border-rose-400/30 text-[10px] font-black uppercase tracking-widest text-rose-300 mb-1.5">
+                Deteksi Dini & Manajemen Outbreak STARKES
               </div>
-              <div>
-                <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-rose-500/15 border border-rose-400/30 text-[10px] font-black uppercase tracking-widest text-rose-300 mb-1.5">
-                  Deteksi Dini & Manajemen Outbreak STARKES
-                </div>
-                <h1 className="font-gta title-ultra-bold text-2xl sm:text-3xl lg:text-[34px] font-black tracking-wide leading-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase drop-shadow-[0_2px_10px_rgba(99,102,241,0.35)]">
-                  Investigasi KLB (Kejadian Luar Biasa) PPI
-                </h1>
-                <p className="text-xs sm:text-sm text-indigo-200/80 mt-1 max-w-2xl">
-                  Pelacakan klaster infeksi HAIs, Line Listing kasus, Kurva Epidemiologi otomatis, 10 langkah intervensi, dan Laporan Resmi F4.
-                </p>
-              </div>
+              <h1 className="font-gta title-ultra-bold text-2xl sm:text-3xl lg:text-[34px] font-black tracking-wide leading-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-purple-500 dark:to-blue-400 bg-[length:200%_auto] animate-gradient uppercase drop-shadow-[0_2px_10px_rgba(99,102,241,0.35)]">
+                Investigasi KLB (Kejadian Luar Biasa) PPI
+              </h1>
+              <p className="text-xs sm:text-sm text-indigo-200/80 mt-1 max-w-2xl">
+                Pelacakan klaster infeksi HAIs, Line Listing kasus, Kurva Epidemiologi otomatis, 10 langkah intervensi, dan Laporan Resmi F4.
+              </p>
             </div>
 
             <button
