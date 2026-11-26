@@ -421,7 +421,7 @@ const getStatusColor = (val: number, std: Standard | undefined) => {
 };
 
 export default function DashboardPage() {
-  const { userRole, isSidebarOpen } = useAppContext();
+  const { userRole } = useAppContext();
 
   const {
     dashboardData,

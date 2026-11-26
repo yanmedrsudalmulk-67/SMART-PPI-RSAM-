@@ -6,7 +6,7 @@ const RechartsResponsiveContainer = dynamic(
   { ssr: false }
 );
 
-export const ResponsiveContainer = ({ children, width = '100%', height = '100%', minHeight, minWidth, ...props }: any) => {
+export const ResponsiveContainer = ({ children, width = '100%', height = '100%', minHeight, minWidth, debounce = 180, ...props }: any) => {
   const [inView, setInView] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -26,7 +26,7 @@ export const ResponsiveContainer = ({ children, width = '100%', height = '100%',
 
   return (
     <div ref={ref} style={{ width, height, minHeight, minWidth }} className="recharts-lazy-wrapper">
-      {inView ? <RechartsResponsiveContainer width={width} height={height} minHeight={minHeight} minWidth={minWidth} {...props}>{children}</RechartsResponsiveContainer> : null}
+      {inView ? <RechartsResponsiveContainer width={width} height={height} minHeight={minHeight} minWidth={minWidth} debounce={debounce} {...props}>{children}</RechartsResponsiveContainer> : null}
     </div>
   );
 };

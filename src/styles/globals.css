@@ -343,6 +343,37 @@ img, svg {
   contain: layout style paint;
 }
 
+/* 120Hz / 144Hz GPU-only compositor transition (transform & opacity ONLY, zero layout reflow) */
+.sidebar-gpu-transition {
+  transition-property: transform, opacity;
+  transition-duration: 240ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.sidebar-opacity-transition {
+  transition-property: opacity;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sidebar-submenu-grid {
+  display: grid;
+  transition: grid-template-rows 200ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease-out;
+}
+
+.route-progress-bar {
+  transform-origin: left center;
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease-out;
+  will-change: transform, opacity;
+}
+
+/* Global instant touch response on tablets & phones (eliminates 300ms delay) */
+button, a, [role="button"], input, select {
+  touch-action: manipulation;
+}
+
 /* 120 FPS / 120Hz & 144Hz ProMotion Touch Engine & Smooth Scroll Optimization */
 @media (max-width: 1024px) {
   * {

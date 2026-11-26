@@ -24,15 +24,15 @@ export const ClockWidget = memo(() => {
   );
 
   return (
-    <div className="flex items-center gap-3 px-3.5 sm:px-4 py-2 rounded-2xl border transition-all duration-300 shadow-[-4px_-4px_12px_rgba(130,160,255,0.08),6px_8px_18px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.15),inset_-1px_-1px_1.5px_rgba(0,0,0,0.35)] bg-gradient-to-br from-[#231b4b]/80 via-[#18224e]/75 to-[#0e1635]/85 backdrop-blur-xl border-indigo-200/20 hover:border-indigo-200/40 hover:shadow-[-6px_-6px_16px_rgba(130,160,255,0.12),8px_12px_24px_rgba(0,0,0,0.7)]">
-      <div className="flex items-center justify-center transition-colors duration-300 text-indigo-300 drop-shadow-[0_0_8px_rgba(165,180,252,0.4)]">
+    <div className="flex items-center gap-3 px-3.5 sm:px-4 py-2 rounded-2xl border shadow-[-4px_-4px_12px_rgba(130,160,255,0.06),6px_8px_18px_rgba(0,0,0,0.55),inset_1px_1px_1.5px_rgba(255,255,255,0.15)] bg-gradient-to-br from-[#211b46] via-[#172047] to-[#0f1633] border-indigo-200/20 hover:border-indigo-200/40 transition-colors duration-200">
+      <div className="flex items-center justify-center text-indigo-300">
         <Clock className="w-4 h-4" />
       </div>
       <div className="flex flex-col items-start min-w-[90px]">
-        <span className="text-[9px] uppercase tracking-widest font-black transition-colors duration-300 text-indigo-200/90">
+        <span className="text-[9px] uppercase tracking-widest font-black text-indigo-200/90">
           {time.toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
         </span>
-        <span className="text-xs font-black font-mono tracking-widest leading-none mt-0.5 transition-colors duration-300 text-white drop-shadow-sm">
+        <span className="text-xs font-black font-mono tracking-widest leading-none mt-0.5 text-white tabular-nums">
           {time.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
         </span>
       </div>

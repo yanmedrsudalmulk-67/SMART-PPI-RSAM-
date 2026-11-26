@@ -8,11 +8,16 @@ interface AppContextType {
   setHospitalLogoUrl: (url: string | null) => void;
   userRole: string;
   setUserRole: (role: string) => void;
+}
+
+interface SidebarContextType {
   isSidebarOpen: boolean;
   setIsSidebarOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
+  toggleSidebar: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
+const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
 const ROLE_STORAGE_KEY = 'smart_ppi_role';
 const SIDEBAR_STORAGE_KEY = 'smart_ppi_sidebar_open';
@@ -38,19 +43,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const persistSidebarState = useCallback((next: boolean) => {
+    if (typeof window === 'undefined') return;
+    const write = () => {
+      try {
+        localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next));
+      } catch (e) {}
+    };
+    if ('requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(write, { timeout: 500 });
+    } else {
+      setTimeout(write, 50);
+    }
+  }, []);
+
   const setIsSidebarOpen = useCallback((openOrFn: boolean | ((prev: boolean) => boolean)) => {
     setIsSidebarOpenState((prev) => {
       const next = typeof openOrFn === 'function' ? openOrFn(prev) : openOrFn;
-      if (typeof window !== 'undefined') {
-        setTimeout(() => {
-          try {
-            localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next));
-          } catch (e) {}
-        }, 0);
+      if (next !== prev) {
+        persistSidebarState(next);
       }
       return next;
     });
-  }, []);
+  }, [persistSidebarState]);
+
+  const toggleSidebar = useCallback(() => {
+    setIsSidebarOpenState((prev) => {
+      const next = !prev;
+      persistSidebarState(next);
+      return next;
+    });
+  }, [persistSidebarState]);
 
   const setUserRole = useCallback((role: string) => {
     setUserRoleState(role);
@@ -81,16 +104,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     fetchLogos();
   }, []);
 
-  const contextValue = useMemo(() => ({
+  const appContextValue = useMemo(() => ({
     appLogoUrl, setAppLogoUrl,
     hospitalLogoUrl, setHospitalLogoUrl,
     userRole, setUserRole,
-    isSidebarOpen, setIsSidebarOpen
-  }), [appLogoUrl, hospitalLogoUrl, userRole, setUserRole, isSidebarOpen]);
+  }), [appLogoUrl, hospitalLogoUrl, userRole, setUserRole]);
+
+  const sidebarContextValue = useMemo(() => ({
+    isSidebarOpen,
+    setIsSidebarOpen,
+    toggleSidebar,
+  }), [isSidebarOpen, setIsSidebarOpen, toggleSidebar]);
 
   return (
-    <AppContext.Provider value={contextValue}>
-      {children}
+    <AppContext.Provider value={appContextValue}>
+      <SidebarContext.Provider value={sidebarContextValue}>
+        {children}
+      </SidebarContext.Provider>
     </AppContext.Provider>
   );
 }
@@ -98,5 +128,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 export function useAppContext() {
   const context = useContext(AppContext);
   if (!context) throw new Error('useAppContext must be used within AppProvider');
+  return context;
+}
+
+export function useSidebar() {
+  const context = useContext(SidebarContext);
+  if (!context) throw new Error('useSidebar must be used within AppProvider');
   return context;
 }

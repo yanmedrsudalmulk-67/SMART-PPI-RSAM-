@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, memo } from 'react';
 import Link from 'next/link';
+import { useSafeRouter as useRouter } from '@/hooks/useSafeRouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, BarChart2, ShieldCheck, ShieldAlert, Activity, ChevronRight, X } from 'lucide-react';
 
@@ -271,7 +272,8 @@ interface MobilePortraitNavBarProps {
   hideSettings?: boolean;
 }
 
-export default function MobilePortraitNavBar({ currentPath, hideSettings = false }: MobilePortraitNavBarProps) {
+const MobilePortraitNavBar = memo(function MobilePortraitNavBar({ currentPath, hideSettings = false }: MobilePortraitNavBarProps) {
+  const router = useRouter();
   const navItems = useMemo(
     () => (hideSettings ? MOBILE_NAV_ITEMS.filter((item) => item.id !== 'settings') : MOBILE_NAV_ITEMS),
     [hideSettings]
@@ -328,9 +330,9 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.18 }}
+            transition={{ duration: 0.16 }}
             onClick={() => setOpenSubMenu(null)}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 landscape:hidden pointer-events-auto"
+            className="fixed inset-0 bg-black/65 z-40 landscape:hidden pointer-events-auto"
           />
         )}
       </AnimatePresence>
@@ -339,17 +341,17 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
         {activePopupConfig && (
           <motion.div
             key={openSubMenu}
-            initial={{ opacity: 0, y: 16, scale: 0.94 }}
+            initial={{ opacity: 0, y: 14, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 16, scale: 0.94 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            exit={{ opacity: 0, y: 14, scale: 0.95 }}
+            transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
             className="fixed inset-0 z-[60] flex items-center justify-center px-5 pb-24 landscape:hidden pointer-events-none"
           >
             <div
               onClick={(e) => e.stopPropagation()}
               className="w-full max-w-sm pointer-events-auto"
             >
-              <div className="w-full bg-[#131535]/95 backdrop-blur-2xl border border-indigo-400/40 rounded-3xl p-3.5 shadow-[0_24px_60px_rgba(0,0,0,0.92),0_0_24px_rgba(99,102,241,0.25)] ring-1 ring-white/10 flex flex-col gap-2">
+              <div className="w-full bg-[#131535]/[0.98] border border-indigo-400/40 rounded-3xl p-3.5 shadow-[0_20px_50px_rgba(0,0,0,0.88),0_0_20px_rgba(99,102,241,0.22)] ring-1 ring-white/10 flex flex-col gap-2">
                 {/* Pop-up Header */}
                 <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-indigo-900/50">
                   <div className="flex items-center gap-2">
@@ -383,8 +385,9 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
                         href={sub.href}
                         prefetch={true}
                         scroll={false}
+                        onTouchStart={() => { router.prefetch(sub.href); }}
                         onClick={() => setOpenSubMenu(null)}
-                        className={`flex items-center justify-between p-2.5 rounded-2xl transition-all duration-200 group active:scale-[0.98] ${
+                        className={`flex items-center justify-between p-2.5 rounded-2xl transition-colors duration-150 group active:scale-[0.98] ${
                           isSubActive
                             ? 'bg-gradient-to-r from-indigo-600/40 via-cyan-600/30 to-blue-600/40 border border-cyan-400/60 text-white shadow-lg shadow-cyan-950/40'
                             : 'bg-[#181a3d]/80 hover:bg-[#1e224e] border border-indigo-900/40 text-slate-300 hover:text-white'
@@ -566,6 +569,7 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
                 href={item.href}
                 prefetch={true}
                 scroll={false}
+                onTouchStart={() => { router.prefetch(item.href); }}
                 onClick={() => {
                   setOptimisticIndex(idx);
                   setOpenSubMenu(null);
@@ -607,6 +611,8 @@ export default function MobilePortraitNavBar({ currentPath, hideSettings = false
     </div>
     </>
   );
-}
+});
+
+export default MobilePortraitNavBar;
 
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import React, { ReactElement, useState, useEffect, useMemo, useRef, useCallback } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
@@ -1072,7 +1072,7 @@ export default function BuktiSupervisiPage() {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <Head>
         <title>Bukti Supervisi & Tindak Lanjut PPI | SMART PPI RSUD AL-MULK</title>
       </Head>
@@ -2861,6 +2861,10 @@ export default function BuktiSupervisiPage() {
           )}
         </AnimatePresence>
       </div>
-    </DashboardLayout>
+    </>
   );
 }
+
+BuktiSupervisiPage.getLayout = function getLayout(page: ReactElement) {
+  return <DashboardLayout>{page}</DashboardLayout>;
+};
