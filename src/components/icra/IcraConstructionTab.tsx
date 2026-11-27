@@ -22,6 +22,8 @@ import {
   ShieldAlert,
   Info,
   BookOpen,
+  MapPin,
+  Sparkles,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { uploadImagesToSupabase } from '@/lib/upload';
@@ -31,6 +33,7 @@ import { exportBlackSignatureCanvas } from '@/utils/signatureUtils';
 import {
   IcraKonstruksiItem,
   IcraMonitoringItem,
+  IcraLocationPoint,
   ConstructionType,
   PatientRiskGroup,
   ConstructionClass,
@@ -47,6 +50,8 @@ import {
   normalizePreChecklist,
   normalizePostChecklist,
   normalizeIntraItems,
+  normalizeLocationPoints,
+  computeHighestRiskFromLocations,
   toBool,
 } from '@/utils/icraData';
 import IcraConstructionPermitModal from './IcraConstructionPermitModal';
@@ -85,6 +90,7 @@ function normalizeKonstruksiRow(raw: any): IcraKonstruksiItem {
     kelas_tindakan: kelas,
     persyaratan_khusus: raw.persyaratan_khusus || '',
     checklist_pengendalian: normalizeChecklist(raw.checklist_pengendalian, kelas),
+    lokasi_rincian: normalizeLocationPoints(raw.lokasi_rincian),
     foto_sebelum: normalizeStringArray(raw.foto_sebelum),
     foto_sesudah: normalizeStringArray(raw.foto_sesudah),
     status_proyek: raw.status_proyek || 'Aktif Berjalan',
@@ -179,10 +185,12 @@ export default function IcraConstructionTab() {
     kelas_tindakan: 'III' as ConstructionClass,
     persyaratan_khusus: '',
     checklist_pengendalian: normalizeChecklist(null, 'III'),
+    lokasi_rincian: [] as IcraLocationPoint[],
     status_proyek: 'Aktif Berjalan' as IcraKonstruksiItem['status_proyek'],
     nama_ipcn: 'Adi Tresa Purnama, A.M.Kep',
     nama_k3rs: 'Tim K3RS RSUD Al-Mulk',
   });
+  const [autoSyncMultiMatrix, setAutoSyncMultiMatrix] = useState(true);
   const [fotoSebelum, setFotoSebelum] = useState<DocImage[]>([]);
   const [fotoSesudah, setFotoSesudah] = useState<DocImage[]>([]);
   const [existingTtdIpcn, setExistingTtdIpcn] = useState<string | null>(null);
@@ -243,6 +251,100 @@ export default function IcraConstructionTab() {
     }));
   };
 
+  const syncHighestRiskToForm = (points: IcraLocationPoint[], prev: typeof projForm) => {
+    const highest = computeHighestRiskFromLocations(points);
+    if (!highest) return { ...prev, lokasi_rincian: points };
+    return {
+      ...prev,
+      lokasi_rincian: points,
+      tipe_konstruksi: highest.tipe_konstruksi,
+      kelompok_risiko: highest.kelompok_risiko,
+      kelas_tindakan: highest.kelas_tindakan,
+      checklist_pengendalian: normalizeChecklist(null, highest.kelas_tindakan),
+    };
+  };
+
+  const addLocationPoint = () => {
+    const newPoint: IcraLocationPoint = {
+      id: `loc_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      uraian_pekerjaan: '',
+      lokasi: '',
+      tipe_konstruksi: 'C',
+      kelompok_risiko: '3',
+      kelas_tindakan: getConstructionClass('3', 'C').classLevel,
+      keterangan: '',
+    };
+    setProjForm((prev) => ({
+      ...prev,
+      lokasi_rincian: [...prev.lokasi_rincian, newPoint],
+    }));
+  };
+
+  const updateLocationPoint = (id: string, patch: Partial<IcraLocationPoint>) => {
+    setProjForm((prev) => {
+      const nextPoints = prev.lokasi_rincian.map((pt) => {
+        if (pt.id !== id) return pt;
+        const nextType = patch.tipe_konstruksi ?? pt.tipe_konstruksi;
+        const nextRisk = patch.kelompok_risiko ?? pt.kelompok_risiko;
+        const recalcClass =
+          patch.kelas_tindakan !== undefined
+            ? patch.kelas_tindakan
+            : patch.tipe_konstruksi !== undefined || patch.kelompok_risiko !== undefined
+            ? getConstructionClass(nextRisk, nextType).classLevel
+            : pt.kelas_tindakan;
+        return {
+          ...pt,
+          ...patch,
+          tipe_konstruksi: nextType,
+          kelompok_risiko: nextRisk,
+          kelas_tindakan: recalcClass,
+        };
+      });
+      return autoSyncMultiMatrix
+        ? syncHighestRiskToForm(nextPoints, prev)
+        : { ...prev, lokasi_rincian: nextPoints };
+    });
+  };
+
+  const removeLocationPoint = (id: string) => {
+    setProjForm((prev) => {
+      const nextPoints = prev.lokasi_rincian.filter((pt) => pt.id !== id);
+      return autoSyncMultiMatrix
+        ? syncHighestRiskToForm(nextPoints, prev)
+        : { ...prev, lokasi_rincian: nextPoints };
+    });
+  };
+
+  const applyHighestRiskFromLocations = () => {
+    const highest = computeHighestRiskFromLocations(projForm.lokasi_rincian);
+    if (!highest) {
+      showToast('Isi minimal 1 uraian pekerjaan atau lokasi terlebih dahulu.', 'error');
+      return;
+    }
+    const uniqueLocations = Array.from(
+      new Set(
+        projForm.lokasi_rincian
+          .map((pt) => pt.lokasi.trim())
+          .filter(Boolean)
+      )
+    );
+    setProjForm((prev) => ({
+      ...prev,
+      lokasi_area: prev.lokasi_rincian.length >= 2 ? 'Seluruh Ruangan' : prev.lokasi_area,
+      area_terdampak:
+        !prev.area_terdampak.trim() && uniqueLocations.length > 0
+          ? uniqueLocations.join(', ')
+          : prev.area_terdampak,
+      tipe_konstruksi: highest.tipe_konstruksi,
+      kelompok_risiko: highest.kelompok_risiko,
+      kelas_tindakan: highest.kelas_tindakan,
+      checklist_pengendalian: normalizeChecklist(null, highest.kelas_tindakan),
+    }));
+    showToast(
+      `Matriks induk disinkronkan ke risiko tertinggi: Tipe ${highest.tipe_konstruksi}, Kelompok ${highest.kelompok_risiko}, Kelas ${highest.kelas_tindakan}.`
+    );
+  };
+
   const openAddProject = () => {
     const defaultClass = getConstructionClass('3', 'C').classLevel;
     const savedObserver =
@@ -264,10 +366,12 @@ export default function IcraConstructionTab() {
       kelas_tindakan: defaultClass,
       persyaratan_khusus: '',
       checklist_pengendalian: normalizeChecklist(null, defaultClass),
+      lokasi_rincian: [],
       status_proyek: 'Aktif Berjalan',
       nama_ipcn: savedObserver,
       nama_k3rs: 'Tim K3RS RSUD Al-Mulk',
     });
+    setAutoSyncMultiMatrix(true);
     setFotoSebelum([]);
     setFotoSesudah([]);
     setExistingTtdIpcn(null);
@@ -291,10 +395,12 @@ export default function IcraConstructionTab() {
       kelas_tindakan: proj.kelas_tindakan,
       persyaratan_khusus: proj.persyaratan_khusus || '',
       checklist_pengendalian: proj.checklist_pengendalian,
+      lokasi_rincian: normalizeLocationPoints(proj.lokasi_rincian),
       status_proyek: proj.status_proyek,
       nama_ipcn: proj.nama_ipcn,
       nama_k3rs: proj.nama_k3rs || 'Tim K3RS RSUD Al-Mulk',
     });
+    setAutoSyncMultiMatrix(true);
     setFotoSebelum(proj.foto_sebelum.map((u) => ({ url: normalizeImageUrl(u), file: null })));
     setFotoSesudah(proj.foto_sesudah.map((u) => ({ url: normalizeImageUrl(u), file: null })));
     setExistingTtdIpcn(proj.ttd_ipcn || null);
@@ -317,6 +423,8 @@ export default function IcraConstructionTab() {
       let ttdIpcn = existingTtdIpcn || editingProject?.ttd_ipcn || null;
       let ttdPelaksana = existingTtdPelaksana || editingProject?.ttd_pelaksana || null;
 
+      const cleanedLocations = normalizeLocationPoints(projForm.lokasi_rincian);
+
       const payload = {
         nomor_izin: (projForm.nomor_izin?.trim() || generatePermitNumber()),
         nama_proyek: projForm.nama_proyek.trim(),
@@ -331,6 +439,7 @@ export default function IcraConstructionTab() {
         kelas_tindakan: projForm.kelas_tindakan,
         persyaratan_khusus: projForm.persyaratan_khusus.trim(),
         checklist_pengendalian: projForm.checklist_pengendalian,
+        lokasi_rincian: cleanedLocations,
         foto_sebelum: uploadedSebelum,
         foto_sesudah: uploadedSesudah,
         status_proyek: projForm.status_proyek || 'Aktif Berjalan',
@@ -580,7 +689,12 @@ export default function IcraConstructionTab() {
                     <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-xs text-slate-300 mt-2 font-medium">
                       <span className="flex items-center gap-1.5">
                         <Building2 className="w-4 h-4 text-cyan-400" />
-                        <span className="font-semibold text-slate-200">{proj.lokasi_area}</span>
+                        <span className="font-semibold text-slate-200">
+                          {proj.lokasi_area}
+                          {proj.lokasi_rincian && proj.lokasi_rincian.length > 0
+                            ? ` (${proj.lokasi_rincian.length} Titik Lokasi)`
+                            : ''}
+                        </span>
                       </span>
                       <span className="flex items-center gap-1.5">
                         <Calendar className="w-4 h-4 text-amber-400" />
@@ -788,6 +902,214 @@ export default function IcraConstructionTab() {
                         className="w-full bg-[#12132e] border border-black/40 text-white text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-400/60 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] transition-all"
                       />
                     </div>
+                  </div>
+
+                  {/* Daftar Rincian Titik Lokasi (Multi-Lokasi — Opsional) */}
+                  <div className="pt-3 border-t border-indigo-900/40 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2.5">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <MapPin className="w-4 h-4 text-cyan-400 shrink-0" />
+                          <span className="text-xs font-black uppercase tracking-wider text-white">
+                            Daftar Rincian Titik Lokasi (Multi-Lokasi)
+                          </span>
+                          <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-400/35 text-[10px] font-black text-cyan-300">
+                            {projForm.lokasi_rincian.length > 0
+                              ? `${projForm.lokasi_rincian.length} Titik`
+                              : 'Opsional'}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          Gunakan bagian ini bila 1 laporan ICRA mencakup beberapa titik renovasi sekaligus. Tabel rincian akan tampil otomatis di Laporan ICRA dan tersedia sebagai pilihan cepat di menu Monitoring.
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        {projForm.lokasi_rincian.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={applyHighestRiskFromLocations}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/45 text-amber-300 text-[11px] font-extrabold transition-all cursor-pointer active:scale-95"
+                          >
+                            <Sparkles className="w-3.5 h-3.5" />
+                            <span>Terapkan Risiko Tertinggi</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={addLocationPoint}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/45 text-cyan-300 text-[11px] font-extrabold transition-all cursor-pointer active:scale-95"
+                        >
+                          <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
+                          <span>Tambah Titik Lokasi</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <datalist id="icra-unit-suggestions">
+                      {ICRA_UNITS_LIST.filter((u) => u !== 'Seluruh Ruangan').map((u) => (
+                        <option key={u} value={u} />
+                      ))}
+                    </datalist>
+
+                    {projForm.lokasi_rincian.length > 0 && (
+                      <div className="space-y-2.5">
+                        <label className="inline-flex items-center gap-2 text-[11px] text-slate-300 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={autoSyncMultiMatrix}
+                            onChange={(e) => setAutoSyncMultiMatrix(e.target.checked)}
+                            className="w-3.5 h-3.5 rounded accent-cyan-400 cursor-pointer"
+                          />
+                          <span>
+                            Sinkronkan Matriks Induk (Bagian 2) otomatis ke risiko tertinggi dari daftar titik (Prinsip PMK 27/2017)
+                          </span>
+                        </label>
+
+                        <div className="space-y-2.5">
+                          {projForm.lokasi_rincian.map((pt, idx) => {
+                            const classBadgeColor =
+                              pt.kelas_tindakan === 'IV'
+                                ? 'bg-rose-500/20 text-rose-300 border-rose-500/45'
+                                : pt.kelas_tindakan === 'III'
+                                ? 'bg-orange-500/20 text-orange-300 border-orange-500/45'
+                                : pt.kelas_tindakan === 'II'
+                                ? 'bg-amber-500/20 text-amber-300 border-amber-500/45'
+                                : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/45';
+
+                            return (
+                              <div
+                                key={pt.id}
+                                className="rounded-2xl bg-[#11132c] border border-indigo-900/55 p-3 sm:p-3.5 space-y-2.5 shadow-[inset_1px_1px_4px_rgba(0,0,0,0.65)]"
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="w-6 h-6 rounded-lg bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 text-[11px] font-black flex items-center justify-center">
+                                      {idx + 1}
+                                    </span>
+                                    <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-200">
+                                      Titik Renovasi #{idx + 1}
+                                    </span>
+                                    <span className={`px-2 py-0.5 rounded-lg border text-[10px] font-black ${classBadgeColor}`}>
+                                      Kelas {pt.kelas_tindakan}
+                                    </span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeLocationPoint(pt.id)}
+                                    className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition-colors cursor-pointer"
+                                    title="Hapus titik lokasi"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 text-xs">
+                                  <div className="md:col-span-4">
+                                    <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                                      Uraian Pekerjaan *
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={pt.uraian_pekerjaan}
+                                      onChange={(e) =>
+                                        updateLocationPoint(pt.id, { uraian_pekerjaan: e.target.value })
+                                      }
+                                      placeholder="Contoh: Penggantian lantai vinyl rusak"
+                                      className="w-full bg-[#181a3d] border border-indigo-900/60 text-white rounded-xl px-3 py-2 text-xs outline-none focus:border-cyan-400/70 placeholder-slate-500"
+                                    />
+                                  </div>
+                                  <div className="md:col-span-3">
+                                    <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                                      Lokasi / Unit *
+                                    </label>
+                                    <input
+                                      type="text"
+                                      list="icra-unit-suggestions"
+                                      value={pt.lokasi}
+                                      onChange={(e) =>
+                                        updateLocationPoint(pt.id, { lokasi: e.target.value })
+                                      }
+                                      placeholder="Contoh: Ruang Recovery IBS"
+                                      className="w-full bg-[#181a3d] border border-indigo-900/60 text-white rounded-xl px-3 py-2 text-xs outline-none focus:border-cyan-400/70 placeholder-slate-500"
+                                    />
+                                  </div>
+                                  <div className="md:col-span-1">
+                                    <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                                      Tipe
+                                    </label>
+                                    <select
+                                      value={pt.tipe_konstruksi}
+                                      onChange={(e) =>
+                                        updateLocationPoint(pt.id, {
+                                          tipe_konstruksi: e.target.value as ConstructionType,
+                                        })
+                                      }
+                                      className="w-full bg-[#181a3d] border border-indigo-900/60 text-white rounded-xl px-2 py-2 text-xs font-bold outline-none focus:border-cyan-400/70 cursor-pointer"
+                                    >
+                                      <option value="A" className="bg-[#18193b]">Tipe A</option>
+                                      <option value="B" className="bg-[#18193b]">Tipe B</option>
+                                      <option value="C" className="bg-[#18193b]">Tipe C</option>
+                                      <option value="D" className="bg-[#18193b]">Tipe D</option>
+                                    </select>
+                                  </div>
+                                  <div className="md:col-span-2">
+                                    <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                                      Risiko Pasien
+                                    </label>
+                                    <select
+                                      value={pt.kelompok_risiko}
+                                      onChange={(e) =>
+                                        updateLocationPoint(pt.id, {
+                                          kelompok_risiko: e.target.value as PatientRiskGroup,
+                                        })
+                                      }
+                                      className="w-full bg-[#181a3d] border border-indigo-900/60 text-white rounded-xl px-2.5 py-2 text-xs font-bold outline-none focus:border-cyan-400/70 cursor-pointer"
+                                    >
+                                      <option value="1" className="bg-[#18193b]">Rendah (Kel. 1)</option>
+                                      <option value="2" className="bg-[#18193b]">Sedang (Kel. 2)</option>
+                                      <option value="3" className="bg-[#18193b]">Tinggi (Kel. 3)</option>
+                                      <option value="4" className="bg-[#18193b]">Sangat Tinggi (Kel. 4)</option>
+                                    </select>
+                                  </div>
+                                  <div className="md:col-span-2">
+                                    <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                                      Kelas Kewaspadaan
+                                    </label>
+                                    <select
+                                      value={pt.kelas_tindakan}
+                                      onChange={(e) =>
+                                        updateLocationPoint(pt.id, {
+                                          kelas_tindakan: e.target.value as ConstructionClass,
+                                        })
+                                      }
+                                      className="w-full bg-[#181a3d] border border-indigo-900/60 text-white rounded-xl px-2.5 py-2 text-xs font-bold outline-none focus:border-cyan-400/70 cursor-pointer"
+                                    >
+                                      <option value="I" className="bg-[#18193b]">Kelas I</option>
+                                      <option value="II" className="bg-[#18193b]">Kelas II</option>
+                                      <option value="III" className="bg-[#18193b]">Kelas III</option>
+                                      <option value="IV" className="bg-[#18193b]">Kelas IV</option>
+                                    </select>
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <input
+                                    type="text"
+                                    value={pt.keterangan || ''}
+                                    onChange={(e) =>
+                                      updateLocationPoint(pt.id, { keterangan: e.target.value })
+                                    }
+                                    placeholder="Catatan pengendalian khusus titik ini (opsional, misal: relokasi pasien / tutup ventilasi)"
+                                    className="w-full bg-[#161838] border border-indigo-900/40 text-slate-200 rounded-xl px-3 py-1.5 text-[11px] outline-none focus:border-cyan-400/60 placeholder-slate-500"
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 

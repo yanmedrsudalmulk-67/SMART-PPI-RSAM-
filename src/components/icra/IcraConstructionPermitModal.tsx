@@ -166,7 +166,12 @@ export default function IcraConstructionPermitModal({
                       <td className="border border-black bg-slate-100 font-bold px-2 py-1.5" style={{ backgroundColor: '#f1f5f9' }}>
                         Lokasi Ruangan / Unit
                       </td>
-                      <td className="border border-black px-2 py-1.5 w-[27%]">{project.lokasi_area}</td>
+                      <td className="border border-black px-2 py-1.5 w-[27%]">
+                        {project.lokasi_area}
+                        {project.lokasi_rincian && project.lokasi_rincian.length > 0
+                          ? ` (${project.lokasi_rincian.length} Titik Lokasi)`
+                          : ''}
+                      </td>
                       <td className="border border-black bg-slate-100 font-bold px-2 py-1.5 w-[20%]" style={{ backgroundColor: '#f1f5f9' }}>
                         Tanggal Pelaksanaan
                       </td>
@@ -186,10 +191,17 @@ export default function IcraConstructionPermitModal({
                     </tr>
                     <tr>
                       <td className="border border-black bg-slate-100 font-bold px-2 py-1.5" style={{ backgroundColor: '#f1f5f9' }}>
-                        Area Terdampak Sekitar
+                        {project.lokasi_rincian && project.lokasi_rincian.length > 0
+                          ? 'Cakupan Titik / Area Terdampak'
+                          : 'Area Terdampak Sekitar'}
                       </td>
                       <td className="border border-black px-2 py-1.5" colSpan={3}>
-                        {project.area_terdampak || '-'}
+                        {project.area_terdampak ||
+                          (project.lokasi_rincian && project.lokasi_rincian.length > 0
+                            ? project.lokasi_rincian
+                                .map((pt, i) => `${i + 1}. ${pt.uraian_pekerjaan || pt.lokasi}${pt.lokasi && pt.uraian_pekerjaan ? ` (${pt.lokasi})` : ''}`)
+                                .join('; ')
+                            : '-')}
                       </td>
                     </tr>
                   </tbody>

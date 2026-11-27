@@ -96,6 +96,16 @@ export interface IcraPostFormData {
   signoffs: IcraChecklistSignoff;
 }
 
+export interface IcraLocationPoint {
+  id: string;
+  uraian_pekerjaan: string;
+  lokasi: string;
+  tipe_konstruksi: ConstructionType;
+  kelompok_risiko: PatientRiskGroup;
+  kelas_tindakan: ConstructionClass;
+  keterangan?: string;
+}
+
 export interface IcraKonstruksiItem {
   id: string;
   created_at?: string;
@@ -112,6 +122,7 @@ export interface IcraKonstruksiItem {
   kelas_tindakan: ConstructionClass;
   persyaratan_khusus?: string;
   checklist_pengendalian: IcraChecklistItem[];
+  lokasi_rincian?: IcraLocationPoint[];
   foto_sebelum: string[];
   foto_sesudah: string[];
   status_proyek: 'Menunggu Izin' | 'Aktif Berjalan' | 'Selesai';
@@ -1355,5 +1366,94 @@ export function normalizePostChecklist(
       ...fallback.signoffs,
       ...(parsed.signoffs || {}),
     },
+  };
+}
+
+export function normalizeLocationPoints(raw: any): IcraLocationPoint[] {
+  let parsed = raw;
+  if (typeof raw === 'string' && raw.trim().startsWith('[')) {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      parsed = [];
+    }
+  }
+  if (!Array.isArray(parsed)) return [];
+
+  const validTypes = new Set<ConstructionType>(['A', 'B', 'C', 'D']);
+  const validRisks = new Set<PatientRiskGroup>(['1', '2', '3', '4']);
+  const validClasses = new Set<ConstructionClass>(['I', 'II', 'III', 'IV']);
+
+  return parsed
+    .filter((item) => item && typeof item === 'object')
+    .map((item, idx) => {
+      const tipe: ConstructionType = validTypes.has(item.tipe_konstruksi)
+        ? item.tipe_konstruksi
+        : 'C';
+      const risk: PatientRiskGroup = validRisks.has(String(item.kelompok_risiko) as PatientRiskGroup)
+        ? (String(item.kelompok_risiko) as PatientRiskGroup)
+        : '3';
+      const kelas: ConstructionClass = validClasses.has(item.kelas_tindakan)
+        ? item.kelas_tindakan
+        : getConstructionClass(risk, tipe).classLevel;
+      return {
+        id: String(item.id || `loc_${idx + 1}`),
+        uraian_pekerjaan: String(item.uraian_pekerjaan || ''),
+        lokasi: String(item.lokasi || ''),
+        tipe_konstruksi: tipe,
+        kelompok_risiko: risk,
+        kelas_tindakan: kelas,
+        keterangan: item.keterangan ? String(item.keterangan) : '',
+      };
+    })
+    .filter((pt) => pt.uraian_pekerjaan.trim() !== '' || pt.lokasi.trim() !== '');
+}
+
+const TYPE_RANK: Record<ConstructionType, number> = { A: 1, B: 2, C: 3, D: 4 };
+const RISK_RANK: Record<PatientRiskGroup, number> = { '1': 1, '2': 2, '3': 3, '4': 4 };
+const CLASS_RANK: Record<ConstructionClass, number> = { I: 1, II: 2, III: 3, IV: 4 };
+
+/**
+ * Menentukan Tipe, Kelompok Risiko, dan Kelas Kewaspadaan tertinggi dari daftar titik lokasi
+ * sesuai prinsip Highest Risk Governs pada Pedoman ICRA Permenkes No. 27 Tahun 2017.
+ */
+export function computeHighestRiskFromLocations(
+  points: IcraLocationPoint[]
+): {
+  tipe_konstruksi: ConstructionType;
+  kelompok_risiko: PatientRiskGroup;
+  kelas_tindakan: ConstructionClass;
+} | null {
+  const valid = points.filter(
+    (pt) => pt.uraian_pekerjaan.trim() !== '' || pt.lokasi.trim() !== ''
+  );
+  if (valid.length === 0) return null;
+
+  let maxType: ConstructionType = 'A';
+  let maxRisk: PatientRiskGroup = '1';
+  let maxPointClass: ConstructionClass = 'I';
+
+  for (const pt of valid) {
+    if (TYPE_RANK[pt.tipe_konstruksi] > TYPE_RANK[maxType]) {
+      maxType = pt.tipe_konstruksi;
+    }
+    if (RISK_RANK[pt.kelompok_risiko] > RISK_RANK[maxRisk]) {
+      maxRisk = pt.kelompok_risiko;
+    }
+    if (CLASS_RANK[pt.kelas_tindakan] > CLASS_RANK[maxPointClass]) {
+      maxPointClass = pt.kelas_tindakan;
+    }
+  }
+
+  const matrixClass = getConstructionClass(maxRisk, maxType).classLevel;
+  const finalClass =
+    CLASS_RANK[maxPointClass] >= CLASS_RANK[matrixClass]
+      ? maxPointClass
+      : matrixClass;
+
+  return {
+    tipe_konstruksi: maxType,
+    kelompok_risiko: maxRisk,
+    kelas_tindakan: finalClass,
   };
 }

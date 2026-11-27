@@ -3,6 +3,7 @@ import { id as idLocale } from 'date-fns/locale';
 import {
   IcraKonstruksiItem,
   IcraMonitoringItem,
+  IcraLocationPoint,
   ConstructionType,
   PatientRiskGroup,
   ConstructionClass,
@@ -10,6 +11,7 @@ import {
   PATIENT_RISK_GROUPS,
   CONSTRUCTION_CLASS_CONTROLS,
   CONSTRUCTION_MATRIX,
+  normalizeLocationPoints,
 } from './icraData';
 
 export const RISK_ROMAN: Record<PatientRiskGroup, string> = {
@@ -284,6 +286,7 @@ export interface IcraReportNarrative {
   rekomendasiSections: RecommendationSection[];
   rekomendasiClosing: string;
   penutupParagraphs: string[];
+  locationPoints: IcraLocationPoint[];
 }
 
 /**
@@ -326,23 +329,30 @@ export function buildIcraReportNarrative(
   const classControl = CONSTRUCTION_CLASS_CONTROLS[kelasCode] || CONSTRUCTION_CLASS_CONTROLS.III;
   const riskLabelLower = riskInfo.riskLabel.toLowerCase();
 
+  const locationPoints = normalizeLocationPoints(project.lokasi_rincian);
+  const isMultiLocation = locationPoints.length > 0;
+  const multiLocationSummaryText = locationPoints
+    .map((pt) => `${pt.uraian_pekerjaan} ${pt.lokasi} ${pt.keterangan || ''}`)
+    .join(' ');
+
   // Analyze semantic work profile & clinical sensitivity
-  const combinedText = `${rawProjectName} ${rawLokasi} ${rawAreaTerdampak} ${project.persyaratan_khusus || ''}`;
+  const combinedText = `${rawProjectName} ${rawLokasi} ${rawAreaTerdampak} ${project.persyaratan_khusus || ''} ${multiLocationSummaryText}`;
   const isDemolition = /\b(bongkar|pembongkaran|perobohan|roboh)\b/i.test(rawProjectName);
   const isNewBuild = /\b(pembangunan|gedung baru|konstruksi baru|perluasan bangunan)\b/i.test(rawProjectName);
   const isPlumbingOrToilet = /\b(toilet|wc|kamar mandi|kloset|wastafel|sanitasi|plumbing|pipa|drainase|saluran air|keramik)\b/i.test(combinedText);
-  const isCeilingOrWall = /\b(plafon|gypsum|partisi|dinding|tembok|plester|acian|lantai)\b/i.test(combinedText);
+  const isCeilingOrWall = /\b(plafon|gypsum|partisi|dinding|tembok|plester|acian|lantai|vinyl|bocor|kanopi)\b/i.test(combinedText);
   const isInternalIpsrs = /\b(ipsrs|iprs|internal rumah sakit)\b/i.test(rawKontraktor);
 
-  const hasClinicalKeywords = /\b(ranap|rawat|igd|igh|icu|nicu|picu|iccu|hcu|ibs|operasi|vk|bersalin|isolasi|poli|klinik|lab|laboratorium|radiologi|farmasi|fisioterapi|gizi|cssd|stroke unit|utd|ip2k|onkologi|cath lab|ruang perawatan|pasien)\b/i.test(
-    `${rawLokasi} ${rawProjectName}`
+  const hasClinicalKeywords = /\b(ranap|rawat|igd|igh|icu|nicu|picu|iccu|hcu|ibs|operasi|recovery|vk|bersalin|isolasi|poli|klinik|lab|laboratorium|radiologi|farmasi|fisioterapi|gizi|cssd|stroke unit|utd|ip2k|onkologi|cath lab|ruang perawatan|pasien)\b/i.test(
+    `${rawLokasi} ${rawProjectName} ${multiLocationSummaryText}`
   );
-  const isExplicitNonPatientUnit = /\b(koperasi|administrasi|manajemen|parkir|tps|kantor|gudang)\b/i.test(rawLokasi);
+  const isExplicitNonPatientUnit =
+    !isMultiLocation && /\b(koperasi|administrasi|manajemen|parkir|tps|kantor|gudang)\b/i.test(rawLokasi);
   const isPatientCareArea = hasClinicalKeywords || (!isExplicitNonPatientUnit && riskCode !== '1');
   const isHighAcuityWard =
     riskCode === '4' ||
-    /\b(icu|nicu|picu|iccu|hcu|isolasi|ibs|operasi|onkologi|cath lab|luka bakar|immunocompromised)\b/i.test(
-      `${rawLokasi} ${rawAreaTerdampak}`
+    /\b(icu|nicu|picu|iccu|hcu|isolasi|ibs|operasi|recovery|cssd|onkologi|cath lab|luka bakar|immunocompromised)\b/i.test(
+      `${rawLokasi} ${rawAreaTerdampak} ${multiLocationSummaryText}`
     );
   const isLargeScaleOrOutdoor =
     isDemolition ||
@@ -371,11 +381,17 @@ export function buildIcraReportNarrative(
     ? projectProse
     : `${projectProse} di ${lokasiProse}`;
 
-  const lokasiLengkapTable = areaTerdampakTitle
+  const lokasiLengkapTable = isMultiLocation
+    ? areaTerdampakTitle
+      ? `${lokasiTitleDisplay} — Mencakup ${locationPoints.length} Titik Lokasi (Area terdampak sekitar: ${areaTerdampakTitle})`
+      : `${lokasiTitleDisplay} — Mencakup ${locationPoints.length} Titik Lokasi (rincian terlampir pada tabel di bawah)`
+    : areaTerdampakTitle
     ? `${lokasiTitleDisplay} (Area terdampak sekitar: ${areaTerdampakTitle})`
     : lokasiTitleDisplay;
   const lokasiLengkapProse = areaTerdampakProse
     ? `${lokasiProse} yang berdekatan dengan ${naturalizeIndonesianList(areaTerdampakProse)}`
+    : isMultiLocation
+    ? `${lokasiProse} yang mencakup ${locationPoints.length} titik lokasi renovasi di lingkungan rumah sakit`
     : lokasiProse;
 
   // Unused imports check keep clean
@@ -479,7 +495,9 @@ export function buildIcraReportNarrative(
   // ==================== 3. TUJUAN & RUANG LINGKUP ====================
   const tujuanText = `Mengidentifikasi, menilai, dan mengendalikan risiko infeksi akibat kegiatan ${projectWithLocationProse} agar paparan debu, spora jamur, maupun kontaminasi lingkungan dapat diminimalkan serta kegiatan pelayanan rumah sakit tetap berlangsung secara aman. Secara khusus, ICRA ini bertujuan menetapkan klasifikasi tipe proyek (Tipe ${tipeCode}), kelompok pasien berisiko (Kelompok ${riskCode} — risiko ${riskLabelLower}), dan tingkat kewaspadaan Kelas ${kelasCode}, menentukan tanggung jawab lintas unit, serta memastikan terlaksananya pemantauan Pra, Intra, dan Post Konstruksi secara berkesinambungan.`;
 
-  const ruangLingkupText = `Mencakup tahap persiapan dan pengkajian prakonstruksi di ${lokasiProse}, pelaksanaan ${activityNoun} sesuai ruang lingkup teknis yang disetujui (${formatIndonesianDate(
+  const ruangLingkupText = `Mencakup tahap persiapan dan pengkajian prakonstruksi di ${lokasiProse}${
+    isMultiLocation ? ` meliputi ${locationPoints.length} titik lokasi pekerjaan sebagaimana dirinci pada bagian Perencanaan` : ''
+  }, pelaksanaan ${activityNoun} sesuai ruang lingkup teknis yang disetujui (${formatIndonesianDate(
     project.tgl_mulai
   )} sampai dengan ${formatIndonesianDate(
     project.tgl_selesai_estimasi
@@ -488,7 +506,9 @@ export function buildIcraReportNarrative(
   }${isPatientCareArea ? ' termasuk keselamatan pasien dan petugas yang beraktivitas di sekitarnya' : ''}, pembersihan akhir menyeluruh (*terminal cleaning*), serta evaluasi kelayakan area pascapekerjaan.`;
 
   // ==================== 4. MATRIKS ICRA RESULT ====================
-  const matriksResultText = `Berdasarkan hasil pengkajian ICRA untuk kegiatan ${projectWithLocationProse}, pekerjaan ini diklasifikasikan ke dalam Tipe ${tipeCode} (${typeInfo.shortDesc.toLowerCase()}) dengan tingkat risiko pasien pada Kategori ${riskRoman} (kelompok risiko ${riskLabelLower}). Pertemuan kedua parameter pada matriks ICRA menetapkan bahwa proyek wajib menerapkan pengendalian infeksi **Kelas ${kelasCode}**, yang mencakup ${classControl.summary.toLowerCase().replace(/\.$/, '')}.`.replace(/\*\*/g, '');
+  const matriksResultText = isMultiLocation
+    ? `Berdasarkan hasil pengkajian ICRA untuk paket kegiatan ${projectWithLocationProse} yang mencakup ${locationPoints.length} titik lokasi, sesuai prinsip risiko tertinggi pada Permenkes Nomor 27 Tahun 2017 penetapan matriks induk diklasifikasikan ke dalam Tipe ${tipeCode} (${typeInfo.shortDesc.toLowerCase()}) dengan tingkat risiko pasien pada Kategori ${riskRoman} (kelompok risiko ${riskLabelLower}). Pertemuan kedua parameter pada matriks ICRA menetapkan bahwa proyek wajib menerapkan pengendalian infeksi Kelas ${kelasCode}, yang mencakup ${classControl.summary.toLowerCase().replace(/\.$/, '')}, dengan penyesuaian intensitas pengawasan lapangan pada masing-masing titik sesuai kelas risikonya.`
+    : `Berdasarkan hasil pengkajian ICRA untuk kegiatan ${projectWithLocationProse}, pekerjaan ini diklasifikasikan ke dalam Tipe ${tipeCode} (${typeInfo.shortDesc.toLowerCase()}) dengan tingkat risiko pasien pada Kategori ${riskRoman} (kelompok risiko ${riskLabelLower}). Pertemuan kedua parameter pada matriks ICRA menetapkan bahwa proyek wajib menerapkan pengendalian infeksi **Kelas ${kelasCode}**, yang mencakup ${classControl.summary.toLowerCase().replace(/\.$/, '')}.`.replace(/\*\*/g, '');
 
   // ==================== 5. RENCANA TINDAKAN (PRA, SAAT, PASCA) ====================
   const praActions: ActionRow[] = [
@@ -762,5 +782,6 @@ export function buildIcraReportNarrative(
     rekomendasiSections,
     rekomendasiClosing,
     penutupParagraphs,
+    locationPoints,
   };
 }

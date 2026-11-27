@@ -40,6 +40,7 @@ import {
   normalizePreChecklist,
   normalizePostChecklist,
   normalizeIntraItems,
+  normalizeLocationPoints,
   toBool,
 } from '@/utils/icraData';
 
@@ -74,6 +75,7 @@ function normalizeKonstruksiRow(raw: any): IcraKonstruksiItem {
     kelas_tindakan: kelas,
     persyaratan_khusus: raw.persyaratan_khusus || '',
     checklist_pengendalian: normalizeChecklist(raw.checklist_pengendalian, kelas),
+    lokasi_rincian: normalizeLocationPoints(raw.lokasi_rincian),
     foto_sebelum: normalizeStringArray(raw.foto_sebelum),
     foto_sesudah: normalizeStringArray(raw.foto_sesudah),
     status_proyek: raw.status_proyek || 'Aktif Berjalan',

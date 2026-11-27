@@ -597,6 +597,49 @@ export default function IcraMonitoringModal({
                   </div>
                 </div>
 
+                {/* Pilih Cepat Titik Lokasi (jika proyek memiliki Daftar Rincian Multi-Lokasi) */}
+                {project.lokasi_rincian && project.lokasi_rincian.length > 0 && (
+                  <div className="rounded-xl bg-[#121432] border border-cyan-500/35 p-3 space-y-2 text-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-black uppercase tracking-wider text-cyan-300 flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-cyan-400" />
+                        Pilih Cepat Titik Renovasi ({project.lokasi_rincian.length} Titik)
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        Klik untuk mengisi kolom Area Renovasi otomatis
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {project.lokasi_rincian.map((pt, idx) => {
+                        const formattedLabel =
+                          pt.lokasi && pt.uraian_pekerjaan
+                            ? `${pt.lokasi} — ${pt.uraian_pekerjaan}`
+                            : pt.lokasi || pt.uraian_pekerjaan;
+                        const isPicked = intraMeta.area_renovasi === formattedLabel;
+                        return (
+                          <button
+                            key={pt.id || idx}
+                            type="button"
+                            onClick={() =>
+                              setIntraMeta((m) => ({
+                                ...m,
+                                area_renovasi: formattedLabel,
+                              }))
+                            }
+                            className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors cursor-pointer text-left ${
+                              isPicked
+                                ? 'bg-cyan-500/25 border-cyan-400 text-cyan-100'
+                                : 'bg-[#181a3d] border-indigo-800/70 text-slate-200 hover:border-cyan-400/60 hover:text-white'
+                            }`}
+                          >
+                            {idx + 1}. {pt.lokasi || pt.uraian_pekerjaan} (Kelas {pt.kelas_tindakan})
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Header Metadata */}
                 <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 text-xs">
                   <div className="sm:col-span-2">

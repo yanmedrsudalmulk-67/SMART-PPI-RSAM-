@@ -150,6 +150,7 @@ export default function IcraOfficialReport({
     rekomendasiSections,
     rekomendasiClosing,
     penutupParagraphs,
+    locationPoints,
   } = narrative;
 
   const tglPengesahan = formatIndonesianDate(signDate || project.tgl_mulai || format(new Date(), 'yyyy-MM-dd'));
@@ -468,6 +469,138 @@ export default function IcraOfficialReport({
         </table>
       ),
     });
+
+    // ==================== 3B. RINCIAN TITIK LOKASI (MULTI-LOKASI, OPSIONAL) ====================
+    if (locationPoints.length > 0) {
+      pushSubHeading(
+        'perencanaan-multi-lokasi-title',
+        `Rincian Titik Lokasi dan Klasifikasi Risiko Pekerjaan (${locationPoints.length} Titik)`
+      );
+
+      locationPoints.forEach((pt, idx) => {
+        const isFirst = idx === 0;
+        const isLast = idx === locationPoints.length - 1;
+        const ptRiskLabel =
+          PATIENT_RISK_GROUPS.find((g) => g.code === pt.kelompok_risiko)?.riskLabel ||
+          `Kelompok ${pt.kelompok_risiko}`;
+
+        b.push({
+          type: 'element',
+          key: `perencanaan-loc-row-${pt.id}-${idx}`,
+          gapAfter: isLast ? 6 : 0,
+          node: (
+            <table
+              className={`w-full table-fixed border-collapse text-[11pt] leading-[1.45] text-black font-normal ${
+                isFirst ? '' : '-mt-[1px]'
+              }`}
+              style={{ ...BASE_TEXT_STYLE, fontSize: '11pt', lineHeight: '1.45' }}
+            >
+              {isFirst && (
+                <thead>
+                  <tr className="bg-gray-100 text-center">
+                    <th
+                      className="border border-black py-1.5 px-1.5 w-[7%] text-center align-middle font-bold"
+                      style={{ ...BASE_TEXT_STYLE, fontSize: '11pt', lineHeight: '1.4', fontWeight: 700, textAlign: 'center', verticalAlign: 'middle' }}
+                    >
+                      No
+                    </th>
+                    <th
+                      className="border border-black py-1.5 px-2 w-[35%] text-center align-middle font-bold"
+                      style={{ ...BASE_TEXT_STYLE, fontSize: '11pt', lineHeight: '1.4', fontWeight: 700, textAlign: 'center', verticalAlign: 'middle' }}
+                    >
+                      Uraian Pekerjaan
+                    </th>
+                    <th
+                      className="border border-black py-1.5 px-2 w-[24%] text-center align-middle font-bold"
+                      style={{ ...BASE_TEXT_STYLE, fontSize: '11pt', lineHeight: '1.4', fontWeight: 700, textAlign: 'center', verticalAlign: 'middle' }}
+                    >
+                      Lokasi / Unit
+                    </th>
+                    <th
+                      className="border border-black py-1.5 px-1.5 w-[9%] text-center align-middle font-bold"
+                      style={{ ...BASE_TEXT_STYLE, fontSize: '11pt', lineHeight: '1.4', fontWeight: 700, textAlign: 'center', verticalAlign: 'middle' }}
+                    >
+                      Tipe
+                    </th>
+                    <th
+                      className="border border-black py-1.5 px-1.5 w-[14%] text-center align-middle font-bold"
+                      style={{ ...BASE_TEXT_STYLE, fontSize: '11pt', lineHeight: '1.4', fontWeight: 700, textAlign: 'center', verticalAlign: 'middle' }}
+                    >
+                      Risiko
+                    </th>
+                    <th
+                      className="border border-black py-1.5 px-1.5 w-[11%] text-center align-middle font-bold"
+                      style={{ ...BASE_TEXT_STYLE, fontSize: '11pt', lineHeight: '1.4', fontWeight: 700, textAlign: 'center', verticalAlign: 'middle' }}
+                    >
+                      Kelas
+                    </th>
+                  </tr>
+                </thead>
+              )}
+              <tbody>
+                <tr>
+                  <td
+                    className="border border-black py-1.5 px-1.5 w-[7%] text-center align-middle font-normal"
+                    style={{ ...BASE_TEXT_STYLE, fontSize: '11pt', lineHeight: '1.45', textAlign: 'center', verticalAlign: 'middle' }}
+                  >
+                    {idx + 1}
+                  </td>
+                  <td
+                    className="border border-black py-1.5 px-2 w-[35%] text-left align-middle font-normal"
+                    style={{ ...BASE_TEXT_STYLE, fontSize: '11pt', lineHeight: '1.45', textAlign: 'left', verticalAlign: 'middle' }}
+                  >
+                    <div>{pt.uraian_pekerjaan || '-'}</div>
+                    {pt.keterangan && pt.keterangan.trim() && (
+                      <div className="italic mt-0.5" style={{ fontSize: '10pt', lineHeight: '1.35' }}>
+                        Catatan: {pt.keterangan.trim()}
+                      </div>
+                    )}
+                  </td>
+                  <td
+                    className="border border-black py-1.5 px-2 w-[24%] text-left align-middle font-normal"
+                    style={{ ...BASE_TEXT_STYLE, fontSize: '11pt', lineHeight: '1.45', textAlign: 'left', verticalAlign: 'middle' }}
+                  >
+                    {pt.lokasi || '-'}
+                  </td>
+                  <td
+                    className="border border-black py-1.5 px-1.5 w-[9%] text-center align-middle font-normal"
+                    style={{ ...BASE_TEXT_STYLE, fontSize: '11pt', lineHeight: '1.45', textAlign: 'center', verticalAlign: 'middle' }}
+                  >
+                    Tipe {pt.tipe_konstruksi}
+                  </td>
+                  <td
+                    className="border border-black py-1.5 px-1.5 w-[14%] text-center align-middle font-normal"
+                    style={{ ...BASE_TEXT_STYLE, fontSize: '11pt', lineHeight: '1.45', textAlign: 'center', verticalAlign: 'middle' }}
+                  >
+                    {ptRiskLabel}
+                  </td>
+                  <td
+                    className="border border-black py-1.5 px-1.5 w-[11%] text-center align-middle font-normal"
+                    style={{ ...BASE_TEXT_STYLE, fontSize: '11pt', lineHeight: '1.45', textAlign: 'center', verticalAlign: 'middle' }}
+                  >
+                    Kelas {pt.kelas_tindakan}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          ),
+        });
+      });
+
+      b.push({
+        type: 'element',
+        key: 'perencanaan-multi-lokasi-note',
+        gapAfter: 12,
+        node: (
+          <p
+            className="text-[11pt] leading-[1.45] italic text-justify text-black font-normal"
+            style={{ ...BASE_TEXT_STYLE, fontSize: '11pt', lineHeight: '1.45', fontStyle: 'italic' }}
+          >
+            Catatan: Sesuai Pedoman ICRA Permenkes Nomor 27 Tahun 2017, penetapan matriks induk pada paket renovasi multi-lokasi mengacu pada tingkat risiko dan kelas kewaspadaan tertinggi (Tipe {tipeCode}, Risiko Kategori {riskRoman} — {riskInfo.riskLabel}, Kelas {kelasCode}), dengan penerapan tindakan pengendalian lapangan disesuaikan pada masing-masing titik lokasi.
+          </p>
+        ),
+      });
+    }
 
     // ==================== 4. TIPE PROYEK KONSTRUKSI (ATOMIC ROWS) ====================
     pushHeading('sec-tipe-proyek', 'TIPE PROYEK KONSTRUKSI', 'tipe-proyek');
@@ -1722,6 +1855,8 @@ export default function IcraOfficialReport({
     tglPengesahan,
     tipeCode,
     riskCode,
+    riskRoman,
+    riskInfo.riskLabel,
     kelasCode,
     latarBelakangParagraphs,
     tujuanText,
@@ -1735,6 +1870,7 @@ export default function IcraOfficialReport({
     rekomendasiSections,
     rekomendasiClosing,
     penutupParagraphs,
+    locationPoints,
     chronologicalLogs,
     prePhotos,
     intraPhotos,
