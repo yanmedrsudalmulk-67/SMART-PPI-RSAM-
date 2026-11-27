@@ -545,7 +545,11 @@ export function buildIcraReportNarrative(
         kelasCode === 'III' || kelasCode === 'IV'
           ? 'Menyiapkan barier fisik tertutup rapat dan kedap debu (partisi gypsum/plastik tebal atau kontrol kubus) serta unit penyaring udara HEPA sebelum pekerjaan dimulai.'
           : 'Menyiapkan pembatas area kerja yang rapi serta sarana pengendalian debu sesuai standar kelas kewaspadaan.',
-      pj: isInternalIpsrs ? 'IPSRS' : `Kontraktor (${kontraktorDisplay}), IPSRS`,
+      pj: isInternalIpsrs
+        ? 'IPSRS'
+        : /^kontraktor$/i.test(kontraktorDisplay.trim())
+        ? 'Kontraktor, IPSRS'
+        : `Kontraktor (${kontraktorDisplay}), IPSRS`,
     },
     ...(isPlumbingOrToilet
       ? [

@@ -839,6 +839,12 @@ export default function IcraOfficialReport({
     b.push({ type: 'pageBreak', key: 'pb-rencana-tindakan' });
     pushHeading('sec-rencana-tindakan', 'RENCANA TINDAKAN PENGENDALIAN INFEKSI', 'rencana-tindakan');
 
+    const ACTION_TABLE_TEXT_STYLE: React.CSSProperties = {
+      ...BASE_TEXT_STYLE,
+      fontSize: '11pt',
+      lineHeight: '1.35',
+    };
+
     const pushAtomicActionTable = (
       prefix: string,
       subTitle: string,
@@ -852,32 +858,32 @@ export default function IcraOfficialReport({
         b.push({
           type: 'element',
           key: `${prefix}-row-${idx}`,
-          gapAfter: isLast ? 14 : 0,
+          gapAfter: isLast ? 12 : 0,
           node: (
             <table
-              className={`w-full table-fixed border-collapse text-[12pt] leading-[1.5] text-black font-normal ${
+              className={`w-full table-fixed border-collapse text-[11pt] leading-[1.35] text-black font-normal ${
                 isFirst ? '' : '-mt-[1px]'
               }`}
-              style={BASE_TEXT_STYLE}
+              style={ACTION_TABLE_TEXT_STYLE}
             >
               {isFirst && (
                 <thead>
                   <tr className="bg-gray-100 text-center">
                     <th
-                      className="border border-black py-2 px-2 text-center align-middle w-[8%] font-bold"
-                      style={{ ...BASE_TEXT_STYLE, fontWeight: 700, textAlign: 'center', verticalAlign: 'middle' }}
+                      className="border border-black py-1.5 px-2 text-center align-middle w-[8%] font-bold"
+                      style={{ ...ACTION_TABLE_TEXT_STYLE, fontWeight: 700, textAlign: 'center', verticalAlign: 'middle' }}
                     >
                       No
                     </th>
                     <th
-                      className="border border-black py-2 px-2.5 text-center align-middle w-[64%] font-bold"
-                      style={{ ...BASE_TEXT_STYLE, fontWeight: 700, textAlign: 'center', verticalAlign: 'middle' }}
+                      className="border border-black py-1.5 px-2.5 text-center align-middle w-[64%] font-bold"
+                      style={{ ...ACTION_TABLE_TEXT_STYLE, fontWeight: 700, textAlign: 'center', verticalAlign: 'middle' }}
                     >
                       Tindakan
                     </th>
                     <th
-                      className="border border-black py-2 px-2.5 text-center align-middle w-[28%] font-bold"
-                      style={{ ...BASE_TEXT_STYLE, fontWeight: 700, textAlign: 'center', verticalAlign: 'middle' }}
+                      className="border border-black py-1.5 px-2.5 text-center align-middle w-[28%] font-bold"
+                      style={{ ...ACTION_TABLE_TEXT_STYLE, fontWeight: 700, textAlign: 'center', verticalAlign: 'middle' }}
                     >
                       Penanggung Jawab
                     </th>
@@ -887,20 +893,20 @@ export default function IcraOfficialReport({
               <tbody>
                 <tr>
                   <td
-                    className="border border-black py-2 px-2 text-center align-middle w-[8%] font-normal"
-                    style={{ ...BASE_TEXT_STYLE, textAlign: 'center', verticalAlign: 'middle' }}
+                    className="border border-black py-1.5 px-2 text-center align-middle w-[8%] font-normal"
+                    style={{ ...ACTION_TABLE_TEXT_STYLE, textAlign: 'center', verticalAlign: 'middle' }}
                   >
                     {idx + 1}
                   </td>
                   <td
-                    className="border border-black py-2 px-2.5 align-middle text-left w-[64%] font-normal"
-                    style={{ ...BASE_TEXT_STYLE, textAlign: 'left', verticalAlign: 'middle' }}
+                    className="border border-black py-1.5 px-2.5 align-middle text-left w-[64%] font-normal"
+                    style={{ ...ACTION_TABLE_TEXT_STYLE, textAlign: 'left', verticalAlign: 'middle' }}
                   >
                     {renderNarrativeText(r.tindakan)}
                   </td>
                   <td
-                    className="border border-black py-2 px-2.5 align-middle text-left w-[28%] font-normal"
-                    style={{ ...BASE_TEXT_STYLE, textAlign: 'left', verticalAlign: 'middle' }}
+                    className="border border-black py-1.5 px-2.5 align-middle text-left w-[28%] font-normal"
+                    style={{ ...ACTION_TABLE_TEXT_STYLE, textAlign: 'left', verticalAlign: 'middle' }}
                   >
                     {r.pj}
                   </td>
