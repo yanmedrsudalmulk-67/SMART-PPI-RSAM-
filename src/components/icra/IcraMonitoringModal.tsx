@@ -586,17 +586,6 @@ export default function IcraMonitoringModal({
                 onSubmit={handleSaveIntra}
                 className="rounded-2xl bg-[#0d0f27] border border-amber-500/35 p-4 sm:p-5 space-y-4"
               >
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
-                  <div>
-                    <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-300">
-                      + Catat Formulir Pemantauan Selama Renovasi / Konstruksi (Kategori / Kelas {kelas})
-                    </h4>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      Daftar ceklist menyesuaikan otomatis dengan Matriks Grading Risiko &amp; Kelas Kewaspadaan {kelas}.
-                    </p>
-                  </div>
-                </div>
-
                 {/* Pilih Cepat Titik Lokasi (jika proyek memiliki Daftar Rincian Multi-Lokasi) */}
                 {project.lokasi_rincian && project.lokasi_rincian.length > 0 && (
                   <div className="rounded-xl bg-[#121432] border border-cyan-500/35 p-3 space-y-2 text-xs">
@@ -604,9 +593,6 @@ export default function IcraMonitoringModal({
                       <span className="text-[11px] font-black uppercase tracking-wider text-cyan-300 flex items-center gap-1.5">
                         <MapPin className="w-3.5 h-3.5 text-cyan-400" />
                         Pilih Cepat Titik Renovasi ({project.lokasi_rincian.length} Titik)
-                      </span>
-                      <span className="text-[10px] text-slate-400">
-                        Klik untuk mengisi kolom Area Renovasi otomatis
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
@@ -632,7 +618,7 @@ export default function IcraMonitoringModal({
                                 : 'bg-[#181a3d] border-indigo-800/70 text-slate-200 hover:border-cyan-400/60 hover:text-white'
                             }`}
                           >
-                            {idx + 1}. {pt.lokasi || pt.uraian_pekerjaan} (Kelas {pt.kelas_tindakan})
+                            {idx + 1}. {pt.lokasi || pt.uraian_pekerjaan}
                           </button>
                         );
                       })}
