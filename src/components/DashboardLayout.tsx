@@ -464,7 +464,7 @@ const DesktopSidebar = memo(function DesktopSidebar({
       <div
         aria-hidden="true"
         onClick={() => setIsSidebarOpen(false)}
-        className="fixed inset-0 bg-black/45 z-40 print:hidden portrait:hidden landscape:block sidebar-opacity-transition"
+        className="fixed inset-0 bg-black/45 z-30 print:hidden portrait:hidden landscape:block sidebar-opacity-transition"
         style={{
           opacity: isTabletOverlay && isSidebarOpen ? 1 : 0,
           pointerEvents: isTabletOverlay && isSidebarOpen ? 'auto' : 'none',
@@ -474,7 +474,7 @@ const DesktopSidebar = memo(function DesktopSidebar({
       {/* Fixed 280px GPU Sidebar Frame — pointer-events outside clipped rail pass through to main content */}
       <aside
         id="app-sidebar"
-        className="fixed inset-y-4 left-4 z-50 w-[280px] pointer-events-none select-none print:hidden portrait:hidden landscape:block"
+        className="fixed inset-y-4 left-4 z-40 w-[280px] pointer-events-none select-none print:hidden portrait:hidden landscape:block"
         style={{ contain: 'layout style' }}
       >
         {/* === 9-SLICE GPU CARD SHELL (ZERO LAYOUT REFLOW, ZERO SEAMS) === */}
@@ -887,7 +887,7 @@ const MainContentFrame = memo(function MainContentFrame({
           isSupervisi
             ? 'p-2 sm:p-3 lg:p-3.5'
             : 'p-3.5 sm:p-5 lg:p-6 xl:p-7'
-        } pb-32 sm:pb-10 relative scroll-container-120fps w-full max-w-full z-10 ${
+        } pb-32 sm:pb-10 relative scroll-container-120fps w-full max-w-full ${
           isResmiScroll ? 'resmi-report-scroll-container' : ''
         }`}
         style={{
