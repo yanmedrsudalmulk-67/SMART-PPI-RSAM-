@@ -454,7 +454,7 @@ export default function IcraOfficialReport({
                   {lokasiTitleDisplay}
                   {locationPoints.length > 0 ? ` (${locationPoints.length} Titik Lokasi)` : ''}
                 </div>
-                {areaTerdampakTitle && (
+                {locationPoints.length === 0 && areaTerdampakTitle && (
                   <div className="mt-0.5">Area terdampak sekitar: {areaTerdampakTitle}</div>
                 )}
               </td>
