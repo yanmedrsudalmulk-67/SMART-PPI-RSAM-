@@ -1702,7 +1702,7 @@ export default function BuktiSupervisiPage() {
                 {/* Modal Body */}
                 <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
                   {/* Summary Box */}
-                  <div className="p-4 rounded-2xl bg-[#161a3c]/90 border border-indigo-900/60 shadow-inner space-y-2.5 backdrop-blur-md">
+                  <div className="p-4 rounded-2xl bg-[#161a3c] border border-indigo-900/60 shadow-inner space-y-2.5">
                     <div>
                       <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-300/80 block">
                         Temuan Lapangan Awal (Before)
@@ -2123,7 +2123,7 @@ export default function BuktiSupervisiPage() {
 
                   {/* Optional Tindak Lanjut jika langsung selesai */}
                   {newStatus === "Selesai" && (
-                    <div className="p-4 rounded-2xl bg-[#161a3c]/90 border border-emerald-900/50 shadow-inner space-y-3 backdrop-blur-md">
+                    <div className="p-4 rounded-2xl bg-[#161a3c] border border-emerald-900/50 shadow-inner space-y-3">
                       <div>
                         <label className="block text-xs font-bold uppercase tracking-wider text-emerald-300 mb-1">
                           Tindak Lanjut Perbaikan yang Telah Dilakukan

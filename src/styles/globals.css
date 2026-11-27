@@ -389,11 +389,7 @@ button, a, [role="button"], input, select {
   -webkit-overflow-scrolling: touch !important;
   overscroll-behavior-y: contain;
   scroll-behavior: auto !important;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  will-change: scroll-position;
+  overflow-anchor: auto;
 }
 
 .nav-dock-120fps {
@@ -421,7 +417,7 @@ html, body {
   overflow: hidden; /* Mencegah double scrollbar di level window / webview */
   scroll-padding-top: 5rem;
   /* Hardware Accelerated rendering optimizations */
-  text-rendering: optimizeLegibility;
+  text-rendering: auto;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior-y: none;
@@ -515,7 +511,7 @@ html, body {
 
 @layer utilities {
   .glass-card, .sleek-card {
-    @apply bg-white/5 backdrop-blur-md border border-white/10 shadow-2xl;
+    @apply bg-[#161838]/95 border border-white/10 shadow-xl;
   }
   .sleek-card {
     @apply rounded-[24px] p-6 lg:p-8;

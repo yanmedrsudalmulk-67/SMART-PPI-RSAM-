@@ -638,7 +638,7 @@ export default function KlbPage() {
       <div className="space-y-6 pb-20 sm:pb-8">
         {/* Header Card */}
         <div className="rounded-3xl bg-gradient-to-br from-[#191b42] via-[#131535] to-[#0d0f26] border border-indigo-500/30 p-5 sm:p-6 shadow-[0_12px_36px_rgba(0,0,0,0.6),inset_1px_1px_1.5px_rgba(255,255,255,0.12)] relative overflow-hidden">
-          <div className="absolute -right-12 -top-12 w-48 h-48 rounded-full bg-rose-500/10 blur-2xl pointer-events-none" />
+          <div className="absolute -right-12 -top-12 w-48 h-48 rounded-full bg-[radial-gradient(circle,rgba(244,63,94,0.14)_0%,transparent_70%)] pointer-events-none" />
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-10">
             <div>
               <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-rose-500/15 border border-rose-400/30 text-[10px] font-black uppercase tracking-widest text-rose-300 mb-1.5">
@@ -667,7 +667,7 @@ export default function KlbPage() {
         {haisAlerts.length > 0 ? (
           <div className="rounded-2xl bg-gradient-to-r from-rose-950/60 via-[#22142f] to-[#17163b] border border-rose-500/45 p-4 shadow-xl space-y-2.5">
             <div className="flex items-center gap-2 text-rose-300 text-xs font-black uppercase tracking-wider">
-              <BellRing className="w-4 h-4 animate-bounce" />
+              <BellRing className="w-4 h-4" />
               <span>Peringatan Dini Surveilans HAIs (30 Hari Terakhir) — Potensi Klaster Terdeteksi</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">

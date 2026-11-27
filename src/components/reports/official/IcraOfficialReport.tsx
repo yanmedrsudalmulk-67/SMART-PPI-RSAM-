@@ -1877,17 +1877,28 @@ export default function IcraOfficialReport({
     postPhotos,
   ]);
 
+  const coverSubtitle = useMemo(() => {
+    const cleaned = cleanedBaseName
+      .replace(/\(\s*\d+\s*titik(\s+lokasi)?\s*\)/gi, '')
+      .replace(/\bmulti[\s-]*(unit|lokasi)\b/gi, '')
+      .replace(/\b\d+\s*titik(\s+lokasi)?\b/gi, '')
+      .replace(/\s{2,}/g, ' ')
+      .replace(/[\s\-–—,:;]+$/g, '')
+      .trim();
+    return (cleaned || cleanedBaseName).toUpperCase();
+  }, [cleanedBaseName]);
+
   const coverNode = useMemo(
     () => (
       <ReportCover
         reportType="icra"
         title="LAPORAN INFECTION CONTROL RISK ASSESSMENT (ICRA)"
-        subtitle={cleanedBaseName.toUpperCase()}
+        subtitle={coverSubtitle}
         hospitalText="UOBK RSUD AL-MULK KOTA SUKABUMI"
         year={projectYear}
       />
     ),
-    [cleanedBaseName, projectYear]
+    [coverSubtitle, projectYear]
   );
 
   return (

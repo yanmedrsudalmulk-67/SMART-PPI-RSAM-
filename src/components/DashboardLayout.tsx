@@ -883,14 +883,16 @@ const MainContentFrame = memo(function MainContentFrame({
     >
       <main
         ref={mainRef}
-        className={`flex-1 overflow-y-auto overflow-x-hidden ${
+        className={`flex-1 overflow-y-auto overflow-x-clip ${
           isSupervisi
             ? 'p-2 sm:p-3 lg:p-3.5'
             : 'p-3.5 sm:p-5 lg:p-6 xl:p-7'
         } pb-32 sm:pb-10 relative scroll-container-120fps w-full max-w-full z-10 ${
           isResmiScroll ? 'resmi-report-scroll-container' : ''
         }`}
-        style={{ contain: 'layout style' }}
+        style={{
+          backgroundColor: '#12142e',
+        }}
       >
         {/* Header Khusus Mode Mobile & Tablet Portrait */}
         <div className="flex landscape:hidden portrait:flex flex-col mb-4 print:hidden">
@@ -929,7 +931,7 @@ const MainContentFrame = memo(function MainContentFrame({
           </div>
         </div>
 
-        <div className="w-full h-full max-w-full overflow-x-hidden">
+        <div className="w-full min-h-full max-w-full overflow-x-clip">
           {isIPCLN && pathname.startsWith('/dashboard/settings')
             ? null
             : children}
@@ -1201,22 +1203,12 @@ export default function DashboardLayout({
   }, [setUserRole, router]);
 
   return (
-    <div className="h-[100dvh] w-full overflow-hidden flex bg-gradient-to-b from-[#181938] via-[#12142e] to-[#0c0d20] text-slate-100 relative">
+    <div className="h-[100dvh] w-full overflow-hidden flex bg-[#12142e] text-slate-100 relative">
       {/* Global 120Hz GPU Route Transition Progress Bar */}
       <RouteProgressBar />
 
       {/* Sync default collapsed rail cleanly on tablet/portrait rotation */}
       <TabletAutoCollapseSync viewportMode={viewportMode} />
-
-      {/* Subtle Ambient Deep Blue-Purple Radial Glow Accent (single lightweight composite layer) */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 pointer-events-none z-0"
-        style={{
-          backgroundImage:
-            'radial-gradient(circle 420px at 28% 8%, rgba(6,182,212,0.07), transparent 70%), radial-gradient(circle 420px at 92% 40%, rgba(99,102,241,0.08), transparent 70%), radial-gradient(circle 420px at 8% 92%, rgba(67,56,202,0.07), transparent 70%)',
-        }}
-      />
 
       {/* Pure GPU 120Hz/144Hz Desktop & Tablet Landscape Sidebar */}
       <DesktopSidebar

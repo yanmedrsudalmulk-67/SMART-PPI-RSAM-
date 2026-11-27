@@ -154,7 +154,7 @@ function SliderSettings() {
   };
 
   return (
-    <div className="bg-white dark:bg-white/5 backdrop-blur-sm p-8 rounded-[32px] border border-slate-200 dark:border-white/5 mt-8 shadow-sm dark:shadow-none transition-all">
+    <div className="bg-white dark:bg-[#17193a] p-8 rounded-[32px] border border-slate-200 dark:border-white/10 mt-8 shadow-sm dark:shadow-none transition-all">
        <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-6 tracking-wide flex items-center gap-2 uppercase">
          <ImageIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Slider Hero Dashboard
        </h2>
@@ -291,7 +291,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-white/5 backdrop-blur-sm p-8 rounded-[32px] border border-slate-200 dark:border-white/5 shadow-sm dark:shadow-none transition-all">
+      <div className="bg-white dark:bg-[#17193a] p-8 rounded-[32px] border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-none transition-all">
         <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-6 tracking-wide flex items-center gap-2 uppercase">
           <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Logo Aplikasi
         </h2>
@@ -328,7 +328,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-white/5 backdrop-blur-sm p-8 rounded-[32px] border border-slate-200 dark:border-white/5 shadow-sm dark:shadow-none transition-all">
+      <div className="bg-white dark:bg-[#17193a] p-8 rounded-[32px] border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-none transition-all">
         <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-6 tracking-wide flex items-center gap-2 uppercase">
           <Hospital className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Logo Rumah Sakit
         </h2>
@@ -368,7 +368,7 @@ export default function SettingsPage() {
       <WelcomeBackgroundSettings />
       <SliderSettings />
 
-      <div className="bg-white dark:bg-white/5 backdrop-blur-sm p-8 rounded-[32px] border border-slate-200 dark:border-white/5 shadow-sm dark:shadow-none transition-all">
+      <div className="bg-white dark:bg-[#17193a] p-8 rounded-[32px] border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-none transition-all">
         <div className="space-y-6">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-4">
             <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Versi Aplikasi</div>

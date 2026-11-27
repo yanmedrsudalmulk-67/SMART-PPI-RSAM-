@@ -165,7 +165,7 @@ const getProfCardTheme = (profName: string) => {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-[#18193b] backdrop-blur-xl border border-[#2b2d56] p-4 rounded-2xl shadow-[0_12px_32px_rgba(0,0,0,0.8)] text-xs space-y-2 text-white z-50 min-w-[210px]">
+      <div className="bg-[#18193b]/[0.97] border border-[#2b2d56] p-4 rounded-2xl shadow-[0_12px_32px_rgba(0,0,0,0.8)] text-xs space-y-2 text-white z-50 min-w-[210px]">
         <div className="font-black border-b border-indigo-900/40 pb-1.5 text-cyan-300 flex items-center justify-between uppercase tracking-wider">
           <span>{label}</span>
           <span className="text-[9px] text-slate-400 font-bold">Realtime</span>
@@ -206,7 +206,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 const HaisTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-[#18193b] backdrop-blur-xl border border-[#2b2d56] p-4 rounded-2xl shadow-[0_12px_32px_rgba(0,0,0,0.8)] text-xs space-y-2 text-white z-50 min-w-[200px]">
+      <div className="bg-[#18193b]/[0.97] border border-[#2b2d56] p-4 rounded-2xl shadow-[0_12px_32px_rgba(0,0,0,0.8)] text-xs space-y-2 text-white z-50 min-w-[200px]">
         <div className="font-black border-b border-indigo-900/40 pb-1.5 text-purple-300 uppercase tracking-wider">
           {label}
         </div>
@@ -233,7 +233,7 @@ const GenericTooltip = ({ active, payload, label }: any) => {
     const item = payload[0];
     const data = item.payload;
     return (
-      <div className="bg-[#18193b] backdrop-blur-xl border border-[#2b2d56] p-4 rounded-2xl shadow-[0_12px_32px_rgba(0,0,0,0.8)] text-xs space-y-2 text-white z-50 min-w-[210px]">
+      <div className="bg-[#18193b]/[0.97] border border-[#2b2d56] p-4 rounded-2xl shadow-[0_12px_32px_rgba(0,0,0,0.8)] text-xs space-y-2 text-white z-50 min-w-[210px]">
         <div className="font-black border-b border-indigo-900/40 pb-1.5 text-cyan-300 flex items-center justify-between uppercase tracking-wider">
           <span>{label}</span>
           <span className="text-[9px] text-slate-400 font-bold">Kepatuhan</span>

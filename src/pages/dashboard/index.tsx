@@ -1002,7 +1002,7 @@ export default function DashboardPage() {
   const renderTooltipContent = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-[#181a48]/95 backdrop-blur-xl border border-indigo-300/40 p-4 rounded-2xl shadow-[0_15px_35px_rgba(10,8,35,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] text-white">
+        <div className="bg-[#181a48]/[0.97] border border-indigo-300/40 p-4 rounded-2xl shadow-[0_15px_35px_rgba(10,8,35,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] text-white">
           <p className="text-sm font-black text-indigo-200 mb-2">
             {label}
           </p>
