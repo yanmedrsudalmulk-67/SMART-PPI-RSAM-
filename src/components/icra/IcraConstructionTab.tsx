@@ -1370,35 +1370,19 @@ export default function IcraConstructionTab() {
                                   </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs">
-                                  <div>
-                                    <label className="block text-[10px] font-bold uppercase text-cyan-300/90 mb-1">
-                                      Area Terdampak Sekitar (Atas / Bawah / Samping)
-                                    </label>
-                                    <input
-                                      type="text"
-                                      value={pt.area_terdampak || ''}
-                                      onChange={(e) =>
-                                        updateLocationPoint(pt.id, { area_terdampak: e.target.value })
-                                      }
-                                      placeholder="Contoh: Ruang Tunggu Pasien, Nurse Station, Poli TB, dan Parkiran"
-                                      className="w-full bg-[#161838] border border-cyan-900/45 text-slate-100 rounded-xl px-3 py-1.5 text-[11px] outline-none focus:border-cyan-400/70 placeholder-slate-500"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
-                                      Catatan Pengendalian Khusus (Opsional)
-                                    </label>
-                                    <input
-                                      type="text"
-                                      value={pt.keterangan || ''}
-                                      onChange={(e) =>
-                                        updateLocationPoint(pt.id, { keterangan: e.target.value })
-                                      }
-                                      placeholder="Misal: relokasi pasien / tutup ventilasi / jadwal di luar jam poli"
-                                      className="w-full bg-[#161838] border border-indigo-900/40 text-slate-200 rounded-xl px-3 py-1.5 text-[11px] outline-none focus:border-cyan-400/60 placeholder-slate-500"
-                                    />
-                                  </div>
+                                <div className="text-xs">
+                                  <label className="block text-[10px] font-bold uppercase text-cyan-300/90 mb-1">
+                                    Area Terdampak Sekitar (Atas / Bawah / Samping)
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={pt.area_terdampak || ''}
+                                    onChange={(e) =>
+                                      updateLocationPoint(pt.id, { area_terdampak: e.target.value })
+                                    }
+                                    placeholder="Contoh: Ruang Tunggu Pasien, Nurse Station, Poli TB, dan Parkiran"
+                                    className="w-full bg-[#161838] border border-cyan-900/45 text-slate-100 rounded-xl px-3 py-2 text-xs outline-none focus:border-cyan-400/70 placeholder-slate-500"
+                                  />
                                 </div>
                               </div>
                             );
