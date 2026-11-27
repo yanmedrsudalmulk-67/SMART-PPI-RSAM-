@@ -125,7 +125,7 @@ export default function IcraOfficialReport({
     cleanedBaseName,
     projectTitleDisplay,
     lokasiTitleDisplay,
-    lokasiLengkapTable,
+    areaTerdampakTitle,
     kontraktorDisplay,
     pjProyekDisplay,
     namaIpcn,
@@ -449,7 +449,15 @@ export default function IcraOfficialReport({
               <td className="py-1 px-1.5 align-top text-left font-normal">2.</td>
               <td className="py-1 px-1.5 align-top text-left font-normal">Lokasi</td>
               <td className="py-1 px-1 align-top text-left font-normal">:</td>
-              <td className="py-1 px-1.5 align-top text-left font-normal">{lokasiLengkapTable}</td>
+              <td className="py-1 px-1.5 align-top text-left font-normal">
+                <div>
+                  {lokasiTitleDisplay}
+                  {locationPoints.length > 0 ? ` (${locationPoints.length} Titik Lokasi)` : ''}
+                </div>
+                {areaTerdampakTitle && (
+                  <div className="mt-0.5">Area terdampak sekitar: {areaTerdampakTitle}</div>
+                )}
+              </td>
             </tr>
             <tr>
               <td className="py-1 px-1.5 align-top text-left font-normal">3.</td>
@@ -499,22 +507,22 @@ export default function IcraOfficialReport({
                 <thead>
                   <tr className="bg-gray-100 text-center">
                     <th
-                      className="border border-black py-1.5 px-1.5 w-[7%] text-center align-middle font-bold"
+                      className="border border-black py-1.5 px-1 w-[6%] text-center align-middle font-bold"
                       style={{ ...BASE_TEXT_STYLE, fontSize: '11pt', lineHeight: '1.4', fontWeight: 700, textAlign: 'center', verticalAlign: 'middle' }}
                     >
                       No
                     </th>
                     <th
-                      className="border border-black py-1.5 px-2 w-[35%] text-center align-middle font-bold"
+                      className="border border-black py-1.5 px-2 w-[32%] text-center align-middle font-bold"
                       style={{ ...BASE_TEXT_STYLE, fontSize: '11pt', lineHeight: '1.4', fontWeight: 700, textAlign: 'center', verticalAlign: 'middle' }}
                     >
                       Uraian Pekerjaan
                     </th>
                     <th
-                      className="border border-black py-1.5 px-2 w-[24%] text-center align-middle font-bold"
+                      className="border border-black py-1.5 px-2 w-[28%] text-center align-middle font-bold"
                       style={{ ...BASE_TEXT_STYLE, fontSize: '11pt', lineHeight: '1.4', fontWeight: 700, textAlign: 'center', verticalAlign: 'middle' }}
                     >
-                      Lokasi / Unit
+                      Lokasi &amp; Area Terdampak
                     </th>
                     <th
                       className="border border-black py-1.5 px-1.5 w-[9%] text-center align-middle font-bold"
@@ -540,13 +548,13 @@ export default function IcraOfficialReport({
               <tbody>
                 <tr>
                   <td
-                    className="border border-black py-1.5 px-1.5 w-[7%] text-center align-middle font-normal"
+                    className="border border-black py-1.5 px-1 w-[6%] text-center align-middle font-normal"
                     style={{ ...BASE_TEXT_STYLE, fontSize: '11pt', lineHeight: '1.45', textAlign: 'center', verticalAlign: 'middle' }}
                   >
                     {idx + 1}
                   </td>
                   <td
-                    className="border border-black py-1.5 px-2 w-[35%] text-left align-middle font-normal"
+                    className="border border-black py-1.5 px-2 w-[32%] text-left align-middle font-normal"
                     style={{ ...BASE_TEXT_STYLE, fontSize: '11pt', lineHeight: '1.45', textAlign: 'left', verticalAlign: 'middle' }}
                   >
                     <div>{pt.uraian_pekerjaan || '-'}</div>
@@ -557,10 +565,15 @@ export default function IcraOfficialReport({
                     )}
                   </td>
                   <td
-                    className="border border-black py-1.5 px-2 w-[24%] text-left align-middle font-normal"
+                    className="border border-black py-1.5 px-2 w-[28%] text-left align-middle font-normal"
                     style={{ ...BASE_TEXT_STYLE, fontSize: '11pt', lineHeight: '1.45', textAlign: 'left', verticalAlign: 'middle' }}
                   >
-                    {pt.lokasi || '-'}
+                    <div>{pt.lokasi || '-'}</div>
+                    {pt.area_terdampak && pt.area_terdampak.trim() && (
+                      <div className="mt-1" style={{ fontSize: '10pt', lineHeight: '1.35' }}>
+                        <span className="italic">Area terdampak:</span> {pt.area_terdampak.trim()}
+                      </div>
+                    )}
                   </td>
                   <td
                     className="border border-black py-1.5 px-1.5 w-[9%] text-center align-middle font-normal"
@@ -1853,7 +1866,7 @@ export default function IcraOfficialReport({
     project,
     projectTitleDisplay,
     lokasiTitleDisplay,
-    lokasiLengkapTable,
+    areaTerdampakTitle,
     kontraktorDisplay,
     pjProyekDisplay,
     namaIpcn,

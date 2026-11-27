@@ -13,6 +13,7 @@ import {
   CONSTRUCTION_TYPES,
   PATIENT_RISK_GROUPS,
   CONSTRUCTION_CLASS_CONTROLS,
+  summarizeAreaTerdampakFromLocations,
 } from '@/utils/icraData';
 import { normalizeImageUrl } from '@/utils/imageHelper';
 import { useAppContext } from '@/components/Providers';
@@ -191,17 +192,12 @@ export default function IcraConstructionPermitModal({
                     </tr>
                     <tr>
                       <td className="border border-black bg-slate-100 font-bold px-2 py-1.5" style={{ backgroundColor: '#f1f5f9' }}>
-                        {project.lokasi_rincian && project.lokasi_rincian.length > 0
-                          ? 'Cakupan Titik / Area Terdampak'
-                          : 'Area Terdampak Sekitar'}
+                        Area Terdampak Sekitar
                       </td>
                       <td className="border border-black px-2 py-1.5" colSpan={3}>
-                        {project.area_terdampak ||
-                          (project.lokasi_rincian && project.lokasi_rincian.length > 0
-                            ? project.lokasi_rincian
-                                .map((pt, i) => `${i + 1}. ${pt.uraian_pekerjaan || pt.lokasi}${pt.lokasi && pt.uraian_pekerjaan ? ` (${pt.lokasi})` : ''}`)
-                                .join('; ')
-                            : '-')}
+                        {project.area_terdampak?.trim() ||
+                          summarizeAreaTerdampakFromLocations(project.lokasi_rincian || []) ||
+                          '-'}
                       </td>
                     </tr>
                   </tbody>

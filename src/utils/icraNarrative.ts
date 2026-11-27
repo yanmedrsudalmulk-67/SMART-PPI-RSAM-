@@ -12,6 +12,7 @@ import {
   CONSTRUCTION_CLASS_CONTROLS,
   CONSTRUCTION_MATRIX,
   normalizeLocationPoints,
+  summarizeAreaTerdampakFromLocations,
 } from './icraData';
 
 export const RISK_ROMAN: Record<PatientRiskGroup, string> = {
@@ -91,6 +92,11 @@ const PROPER_PHRASES: Array<[RegExp, (substring: string, ...args: string[]) => s
   [/\bstroke\s+unit\b/gi, () => 'Stroke Unit'],
   [/\bhigh\s+care\b/gi, () => 'High Care'],
   [/\brawat\s+jalan\b/gi, () => 'Rawat Jalan'],
+  [/\brawat\s+inap\b/gi, () => 'Rawat Inap'],
+  [/\brekam\s+medis\b/gi, () => 'Rekam Medis'],
+  [/\bpoli\s+tb\b/gi, () => 'Poli TB'],
+  [/\bnurse\s+station\b/gi, () => 'Nurse Station'],
+  [/\bruang\s+tunggu\b/gi, () => 'Ruang Tunggu'],
 ];
 
 function formatWordSmart(word: string, capitalizeFirst: boolean): string {
@@ -218,7 +224,21 @@ function inferAfterPic(action: string): string {
  */
 function naturalizeIndonesianList(text: string): string {
   if (!text) return '';
-  return text.replace(/,\s+dan\s+/gi, ', serta ');
+  let normalized = text.replace(/,\s+dan\s+/gi, ', serta ');
+  if (/\b(dan|serta)\b/i.test(normalized)) {
+    return normalized;
+  }
+  const parts = normalized
+    .split(',')
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (parts.length === 2) {
+    return `${parts[0]} serta ${parts[1]}`;
+  }
+  if (parts.length > 2) {
+    return `${parts.slice(0, -1).join(', ')}, serta ${parts[parts.length - 1]}`;
+  }
+  return normalized;
 }
 
 /**
@@ -304,11 +324,15 @@ export function buildIcraReportNarrative(
   const projectTitleDisplay = toSmartTitleCase(cleanedBaseName);
   const projectProse = toMidSentenceProse(cleanedBaseName);
 
+  const locationPoints = normalizeLocationPoints(project.lokasi_rincian);
+  const isMultiLocation = locationPoints.length > 0;
+
   const rawLokasi = project.lokasi_area?.trim() || 'Lingkungan Rumah Sakit';
   const lokasiTitleDisplay = toSmartTitleCase(rawLokasi);
-  const lokasiProse = toMidSentenceProse(rawLokasi);
+  const lokasiProse = naturalizeIndonesianList(toMidSentenceProse(rawLokasi));
 
-  const rawAreaTerdampak = project.area_terdampak?.trim() || '';
+  const rawAreaTerdampak =
+    project.area_terdampak?.trim() || summarizeAreaTerdampakFromLocations(locationPoints);
   const areaTerdampakProse = toMidSentenceProse(rawAreaTerdampak);
   const areaTerdampakTitle = toSmartTitleCase(rawAreaTerdampak);
 
@@ -329,10 +353,8 @@ export function buildIcraReportNarrative(
   const classControl = CONSTRUCTION_CLASS_CONTROLS[kelasCode] || CONSTRUCTION_CLASS_CONTROLS.III;
   const riskLabelLower = riskInfo.riskLabel.toLowerCase();
 
-  const locationPoints = normalizeLocationPoints(project.lokasi_rincian);
-  const isMultiLocation = locationPoints.length > 0;
   const multiLocationSummaryText = locationPoints
-    .map((pt) => `${pt.uraian_pekerjaan} ${pt.lokasi} ${pt.keterangan || ''}`)
+    .map((pt) => `${pt.uraian_pekerjaan} ${pt.lokasi} ${pt.area_terdampak || ''} ${pt.keterangan || ''}`)
     .join(' ');
 
   // Analyze semantic work profile & clinical sensitivity

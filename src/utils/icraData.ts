@@ -100,6 +100,7 @@ export interface IcraLocationPoint {
   id: string;
   uraian_pekerjaan: string;
   lokasi: string;
+  area_terdampak?: string;
   tipe_konstruksi: ConstructionType;
   kelompok_risiko: PatientRiskGroup;
   kelas_tindakan: ConstructionClass;
@@ -174,6 +175,7 @@ export const ICRA_UNITS_LIST = [
   'Laboratorium',
   'Radiologi',
   'Farmasi',
+  'Rekam Medis',
   'Gizi / Dapur',
   'Laundry / Linen',
   'Kamar Jenazah',
@@ -1400,13 +1402,78 @@ export function normalizeLocationPoints(raw: any): IcraLocationPoint[] {
         id: String(item.id || `loc_${idx + 1}`),
         uraian_pekerjaan: String(item.uraian_pekerjaan || ''),
         lokasi: String(item.lokasi || ''),
+        area_terdampak: item.area_terdampak ? String(item.area_terdampak).trim() : '',
         tipe_konstruksi: tipe,
         kelompok_risiko: risk,
         kelas_tindakan: kelas,
         keterangan: item.keterangan ? String(item.keterangan) : '',
       };
     })
-    .filter((pt) => pt.uraian_pekerjaan.trim() !== '' || pt.lokasi.trim() !== '');
+    .filter(
+      (pt) =>
+        pt.uraian_pekerjaan.trim() !== '' ||
+        pt.lokasi.trim() !== '' ||
+        (pt.area_terdampak || '').trim() !== ''
+    );
+}
+
+/**
+ * Memecah string lokasi_area (dipisahkan koma) menjadi array unit unik yang rapi.
+ */
+export function parseSelectedLocations(raw?: string): string[] {
+  if (!raw) return [];
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const part of raw.split(',')) {
+    const clean = part.trim();
+    if (!clean) continue;
+    const key = clean.toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      result.push(clean);
+    }
+  }
+  return result;
+}
+
+/**
+ * Menggabungkan array unit lokasi terpilih menjadi string tersimpan pada kolom lokasi_area.
+ */
+export function formatSelectedLocations(locations: string[]): string {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const item of locations) {
+    const clean = item.trim();
+    if (!clean) continue;
+    const key = clean.toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      result.push(clean);
+    }
+  }
+  return result.join(', ');
+}
+
+/**
+ * Merangkum area terdampak sekitar dari seluruh daftar titik lokasi (deduplikasi tanpa mengubah kapitalisasi awal).
+ */
+export function summarizeAreaTerdampakFromLocations(points: IcraLocationPoint[]): string {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const pt of points) {
+    const raw = (pt.area_terdampak || '').trim();
+    if (!raw) continue;
+    for (const seg of raw.split(/[,;]+/)) {
+      const clean = seg.trim();
+      if (!clean) continue;
+      const key = clean.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(clean);
+      }
+    }
+  }
+  return result.join(', ');
 }
 
 const TYPE_RANK: Record<ConstructionType, number> = { A: 1, B: 2, C: 3, D: 4 };

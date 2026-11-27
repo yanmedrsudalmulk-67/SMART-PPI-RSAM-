@@ -24,6 +24,9 @@ import {
   BookOpen,
   MapPin,
   Sparkles,
+  ChevronDown,
+  Check,
+  RefreshCw,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { uploadImagesToSupabase } from '@/lib/upload';
@@ -52,6 +55,9 @@ import {
   normalizeIntraItems,
   normalizeLocationPoints,
   computeHighestRiskFromLocations,
+  parseSelectedLocations,
+  formatSelectedLocations,
+  summarizeAreaTerdampakFromLocations,
   toBool,
 } from '@/utils/icraData';
 import IcraConstructionPermitModal from './IcraConstructionPermitModal';
@@ -196,6 +202,63 @@ export default function IcraConstructionTab() {
   const [existingTtdIpcn, setExistingTtdIpcn] = useState<string | null>(null);
   const [existingTtdPelaksana, setExistingTtdPelaksana] = useState<string | null>(null);
   const [showGuideline, setShowGuideline] = useState(false);
+  const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
+  const [customUnitInput, setCustomUnitInput] = useState('');
+  const locationPickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isLocationPickerOpen) return;
+    const handleMouseDown = (e: MouseEvent) => {
+      if (locationPickerRef.current && !locationPickerRef.current.contains(e.target as Node)) {
+        setIsLocationPickerOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsLocationPickerOpen(false);
+    };
+    document.addEventListener('mousedown', handleMouseDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleMouseDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isLocationPickerOpen]);
+
+  const selectedLocations = useMemo(
+    () => parseSelectedLocations(projForm.lokasi_area),
+    [projForm.lokasi_area]
+  );
+
+  const toggleLocationUnit = useCallback((unit: string) => {
+    setProjForm((prev) => {
+      const current = parseSelectedLocations(prev.lokasi_area);
+      if (unit === 'Seluruh Ruangan') {
+        const isAlreadyAll = current.length === 1 && current[0] === 'Seluruh Ruangan';
+        return { ...prev, lokasi_area: isAlreadyAll ? '' : 'Seluruh Ruangan' };
+      }
+      const withoutAll = current.filter((u) => u.toLowerCase() !== 'seluruh ruangan');
+      const exists = withoutAll.some((u) => u.toLowerCase() === unit.toLowerCase());
+      const next = exists
+        ? withoutAll.filter((u) => u.toLowerCase() !== unit.toLowerCase())
+        : [...withoutAll, unit];
+      return { ...prev, lokasi_area: formatSelectedLocations(next) };
+    });
+  }, []);
+
+  const handleAddCustomUnit = useCallback(() => {
+    const clean = customUnitInput.trim();
+    if (!clean) return;
+    setProjForm((prev) => {
+      const current = parseSelectedLocations(prev.lokasi_area).filter(
+        (u) => u.toLowerCase() !== 'seluruh ruangan'
+      );
+      if (current.some((u) => u.toLowerCase() === clean.toLowerCase())) {
+        return prev;
+      }
+      return { ...prev, lokasi_area: formatSelectedLocations([...current, clean]) };
+    });
+    setCustomUnitInput('');
+  }, [customUnitInput]);
 
   const showToast = useCallback((text: string, type: 'success' | 'error' = 'success') => {
     setToastMsg({ text, type });
@@ -269,6 +332,7 @@ export default function IcraConstructionTab() {
       id: `loc_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       uraian_pekerjaan: '',
       lokasi: '',
+      area_terdampak: '',
       tipe_konstruksi: 'C',
       kelompok_risiko: '3',
       kelas_tindakan: getConstructionClass('3', 'C').classLevel,
@@ -282,6 +346,7 @@ export default function IcraConstructionTab() {
 
   const updateLocationPoint = (id: string, patch: Partial<IcraLocationPoint>) => {
     setProjForm((prev) => {
+      const prevAreaSummary = summarizeAreaTerdampakFromLocations(prev.lokasi_rincian);
       const nextPoints = prev.lokasi_rincian.map((pt) => {
         if (pt.id !== id) return pt;
         const nextType = patch.tipe_konstruksi ?? pt.tipe_konstruksi;
@@ -300,19 +365,57 @@ export default function IcraConstructionTab() {
           kelas_tindakan: recalcClass,
         };
       });
+
+      const nextAreaSummary = summarizeAreaTerdampakFromLocations(nextPoints);
+      const shouldSyncParentArea =
+        patch.area_terdampak !== undefined &&
+        (!prev.area_terdampak.trim() || prev.area_terdampak.trim() === prevAreaSummary);
+
+      const baseUpdated = shouldSyncParentArea
+        ? { ...prev, area_terdampak: nextAreaSummary }
+        : prev;
+
       return autoSyncMultiMatrix
-        ? syncHighestRiskToForm(nextPoints, prev)
-        : { ...prev, lokasi_rincian: nextPoints };
+        ? syncHighestRiskToForm(nextPoints, baseUpdated)
+        : { ...baseUpdated, lokasi_rincian: nextPoints };
     });
   };
 
   const removeLocationPoint = (id: string) => {
     setProjForm((prev) => {
+      const prevAreaSummary = summarizeAreaTerdampakFromLocations(prev.lokasi_rincian);
       const nextPoints = prev.lokasi_rincian.filter((pt) => pt.id !== id);
+      const nextAreaSummary = summarizeAreaTerdampakFromLocations(nextPoints);
+      const baseUpdated =
+        prev.area_terdampak.trim() && prev.area_terdampak.trim() === prevAreaSummary
+          ? { ...prev, area_terdampak: nextAreaSummary }
+          : prev;
       return autoSyncMultiMatrix
-        ? syncHighestRiskToForm(nextPoints, prev)
-        : { ...prev, lokasi_rincian: nextPoints };
+        ? syncHighestRiskToForm(nextPoints, baseUpdated)
+        : { ...baseUpdated, lokasi_rincian: nextPoints };
     });
+  };
+
+  const syncLocationsFromPoints = () => {
+    const uniqueLocs = formatSelectedLocations(
+      projForm.lokasi_rincian.map((pt) => pt.lokasi.trim()).filter(Boolean)
+    );
+    if (!uniqueLocs) {
+      showToast('Isi kolom Lokasi / Unit pada Daftar Titik terlebih dahulu.', 'error');
+      return;
+    }
+    setProjForm((prev) => ({ ...prev, lokasi_area: uniqueLocs }));
+    showToast('Lokasi / Unit Kerja disinkronkan dari Daftar Titik Renovasi.');
+  };
+
+  const syncAreaTerdampakFromPoints = () => {
+    const summary = summarizeAreaTerdampakFromLocations(projForm.lokasi_rincian);
+    if (!summary) {
+      showToast('Isi kolom Area Terdampak Sekitar pada Daftar Titik terlebih dahulu.', 'error');
+      return;
+    }
+    setProjForm((prev) => ({ ...prev, area_terdampak: summary }));
+    showToast('Rangkuman Area Terdampak Sekitar diperbarui dari Daftar Titik.');
   };
 
   const applyHighestRiskFromLocations = () => {
@@ -321,19 +424,19 @@ export default function IcraConstructionTab() {
       showToast('Isi minimal 1 uraian pekerjaan atau lokasi terlebih dahulu.', 'error');
       return;
     }
-    const uniqueLocations = Array.from(
-      new Set(
-        projForm.lokasi_rincian
-          .map((pt) => pt.lokasi.trim())
-          .filter(Boolean)
-      )
+    const uniqueLocations = formatSelectedLocations(
+      projForm.lokasi_rincian.map((pt) => pt.lokasi.trim()).filter(Boolean)
     );
+    const areaSummary = summarizeAreaTerdampakFromLocations(projForm.lokasi_rincian);
     setProjForm((prev) => ({
       ...prev,
-      lokasi_area: prev.lokasi_rincian.length >= 2 ? 'Seluruh Ruangan' : prev.lokasi_area,
+      lokasi_area:
+        uniqueLocations && (!prev.lokasi_area.trim() || prev.lokasi_area === 'Seluruh Ruangan')
+          ? uniqueLocations
+          : prev.lokasi_area,
       area_terdampak:
-        !prev.area_terdampak.trim() && uniqueLocations.length > 0
-          ? uniqueLocations.join(', ')
+        areaSummary && !prev.area_terdampak.trim()
+          ? areaSummary
           : prev.area_terdampak,
       tipe_konstruksi: highest.tipe_konstruksi,
       kelompok_risiko: highest.kelompok_risiko,
@@ -372,6 +475,8 @@ export default function IcraConstructionTab() {
       nama_k3rs: 'Tim K3RS RSUD Al-Mulk',
     });
     setAutoSyncMultiMatrix(true);
+    setIsLocationPickerOpen(false);
+    setCustomUnitInput('');
     setFotoSebelum([]);
     setFotoSesudah([]);
     setExistingTtdIpcn(null);
@@ -401,6 +506,8 @@ export default function IcraConstructionTab() {
       nama_k3rs: proj.nama_k3rs || 'Tim K3RS RSUD Al-Mulk',
     });
     setAutoSyncMultiMatrix(true);
+    setIsLocationPickerOpen(false);
+    setCustomUnitInput('');
     setFotoSebelum(proj.foto_sebelum.map((u) => ({ url: normalizeImageUrl(u), file: null })));
     setFotoSesudah(proj.foto_sesudah.map((u) => ({ url: normalizeImageUrl(u), file: null })));
     setExistingTtdIpcn(proj.ttd_ipcn || null);
@@ -424,12 +531,16 @@ export default function IcraConstructionTab() {
       let ttdPelaksana = existingTtdPelaksana || editingProject?.ttd_pelaksana || null;
 
       const cleanedLocations = normalizeLocationPoints(projForm.lokasi_rincian);
+      const lokasiFinal =
+        formatSelectedLocations(parseSelectedLocations(projForm.lokasi_area)) || 'Lingkungan Rumah Sakit';
+      const areaTerdampakFinal =
+        projForm.area_terdampak.trim() || summarizeAreaTerdampakFromLocations(cleanedLocations);
 
       const payload = {
         nomor_izin: (projForm.nomor_izin?.trim() || generatePermitNumber()),
         nama_proyek: projForm.nama_proyek.trim(),
-        lokasi_area: projForm.lokasi_area,
-        area_terdampak: projForm.area_terdampak.trim(),
+        lokasi_area: lokasiFinal,
+        area_terdampak: areaTerdampakFinal,
         kontraktor_pelaksana: projForm.kontraktor_pelaksana.trim(),
         pj_proyek: projForm.pj_proyek.trim(),
         tgl_mulai: projForm.tgl_mulai,
@@ -837,29 +948,195 @@ export default function IcraConstructionTab() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1.5">Lokasi / Unit Kerja</label>
-                      <select
-                        value={projForm.lokasi_area}
-                        onChange={(e) => setProjForm((p) => ({ ...p, lokasi_area: e.target.value }))}
-                        className="w-full bg-[#12132e] border border-black/40 text-white text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-400/60 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] transition-all cursor-pointer"
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                    {/* Lokasi / Unit Kerja — Multi-Select Chips + Inline Picker Drawer */}
+                    <div className="lg:col-span-6" ref={locationPickerRef}>
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                        <label className="text-[11px] font-bold uppercase text-indigo-300 flex items-center gap-2">
+                          <span>Lokasi / Unit Kerja</span>
+                          {selectedLocations.length > 0 && (
+                            <span className="px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-400/35 text-[10px] font-black text-cyan-300 normal-case tracking-normal">
+                              {selectedLocations.length === 1 && selectedLocations[0] === 'Seluruh Ruangan'
+                                ? 'Seluruh RS'
+                                : `${selectedLocations.length} Lokasi Dipilih`}
+                            </span>
+                          )}
+                        </label>
+                        {projForm.lokasi_rincian.some((pt) => pt.lokasi.trim()) && (
+                          <button
+                            type="button"
+                            onClick={syncLocationsFromPoints}
+                            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-400/35 text-cyan-300 text-[10px] font-bold transition-colors cursor-pointer"
+                            title="Ambil daftar unit kerja dari Daftar Rincian Titik Lokasi"
+                          >
+                            <RefreshCw className="w-3 h-3" />
+                            <span>Ambil dari Titik</span>
+                          </button>
+                        )}
+                      </div>
+
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => setIsLocationPickerOpen((v) => !v)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setIsLocationPickerOpen((v) => !v);
+                          }
+                        }}
+                        className={`w-full min-h-[60px] bg-[#12132e] border rounded-xl px-3.5 py-2.5 flex items-center justify-between gap-2.5 cursor-pointer shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] transition-all ${
+                          isLocationPickerOpen
+                            ? 'border-cyan-400/70 ring-2 ring-cyan-500/30'
+                            : 'border-black/40 hover:border-indigo-500/50'
+                        }`}
                       >
-                        {ICRA_UNITS_LIST.map((u) => (
-                          <option key={u} value={u} className="bg-[#18193b] text-white">{u}</option>
-                        ))}
-                      </select>
+                        <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0">
+                          {selectedLocations.length === 0 ? (
+                            <span className="text-sm text-slate-500 font-medium">
+                              Klik untuk memilih satu atau beberapa lokasi / unit kerja...
+                            </span>
+                          ) : (
+                            selectedLocations.map((loc) => (
+                              <span
+                                key={loc}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/15 border border-cyan-400/40 text-cyan-200 text-xs font-bold shadow-sm"
+                              >
+                                <span>{loc}</span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleLocationUnit(loc);
+                                  }}
+                                  className="p-0.5 rounded hover:bg-cyan-400/25 text-cyan-300 hover:text-white transition-colors cursor-pointer"
+                                  title={`Hapus ${loc}`}
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </span>
+                            ))
+                          )}
+                        </div>
+                        <ChevronDown
+                          className={`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200 ${
+                            isLocationPickerOpen ? 'rotate-180 text-cyan-300' : ''
+                          }`}
+                        />
+                      </div>
+
+                      {isLocationPickerOpen && (
+                        <div className="mt-2 rounded-2xl bg-[#10122a] border border-cyan-500/35 p-3.5 space-y-3 shadow-[0_12px_32px_rgba(0,0,0,0.75)]">
+                          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-900/50 pb-2">
+                            <span className="text-[11px] font-bold text-slate-300">
+                              Klik unit untuk memilih (bisa pilih lebih dari satu):
+                            </span>
+                            <div className="flex items-center gap-2">
+                              {selectedLocations.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setProjForm((p) => ({ ...p, lokasi_area: '' }))}
+                                  className="text-[10.5px] font-bold text-slate-400 hover:text-rose-300 transition-colors cursor-pointer"
+                                >
+                                  Kosongkan
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => setIsLocationPickerOpen(false)}
+                                className="px-2.5 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-200 text-[10.5px] font-extrabold cursor-pointer"
+                              >
+                                Selesai
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-1">
+                            {ICRA_UNITS_LIST.map((unit) => {
+                              const isSelected = selectedLocations.some(
+                                (u) => u.toLowerCase() === unit.toLowerCase()
+                              );
+                              const isAllUnit = unit === 'Seluruh Ruangan';
+                              return (
+                                <button
+                                  key={unit}
+                                  type="button"
+                                  onClick={() => toggleLocationUnit(unit)}
+                                  className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all cursor-pointer active:scale-95 ${
+                                    isSelected
+                                      ? isAllUnit
+                                        ? 'bg-amber-500/20 border-amber-400/60 text-amber-200 shadow-sm'
+                                        : 'bg-cyan-500/25 border-cyan-400/70 text-white shadow-sm'
+                                      : 'bg-[#17193a] border-indigo-900/60 text-slate-300 hover:border-cyan-400/40 hover:text-white'
+                                  }`}
+                                >
+                                  <span
+                                    className={`w-3.5 h-3.5 rounded flex items-center justify-center border ${
+                                      isSelected
+                                        ? isAllUnit
+                                          ? 'bg-amber-400 border-amber-300 text-slate-950'
+                                          : 'bg-cyan-400 border-cyan-300 text-slate-950'
+                                        : 'border-slate-500/70'
+                                    }`}
+                                  >
+                                    {isSelected && <Check className="w-2.5 h-2.5" strokeWidth={3} />}
+                                  </span>
+                                  <span>{unit}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          <div className="flex items-center gap-2 pt-2 border-t border-indigo-900/50">
+                            <input
+                              type="text"
+                              value={customUnitInput}
+                              onChange={(e) => setCustomUnitInput(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleAddCustomUnit();
+                                }
+                              }}
+                              placeholder="Tambah lokasi khusus lain (misal: Rooftop Ranap Aisyah)..."
+                              className="flex-1 bg-[#161838] border border-indigo-900/60 text-white text-xs rounded-xl px-3 py-1.5 outline-none focus:border-cyan-400/70 placeholder-slate-500"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleAddCustomUnit}
+                              className="px-3 py-1.5 rounded-xl bg-indigo-500/25 hover:bg-indigo-500/40 border border-indigo-400/45 text-indigo-200 text-xs font-extrabold transition-colors cursor-pointer shrink-0"
+                            >
+                              + Tambah
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="sm:col-span-2">
-                      <label className="block text-[11px] font-bold uppercase text-indigo-300 mb-1.5">
-                        Area Terdampak Sekitar (Atas / Bawah / Samping)
-                      </label>
-                      <input
-                        type="text"
+
+                    {/* Area Terdampak Sekitar (Atas / Bawah / Samping) */}
+                    <div className="lg:col-span-6">
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                        <label className="text-[11px] font-bold uppercase text-indigo-300">
+                          Area Terdampak Sekitar (Atas / Bawah / Samping)
+                        </label>
+                        {projForm.lokasi_rincian.some((pt) => (pt.area_terdampak || '').trim()) && (
+                          <button
+                            type="button"
+                            onClick={syncAreaTerdampakFromPoints}
+                            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-400/35 text-cyan-300 text-[10px] font-bold transition-colors cursor-pointer"
+                            title="Rangkum otomatis seluruh area terdampak sekitar dari tiap titik lokasi di bawah"
+                          >
+                            <RefreshCw className="w-3 h-3" />
+                            <span>Rangkum dari Titik</span>
+                          </button>
+                        )}
+                      </div>
+                      <textarea
+                        rows={2}
                         value={projForm.area_terdampak}
                         onChange={(e) => setProjForm((p) => ({ ...p, area_terdampak: e.target.value }))}
-                        placeholder="Contoh: Koridor Ranap, Ruang Tindakan, dan Nurse Station"
-                        className="w-full bg-[#12132e] border border-black/40 text-white text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-400/60 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] transition-all placeholder-slate-500"
+                        placeholder="Contoh: Ruang Tunggu Rawat Jalan, Nurse Station, Poli TB, Kamar Operasi Aktif IBS, Area Steril CSSD"
+                        className="w-full min-h-[60px] bg-[#12132e] border border-black/40 text-white text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-400/60 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.05)] transition-all placeholder-slate-500 leading-snug resize-y"
                       />
                     </div>
                   </div>
@@ -1093,16 +1370,35 @@ export default function IcraConstructionTab() {
                                   </div>
                                 </div>
 
-                                <div>
-                                  <input
-                                    type="text"
-                                    value={pt.keterangan || ''}
-                                    onChange={(e) =>
-                                      updateLocationPoint(pt.id, { keterangan: e.target.value })
-                                    }
-                                    placeholder="Catatan pengendalian khusus titik ini (opsional, misal: relokasi pasien / tutup ventilasi)"
-                                    className="w-full bg-[#161838] border border-indigo-900/40 text-slate-200 rounded-xl px-3 py-1.5 text-[11px] outline-none focus:border-cyan-400/60 placeholder-slate-500"
-                                  />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs">
+                                  <div>
+                                    <label className="block text-[10px] font-bold uppercase text-cyan-300/90 mb-1">
+                                      Area Terdampak Sekitar (Atas / Bawah / Samping)
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={pt.area_terdampak || ''}
+                                      onChange={(e) =>
+                                        updateLocationPoint(pt.id, { area_terdampak: e.target.value })
+                                      }
+                                      placeholder="Contoh: Ruang Tunggu Pasien, Nurse Station, Poli TB, dan Parkiran"
+                                      className="w-full bg-[#161838] border border-cyan-900/45 text-slate-100 rounded-xl px-3 py-1.5 text-[11px] outline-none focus:border-cyan-400/70 placeholder-slate-500"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                                      Catatan Pengendalian Khusus (Opsional)
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={pt.keterangan || ''}
+                                      onChange={(e) =>
+                                        updateLocationPoint(pt.id, { keterangan: e.target.value })
+                                      }
+                                      placeholder="Misal: relokasi pasien / tutup ventilasi / jadwal di luar jam poli"
+                                      className="w-full bg-[#161838] border border-indigo-900/40 text-slate-200 rounded-xl px-3 py-1.5 text-[11px] outline-none focus:border-cyan-400/60 placeholder-slate-500"
+                                    />
+                                  </div>
                                 </div>
                               </div>
                             );
