@@ -381,24 +381,24 @@ export default function IcraOfficialReport({
             LAPORAN PELAKSANAAN INFECTION CONTROL RISK ASSESSMENT (ICRA)
           </h1>
           <p
-            className="text-[12pt] leading-[1.5] font-bold text-black"
+            className="text-[12pt] leading-[1.5] font-bold uppercase text-black"
             style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}
           >
             {projectTitleDisplay === 'Pemeliharaan, Perbaikan, Renovasi dan Konstruksi Sarana Prasarana' ? (
               <>
-                Pada Kegiatan Pemeliharaan, Perbaikan, Renovasi
+                PADA KEGIATAN PEMELIHARAAN, PERBAIKAN, RENOVASI
                 <br />
-                dan Konstruksi Sarana Prasarana
+                DAN KONSTRUKSI SARANA PRASARANA
               </>
             ) : (
-              `Pada Kegiatan ${projectTitleDisplay}`
+              `PADA KEGIATAN ${projectTitleDisplay.toUpperCase()}`
             )}
           </p>
           <p
-            className="text-[12pt] leading-[1.5] font-bold text-black"
+            className="text-[12pt] leading-[1.5] font-bold uppercase text-black"
             style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}
           >
-            UOBK RSUD Al-Mulk Kota Sukabumi
+            UOBK RSUD AL-MULK KOTA SUKABUMI
           </p>
         </div>
       ),
