@@ -384,7 +384,15 @@ export default function IcraOfficialReport({
             className="text-[12pt] leading-[1.5] font-bold text-black"
             style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}
           >
-            Pada Kegiatan {projectTitleDisplay}
+            {projectTitleDisplay === 'Pemeliharaan, Perbaikan, Renovasi dan Konstruksi Sarana Prasarana' ? (
+              <>
+                Pada Kegiatan Pemeliharaan, Perbaikan, Renovasi
+                <br />
+                dan Konstruksi Sarana Prasarana
+              </>
+            ) : (
+              `Pada Kegiatan ${projectTitleDisplay}`
+            )}
           </p>
           <p
             className="text-[12pt] leading-[1.5] font-bold text-black"

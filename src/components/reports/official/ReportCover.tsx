@@ -232,12 +232,12 @@ export default function ReportCover({
         {/* Line 4: TAHUN [TAHUN]                                     */}
         {/* ========================================================= */}
         {detectedType === 'icra' && (
-          <div className="flex flex-col items-center justify-center text-center px-2 gap-2">
+          <div className="flex flex-col items-center justify-center text-center px-2">
             <h1
-              className="cover-title-text font-bold uppercase font-sans text-center whitespace-nowrap"
+              className="cover-title-text font-bold uppercase font-sans text-center whitespace-nowrap m-0"
               style={{
                 fontSize: '14.2pt',
-                lineHeight: '1.2',
+                lineHeight: '1.5',
                 letterSpacing: '0.01em',
                 color: '#ffffff',
                 WebkitTextFillColor: '#ffffff',
@@ -247,15 +247,11 @@ export default function ReportCover({
               {title || 'LAPORAN PELAKSANAAN INFECTION CONTROL RISK ASSESSMENT (ICRA)'}
             </h1>
             <h2
-              className="cover-title-text font-bold uppercase tracking-wide font-sans text-center px-2"
+              className="cover-title-text font-bold uppercase font-sans text-center px-2 m-0"
               style={{
-                fontSize:
-                  subtitle && subtitle.length > 68
-                    ? '15pt'
-                    : subtitle && subtitle.length > 42
-                    ? '16.5pt'
-                    : '18pt',
-                lineHeight: '1.22',
+                fontSize: '14.2pt',
+                lineHeight: '1.5',
+                letterSpacing: '0.01em',
                 color: '#ffffff',
                 WebkitTextFillColor: '#ffffff',
                 textShadow: '0 2px 4px rgba(0,0,0,0.5)',
@@ -264,10 +260,11 @@ export default function ReportCover({
               {subtitle || 'PADA KEGIATAN PEMELIHARAAN, PERBAIKAN, RENOVASI DAN KONSTRUKSI SARANA PRASARANA'}
             </h2>
             <h3
-              className="cover-title-text font-bold uppercase tracking-wide font-sans text-center whitespace-nowrap"
+              className="cover-title-text font-bold uppercase font-sans text-center whitespace-nowrap m-0"
               style={{
-                fontSize: '16.5pt',
-                lineHeight: '1.2',
+                fontSize: '14.2pt',
+                lineHeight: '1.5',
+                letterSpacing: '0.01em',
                 color: '#ffffff',
                 WebkitTextFillColor: '#ffffff',
                 textShadow: '0 2px 4px rgba(0,0,0,0.5)',
@@ -276,10 +273,11 @@ export default function ReportCover({
               {hospitalText}
             </h3>
             <p
-              className="cover-title-text font-bold uppercase tracking-wider font-sans text-center"
+              className="cover-title-text font-bold uppercase font-sans text-center m-0"
               style={{
-                fontSize: '16.5pt',
-                lineHeight: '1.2',
+                fontSize: '14.2pt',
+                lineHeight: '1.5',
+                letterSpacing: '0.01em',
                 color: '#ffffff',
                 WebkitTextFillColor: '#ffffff',
                 textShadow: '0 2px 4px rgba(0,0,0,0.5)',
