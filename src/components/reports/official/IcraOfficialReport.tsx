@@ -1073,6 +1073,7 @@ export default function IcraOfficialReport({
     });
 
     // ==================== 9. REKOMENDASI (ATOMIC PER-BULLET) ====================
+    b.push({ type: 'pageBreak', key: 'pb-rekomendasi' });
     pushHeading('sec-rekomendasi', 'REKOMENDASI', 'rekomendasi');
     pushParagraph('rek-intro', renderNarrativeText(rekomendasiIntro), 6, false);
 
