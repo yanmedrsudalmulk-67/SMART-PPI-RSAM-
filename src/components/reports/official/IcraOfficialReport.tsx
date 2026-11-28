@@ -870,18 +870,21 @@ export default function IcraOfficialReport({
     b.push({ type: 'pageBreak', key: 'pb-rencana-tindakan' });
     pushHeading('sec-rencana-tindakan', 'RENCANA TINDAKAN PENGENDALIAN INFEKSI', 'rencana-tindakan');
 
-    const ACTION_TABLE_TEXT_STYLE: React.CSSProperties = {
-      ...BASE_TEXT_STYLE,
-      fontSize: '11pt',
-      lineHeight: '1.3',
-    };
-
     const pushAtomicActionTable = (
       prefix: string,
       subTitle: string,
-      rows: { tindakan: string; pj: string }[]
+      rows: { tindakan: string; pj: string }[],
+      opts?: { fontSize?: string; lineHeight?: string; spacious?: boolean }
     ) => {
       pushSubHeading(`${prefix}-title`, subTitle);
+
+      const cellStyle: React.CSSProperties = {
+        ...BASE_TEXT_STYLE,
+        fontSize: opts?.fontSize || '11pt',
+        lineHeight: opts?.lineHeight || '1.3',
+      };
+      const cellPadY = opts?.spacious ? 'py-2' : 'py-1.5';
+      const tableSpaciousClass = opts?.spacious ? 'icra-action-table-spacious' : '';
 
       rows.forEach((r, idx) => {
         const isFirst = idx === 0;
@@ -892,29 +895,29 @@ export default function IcraOfficialReport({
           gapAfter: isLast ? 12 : 0,
           node: (
             <table
-              className={`w-full table-fixed border-collapse text-[11pt] leading-[1.3] text-black font-normal ${
+              className={`w-full table-fixed border-collapse text-black font-normal ${tableSpaciousClass} ${
                 isFirst ? '' : '-mt-[1px]'
               }`}
-              style={ACTION_TABLE_TEXT_STYLE}
+              style={cellStyle}
             >
               {isFirst && (
                 <thead>
                   <tr className="bg-gray-100 text-center">
                     <th
-                      className="border border-black py-1.5 px-2 text-center align-middle w-[8%] font-bold"
-                      style={{ ...ACTION_TABLE_TEXT_STYLE, fontWeight: 700, textAlign: 'center', verticalAlign: 'middle' }}
+                      className={`border border-black ${cellPadY} px-2 text-center align-middle w-[8%] font-bold`}
+                      style={{ ...cellStyle, fontWeight: 700, textAlign: 'center', verticalAlign: 'middle' }}
                     >
                       No
                     </th>
                     <th
-                      className="border border-black py-1.5 px-2.5 text-center align-middle w-[64%] font-bold"
-                      style={{ ...ACTION_TABLE_TEXT_STYLE, fontWeight: 700, textAlign: 'center', verticalAlign: 'middle' }}
+                      className={`border border-black ${cellPadY} px-2.5 text-center align-middle w-[64%] font-bold`}
+                      style={{ ...cellStyle, fontWeight: 700, textAlign: 'center', verticalAlign: 'middle' }}
                     >
                       Tindakan
                     </th>
                     <th
-                      className="border border-black py-1.5 px-2.5 text-center align-middle w-[28%] font-bold"
-                      style={{ ...ACTION_TABLE_TEXT_STYLE, fontWeight: 700, textAlign: 'center', verticalAlign: 'middle' }}
+                      className={`border border-black ${cellPadY} px-2.5 text-center align-middle w-[28%] font-bold`}
+                      style={{ ...cellStyle, fontWeight: 700, textAlign: 'center', verticalAlign: 'middle' }}
                     >
                       Penanggung Jawab
                     </th>
@@ -924,20 +927,20 @@ export default function IcraOfficialReport({
               <tbody>
                 <tr>
                   <td
-                    className="border border-black py-1.5 px-2 text-center align-middle w-[8%] font-normal"
-                    style={{ ...ACTION_TABLE_TEXT_STYLE, textAlign: 'center', verticalAlign: 'middle' }}
+                    className={`border border-black ${cellPadY} px-2 text-center align-middle w-[8%] font-normal`}
+                    style={{ ...cellStyle, textAlign: 'center', verticalAlign: 'middle' }}
                   >
                     {idx + 1}
                   </td>
                   <td
-                    className="border border-black py-1.5 px-2.5 align-middle text-left w-[64%] font-normal"
-                    style={{ ...ACTION_TABLE_TEXT_STYLE, textAlign: 'left', verticalAlign: 'middle' }}
+                    className={`border border-black ${cellPadY} px-2.5 align-middle text-left w-[64%] font-normal`}
+                    style={{ ...cellStyle, textAlign: 'left', verticalAlign: 'middle' }}
                   >
                     {renderNarrativeText(r.tindakan)}
                   </td>
                   <td
-                    className="border border-black py-1.5 px-2.5 align-middle text-left w-[28%] font-normal"
-                    style={{ ...ACTION_TABLE_TEXT_STYLE, textAlign: 'left', verticalAlign: 'middle' }}
+                    className={`border border-black ${cellPadY} px-2.5 align-middle text-left w-[28%] font-normal`}
+                    style={{ ...cellStyle, textAlign: 'left', verticalAlign: 'middle' }}
                   >
                     {r.pj}
                   </td>
@@ -949,18 +952,23 @@ export default function IcraOfficialReport({
       });
     };
 
-    pushAtomicActionTable('pra', 'Tindakan Pra-Renovasi (Sebelum Pekerjaan)', praActions);
+    pushAtomicActionTable('pra', 'Tindakan Pra-Renovasi (Sebelum Pekerjaan)', praActions, {
+      fontSize: '11pt',
+      lineHeight: '1.3',
+    });
     b.push({ type: 'pageBreak', key: 'pb-tindakan-saat' });
     pushAtomicActionTable(
       'saat',
       `Tindakan Saat Renovasi — Kelas ${kelasCode} (Selama Pekerjaan)`,
-      saatActions
+      saatActions,
+      { fontSize: '12pt', lineHeight: '1.4', spacious: true }
     );
     b.push({ type: 'pageBreak', key: 'pb-tindakan-pasca' });
     pushAtomicActionTable(
       'pasca',
       `Tindakan Pasca-Renovasi — Kelas ${kelasCode} (Setelah Pekerjaan)`,
-      pascaActions
+      pascaActions,
+      { fontSize: '12pt', lineHeight: '1.4', spacious: true }
     );
 
     if (project.persyaratan_khusus && project.persyaratan_khusus.trim()) {

@@ -193,6 +193,13 @@ img, svg {
   box-sizing: border-box !important;
 }
 
+.official-pdf-page table.icra-action-table-spacious th,
+.official-pdf-page table.icra-action-table-spacious td,
+[data-pdf-page="true"] table.icra-action-table-spacious th,
+[data-pdf-page="true"] table.icra-action-table-spacious td {
+  line-height: 1.4 !important;
+}
+
 /* Ensure align-top is strictly respected for findings, recommendations, and signatures */
 .official-report-sheet .align-top,
 .official-report-paper .align-top,
