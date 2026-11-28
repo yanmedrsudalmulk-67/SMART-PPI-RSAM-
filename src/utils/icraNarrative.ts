@@ -74,9 +74,28 @@ const PROPER_NOUNS: Record<string, string> = {
   fatimah: 'Fatimah',
   khadijah: 'Khadijah',
   aisyah: 'Aisyah',
+  aisayh: 'Aisyah',
   usman: 'Usman',
   hais: 'HAIs',
 };
+
+function isAreaOverlappingLocation(lokasiText: string, areaText: string): boolean {
+  if (!lokasiText || !areaText) return false;
+  const extractTokens = (text: string) =>
+    text
+      .toLowerCase()
+      .replace(/[/–—,&()]/g, ' ')
+      .split(/\s+/)
+      .map((w) => w.replace(/[^a-z0-9]/g, ''))
+      .filter((w) => w.length >= 3 && !['dan', 'serta', 'area', 'ruang', 'gedung', 'atau'].includes(w));
+
+  const locTokens = new Set(extractTokens(lokasiText));
+  const areaTokens = extractTokens(areaText);
+  if (areaTokens.length === 0 || locTokens.size === 0) return false;
+
+  const matched = areaTokens.filter((token) => locTokens.has(token)).length;
+  return matched / areaTokens.length >= 0.45;
+}
 
 // Multi-word building / hospital unit names that should keep capital initials mid-sentence
 const PROPER_PHRASES: Array<[RegExp, (substring: string, ...args: string[]) => string]> = [
@@ -84,7 +103,7 @@ const PROPER_PHRASES: Array<[RegExp, (substring: string, ...args: string[]) => s
   [/\bkota\s+sukabumi\b/gi, () => 'Kota Sukabumi'],
   [/\bgedung\s+koperasi\b/gi, () => 'Gedung Koperasi'],
   [/\bgedung\s+([a-z0-9]+)\b/gi, (_, name) => `Gedung ${formatWordSmart(name, true)}`],
-  [/\branap\s+(aisyah|fatimah|khadijah|usman|dewasa|anak|kebidanan|bedah)\b/gi, (_, name) => `Ranap ${formatWordSmart(name, true)}`],
+  [/\branap\s+(aisyah|aisayh|fatimah|khadijah|usman|dewasa|anak|kebidanan|bedah)\b/gi, (_, name) => `Ranap ${formatWordSmart(name, true)}`],
   [/\bruang\s+isolasi\b/gi, () => 'Ruang Isolasi'],
   [/\bkamar\s+operasi\b/gi, () => 'Kamar Operasi'],
   [/\bkamar\s+bersalin\b/gi, () => 'Kamar Bersalin'],
@@ -94,9 +113,16 @@ const PROPER_PHRASES: Array<[RegExp, (substring: string, ...args: string[]) => s
   [/\brawat\s+jalan\b/gi, () => 'Rawat Jalan'],
   [/\brawat\s+inap\b/gi, () => 'Rawat Inap'],
   [/\brekam\s+medis\b/gi, () => 'Rekam Medis'],
+  [/\bpoliklinik\b/gi, () => 'Poliklinik'],
   [/\bpoli\s+tb\b/gi, () => 'Poli TB'],
   [/\bnurse\s+station\b/gi, () => 'Nurse Station'],
   [/\bruang\s+tunggu\b/gi, () => 'Ruang Tunggu'],
+  [/\brooftop\b/gi, () => 'Rooftop'],
+  [/\beksterior\b/gi, () => 'Eksterior'],
+  [/\bkoridor\b/gi, () => 'Koridor'],
+  [/\bmanajemen\b/gi, () => 'Manajemen'],
+  [/\brecovery\b/gi, () => 'Recovery'],
+  [/\bkm\.\s*/gi, () => 'Km. '],
 ];
 
 function formatWordSmart(word: string, capitalizeFirst: boolean): string {
@@ -431,10 +457,15 @@ export function buildIcraReportNarrative(
     : areaTerdampakTitle
     ? `${lokasiTitleDisplay} (Area terdampak sekitar: ${areaTerdampakTitle})`
     : lokasiTitleDisplay;
-  const lokasiLengkapProse = areaTerdampakProse
-    ? `${lokasiProse} yang berdekatan dengan ${naturalizeIndonesianList(areaTerdampakProse)}`
-    : isMultiLocation
-    ? `${lokasiProse} yang mencakup ${locationPoints.length} titik lokasi renovasi di lingkungan rumah sakit`
+  const areaOverlapsLocation = isAreaOverlappingLocation(lokasiProse, areaTerdampakProse);
+  const distinctAreaProse = !areaOverlapsLocation && areaTerdampakProse ? naturalizeIndonesianList(areaTerdampakProse) : '';
+
+  const lokasiLengkapProse = isMultiLocation
+    ? distinctAreaProse
+      ? `${locationPoints.length} titik lokasi di lingkungan rumah sakit (${lokasiProse}) yang berdekatan dengan ${distinctAreaProse}`
+      : `${locationPoints.length} titik lokasi di lingkungan rumah sakit, meliputi ${lokasiProse}`
+    : distinctAreaProse
+    ? `${lokasiProse} yang berdekatan dengan ${distinctAreaProse}`
     : lokasiProse;
 
   // Unused imports check keep clean
@@ -464,9 +495,9 @@ export function buildIcraReportNarrative(
   const lbP1 =
     'Rumah sakit sebagai institusi pelayanan kesehatan memiliki tanggung jawab dalam menyediakan lingkungan yang aman, nyaman, dan memenuhi standar kesehatan bagi pasien, tenaga kesehatan, pegawai, pengunjung, serta masyarakat di sekitarnya. Salah satu upaya dalam meningkatkan mutu pelayanan kesehatan adalah melalui pemeliharaan, pengembangan, dan penataan sarana serta prasarana rumah sakit secara berkelanjutan. Namun, setiap kegiatan pembongkaran, konstruksi, maupun renovasi bangunan di lingkungan rumah sakit memiliki potensi risiko yang perlu diperhatikan, khususnya dari aspek Pencegahan dan Pengendalian Infeksi (PPI).';
 
-  // P2 adapts cleanly between non-patient detached locations (e.g. Gedung Koperasi) and clinical care units (e.g. Ranap Aisyah)
-  const surroundingLabel = areaTerdampakProse
-    ? naturalizeIndonesianList(areaTerdampakProse)
+  // P2 adapts cleanly between single-site, detached non-patient units, and multi-location hospital-wide projects
+  const surroundingLabel = distinctAreaProse
+    ? distinctAreaProse
     : isPatientCareArea
     ? 'ruang pelayanan pasien dan koridor unit perawatan'
     : 'area perkantoran dan manajemen';
@@ -474,27 +505,42 @@ export function buildIcraReportNarrative(
   const isBuildingLocation = /\bgedung\b/i.test(lokasiProse);
   const locationNoun = isBuildingLocation ? 'gedung' : 'ruangan atau area';
 
-  const lbP2 = isPatientCareArea
+  const lbP2 = isMultiLocation
+    ? `Dalam rangka pemeliharaan, pengembangan, dan penataan sarana prasarana pelayanan, UOBK RSUD Al-Mulk Kota Sukabumi merencanakan kegiatan ${projectWithLocationProse} yang tersebar pada ${locationPoints.length} titik lokasi di lingkungan rumah sakit. Cakupan lokasi pekerjaan tersebut meliputi ${lokasiProse}${
+        distinctAreaProse ? `, serta berdekatan dengan ${distinctAreaProse}` : ''
+      }. Mengingat sebagian besar titik pekerjaan berada langsung di dalam maupun berbatasan erat dengan area pelayanan aktif (${riskCode === '4' ? `kelompok risiko ${riskCode} dengan tingkat risiko ${riskLabelLower}` : `tingkat risiko ${riskLabelLower}`}), pelaksanaannya wajib memperhatikan keselamatan pasien, kondisi lingkungan sekitar, serta pencegahan penyebaran kontaminan ke zona pelayanan lainnya.`
+    : isPatientCareArea
     ? `Dalam rangka pemeliharaan, pengembangan, dan penataan sarana prasarana pelayanan, UOBK RSUD Al-Mulk Kota Sukabumi merencanakan kegiatan ${projectWithLocationProse} yang berada di lingkungan rumah sakit. Lokasi pekerjaan tersebut berada di ${lokasiProse}${
-        areaTerdampakProse ? ` dan berdekatan dengan ${naturalizeIndonesianList(areaTerdampakProse)}` : ''
-      }, sehingga pelaksanaan ${activityNoun} perlu memperhatikan keselamatan pasien, kondisi lingkungan sekitar, serta keberlangsungan aktivitas pelayanan rumah sakit. Mengingat lokasi ${activityNoun} berada secara langsung di dalam atau berbatasan erat dengan area pelayanan pasien (kelompok risiko ${riskCode} dengan tingkat risiko ${riskLabelLower}), potensi penyebaran kontaminan ke pasien, petugas, maupun area pelayanan lainnya harus diantisipasi secara ketat.`
-    : `Dalam rangka pengembangan dan penataan sarana prasarana, UOBK RSUD Al-Mulk Kota Sukabumi merencanakan kegiatan ${projectWithLocationProse} yang berada di lingkungan rumah sakit. Lokasi ${locationNoun} tersebut berdekatan dengan ${surroundingLabel}, sehingga pelaksanaan ${activityNoun} perlu memperhatikan kondisi lingkungan sekitar serta keberlangsungan aktivitas operasional rumah sakit. Meskipun lokasi ${activityNoun} tidak berada secara langsung di dalam area pelayanan pasien, potensi penyebaran kontaminan ke area lain tetap perlu diantisipasi.`;
+        distinctAreaProse ? ` dan berdekatan dengan ${distinctAreaProse}` : ''
+      }, sehingga pelaksanaannya perlu memperhatikan keselamatan pasien, kondisi lingkungan sekitar, serta keberlangsungan aktivitas pelayanan rumah sakit. Mengingat area tersebut berada langsung di dalam atau berbatasan erat dengan zona pelayanan pasien (kelompok risiko ${riskCode} dengan tingkat risiko ${riskLabelLower}), potensi penyebaran kontaminan ke pasien, petugas, maupun area pelayanan lainnya harus diantisipasi secara ketat.`
+    : `Dalam rangka pengembangan dan penataan sarana prasarana, UOBK RSUD Al-Mulk Kota Sukabumi merencanakan kegiatan ${projectWithLocationProse} yang berada di lingkungan rumah sakit. Lokasi ${locationNoun} tersebut berdekatan dengan ${surroundingLabel}, sehingga pelaksanaan pekerjaan perlu memperhatikan kondisi lingkungan sekitar serta keberlangsungan aktivitas operasional rumah sakit. Meskipun lokasi pekerjaan tidak berada secara langsung di dalam area pelayanan pasien, potensi penyebaran kontaminan ke area lain tetap perlu diantisipasi.`;
 
   // P3: Dust, building particles, Aspergillus spp., plus project-specific hazard details
-  const specificHazardPhrase = isPlumbingOrToilet
-    ? 'Selain debu dari pembongkaran material keramik maupun dinding, pekerjaan pada area sanitasi dan saluran air juga berpotensi menimbulkan kelembaban berlebih serta percikan aerosol yang dapat memicu pertumbuhan mikroorganisme apabila tidak dikelola dengan baik.'
-    : isCeilingOrWall
-    ? 'Pembukaan plafon, pemlesteran, maupun pengerjaan struktur dinding berpotensi melepaskan akumulasi debu lama di atas rongga plafon ke ruang di sekitarnya.'
-    : '';
+  const specificHazardPhrase =
+    hasFullMaintenanceScope || isMultiLocation
+      ? isPlumbingOrToilet
+        ? 'Pembongkaran material bangunan, pengerjaan struktur dinding maupun plafon berpotensi melepaskan akumulasi debu lama, sedangkan pekerjaan pada area sanitasi dan saluran air juga berisiko menimbulkan kelembaban berlebih serta percikan aerosol apabila tidak dikelola dengan baik.'
+        : 'Pembukaan plafon, pemlesteran, maupun pengerjaan struktur dinding berpotensi melepaskan akumulasi debu lama ke ruang di sekitarnya.'
+      : isPlumbingOrToilet
+      ? 'Selain debu dari pembongkaran material keramik maupun dinding, pekerjaan pada area sanitasi dan saluran air juga berpotensi menimbulkan kelembaban berlebih serta percikan aerosol yang dapat memicu pertumbuhan mikroorganisme apabila tidak dikelola dengan baik.'
+      : isCeilingOrWall
+      ? 'Pembukaan plafon, pemlesteran, maupun pengerjaan struktur dinding berpotensi melepaskan akumulasi debu lama di atas rongga plafon ke ruang di sekitarnya.'
+      : '';
+
+  const affectedLocationPhrase = isMultiLocation
+    ? 'di sekitar masing-masing titik pekerjaan'
+    : `di sekitar area ${lokasiProse}`;
 
   const affectedHumanTarget = isHighAcuityWard
-    ? `pasien berisiko sangat tinggi maupun pasien dengan penurunan sistem kekebalan tubuh (*immunocompromised*), tenaga kesehatan, pegawai, serta pengunjung di sekitar area ${lokasiProse}`
+    ? `pasien berisiko sangat tinggi maupun pasien dengan penurunan sistem kekebalan tubuh (*immunocompromised*), tenaga kesehatan, pegawai, serta pengunjung ${affectedLocationPhrase}`
     : isPatientCareArea
     ? `pasien yang sedang menjalani perawatan (terutama pasien dengan sistem kekebalan tubuh yang rendah), tenaga kesehatan, pegawai, maupun pengunjung yang berada di sekitar lokasi ${activityNoun}`
     : `pegawai maupun individu yang berada di sekitar lokasi ${activityNoun}`;
 
   const workPhraseP3 = isDemolition
     ? 'Kegiatan pembongkaran bangunan'
+    : hasFullMaintenanceScope || isMultiLocation
+    ? 'Kegiatan pemeliharaan, perbaikan, renovasi dan konstruksi sarana prasarana'
     : isPlumbingOrToilet
     ? 'Kegiatan renovasi dan perbaikan fasilitas sanitasi'
     : isNewBuild
@@ -540,14 +586,16 @@ export function buildIcraReportNarrative(
   // ==================== 3. TUJUAN & RUANG LINGKUP ====================
   const tujuanText = `Mengidentifikasi, menilai, dan mengendalikan risiko infeksi akibat kegiatan ${projectWithLocationProse} agar paparan debu, spora jamur, maupun kontaminasi lingkungan dapat diminimalkan serta kegiatan pelayanan rumah sakit tetap berlangsung secara aman. Secara khusus, ICRA ini bertujuan menetapkan klasifikasi tipe proyek (Tipe ${tipeCode}), kelompok pasien berisiko (Kelompok ${riskCode} — risiko ${riskLabelLower}), dan tingkat kewaspadaan Kelas ${kelasCode}, menentukan tanggung jawab lintas unit, serta memastikan terlaksananya pemantauan Pra, Intra, dan Post Konstruksi secara berkesinambungan.`;
 
-  const ruangLingkupText = `Mencakup tahap persiapan dan pengkajian prakonstruksi di ${lokasiProse}${
-    isMultiLocation ? ` meliputi ${locationPoints.length} titik lokasi pekerjaan sebagaimana dirinci pada bagian Perencanaan` : ''
+  const ruangLingkupText = `Mencakup tahap persiapan dan pengkajian prakonstruksi ${
+    isMultiLocation
+      ? `pada ${locationPoints.length} titik lokasi pekerjaan sebagaimana dirinci pada bagian Perencanaan`
+      : `di ${lokasiProse}`
   }, pelaksanaan ${activityNoun} sesuai ruang lingkup teknis yang disetujui (${formatIndonesianDate(
     project.tgl_mulai
   )} sampai dengan ${formatIndonesianDate(
     project.tgl_selesai_estimasi
   )}), pengamanan jalur pemindahan material dan puing dalam wadah tertutup, perlindungan area sekitar${
-    areaTerdampakProse ? ` (${naturalizeIndonesianList(areaTerdampakProse)})` : ''
+    !isMultiLocation && distinctAreaProse ? ` (${distinctAreaProse})` : ''
   }${isPatientCareArea ? ' termasuk keselamatan pasien dan petugas yang beraktivitas di sekitarnya' : ''}, pembersihan akhir menyeluruh (*terminal cleaning*), serta evaluasi kelayakan area pascapekerjaan.`;
 
   // ==================== 4. MATRIKS ICRA RESULT ====================
@@ -710,8 +758,12 @@ export function buildIcraReportNarrative(
 
   const kesimpulanParagraphs = [
     `Kegiatan ${projectWithLocationProse} merupakan langkah penting dan strategis dalam rangka meningkatkan kualitas fasilitas sarana prasarana serta menunjang kenyamanan dan keamanan pelayanan di lingkungan UOBK RSUD Al-Mulk Kota Sukabumi. Karena pelaksanaan kegiatan berlangsung di lingkungan rumah sakit aktif${
-      areaTerdampakProse ? ` yang berdekatan dengan ${naturalizeIndonesianList(areaTerdampakProse)}` : ''
-    }${isPatientCareArea ? ` dan berada pada area pelayanan ${lokasiProse}` : ''}, maka potensi risiko penyebaran debu, spora jamur *Aspergillus spp.*, maupun kontaminasi lingkungan harus diantisipasi secara cermat dan terstruktur.`,
+      isMultiLocation
+        ? ` pada ${locationPoints.length} titik lokasi pelayanan maupun area penunjang`
+        : `${distinctAreaProse ? ` yang berdekatan dengan ${distinctAreaProse}` : ''}${
+            isPatientCareArea ? ` serta berada pada area pelayanan ${lokasiProse}` : ''
+          }`
+    }, maka potensi risiko penyebaran debu, spora jamur *Aspergillus spp.*, maupun kontaminasi lingkungan harus diantisipasi secara cermat dan terstruktur.`,
     `Melalui proses *Infection Control Risk Assessment* (ICRA), proyek ini dikategorikan sebagai Tipe ${tipeCode} (${typeInfo.shortDesc.toLowerCase()}) dengan risiko pasien pada Kategori ${riskRoman} (risiko ${riskLabelLower}). Berdasarkan klasifikasi matriks ICRA, kombinasi tersebut menghasilkan tingkat kewaspadaan **Kelas ${kelasCode}**, yang mengharuskan penerapan tindakan pencegahan terstandar berupa ${classControl.summary.toLowerCase().replace(/\.$/, '')}.`.replace(/\*\*/g, ''),
     `Langkah-langkah pengendalian sebelum, selama, dan sesudah ${activityNoun} telah dirancang secara menyeluruh untuk meminimalkan paparan debu, menjaga higienitas sistem ventilasi maupun sanitasi, mencegah terjadinya infeksi terkait pelayanan kesehatan (*HAIs*), serta memastikan keberlangsungan layanan medis. ${monitoringSummaryProse}`,
     `Dengan dilaksanakannya pengkajian ICRA secara konsisten dan dipatuhinya seluruh protokol pengendalian infeksi oleh ${
@@ -752,8 +804,10 @@ export function buildIcraReportNarrative(
     {
       title: '3. Komunikasi dan Edukasi',
       items: [
-        `Melakukan koordinasi dan pemberitahuan resmi kepada staf unit, pasien, dan keluarga di sekitar ${lokasiProse}${
-          areaTerdampakProse ? ` serta area terdampak (${naturalizeIndonesianList(areaTerdampakProse)})` : ''
+        `Melakukan koordinasi dan pemberitahuan resmi kepada staf unit, pasien, dan keluarga di sekitar ${
+          isMultiLocation
+            ? 'masing-masing titik pekerjaan serta area pelayanan terdampak'
+            : `${lokasiProse}${distinctAreaProse ? ` serta area terdampak (${distinctAreaProse})` : ''}`
         } mengenai durasi pekerjaan dan pengaturan akses ruangan.`,
         'Memberikan pengarahan rutin kepada pekerja proyek serta petugas kebersihan mengenai penanganan debu, keset basah (*sticky mat*), pembersihan harian, dan pengelolaan limbah konstruksi.',
       ],
