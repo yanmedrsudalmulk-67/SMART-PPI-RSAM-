@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef, ReactElement } from "react";
+import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import "swiper/css";
 import "swiper/css/pagination";
@@ -280,6 +281,9 @@ const HeroSlider = ({
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" ? window.innerWidth < 768 : false);
   const [windowWidth, setWindowWidth] = useState(() => typeof window !== "undefined" ? window.innerWidth : 1200);
+  const [previewSlide, setPreviewSlide] = useState<{ src: string; alt: string } | null>(null);
+  const swiperRef = useRef<any>(null);
+  const pointerDownPosRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -290,6 +294,21 @@ const HeroSlider = ({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    if (!previewSlide) {
+      swiperRef.current?.autoplay?.start?.();
+      return;
+    }
+    swiperRef.current?.autoplay?.stop?.();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setPreviewSlide(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [previewSlide]);
 
   const visibleSlides = useMemo(() => {
     const normalized = normalizeSlidesList(slides);
@@ -323,91 +342,145 @@ const HeroSlider = ({
     return visibleSlides.map((s) => s.id).join("-");
   }, [visibleSlides]);
 
+  const openSlidePreview = (slide: Slide) => {
+    if (imageErrors[slide.id]) return;
+    setPreviewSlide({
+      src: normalizeSliderUrl(slide.image_url),
+      alt: slide.title || "Detail Gambar Slider",
+    });
+  };
+
   return (
-    <div
-      className="w-full md:max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto relative group overflow-hidden md:overflow-visible mb-6 mt-1 bg-transparent transform-gpu"
-      style={{ 
-        aspectRatio: currentRatio,
-        perspective: "1200px"
-      }}
-    >
-      <Swiper
-        key={swiperKey}
-        modules={[Autoplay, Pagination]}
-        centeredSlides={true}
-        spaceBetween={16}
-        slidesPerView={1}
-        loop={duplicatedSlides.length > 1}
-        autoplay={{ delay: 5000, disableOnInteraction: false }}
-        pagination={{
-          clickable: true,
-          dynamicBullets: true,
+    <>
+      <div
+        className="w-full md:max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto relative group overflow-hidden md:overflow-visible mb-6 mt-1 bg-transparent transform-gpu"
+        style={{ 
+          aspectRatio: currentRatio,
+          perspective: "1200px"
         }}
-        onSlideChange={(swiper) => {
-          if (visibleSlides.length > 0) {
-            setActiveIndex(swiper.realIndex % visibleSlides.length);
-          }
-        }}
-        breakpoints={{
-          0: {
-            slidesPerView: 1,
-            spaceBetween: 0,
-          },
-          768: {
-            slidesPerView: 1.35,
-            spaceBetween: 16,
-          },
-          1024: {
-            slidesPerView: 1.40,
-            spaceBetween: 20,
-          },
-          1280: {
-            slidesPerView: 1.45,
-            spaceBetween: 24,
-          }
-        }}
-        className="w-full h-full bg-transparent !overflow-visible transition-all duration-300 ease-in-out transform-gpu"
-        style={{ transformStyle: 'preserve-3d', perspective: '1200px' }}
       >
-        {duplicatedSlides.map((slide, i) => (
-          <SwiperSlide 
-            key={`${slide.id}-dup-${i}`} 
-            className="overflow-visible flex items-center justify-center p-2 md:p-6"
-            style={{ transformStyle: 'preserve-3d', perspective: '1200px' }}
-          >
-            {({ isActive, isPrev, isNext }) => {
-              const slideStyle = getSlideStyles(isActive, isPrev, isNext, windowWidth);
-              return (
-                <div
-                  style={slideStyle}
-                  className={`relative w-full h-full rounded-[16px] md:rounded-[20px] overflow-hidden transition-all duration-700 ease-out transform-gpu flex items-center justify-center border border-indigo-300/30 ${
-                    isActive
-                      ? "shadow-[0_20px_50px_rgba(15,10,45,0.45)]"
-                      : "shadow-[0_10px_25px_rgba(15,10,45,0.25)]"
-                  }`}
-                >
-                  {slide.image_url && !imageErrors[slide.id] ? (
-                    <SliderImage slide={slide} setImageErrors={setImageErrors} />
-                  ) : (
-                    <div className="absolute inset-0 bg-slate-100 dark:bg-slate-800/80 flex flex-col items-center justify-center gap-3">
-                      <ImageOff className="w-12 h-12 text-slate-400 dark:text-slate-600 mb-2" />
-                      <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-                        Image not available
-                      </span>
-                    </div>
-                  )}
+        <Swiper
+          key={swiperKey}
+          modules={[Autoplay, Pagination]}
+          onSwiper={(swiper) => {
+            swiperRef.current = swiper;
+          }}
+          centeredSlides={true}
+          spaceBetween={16}
+          slidesPerView={1}
+          loop={duplicatedSlides.length > 1}
+          autoplay={{ delay: 5000, disableOnInteraction: false }}
+          pagination={{
+            clickable: true,
+            dynamicBullets: true,
+          }}
+          onSlideChange={(swiper) => {
+            if (visibleSlides.length > 0) {
+              setActiveIndex(swiper.realIndex % visibleSlides.length);
+            }
+          }}
+          breakpoints={{
+            0: {
+              slidesPerView: 1,
+              spaceBetween: 0,
+            },
+            768: {
+              slidesPerView: 1.35,
+              spaceBetween: 16,
+            },
+            1024: {
+              slidesPerView: 1.40,
+              spaceBetween: 20,
+            },
+            1280: {
+              slidesPerView: 1.45,
+              spaceBetween: 24,
+            }
+          }}
+          className="w-full h-full bg-transparent !overflow-visible transition-all duration-300 ease-in-out transform-gpu"
+          style={{ transformStyle: 'preserve-3d', perspective: '1200px' }}
+        >
+          {duplicatedSlides.map((slide, i) => (
+            <SwiperSlide 
+              key={`${slide.id}-dup-${i}`} 
+              className="overflow-visible flex items-center justify-center p-2 md:p-6"
+              style={{ transformStyle: 'preserve-3d', perspective: '1200px' }}
+            >
+              {({ isActive, isPrev, isNext }) => {
+                const slideStyle = getSlideStyles(isActive, isPrev, isNext, windowWidth);
+                return (
                   <div
-                    className={`absolute inset-0 bg-slate-950 transition-opacity duration-700 ease-out pointer-events-none ${
-                      isActive ? "opacity-0" : "opacity-55"
+                    style={slideStyle}
+                    onPointerDown={(e) => {
+                      pointerDownPosRef.current = { x: e.clientX, y: e.clientY };
+                    }}
+                    onClick={(e) => {
+                      const down = pointerDownPosRef.current;
+                      pointerDownPosRef.current = null;
+                      if (down) {
+                        const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
+                        if (moved > 8) return;
+                      }
+                      openSlidePreview(slide);
+                    }}
+                    className={`relative w-full h-full rounded-[16px] md:rounded-[20px] overflow-hidden transition-all duration-700 ease-out transform-gpu flex items-center justify-center border border-indigo-300/30 cursor-pointer ${
+                      isActive
+                        ? "shadow-[0_20px_50px_rgba(15,10,45,0.45)]"
+                        : "shadow-[0_10px_25px_rgba(15,10,45,0.25)]"
                     }`}
-                  />
-                </div>
-              );
-            }}
-          </SwiperSlide>
-        ))}
-      </Swiper>
-    </div>
+                  >
+                    {slide.image_url && !imageErrors[slide.id] ? (
+                      <SliderImage slide={slide} setImageErrors={setImageErrors} />
+                    ) : (
+                      <div className="absolute inset-0 bg-slate-100 dark:bg-slate-800/80 flex flex-col items-center justify-center gap-3">
+                        <ImageOff className="w-12 h-12 text-slate-400 dark:text-slate-600 mb-2" />
+                        <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                          Image not available
+                        </span>
+                      </div>
+                    )}
+                    <div
+                      className={`absolute inset-0 bg-slate-950 transition-opacity duration-700 ease-out pointer-events-none ${
+                        isActive ? "opacity-0" : "opacity-55"
+                      }`}
+                    />
+                  </div>
+                );
+              }}
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      </div>
+
+      {typeof document !== "undefined" &&
+        createPortal(
+          <AnimatePresence>
+            {previewSlide && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18 }}
+                onClick={() => setPreviewSlide(null)}
+                className="fixed inset-0 z-[9999] bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 cursor-pointer"
+              >
+                <motion.img
+                  src={previewSlide.src}
+                  alt={previewSlide.alt}
+                  initial={{ opacity: 0, scale: 0.94 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="max-w-[95vw] max-h-[92vh] w-auto h-auto object-contain rounded-2xl shadow-[0_25px_70px_rgba(0,0,0,0.85)] select-none cursor-default"
+                  referrerPolicy="no-referrer"
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
+    </>
   );
 };
 
