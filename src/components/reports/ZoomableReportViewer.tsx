@@ -1,16 +1,17 @@
 import React, { useState, useRef, useEffect, useCallback, ReactNode } from 'react';
-import { 
-  ZoomIn, 
-  ZoomOut, 
-  RotateCcw, 
-  Smartphone, 
-  Monitor, 
-  Minus, 
-  Plus, 
-  Columns3, 
-  FileText, 
-  Maximize2 
+import {
+  ZoomIn,
+  ZoomOut,
+  Smartphone,
+  Monitor,
+  Minus,
+  Plus,
+  LayoutGrid,
+  FileText,
+  Maximize2,
 } from 'lucide-react';
+
+type ReportViewMode = 'two-page' | 'single' | 'fit';
 
 interface ZoomableReportViewerProps {
   children: ReactNode;
@@ -19,9 +20,16 @@ interface ZoomableReportViewerProps {
   className?: string;
   /** Whether to show the top zoom toolbar (Default: false) */
   showToolbar?: boolean;
-  /** Whether to show the bottom-right Word-style floating zoom slider bar (Default: true) */
+  /** Whether to show the right-edge vertical zoom & view-mode control bar (Default: true) */
   showBottomZoomBar?: boolean;
+  /** Preferred initial view mode on wide screens with >= 2 pages (Default: 'two-page') */
+  defaultViewMode?: ReportViewMode;
 }
+
+const MIN_ZOOM = 0.20;
+const MAX_ZOOM = 1.50;
+const TWO_PAGE_STAGE_WIDTH = 1656; // 813 * 2 + 28px gap + 2px safety
+const SINGLE_PAGE_WIDTH = 813;
 
 export default function ZoomableReportViewer({
   children,
@@ -29,44 +37,56 @@ export default function ZoomableReportViewer({
   className = '',
   showToolbar = false,
   showBottomZoomBar = true,
+  defaultViewMode = 'two-page',
 }: ZoomableReportViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const sliderTrackRef = useRef<HTMLDivElement>(null);
 
-  // Content dimensions (defaults to standard F4 portrait 813x1150)
-  const [contentDimensions, setContentDimensions] = useState<{ width: number; height: number }>({ width: 813, height: 1150 });
-  const [containerWidth, setContainerWidth] = useState<number>(813);
+  // Content dimensions (defaults to standard F4 portrait)
+  const [contentDimensions, setContentDimensions] = useState<{ width: number; height: number }>({
+    width: SINGLE_PAGE_WIDTH,
+    height: 1247,
+  });
   const [isPinching, setIsPinching] = useState(false);
   const [isSliding, setIsSliding] = useState(false);
   const [pageCount, setPageCount] = useState<number>(0);
+  const [isWideViewport, setIsWideViewport] = useState<boolean>(() =>
+    typeof window !== 'undefined' ? window.innerWidth >= 900 : true
+  );
+  const [viewMode, setViewMode] = useState<ReportViewMode>(() =>
+    typeof window !== 'undefined' && window.innerWidth >= 900 ? defaultViewMode : 'fit'
+  );
   const hasUserInteractedRef = useRef(false);
 
-  // Compute fit zoom on mobile/narrow viewports
-  const calculateFitZoom = useCallback((cWidth: number, pWidth: number = 813) => {
-    if (cWidth < pWidth) {
-      const horizontalPadding = cWidth <= 480 ? 12 : 16;
-      const availableWidth = Math.max(cWidth - horizontalPadding, 240);
-      const fitZoom = Number((availableWidth / pWidth).toFixed(2));
-      return Math.min(Math.max(fitZoom, 0.20), 1.0);
+  // Compute fit zoom for any target stage width cleanly leaving room for right-edge floating control bar
+  const calculateFitZoom = useCallback((cWidth: number, stageWidth: number = SINGLE_PAGE_WIDTH) => {
+    if (cWidth <= 0) return 1.0;
+    const isDesktop = cWidth >= 760;
+    const horizontalAllowance = isDesktop ? 88 : 20;
+    const availableWidth = Math.max(cWidth - horizontalAllowance, 240);
+    if (availableWidth < stageWidth || stageWidth > SINGLE_PAGE_WIDTH) {
+      const fitZoom = Number((availableWidth / stageWidth).toFixed(2));
+      return Math.min(Math.max(fitZoom, MIN_ZOOM), 1.0);
     }
     return 1.0;
   }, []);
 
-  // Initialize zoom so first render on mobile is fitted, desktop is 100%
+  // Initialize zoom so first render fits smoothly
   const [zoom, setZoom] = useState<number>(() => {
     if (typeof window !== 'undefined') {
       const winWidth = window.innerWidth;
-      if (winWidth < 850) {
-        const horizontalPadding = winWidth <= 480 ? 12 : 16;
-        const fit = (winWidth - horizontalPadding) / 813;
-        return Math.min(Math.max(Number(fit.toFixed(2)), 0.20), 1.0);
+      if (winWidth < 900) {
+        const fit = (winWidth - 24) / SINGLE_PAGE_WIDTH;
+        return Math.min(Math.max(Number(fit.toFixed(2)), MIN_ZOOM), 1.0);
       }
+      const approxStage = defaultViewMode === 'two-page' ? TWO_PAGE_STAGE_WIDTH : SINGLE_PAGE_WIDTH;
+      const avail = Math.max(winWidth - 360, 400);
+      const fit = avail / approxStage;
+      return Math.min(Math.max(Number(fit.toFixed(2)), MIN_ZOOM), 1.0);
     }
-    return 1.0;
+    return 0.56;
   });
-
-  // Multi-page mode (explicit state, only supported on wide desktop screens)
-  const [isMultiPage, setIsMultiPage] = useState(false);
 
   // Touch tracking for pinch-to-zoom
   const touchStateRef = useRef<{
@@ -79,54 +99,93 @@ export default function ZoomableReportViewer({
 
   // Measure content & container dimensions
   const updateDimensions = useCallback(() => {
-    if (containerRef.current) {
-      const cWidth = containerRef.current.clientWidth;
-      setContainerWidth(cWidth);
+    if (!containerRef.current) return;
+    const cWidth = containerRef.current.clientWidth;
+    const wide = typeof window !== 'undefined' ? window.innerWidth >= 900 : cWidth >= 820;
+    setIsWideViewport(wide);
 
-      // Multi-page (3-column side-by-side) is strictly for large desktop screens (>= 1024px) when explicitly turned on
-      const isMulti = isMultiPage && typeof window !== 'undefined' && window.innerWidth >= 1024;
-      const hasLandscape = Boolean(
-        contentRef.current?.querySelector('.f4-page-landscape, [data-orientation="landscape"]')
-      );
-      // 3 pages side-by-side with 28px gaps: 813 * 3 + 28 * 2 = 2495px ~ 2520px
-      const pWidth = isMulti ? 2520 : hasLandscape ? 1248 : 813;
+    const pages = contentRef.current ? contentRef.current.querySelectorAll('.f4-page') : null;
+    const count = pages ? pages.length : 0;
+    if (count !== pageCount) {
+      setPageCount(count);
+    }
 
-      let pHeight = 1247;
-      if (contentRef.current) {
-        const pages = contentRef.current.querySelectorAll('.f4-page');
-        const count = pages.length;
-        if (count > 0) {
-          setPageCount(count);
-          if (isMulti) {
-            const numRows = Math.ceil(count / 3);
-            const rowHeight = 1247 + 28;
-            pHeight = Math.max(contentRef.current.scrollHeight || 0, numRows * rowHeight + 50);
-          } else {
-            let totalH = 0;
-            pages.forEach((p) => {
-              const el = p as HTMLElement;
-              totalH += (el.offsetHeight || 1247) + 36;
-            });
-            pHeight = totalH + 20;
+    // Active multi-page (2 pages side-by-side) when enabled, screen is wide enough, and there are >= 2 pages
+    const activeTwoPage =
+      viewMode === 'two-page' && wide && count >= 2;
+
+    const hasLandscape = Boolean(
+      contentRef.current?.querySelector('.f4-page-landscape, [data-orientation="landscape"]')
+    );
+
+    const pWidth = activeTwoPage
+      ? TWO_PAGE_STAGE_WIDTH
+      : hasLandscape
+      ? 1248
+      : SINGLE_PAGE_WIDTH;
+
+    let pHeight = 1247;
+    if (contentRef.current) {
+      if (pages && count > 0) {
+        if (activeTwoPage) {
+          let rowSum = 0;
+          const pageArr = Array.from(pages) as HTMLElement[];
+          for (let idx = 0; idx < pageArr.length; ) {
+            const cur = pageArr[idx];
+            const curLandscape =
+              cur.classList.contains('f4-page-landscape') ||
+              cur.getAttribute('data-orientation') === 'landscape';
+            const curH = cur.offsetHeight || 1247;
+            if (curLandscape || idx + 1 >= pageArr.length) {
+              rowSum += curH + 28;
+              idx += 1;
+            } else {
+              const nxt = pageArr[idx + 1];
+              const nxtLandscape =
+                nxt.classList.contains('f4-page-landscape') ||
+                nxt.getAttribute('data-orientation') === 'landscape';
+              if (nxtLandscape) {
+                rowSum += curH + 28;
+                idx += 1;
+              } else {
+                const nxtH = nxt.offsetHeight || 1247;
+                rowSum += Math.max(curH, nxtH) + 28;
+                idx += 2;
+              }
+            }
           }
+          pHeight = Math.max(contentRef.current.scrollHeight || 0, rowSum + 24);
         } else {
-          pHeight = contentRef.current.scrollHeight || 1247;
+          let totalH = 0;
+          pages.forEach((p) => {
+            const el = p as HTMLElement;
+            totalH += (el.offsetHeight || 1247) + 36;
+          });
+          pHeight = totalH + 20;
         }
-      }
-
-      setContentDimensions({ width: pWidth, height: pHeight });
-
-      // Auto-fit on initial render or resize if user hasn't touched controls
-      if (!hasUserInteractedRef.current && cWidth > 0 && !isMulti) {
-        const optimal = calculateFitZoom(cWidth, 813);
-        setZoom(optimal);
+      } else {
+        pHeight = contentRef.current.scrollHeight || 1247;
       }
     }
-  }, [isMultiPage, calculateFitZoom]);
+
+    setContentDimensions({ width: pWidth, height: pHeight });
+
+    // Auto-fit cleanly on load/resize before user overrides zoom manually
+    if (!hasUserInteractedRef.current && cWidth > 0) {
+      if (wide && count >= 2 && defaultViewMode === 'two-page') {
+        if (viewMode !== 'two-page') setViewMode('two-page');
+        setZoom(calculateFitZoom(cWidth, TWO_PAGE_STAGE_WIDTH));
+      } else {
+        if (!wide && viewMode === 'two-page') setViewMode('fit');
+        setZoom(calculateFitZoom(cWidth, hasLandscape ? 1248 : SINGLE_PAGE_WIDTH));
+      }
+    }
+  }, [viewMode, pageCount, defaultViewMode, calculateFitZoom]);
 
   useEffect(() => {
     updateDimensions();
     const timer = setTimeout(updateDimensions, 80);
+    const timer2 = setTimeout(updateDimensions, 260);
 
     window.addEventListener('resize', updateDimensions);
     const ro = new ResizeObserver(() => updateDimensions());
@@ -135,6 +194,7 @@ export default function ZoomableReportViewer({
 
     return () => {
       clearTimeout(timer);
+      clearTimeout(timer2);
       window.removeEventListener('resize', updateDimensions);
       ro.disconnect();
     };
@@ -143,11 +203,7 @@ export default function ZoomableReportViewer({
   // Update page count when children change
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (contentRef.current) {
-        const pages = contentRef.current.querySelectorAll('.f4-page');
-        setPageCount(pages.length);
-        updateDimensions();
-      }
+      updateDimensions();
     }, 100);
     return () => clearTimeout(timer);
   }, [children, updateDimensions]);
@@ -155,43 +211,96 @@ export default function ZoomableReportViewer({
   // Handle Zoom In (+)
   const handleZoomIn = () => {
     hasUserInteractedRef.current = true;
-    setZoom((prev) => Math.min(Number((prev + 0.05).toFixed(2)), 1.50));
+    setZoom((prev) => Math.min(Number((prev + 0.05).toFixed(2)), MAX_ZOOM));
   };
 
   // Handle Zoom Out (-)
   const handleZoomOut = () => {
     hasUserInteractedRef.current = true;
-    setZoom((prev) => Math.max(Number((prev - 0.05).toFixed(2)), 0.20));
+    setZoom((prev) => Math.max(Number((prev - 0.05).toFixed(2)), MIN_ZOOM));
   };
 
-  // Handle Reset to 100%
+  // Mode 1: Two-page Side-by-Side (2 Halaman Berdampingan)
+  const handleSetTwoPage = () => {
+    hasUserInteractedRef.current = true;
+    setViewMode('two-page');
+    if (containerRef.current) {
+      setZoom(calculateFitZoom(containerRef.current.clientWidth, TWO_PAGE_STAGE_WIDTH));
+    } else {
+      setZoom(0.56);
+    }
+  };
+
+  // Mode 2: 100% Original Print Layout (1 Halaman Asli)
   const handleResetZoom = () => {
     hasUserInteractedRef.current = true;
-    setIsMultiPage(false);
+    setViewMode('single');
     setZoom(1.0);
   };
 
-  // Handle Fit to Screen Width (Pas Layar)
+  // Mode 3: Fit Single Page Width (1 Halaman Pas Layar)
   const handleFitWidth = () => {
     hasUserInteractedRef.current = true;
-    setIsMultiPage(false);
+    setViewMode('fit');
     if (containerRef.current) {
-      const cWidth = containerRef.current.clientWidth;
-      const optimal = calculateFitZoom(cWidth, 813);
-      setZoom(optimal);
+      const hasLandscape = Boolean(
+        contentRef.current?.querySelector('.f4-page-landscape, [data-orientation="landscape"]')
+      );
+      setZoom(
+        calculateFitZoom(
+          containerRef.current.clientWidth,
+          hasLandscape ? 1248 : SINGLE_PAGE_WIDTH
+        )
+      );
     }
   };
 
-  // Toggle between 100% and 45% (Multi-page view - desktop only)
-  const handleToggleMultiPage = () => {
+  // Toggle between 2-Page Spread and 100% Single Page when clicking percentage readout
+  const handleToggleTwoPageOrSingle = () => {
     hasUserInteractedRef.current = true;
-    if (isMultiPage) {
-      setIsMultiPage(false);
-      setZoom(1.0);
+    if (isWideViewport && pageCount >= 2) {
+      if (viewMode === 'two-page') {
+        handleResetZoom();
+      } else {
+        handleSetTwoPage();
+      }
+    } else if (zoom >= 0.95) {
+      handleFitWidth();
     } else {
-      setIsMultiPage(true);
-      setZoom(0.45);
+      handleResetZoom();
     }
+  };
+
+  // Vertical Slider Pointer Logic (Bottom = MIN_ZOOM 20%, Top = MAX_ZOOM 150%)
+  const updateZoomFromPointerY = useCallback((clientY: number) => {
+    const track = sliderTrackRef.current;
+    if (!track) return;
+    const rect = track.getBoundingClientRect();
+    if (rect.height <= 0) return;
+    const ratioFromBottom = 1 - Math.max(0, Math.min(clientY - rect.top, rect.height)) / rect.height;
+    const nextZoom = Number((MIN_ZOOM + ratioFromBottom * (MAX_ZOOM - MIN_ZOOM)).toFixed(2));
+    hasUserInteractedRef.current = true;
+    setZoom(Math.min(Math.max(nextZoom, MIN_ZOOM), MAX_ZOOM));
+  }, []);
+
+  const handleSliderPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setIsSliding(true);
+    updateZoomFromPointerY(e.clientY);
+  };
+
+  const handleSliderPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isSliding) return;
+    updateZoomFromPointerY(e.clientY);
+  };
+
+  const handleSliderPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isSliding) return;
+    setIsSliding(false);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {}
   };
 
   // Touch Event Handlers for Pinch to Zoom on Touchscreens
@@ -205,7 +314,6 @@ export default function ZoomableReportViewer({
       touchStateRef.current.initialDist = dist;
       touchStateRef.current.initialZoom = zoom;
     }
-    // Single touch is strictly for scrolling - never trigger mode switches on tap or scroll
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -218,7 +326,7 @@ export default function ZoomableReportViewer({
         hasUserInteractedRef.current = true;
         const factor = dist / touchStateRef.current.initialDist;
         const newZoom = Number((touchStateRef.current.initialZoom * factor).toFixed(2));
-        setZoom(Math.min(Math.max(newZoom, 0.20), 1.50));
+        setZoom(Math.min(Math.max(newZoom, MIN_ZOOM), MAX_ZOOM));
       }
     }
   };
@@ -229,30 +337,34 @@ export default function ZoomableReportViewer({
     }
   };
 
-  const isMulti = isMultiPage && typeof window !== 'undefined' && window.innerWidth >= 1024;
-  const paperWidth = isMulti ? 2520 : (contentDimensions.width || 813);
+  const isTwoPage = viewMode === 'two-page' && isWideViewport && pageCount >= 2;
+  const paperWidth = isTwoPage ? TWO_PAGE_STAGE_WIDTH : contentDimensions.width || SINGLE_PAGE_WIDTH;
   const paperHeight = contentDimensions.height || 1247;
   const scaledWidth = Math.round(paperWidth * zoom);
   const scaledHeight = Math.round(paperHeight * zoom);
+  const sliderPercent = Math.round(((zoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM)) * 100);
 
   return (
     <div className={`w-full flex flex-col items-center relative ${className}`}>
-      {/* Global CSS for switching between Single-Column & Multi-Page (Side-by-Side) */}
+      {/* Global CSS for switching between 1-Page Vertical & 2-Page Book Spread Side-by-Side */}
       <style jsx global>{`
-        .report-multipage-view .official-pages-container {
+        .report-twopage-view .official-pages-container,
+        .report-twopage-view [data-orientation='portrait'].flex-col {
           display: flex !important;
           flex-direction: row !important;
           flex-wrap: wrap !important;
           justify-content: center !important;
           align-items: flex-start !important;
           gap: 28px !important;
-          width: 2520px !important;
-          max-width: 2520px !important;
+          width: 1656px !important;
+          max-width: 1656px !important;
+          margin-left: auto !important;
+          margin-right: auto !important;
         }
-        .report-multipage-view .f4-page {
+        .report-twopage-view .f4-page {
           margin-left: 0 !important;
           margin-right: 0 !important;
-          margin-bottom: 28px !important;
+          margin-bottom: 0 !important;
           flex-shrink: 0 !important;
           box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3) !important;
         }
@@ -263,33 +375,11 @@ export default function ZoomableReportViewer({
           width: 100% !important;
           max-width: 100% !important;
         }
-        /* Range slider glowing styling */
-        .report-zoom-slider::-webkit-slider-thumb {
-          appearance: none;
-          width: 10px;
-          height: 10px;
-          border-radius: 50%;
-          background: #ffffff;
-          box-shadow: 0 0 4px rgba(255, 255, 255, 0.9);
-          cursor: pointer;
-        }
-        .report-zoom-slider::-webkit-slider-thumb:hover {
-          transform: scale(1.15);
-        }
-        .report-zoom-slider::-moz-range-thumb {
-          width: 10px;
-          height: 10px;
-          border-radius: 50%;
-          background: #ffffff;
-          box-shadow: 0 0 4px rgba(255, 255, 255, 0.9);
-          cursor: pointer;
-          border: none;
-        }
       `}</style>
 
       {/* Top Toolbar (Legacy Optional) */}
       {showToolbar && (
-        <div 
+        <div
           className="w-full flex flex-wrap items-center justify-between gap-2 mb-4 px-3 py-2 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-300 shadow-md no-print select-none text-slate-800"
           data-html2canvas-ignore="true"
         >
@@ -298,7 +388,7 @@ export default function ZoomableReportViewer({
               type="button"
               onClick={handleFitWidth}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all ${
-                zoom < 0.95
+                viewMode === 'fit'
                   ? 'bg-emerald-600 text-white shadow-sm font-black'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-white'
               }`}
@@ -311,7 +401,7 @@ export default function ZoomableReportViewer({
               type="button"
               onClick={handleResetZoom}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all ${
-                zoom >= 0.95 && zoom <= 1.05
+                viewMode === 'single'
                   ? 'bg-indigo-600 text-white shadow-sm font-black'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-white'
               }`}
@@ -330,7 +420,7 @@ export default function ZoomableReportViewer({
             <button
               type="button"
               onClick={handleZoomOut}
-              disabled={zoom <= 0.20}
+              disabled={zoom <= MIN_ZOOM}
               className="p-1.5 text-slate-700 hover:text-slate-950 hover:bg-white rounded-lg transition-all disabled:opacity-30 disabled:pointer-events-none active:scale-95"
             >
               <ZoomOut className="w-4 h-4" />
@@ -347,7 +437,7 @@ export default function ZoomableReportViewer({
             <button
               type="button"
               onClick={handleZoomIn}
-              disabled={zoom >= 1.50}
+              disabled={zoom >= MAX_ZOOM}
               className="p-1.5 text-slate-700 hover:text-slate-950 hover:bg-white rounded-lg transition-all disabled:opacity-30 disabled:pointer-events-none active:scale-95"
             >
               <ZoomIn className="w-4 h-4" />
@@ -362,7 +452,7 @@ export default function ZoomableReportViewer({
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="w-full flex justify-center items-start overflow-x-auto overflow-y-visible py-8 px-1 sm:px-4 rounded-2xl bg-[#0f1228] border border-indigo-950/40 custom-scrollbar transition-all min-h-[85vh]"
+        className="w-full flex justify-center items-start overflow-x-auto overflow-y-visible py-7 px-2 sm:pl-4 sm:pr-14 rounded-2xl bg-[#0f1228] border border-indigo-950/40 custom-scrollbar transition-all min-h-[85vh]"
         style={{
           touchAction: 'pan-x pan-y pinch-zoom',
           backgroundColor: '#0f1228',
@@ -382,7 +472,9 @@ export default function ZoomableReportViewer({
           <div
             ref={contentRef}
             id={reportId}
-            className={`report-zoom-stage origin-top-left ${isMulti ? 'report-multipage-view' : 'report-singlepage-view'}`}
+            className={`report-zoom-stage origin-top-left ${
+              isTwoPage ? 'report-twopage-view' : 'report-singlepage-view'
+            }`}
             style={{
               width: `${paperWidth}px`,
               minWidth: `${paperWidth}px`,
@@ -401,131 +493,141 @@ export default function ZoomableReportViewer({
       </div>
 
       {/* ========================================================================= */}
-      {/* ULTRA-COMPACT WORD/OFFICE ZOOM STATUS BAR DI POJOK KANAN BAWAH           */}
+      {/* FLOATING VERTICAL ZOOM & VIEW-MODE CONTROL BAR AT MIDDLE-RIGHT EDGE       */}
       {/* ========================================================================= */}
       {showBottomZoomBar && (
-        <aside 
-          className="fixed bottom-2 right-2 sm:bottom-3 sm:right-4 z-40 select-none no-print shadow-lg"
+        <aside
+          className="fixed right-2.5 sm:right-4 bottom-24 md:bottom-auto md:top-1/2 md:-translate-y-1/2 z-40 select-none no-print"
           data-html2canvas-ignore="true"
-          aria-label="Kontrol Zoom Laporan Resmi"
+          aria-label="Kontrol Tampilan dan Zoom Laporan"
         >
-          <div className="flex items-center gap-1.5 sm:gap-2 bg-[#121429]/95 backdrop-blur-md border border-slate-700/60 rounded-lg px-2 py-0.5 sm:py-1 shadow-md text-white text-xs">
-            
-            {/* 3 View Mode Icons (Ultra compact 14px) */}
-            <div className="flex items-center gap-0.5">
-              {/* Multi-Page Mode (Desktop only, hidden on mobile/tablet) */}
+          <div className="flex flex-col items-center gap-1.5 bg-white/95 border border-slate-200/90 rounded-full px-1.5 py-2.5 shadow-[0_8px_28px_rgba(0,0,0,0.45)] text-slate-600 w-[42px] sm:w-[44px]">
+            {/* View Mode Icons */}
+            {pageCount >= 2 && (
               <button
                 type="button"
-                onClick={() => {
-                  hasUserInteractedRef.current = true;
-                  setIsMultiPage(true);
-                  setZoom(0.45);
-                }}
-                className={`p-1 rounded transition-colors hidden md:block ${
-                  isMultiPage
-                    ? 'text-cyan-300 bg-white/10'
-                    : 'text-slate-400 hover:text-white'
+                onClick={handleSetTwoPage}
+                className={`hidden md:flex items-center justify-center w-7 h-7 rounded-full transition-all cursor-pointer ${
+                  isTwoPage
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
                 }`}
-                title="Mode Multi-Halaman Samping (Desktop)"
-                aria-label="Mode Multi-Halaman"
+                title="Tampilan 2 Halaman Berdampingan"
+                aria-label="Tampilan 2 Halaman Berdampingan"
               >
-                <Columns3 className="w-3.5 h-3.5" />
+                <LayoutGrid className="w-3.5 h-3.5" />
               </button>
+            )}
 
-              {/* 100% Print Layout */}
-              <button
-                type="button"
-                onClick={handleResetZoom}
-                className={`p-1 rounded transition-colors ${
-                  !isMultiPage && zoom >= 0.95 && zoom <= 1.05
-                    ? 'text-cyan-300 bg-white/10'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-                title="Tata Letak Cetak Asli (100%)"
-                aria-label="Ukuran Asli 100%"
-              >
-                <FileText className="w-3.5 h-3.5" />
-              </button>
+            <button
+              type="button"
+              onClick={handleResetZoom}
+              className={`flex items-center justify-center w-7 h-7 rounded-full transition-all cursor-pointer ${
+                !isTwoPage && viewMode === 'single'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+              title="1 Halaman Ukuran Asli (100%)"
+              aria-label="1 Halaman Ukuran Asli 100%"
+            >
+              <FileText className="w-3.5 h-3.5" />
+            </button>
 
-              {/* Fit Width */}
-              <button
-                type="button"
-                onClick={handleFitWidth}
-                className={`p-1 rounded transition-colors ${
-                  !isMultiPage && (zoom < 0.95 || zoom > 1.05)
-                    ? 'text-cyan-300 bg-white/10'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-                title="Pas Lebar Layar"
-                aria-label="Pas Layar"
-              >
-                <Maximize2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleFitWidth}
+              className={`flex items-center justify-center w-7 h-7 rounded-full transition-all cursor-pointer ${
+                !isTwoPage && viewMode === 'fit'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+              title="Pas Lebar Layar"
+              aria-label="Pas Lebar Layar"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+            </button>
 
-            {/* Subtle Divider */}
-            <div className="h-3 w-px bg-slate-700 mx-0.5" />
+            <div className="w-5 h-px bg-slate-200 my-0.5" />
 
-            {/* Zoom Steppers & Ultra-Thin Slider */}
-            <div className="flex items-center gap-1 sm:gap-1.5">
-              {/* Zoom Out Button (–) */}
-              <button
-                type="button"
-                onClick={handleZoomOut}
-                disabled={zoom <= 0.20}
-                className="p-0.5 text-slate-400 hover:text-white transition-colors disabled:opacity-30 disabled:pointer-events-none"
-                title="Perkecil Zoom (Zoom Out)"
-                aria-label="Zoom Out"
-              >
-                <Minus className="w-3 h-3" />
-              </button>
+            {/* Zoom In (+) */}
+            <button
+              type="button"
+              onClick={handleZoomIn}
+              disabled={zoom >= MAX_ZOOM}
+              className="flex items-center justify-center w-7 h-7 rounded-full text-slate-600 hover:text-slate-950 hover:bg-slate-100 transition-colors disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+              title="Perbesar Tampilan"
+              aria-label="Perbesar Zoom"
+            >
+              <Plus className="w-3.5 h-3.5" strokeWidth={2.4} />
+            </button>
 
-              {/* Thin Minimal Slider */}
-              <div className="relative flex items-center">
-                <input
-                  type="range"
-                  min={20}
-                  max={150}
-                  step={1}
-                  value={Math.round(zoom * 100)}
-                  onMouseDown={() => setIsSliding(true)}
-                  onMouseUp={() => setIsSliding(false)}
-                  onTouchStart={() => setIsSliding(true)}
-                  onTouchEnd={() => setIsSliding(false)}
-                  onChange={(e) => {
-                    hasUserInteractedRef.current = true;
-                    setZoom(Number((Number(e.target.value) / 100).toFixed(2)));
-                  }}
-                  className="report-zoom-slider w-16 sm:w-20 md:w-24 h-1 bg-slate-700/80 rounded-full appearance-none cursor-pointer accent-cyan-400 focus:outline-none"
-                  title="Geser untuk mengatur ukuran zoom"
-                  aria-label="Slider Ukuran Zoom"
+            {/* Cross-Browser Vertical Slider Track */}
+            <div
+              ref={sliderTrackRef}
+              role="slider"
+              tabIndex={0}
+              aria-label="Slider Pengatur Ukuran Zoom Laporan"
+              aria-valuemin={20}
+              aria-valuemax={150}
+              aria-valuenow={Math.round(zoom * 100)}
+              onPointerDown={handleSliderPointerDown}
+              onPointerMove={handleSliderPointerMove}
+              onPointerUp={handleSliderPointerUp}
+              onPointerCancel={handleSliderPointerUp}
+              onKeyDown={(e) => {
+                if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
+                  e.preventDefault();
+                  handleZoomIn();
+                } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
+                  e.preventDefault();
+                  handleZoomOut();
+                }
+              }}
+              className="relative w-7 h-24 sm:h-28 flex items-center justify-center cursor-pointer touch-none focus:outline-none"
+              title="Geser ke atas/bawah untuk memperbesar atau memperkecil laporan"
+            >
+              <div className="relative w-[3px] h-full rounded-full bg-slate-200 overflow-visible">
+                <div
+                  className="absolute bottom-0 inset-x-0 rounded-full bg-emerald-600"
+                  style={{ height: `${Math.max(0, Math.min(sliderPercent, 100))}%` }}
+                />
+                <div
+                  className={`absolute left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-emerald-600 border-2 border-white shadow-[0_1px_5px_rgba(5,150,105,0.65)] transition-transform ${
+                    isSliding ? 'scale-125' : 'hover:scale-110'
+                  }`}
+                  style={{ bottom: `calc(${Math.max(0, Math.min(sliderPercent, 100))}% - 7px)` }}
                 />
               </div>
-
-              {/* Zoom In Button (+) */}
-              <button
-                type="button"
-                onClick={handleZoomIn}
-                disabled={zoom >= 1.50}
-                className="p-0.5 text-slate-400 hover:text-white transition-colors disabled:opacity-30 disabled:pointer-events-none"
-                title="Perbesar Zoom (Zoom In)"
-                aria-label="Zoom In"
-              >
-                <Plus className="w-3 h-3" />
-              </button>
-
-              {/* Minimal Percentage Text */}
-              <button
-                type="button"
-                onClick={handleToggleMultiPage}
-                className="min-w-[32px] text-right text-[11px] font-mono text-slate-300 hover:text-cyan-300 transition-colors ml-0.5 cursor-pointer font-semibold"
-                title={isMultiPage ? "Multi-Halaman Aktif (< 50%). Klik untuk kembali ke 100%" : "Klik untuk Multi-Halaman (45%)"}
-                aria-label={`Ukuran zoom ${Math.round(zoom * 100)}%`}
-              >
-                {Math.round(zoom * 100)}%
-              </button>
             </div>
 
+            {/* Zoom Out (-) */}
+            <button
+              type="button"
+              onClick={handleZoomOut}
+              disabled={zoom <= MIN_ZOOM}
+              className="flex items-center justify-center w-7 h-7 rounded-full text-slate-600 hover:text-slate-950 hover:bg-slate-100 transition-colors disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+              title="Perkecil Tampilan"
+              aria-label="Perkecil Zoom"
+            >
+              <Minus className="w-3.5 h-3.5" strokeWidth={2.4} />
+            </button>
+
+            <div className="w-5 h-px bg-slate-200 my-0.5" />
+
+            {/* Live Percentage Readout */}
+            <button
+              type="button"
+              onClick={handleToggleTwoPageOrSingle}
+              className="w-full py-0.5 text-center text-[10px] font-bold text-slate-700 hover:text-emerald-700 transition-colors cursor-pointer tabular-nums"
+              title={
+                isTwoPage
+                  ? 'Mode 2 Halaman aktif. Klik untuk beralih ke 100%'
+                  : 'Klik untuk beralih antara 2 Halaman & 100%'
+              }
+              aria-label={`Ukuran zoom ${Math.round(zoom * 100)}%`}
+            >
+              {Math.round(zoom * 100)}%
+            </button>
           </div>
         </aside>
       )}
