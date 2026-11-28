@@ -1606,31 +1606,38 @@ export default function IcraOfficialReport({
               </h2>
             </div>
 
-            <table className="w-full border-collapse text-[11pt] leading-[1.35] text-black font-normal" style={INTRA_FORM_STYLE}>
+            <table
+              className="w-full table-fixed border-collapse text-[11pt] leading-[1.35] text-black font-normal text-left"
+              style={{ ...INTRA_FORM_STYLE, textAlign: 'left' }}
+            >
               <tbody>
                 <tr>
-                  <td className="py-0.5 w-[26%] font-normal">Area renovasi</td>
                   <td
-                    className="py-0.5 w-[4%] text-center align-middle font-normal"
-                    style={{ textAlign: 'center', verticalAlign: 'middle' }}
+                    className="border border-black py-1 px-2.5 w-[28%] text-left font-normal"
+                    style={{ ...INTRA_FORM_STYLE, textAlign: 'left' }}
                   >
-                    :
+                    Area renovasi
                   </td>
-                  <td className="py-0.5 font-normal">
+                  <td
+                    className="border border-black py-1 px-2.5 w-[72%] text-left font-normal"
+                    style={{ ...INTRA_FORM_STYLE, textAlign: 'left' }}
+                  >
                     {log.area_renovasi && !/^seluruh\s+ruangan$/i.test(log.area_renovasi.trim())
                       ? toSmartTitleCase(log.area_renovasi)
                       : formulirAreaDisplay}
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-0.5 font-normal">Tanggal pemantauan</td>
                   <td
-                    className="py-0.5 text-center align-middle font-normal"
-                    style={{ textAlign: 'center', verticalAlign: 'middle' }}
+                    className="border border-black py-1 px-2.5 text-left font-normal"
+                    style={{ ...INTRA_FORM_STYLE, textAlign: 'left' }}
                   >
-                    :
+                    Tanggal pemantauan
                   </td>
-                  <td className="py-0.5 font-normal">
+                  <td
+                    className="border border-black py-1 px-2.5 text-left font-normal"
+                    style={{ ...INTRA_FORM_STYLE, textAlign: 'left' }}
+                  >
                     {formatIndonesianDate(log.tanggal_monitoring)}
                     {log.jam_monitoring ? ` (Pukul ${log.jam_monitoring} WIB)` : ''}
                   </td>
