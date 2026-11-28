@@ -558,9 +558,13 @@ export function buildIcraReportNarrative(
   // ==================== 5. RENCANA TINDAKAN (PRA, SAAT, PASCA) ====================
   const praActions: ActionRow[] = [
     {
-      tindakan: `Melakukan rapat koordinasi prakonstruksi antara tim teknis (IPSRS), Komite PPI, K3RS, Kesehatan Lingkungan${
-        isPatientCareArea ? `, kepala ruangan ${lokasiProse}` : ''
-      }${isInternalIpsrs ? '' : `, dan pihak pelaksana (${kontraktorProse})`}.`,
+      tindakan: isMultiLocation
+        ? `Melakukan rapat koordinasi prakonstruksi antara tim teknis (IPSRS), Komite PPI, K3RS, Kesehatan Lingkungan, kepala unit/ruangan pada masing-masing titik lokasi pekerjaan${
+            isInternalIpsrs ? '' : `, dan pihak pelaksana (${kontraktorProse})`
+          }.`
+        : `Melakukan rapat koordinasi prakonstruksi antara tim teknis (IPSRS), Komite PPI, K3RS, Kesehatan Lingkungan${
+            isPatientCareArea ? `, kepala ruangan ${lokasiProse}` : ''
+          }${isInternalIpsrs ? '' : `, dan pihak pelaksana (${kontraktorProse})`}.`,
       pj: 'Manajemen RS, Tim PPI, IPSRS',
     },
     {
@@ -568,15 +572,19 @@ export function buildIcraReportNarrative(
       pj: 'Tim PPI / IPCN, IPSRS',
     },
     {
-      tindakan: `Melakukan identifikasi risiko pasien dan penetapan batas zona aman kerja di ${lokasiProse}${
-        areaTerdampakProse ? ` serta area terdampak (${naturalizeIndonesianList(areaTerdampakProse)})` : ''
-      }.`,
+      tindakan: isMultiLocation
+        ? `Melakukan identifikasi risiko pasien dan penetapan batas zona aman kerja pada ${locationPoints.length} titik lokasi renovasi beserta area terdampak di sekitarnya.`
+        : `Melakukan identifikasi risiko pasien dan penetapan batas zona aman kerja di ${lokasiProse}${
+            areaTerdampakProse ? ` serta area terdampak (${naturalizeIndonesianList(areaTerdampakProse)})` : ''
+          }.`,
       pj: isPatientCareArea ? 'IPCN dan PJ Ruangan' : 'IPCN dan Tim K3RS',
     },
     ...(isPatientCareArea
       ? [
           {
-            tindakan: `Mengatur pengosongan area kerja serta memindahkan sementara atau melindungi pasien yang berada di zona berdekatan dengan lokasi ${lokasiProse} sebelum pekerjaan dimulai.`,
+            tindakan: isMultiLocation
+              ? 'Mengatur pengosongan area kerja serta memindahkan sementara atau melindungi pasien yang berada di zona berdekatan dengan masing-masing lokasi pekerjaan sebelum dimulai.'
+              : `Mengatur pengosongan area kerja serta memindahkan sementara atau melindungi pasien yang berada di zona berdekatan dengan lokasi ${lokasiProse} sebelum pekerjaan dimulai.`,
             pj: 'Kepala Ruangan dan Tim PPI',
           },
         ]

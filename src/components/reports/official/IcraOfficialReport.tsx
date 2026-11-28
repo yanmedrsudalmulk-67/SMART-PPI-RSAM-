@@ -343,11 +343,18 @@ export default function IcraOfficialReport({
     };
 
     // Normal body paragraph (Arial 12pt, line-height 1.5, strictly normal weight)
-    const pushParagraph = (key: string, content: React.ReactNode, gapAfter = 8, indent = true) => {
+    const pushParagraph = (
+      key: string,
+      content: React.ReactNode,
+      gapAfter = 8,
+      indent = true,
+      splittableText?: string
+    ) => {
       b.push({
         type: 'element',
         key,
         gapAfter,
+        ...(splittableText ? { splittableParagraph: { text: splittableText, indent } } : {}),
         node: (
           <p
             className={`text-[12pt] leading-[1.5] text-justify text-black font-normal ${indent ? 'indent-8' : ''}`}
@@ -395,7 +402,9 @@ export default function IcraOfficialReport({
       pushParagraph(
         `lb-${idx + 1}`,
         renderNarrativeText(pText),
-        idx === latarBelakangParagraphs.length - 1 ? 12 : 8
+        idx === latarBelakangParagraphs.length - 1 ? 12 : 8,
+        true,
+        pText
       );
     });
 
@@ -854,8 +863,8 @@ export default function IcraOfficialReport({
 
     const ACTION_TABLE_TEXT_STYLE: React.CSSProperties = {
       ...BASE_TEXT_STYLE,
-      fontSize: '11pt',
-      lineHeight: '1.35',
+      fontSize: '10pt',
+      lineHeight: '1.25',
     };
 
     const pushAtomicActionTable = (
@@ -874,7 +883,7 @@ export default function IcraOfficialReport({
           gapAfter: isLast ? 12 : 0,
           node: (
             <table
-              className={`w-full table-fixed border-collapse text-[11pt] leading-[1.35] text-black font-normal ${
+              className={`w-full table-fixed border-collapse text-[10pt] leading-[1.25] text-black font-normal ${
                 isFirst ? '' : '-mt-[1px]'
               }`}
               style={ACTION_TABLE_TEXT_STYLE}
@@ -1056,7 +1065,9 @@ export default function IcraOfficialReport({
       pushParagraph(
         `kes-${idx + 1}`,
         renderNarrativeText(pText),
-        idx === kesimpulanParagraphs.length - 1 ? 12 : 8
+        idx === kesimpulanParagraphs.length - 1 ? 12 : 8,
+        true,
+        pText
       );
     });
 
@@ -1094,7 +1105,9 @@ export default function IcraOfficialReport({
       pushParagraph(
         `pen-${idx + 1}`,
         renderNarrativeText(pText),
-        idx === penutupParagraphs.length - 1 ? 14 : 8
+        idx === penutupParagraphs.length - 1 ? 14 : 8,
+        true,
+        pText
       );
     });
 
@@ -1224,6 +1237,16 @@ export default function IcraOfficialReport({
 
     const preData = normalizePreChecklist(project.pre_checklist, project);
     const postData = normalizePostChecklist(project.post_checklist, project);
+    const pointLocationsUnique = Array.from(
+      new Set(locationPoints.map((pt) => pt.lokasi.trim()).filter(Boolean))
+    );
+    const hasSpecificLokasiArea =
+      Boolean(project.lokasi_area?.trim()) && !/^seluruh\s+ruangan$/i.test(project.lokasi_area.trim());
+    const formulirAreaDisplay = hasSpecificLokasiArea
+      ? lokasiTitleDisplay
+      : pointLocationsUnique.length > 0
+      ? toSmartTitleCase(pointLocationsUnique.join(', '))
+      : toSmartTitleCase(preData.area || lokasiTitleDisplay);
     const preDateFormatted = formatIndonesianDate(preData.tanggal_survey || project.tgl_mulai);
     const postDateFormatted = formatIndonesianDate(postData.tanggal_survey || project.tgl_selesai_estimasi);
 
@@ -1335,7 +1358,7 @@ export default function IcraOfficialReport({
             <tr>
               <td className="border border-black py-1 px-2.5 font-normal">Area</td>
               <td className="border border-black py-1 px-2.5 font-normal">
-                {toSmartTitleCase(preData.area || lokasiTitleDisplay)}
+                {formulirAreaDisplay}
               </td>
             </tr>
             <tr>
@@ -1513,7 +1536,7 @@ export default function IcraOfficialReport({
               apd_pekerja: true,
               status_kepatuhan: 'Sesuai Standar' as const,
               foto_monitoring: [],
-              area_renovasi: lokasiTitleDisplay,
+              area_renovasi: formulirAreaDisplay,
               intra_items: buildDefaultIntraItems(kelasCode),
             },
           ];
@@ -1576,7 +1599,9 @@ export default function IcraOfficialReport({
                     :
                   </td>
                   <td className="py-0.5 font-normal">
-                    {toSmartTitleCase(log.area_renovasi || lokasiTitleDisplay)}
+                    {log.area_renovasi && !/^seluruh\s+ruangan$/i.test(log.area_renovasi.trim())
+                      ? toSmartTitleCase(log.area_renovasi)
+                      : formulirAreaDisplay}
                   </td>
                 </tr>
                 <tr>
@@ -1680,28 +1705,6 @@ export default function IcraOfficialReport({
           ),
         });
       }
-
-      // Petugas yang mengobservasi block (calibrated so 10-12 rows + signature fill 1 F4 page evenly)
-      b.push({
-        type: 'element',
-        key: `formulir-intra-obs-${log.id}-${logIdx}`,
-        gapAfter: 2,
-        node: (
-          <div className="flex justify-end pt-2.5 pr-4 text-[11pt] leading-[1.35] text-black font-normal" style={INTRA_FORM_STYLE}>
-            <div className="text-center w-[46%]">
-              <p className="font-normal">Petugas yang mengobservasi</p>
-              <div className="h-14 flex items-center justify-center my-0.5">
-                {project.ttd_ipcn && (log.petugas_ipcn === namaIpcn || !log.petugas_ipcn) ? (
-                  <img src={project.ttd_ipcn} alt="Tanda tangan petugas" data-pdf-signature-img="true" className="max-h-12 object-contain" />
-                ) : null}
-              </div>
-              <p className="font-normal">
-                ( {log.petugas_ipcn || namaIpcn} )
-              </p>
-            </div>
-          </div>
-        ),
-      });
     });
 
     // ==================== 14. LAMPIRAN: FORMULIR POST RENOVASI ====================
@@ -1740,7 +1743,7 @@ export default function IcraOfficialReport({
             <tr>
               <td className="border border-black py-1 px-2.5 font-normal">Area</td>
               <td className="border border-black py-1 px-2.5 font-normal">
-                {toSmartTitleCase(postData.area || lokasiTitleDisplay)}
+                {formulirAreaDisplay}
               </td>
             </tr>
             <tr>

@@ -9,6 +9,71 @@ export interface ElementFlowBlock {
   gapAfter?: number;
   keepWithNext?: boolean;
   chapterAnchor?: string;
+  splittableParagraph?: {
+    text: string;
+    indent?: boolean;
+  };
+}
+
+interface NarrativeWordToken {
+  text: string;
+  italic: boolean;
+}
+
+function tokenizeNarrativeText(text: string): NarrativeWordToken[] {
+  const tokens: NarrativeWordToken[] = [];
+  const rawWords = text.trim().split(/\s+/);
+  let inItalic = false;
+
+  for (const w of rawWords) {
+    if (!w) continue;
+    const starCount = (w.match(/\*/g) || []).length;
+    if (starCount === 0) {
+      tokens.push({ text: w, italic: inItalic });
+    } else if (starCount === 2 && w.startsWith('*')) {
+      const endStar = w.indexOf('*', 1);
+      tokens.push({ text: w.replace(/\*/g, ''), italic: true });
+      void endStar;
+    } else if (w.startsWith('*') && !inItalic) {
+      inItalic = true;
+      tokens.push({ text: w.slice(1).replace(/\*/g, ''), italic: true });
+      if (starCount % 2 === 0) inItalic = false;
+    } else if (inItalic && w.includes('*')) {
+      tokens.push({ text: w.replace(/\*/g, ''), italic: true });
+      inItalic = false;
+    } else {
+      tokens.push({ text: w.replace(/\*/g, ''), italic: inItalic });
+    }
+  }
+  return tokens;
+}
+
+function renderNarrativeTokenNodes(
+  tokens: NarrativeWordToken[],
+  options: { indent?: boolean; justifyLast?: boolean }
+): React.ReactNode {
+  const { indent = true, justifyLast = false } = options;
+  return (
+    <p
+      className={`text-[12pt] leading-[1.5] text-justify text-black font-normal ${indent ? 'indent-8' : ''}`}
+      style={{
+        fontFamily: 'Arial, Helvetica, sans-serif',
+        fontSize: '12pt',
+        lineHeight: '1.5',
+        fontWeight: 400,
+        color: '#000000',
+        textAlign: 'justify',
+        ...(justifyLast ? { textAlignLast: 'justify' as const } : {}),
+      }}
+    >
+      {tokens.map((tok, i) => (
+        <React.Fragment key={i}>
+          {i > 0 ? ' ' : null}
+          {tok.italic ? <em>{tok.text}</em> : tok.text}
+        </React.Fragment>
+      ))}
+    </p>
+  );
 }
 
 export interface PageBreakFlowBlock {
@@ -118,6 +183,7 @@ export default function AutoPaginatedF4Document({
       : (coverPage ? 1 : 0) + frontMatterPages.length + 1;
 
   const measureContainerRef = useRef<HTMLDivElement | null>(null);
+  const splitScratchRef = useRef<HTMLDivElement | null>(null);
   const printableRefBox = useRef<HTMLDivElement | null>(null);
   const oneLineRefBox = useRef<HTMLDivElement | null>(null);
   const prevChaptersJsonRef = useRef<string>('');
@@ -194,8 +260,34 @@ export default function AutoPaginatedF4Document({
       return total;
     };
 
-    for (let i = 0; i < blocks.length; i++) {
-      const b = blocks[i];
+    const measureTokensHeight = (
+      tokens: NarrativeWordToken[],
+      indent: boolean
+    ): number => {
+      const scratch = splitScratchRef.current;
+      if (!scratch) return oneLinePx * 10;
+      scratch.className = `w-full text-[12pt] leading-[1.5] text-justify text-black font-normal ${
+        indent ? 'indent-8' : ''
+      }`;
+      scratch.textContent = '';
+      tokens.forEach((tok, idx) => {
+        if (idx > 0) scratch.appendChild(document.createTextNode(' '));
+        if (tok.italic) {
+          const em = document.createElement('em');
+          em.textContent = tok.text;
+          scratch.appendChild(em);
+        } else {
+          scratch.appendChild(document.createTextNode(tok.text));
+        }
+      });
+      const h = scratch.getBoundingClientRect().height;
+      return Math.ceil(h > 0 ? h : scratch.offsetHeight);
+    };
+
+    const queue: FlowBlock[] = [...blocks];
+
+    for (let i = 0; i < queue.length; i++) {
+      const b = queue[i];
 
       if (b.type === 'pageBreak') {
         flushPage();
@@ -220,11 +312,72 @@ export default function AutoPaginatedF4Document({
       }
 
       // ElementFlowBlock
-      const rawH = heightMap.get(b.key) ?? 32;
+      const rawH = b.splittableParagraph
+        ? measureTokensHeight(
+            tokenizeNarrativeText(b.splittableParagraph.text),
+            Boolean(b.splittableParagraph.indent)
+          )
+        : (heightMap.get(b.key) ?? 32);
       const gap = b.gapAfter ?? 8;
       const neededHeight = b.keepWithNext ? getChainHeight(i) : rawH;
 
       if (currentItems.length > 0 && usedHeight + neededHeight > maxContentHeight) {
+        const avail = maxContentHeight - usedHeight;
+        if (b.splittableParagraph && splitScratchRef.current && avail >= oneLinePx * 2) {
+          const tokens = tokenizeNarrativeText(b.splittableParagraph.text);
+          const indent = Boolean(b.splittableParagraph.indent);
+          if (tokens.length >= 10) {
+            let lo = 1;
+            let hi = tokens.length - 1;
+            let best = 0;
+            while (lo <= hi) {
+              const mid = (lo + hi) >> 1;
+              const h = measureTokensHeight(tokens.slice(0, mid), indent);
+              if (h <= avail) {
+                best = mid;
+                lo = mid + 1;
+              } else {
+                hi = mid - 1;
+              }
+            }
+            if (best > 0 && best < tokens.length) {
+              const headTokens = tokens.slice(0, best);
+              const tailTokens = tokens.slice(best);
+              const headH = measureTokensHeight(headTokens, indent);
+              const tailH = measureTokensHeight(tailTokens, false);
+              if (headH >= oneLinePx * 1.8 && tailH >= oneLinePx * 1.8) {
+                if (b.chapterAnchor && chapterMap[b.chapterAnchor] === undefined) {
+                  chapterMap[b.chapterAnchor] = pageNum;
+                }
+                currentItems.push({
+                  type: 'element',
+                  key: `${b.key}__part1_${i}`,
+                  gapAfter: 0,
+                  node: renderNarrativeTokenNodes(headTokens, {
+                    indent,
+                    justifyLast: true,
+                  }),
+                });
+                flushPage();
+
+                const tailText = tailTokens
+                  .map((t) => (t.italic ? `*${t.text}*` : t.text))
+                  .join(' ');
+                queue.splice(i + 1, 0, {
+                  type: 'element',
+                  key: `${b.key}__part2_${i}`,
+                  gapAfter: b.gapAfter,
+                  splittableParagraph: { text: tailText, indent: false },
+                  node: renderNarrativeTokenNodes(tailTokens, {
+                    indent: false,
+                    justifyLast: false,
+                  }),
+                });
+                continue;
+              }
+            }
+          }
+        }
         flushPage();
       }
 
@@ -347,6 +500,11 @@ export default function AutoPaginatedF4Document({
             >
               Ag
             </div>
+            <div
+              ref={splitScratchRef}
+              className="w-full text-[12pt] leading-[1.5] text-justify text-black font-normal"
+              style={{ fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '12pt', lineHeight: '1.5' }}
+            />
             {/* Atomic element blocks measured at exact 165mm width */}
             <div
               ref={measureContainerRef}
