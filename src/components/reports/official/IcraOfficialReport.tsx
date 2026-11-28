@@ -872,8 +872,8 @@ export default function IcraOfficialReport({
 
     const ACTION_TABLE_TEXT_STYLE: React.CSSProperties = {
       ...BASE_TEXT_STYLE,
-      fontSize: '10pt',
-      lineHeight: '1.25',
+      fontSize: '11pt',
+      lineHeight: '1.3',
     };
 
     const pushAtomicActionTable = (
@@ -892,7 +892,7 @@ export default function IcraOfficialReport({
           gapAfter: isLast ? 12 : 0,
           node: (
             <table
-              className={`w-full table-fixed border-collapse text-[10pt] leading-[1.25] text-black font-normal ${
+              className={`w-full table-fixed border-collapse text-[11pt] leading-[1.3] text-black font-normal ${
                 isFirst ? '' : '-mt-[1px]'
               }`}
               style={ACTION_TABLE_TEXT_STYLE}

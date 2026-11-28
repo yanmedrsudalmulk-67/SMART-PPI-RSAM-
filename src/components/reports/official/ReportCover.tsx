@@ -257,7 +257,24 @@ export default function ReportCover({
                 textShadow: '0 2px 4px rgba(0,0,0,0.5)',
               }}
             >
-              {subtitle || 'PADA KEGIATAN PEMELIHARAAN, PERBAIKAN, RENOVASI DAN KONSTRUKSI SARANA PRASARANA'}
+              {(() => {
+                const sub =
+                  subtitle ||
+                  'PADA KEGIATAN PEMELIHARAAN, PERBAIKAN, RENOVASI DAN KONSTRUKSI SARANA PRASARANA';
+                const splitMatch = sub.match(
+                  /^(PADA KEGIATAN PEMELIHARAAN, PERBAIKAN, RENOVASI)\s+(DAN KONSTRUKSI SARANA PRASARANA)$/i
+                );
+                if (splitMatch) {
+                  return (
+                    <>
+                      {splitMatch[1]}
+                      <br />
+                      {splitMatch[2]}
+                    </>
+                  );
+                }
+                return sub;
+              })()}
             </h2>
             <h3
               className="cover-title-text font-bold uppercase font-sans text-center whitespace-nowrap m-0"
