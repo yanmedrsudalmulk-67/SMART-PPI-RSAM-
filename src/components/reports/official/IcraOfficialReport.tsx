@@ -489,6 +489,7 @@ export default function IcraOfficialReport({
 
     // ==================== 3B. RINCIAN TITIK LOKASI (MULTI-LOKASI, OPSIONAL) ====================
     if (locationPoints.length > 0) {
+      b.push({ type: 'pageBreak', key: 'pb-rincian-titik-lokasi' });
       pushSubHeading(
         'perencanaan-multi-lokasi-title',
         `Rincian Titik Lokasi dan Klasifikasi Risiko Pekerjaan (${locationPoints.length} Titik)`

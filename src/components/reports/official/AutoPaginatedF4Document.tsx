@@ -238,28 +238,6 @@ export default function AutoPaginatedF4Document({
       }
     };
 
-    // Helper: compute height required for a keepWithNext chain starting at index idx
-    const getChainHeight = (startIdx: number): number => {
-      let total = 0;
-      let idx = startIdx;
-      while (idx < blocks.length) {
-        const blk = blocks[idx];
-        if (blk.type !== 'element') break;
-        const h = heightMap.get(blk.key) ?? 32;
-        total += h;
-        if (!blk.keepWithNext) {
-          break;
-        }
-        // Only add gap between chained elements if continuing to next element
-        const nextBlk = blocks[idx + 1];
-        if (nextBlk && nextBlk.type === 'element') {
-          total += blk.gapAfter ?? 8;
-        }
-        idx++;
-      }
-      return total;
-    };
-
     const measureTokensHeight = (
       tokens: NarrativeWordToken[],
       indent: boolean
@@ -285,6 +263,33 @@ export default function AutoPaginatedF4Document({
     };
 
     const queue: FlowBlock[] = [...blocks];
+
+    // Helper: compute height required for a keepWithNext chain starting at index idx in queue
+    const getChainHeight = (startIdx: number): number => {
+      let total = 0;
+      let idx = startIdx;
+      while (idx < queue.length) {
+        const blk = queue[idx];
+        if (blk.type !== 'element') break;
+        const h = blk.splittableParagraph
+          ? measureTokensHeight(
+              tokenizeNarrativeText(blk.splittableParagraph.text),
+              Boolean(blk.splittableParagraph.indent)
+            )
+          : (heightMap.get(blk.key) ?? 32);
+        total += h;
+        if (!blk.keepWithNext) {
+          break;
+        }
+        // Only add gap between chained elements if continuing to next element
+        const nextBlk = queue[idx + 1];
+        if (nextBlk && nextBlk.type === 'element') {
+          total += blk.gapAfter ?? 8;
+        }
+        idx++;
+      }
+      return total;
+    };
 
     for (let i = 0; i < queue.length; i++) {
       const b = queue[i];
