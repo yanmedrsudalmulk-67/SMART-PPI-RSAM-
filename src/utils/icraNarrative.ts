@@ -319,7 +319,21 @@ export function buildIcraReportNarrative(
 ): IcraReportNarrative {
   const projectYear = getYearFromDate(project.tgl_mulai);
   const rawProjectName = project.nama_proyek?.trim() || 'Kegiatan Konstruksi / Renovasi';
-  const cleanedBaseName = stripHospitalSuffix(rawProjectName) || rawProjectName;
+  let cleanedBaseName = stripHospitalSuffix(rawProjectName) || rawProjectName;
+  cleanedBaseName = cleanedBaseName
+    .replace(/\(\s*\d+\s*titik(\s+lokasi)?\s*\)/gi, '')
+    .replace(/\bmulti[\s-]*(unit|lokasi)\b/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/^(pada\s+kegiatan|kegiatan)\s+/i, '')
+    .replace(/[\s\-–—,:;]+$/g, '')
+    .trim();
+
+  if (
+    /^renovasi\s+dan\s+pemeliharaan\s+sarana\s+prasarana\s+terpadu\b/i.test(cleanedBaseName) ||
+    /pemeliharaan.*perbaikan.*renovasi.*k[ou]n?struksi.*sarana\s+prasarana/i.test(cleanedBaseName)
+  ) {
+    cleanedBaseName = 'Pemeliharaan, Perbaikan, Renovasi dan Konstruksi Sarana Prasarana';
+  }
 
   const projectTitleDisplay = toSmartTitleCase(cleanedBaseName);
   const projectProse = toMidSentenceProse(cleanedBaseName);
@@ -382,11 +396,16 @@ export function buildIcraReportNarrative(
     tipeCode === 'D' ||
     /\b(gedung|parkir|halaman|tps|luar)\b/i.test(rawLokasi);
 
+  const hasFullMaintenanceScope =
+    /\bpemeliharaan\b/i.test(cleanedBaseName) && /\bperbaikan\b/i.test(cleanedBaseName);
+
   const activityNoun = isDemolition
     ? 'pembongkaran'
     : isNewBuild
     ? 'pembangunan dan konstruksi'
-    : isPlumbingOrToilet
+    : hasFullMaintenanceScope
+    ? 'pemeliharaan, perbaikan, renovasi dan konstruksi'
+    : isPlumbingOrToilet && !isMultiLocation
     ? 'renovasi'
     : 'renovasi dan konstruksi';
 
@@ -394,11 +413,13 @@ export function buildIcraReportNarrative(
     ? 'Pembongkaran'
     : isNewBuild
     ? 'Pembangunan dan Konstruksi'
-    : isPlumbingOrToilet
+    : hasFullMaintenanceScope
+    ? 'Pemeliharaan, Perbaikan, Renovasi dan Konstruksi'
+    : isPlumbingOrToilet && !isMultiLocation
     ? 'Renovasi'
     : 'Renovasi dan Konstruksi';
 
-  const locationAlreadyInName = hasLocationInText(projectProse, lokasiProse);
+  const locationAlreadyInName = isMultiLocation || hasLocationInText(projectProse, lokasiProse);
   const projectWithLocationProse = locationAlreadyInName
     ? projectProse
     : `${projectProse} di ${lokasiProse}`;
@@ -419,7 +440,9 @@ export function buildIcraReportNarrative(
   // Unused imports check keep clean
   void CONSTRUCTION_MATRIX;
 
-  const unitCoordinatorPhrase = isPatientCareArea
+  const unitCoordinatorPhrase = isMultiLocation
+    ? ', penanggung jawab masing-masing unit lokasi pekerjaan'
+    : isPatientCareArea
     ? `, penanggung jawab unit ${lokasiProse}`
     : '';
   const contractorActorPhrase = isInternalIpsrs

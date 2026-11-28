@@ -225,42 +225,48 @@ export default function ReportCover({
 
         {/* ========================================================= */}
         {/* FORMAT 4: LAPORAN ICRA KONSTRUKSI / RENOVASI              */}
-        {/* Line 1: LAPORAN INFECTION CONTROL RISK ASSESSMENT (ICRA)  */}
-        {/* Line 2: [NAMA PROYEK]                                     */}
+        {/* Line 1: LAPORAN PELAKSANAAN INFECTION CONTROL RISK        */}
+        {/*         ASSESSMENT (ICRA)                                 */}
+        {/* Line 2: PADA KEGIATAN [NAMA PROYEK]                       */}
         {/* Line 3: UOBK RSUD AL-MULK KOTA SUKABUMI                   */}
         {/* Line 4: TAHUN [TAHUN]                                     */}
         {/* ========================================================= */}
         {detectedType === 'icra' && (
-          <div className="flex flex-col items-center justify-center text-center px-3">
+          <div className="flex flex-col items-center justify-center text-center px-3 gap-1.5">
             <h1
               className="cover-title-text font-bold uppercase tracking-wide font-sans text-center"
               style={{
-                fontSize: '17.5pt',
-                lineHeight: '1.2',
+                fontSize: '19.5pt',
+                lineHeight: '1.18',
                 color: '#ffffff',
                 WebkitTextFillColor: '#ffffff',
                 textShadow: '0 2px 4px rgba(0,0,0,0.5)',
               }}
             >
-              {title || 'LAPORAN INFECTION CONTROL RISK ASSESSMENT (ICRA)'}
+              {title || 'LAPORAN PELAKSANAAN INFECTION CONTROL RISK ASSESSMENT (ICRA)'}
             </h1>
             <h2
-              className="cover-title-text font-bold uppercase tracking-wide font-sans text-center mt-1.5"
+              className="cover-title-text font-bold uppercase tracking-wide font-sans text-center"
               style={{
-                fontSize: subtitle && subtitle.length > 44 ? '14pt' : '16.5pt',
-                lineHeight: '1.2',
+                fontSize:
+                  subtitle && subtitle.length > 68
+                    ? '15.5pt'
+                    : subtitle && subtitle.length > 42
+                    ? '17pt'
+                    : '18.5pt',
+                lineHeight: '1.18',
                 color: '#ffffff',
                 WebkitTextFillColor: '#ffffff',
                 textShadow: '0 2px 4px rgba(0,0,0,0.5)',
               }}
             >
-              {subtitle || 'PROYEK KONSTRUKSI / RENOVASI'}
+              {subtitle || 'PADA KEGIATAN PEMELIHARAAN, PERBAIKAN, RENOVASI DAN KONSTRUKSI SARANA PRASARANA'}
             </h2>
             <h3
-              className="cover-title-text font-bold uppercase tracking-wide font-sans text-center mt-1.5"
+              className="cover-title-text font-bold uppercase tracking-wide font-sans text-center whitespace-nowrap"
               style={{
-                fontSize: '15.5pt',
-                lineHeight: '1.2',
+                fontSize: '17.5pt',
+                lineHeight: '1.18',
                 color: '#ffffff',
                 WebkitTextFillColor: '#ffffff',
                 textShadow: '0 2px 4px rgba(0,0,0,0.5)',
@@ -269,9 +275,9 @@ export default function ReportCover({
               {hospitalText}
             </h3>
             <p
-              className="cover-title-text font-bold uppercase tracking-wider font-sans text-center mt-1"
+              className="cover-title-text font-bold uppercase tracking-wider font-sans text-center"
               style={{
-                fontSize: '15.5pt',
+                fontSize: '17.5pt',
                 lineHeight: '1.15',
                 color: '#ffffff',
                 WebkitTextFillColor: '#ffffff',

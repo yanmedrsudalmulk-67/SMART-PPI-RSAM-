@@ -268,7 +268,7 @@ export default function IcraOfficialReport({
               {[
                 { label: 'KATA PENGANTAR', page: 'ii', indent: false },
                 { label: 'DAFTAR ISI', page: 'iii', indent: false },
-                { label: 'LAPORAN INFECTION CONTROL RISK ASSESSMENT (ICRA)', page: '1', indent: false },
+                { label: 'LAPORAN PELAKSANAAN INFECTION CONTROL RISK ASSESSMENT (ICRA)', page: '1', indent: false },
                 { label: 'LATAR BELAKANG', page: String(chapterPages['latar-belakang'] ?? 1), indent: true },
                 { label: 'TUJUAN DAN RUANG LINGKUP', page: String(chapterPages['tujuan-ruang-lingkup'] ?? 1), indent: true },
                 { label: 'PERENCANAAN', page: String(chapterPages['perencanaan'] ?? 2), indent: true },
@@ -288,8 +288,8 @@ export default function IcraOfficialReport({
                   key={i}
                   className={`flex items-baseline justify-between font-normal ${entry.indent ? 'pl-6' : ''}`}
                 >
-                  <span className="shrink-0 font-normal">{entry.label}</span>
-                  <span className="flex-1 mx-2 border-b border-dotted border-black" />
+                  <span className="text-left font-normal">{entry.label}</span>
+                  <span className="flex-1 mx-2 border-b border-dotted border-black min-w-[16px]" />
                   <span className="shrink-0 font-normal min-w-[20px] text-right">{entry.page}</span>
                 </div>
               ))}
@@ -371,13 +371,13 @@ export default function IcraOfficialReport({
             className="text-[12pt] leading-[1.5] font-bold uppercase text-black"
             style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}
           >
-            LAPORAN ICRA (INFECTION CONTROL RISK ASSESSMENT)
+            LAPORAN PELAKSANAAN INFECTION CONTROL RISK ASSESSMENT (ICRA)
           </h1>
           <p
             className="text-[12pt] leading-[1.5] font-bold text-black"
             style={{ ...BASE_TEXT_STYLE, fontWeight: 700 }}
           >
-            {projectTitleDisplay}
+            Pada Kegiatan {projectTitleDisplay}
           </p>
           <p
             className="text-[12pt] leading-[1.5] font-bold text-black"
@@ -1341,7 +1341,7 @@ export default function IcraOfficialReport({
             <tr>
               <td className="border border-black py-1 px-2.5 font-normal">Proyek</td>
               <td className="border border-black py-1 px-2.5 font-normal">
-                {toSmartTitleCase(preData.proyek || projectTitleDisplay)}
+                {projectTitleDisplay}
               </td>
             </tr>
           </tbody>
@@ -1746,7 +1746,7 @@ export default function IcraOfficialReport({
             <tr>
               <td className="border border-black py-1 px-2.5 font-normal">Proyek</td>
               <td className="border border-black py-1 px-2.5 font-normal">
-                {toSmartTitleCase(postData.proyek || projectTitleDisplay)}
+                {projectTitleDisplay}
               </td>
             </tr>
           </tbody>
@@ -1901,17 +1901,19 @@ export default function IcraOfficialReport({
       .replace(/\(\s*\d+\s*titik(\s+lokasi)?\s*\)/gi, '')
       .replace(/\bmulti[\s-]*(unit|lokasi)\b/gi, '')
       .replace(/\b\d+\s*titik(\s+lokasi)?\b/gi, '')
+      .replace(/^(pada\s+kegiatan|kegiatan)\s+/i, '')
       .replace(/\s{2,}/g, ' ')
       .replace(/[\s\-–—,:;]+$/g, '')
       .trim();
-    return (cleaned || cleanedBaseName).toUpperCase();
+    const upper = (cleaned || cleanedBaseName).toUpperCase();
+    return upper.startsWith('PADA KEGIATAN ') ? upper : `PADA KEGIATAN ${upper}`;
   }, [cleanedBaseName]);
 
   const coverNode = useMemo(
     () => (
       <ReportCover
         reportType="icra"
-        title="LAPORAN INFECTION CONTROL RISK ASSESSMENT (ICRA)"
+        title="LAPORAN PELAKSANAAN INFECTION CONTROL RISK ASSESSMENT (ICRA)"
         subtitle={coverSubtitle}
         hospitalText="UOBK RSUD AL-MULK KOTA SUKABUMI"
         year={projectYear}
