@@ -169,6 +169,22 @@ img, svg {
   line-height: 1.5 !important;
 }
 
+/* Natural Word-like inline document editing on F4 pages (no chrome, borders, or badges) */
+.f4-editable-block {
+  outline: none !important;
+  cursor: text;
+  caret-color: #000000;
+}
+
+.f4-editable-block:focus,
+.f4-editable-block:focus-visible {
+  outline: none !important;
+}
+
+.cover-title.f4-editable-block {
+  caret-color: #ffffff;
+}
+
 /* PDF Generation & Print Styles: Default vertical alignment to middle for table cells, while respecting align-top */
 .official-report-sheet th:not(.align-top):not([class*="align-top"]),
 .official-report-sheet td:not(.align-top):not([class*="align-top"]),

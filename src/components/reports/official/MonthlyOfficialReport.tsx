@@ -2276,6 +2276,7 @@ export default function MonthlyOfficialReport({
   return (
     <AutoPaginatedF4Document
       id="print-area-monthly"
+      documentStorageKey={`monthly:${reportYear}-${monthName.toLowerCase()}`}
       numberingMode="inclusive"
       coverPage={
         <ReportCover

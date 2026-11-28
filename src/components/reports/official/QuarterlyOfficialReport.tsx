@@ -1733,6 +1733,7 @@ export default function QuarterlyOfficialReport({
   return (
     <AutoPaginatedF4Document
       id="print-area-quarterly"
+      documentStorageKey={`quarterly:${reportYear}-${qData.quarterRoman}`}
       numberingMode="inclusive"
       coverPage={
         <ReportCover

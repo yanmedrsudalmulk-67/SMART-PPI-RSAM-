@@ -43,19 +43,19 @@ export default function ReportCover({
 
   return (
     <div 
-      className="w-full h-full relative bg-white overflow-hidden font-sans select-none"
+      className="w-full h-full relative bg-white overflow-hidden font-sans"
       style={{ color: '#ffffff' }}
     >
       {/* High-resolution official RSUD Al-Mulk book cover template */}
       <img 
         src="/reports/assets/cover_rsud_almulk.png" 
         alt="Cover RSUD Al-Mulk"
-        className="w-full h-full object-fill absolute inset-0 z-0 pointer-events-none"
+        className="w-full h-full object-fill absolute inset-0 z-0 pointer-events-none select-none"
       />
 
       {/* Dynamic Report Title & Content positioned exactly in the blue banner box */}
       <div 
-        className="cover-title absolute left-0 right-0 flex flex-col justify-center items-center text-center px-6 z-10 pointer-events-none"
+        className="cover-title absolute left-0 right-0 flex flex-col justify-center items-center text-center px-6 z-10"
         style={{ 
           top: '66.5%', 
           height: '20%', 

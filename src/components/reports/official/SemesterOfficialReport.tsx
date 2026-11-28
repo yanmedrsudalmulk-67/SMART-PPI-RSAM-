@@ -1506,6 +1506,7 @@ export default function SemesterOfficialReport({
   return (
     <AutoPaginatedF4Document
       id="print-area-semester"
+      documentStorageKey={`semester:${reportYear}-${semRoman}`}
       numberingMode="inclusive"
       coverPage={
         <ReportCover

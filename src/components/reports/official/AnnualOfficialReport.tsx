@@ -1585,6 +1585,7 @@ export default function AnnualOfficialReport({
   return (
     <AutoPaginatedF4Document
       id="print-area-annual"
+      documentStorageKey={`annual:${reportYear}`}
       numberingMode="bodyStartsAtOne"
       coverPage={
         <ReportCover

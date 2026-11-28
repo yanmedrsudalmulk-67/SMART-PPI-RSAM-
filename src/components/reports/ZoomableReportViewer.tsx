@@ -9,6 +9,7 @@ import {
   LayoutGrid,
   FileText,
   Maximize2,
+  RotateCcw,
 } from 'lucide-react';
 
 type ReportViewMode = 'two-page' | 'single' | 'fit';
@@ -57,7 +58,21 @@ export default function ZoomableReportViewer({
   const [viewMode, setViewMode] = useState<ReportViewMode>(() =>
     typeof window !== 'undefined' && window.innerWidth >= 900 ? defaultViewMode : 'fit'
   );
+  const [hasCustomEdits, setHasCustomEdits] = useState(false);
   const hasUserInteractedRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onEditsState = (e: Event) => {
+      const detail = (e as CustomEvent)?.detail;
+      if (!detail) return;
+      if (!reportId || detail.reportId === reportId) {
+        setHasCustomEdits(Boolean(detail.hasEdits));
+      }
+    };
+    window.addEventListener('smart_ppi_report_edits_state', onEditsState);
+    return () => window.removeEventListener('smart_ppi_report_edits_state', onEditsState);
+  }, [reportId]);
 
   // Compute fit zoom for any target stage width cleanly leaving room for right-edge floating control bar
   const calculateFitZoom = useCallback((cWidth: number, stageWidth: number = SINGLE_PAGE_WIDTH) => {
@@ -628,6 +643,32 @@ export default function ZoomableReportViewer({
             >
               {Math.round(zoom * 100)}%
             </button>
+
+            {hasCustomEdits && (
+              <>
+                <div className="w-5 h-px bg-slate-200 my-0.5" />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (
+                      typeof window !== 'undefined' &&
+                      window.confirm('Kembalikan tulisan laporan ini ke bawaan otomatis sistem?')
+                    ) {
+                      window.dispatchEvent(
+                        new CustomEvent('smart_ppi_reset_report_edits', {
+                          detail: { reportId },
+                        })
+                      );
+                    }
+                  }}
+                  className="flex items-center justify-center w-7 h-7 rounded-full text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                  title="Kembalikan tulisan laporan ke bawaan sistem"
+                  aria-label="Kembalikan tulisan laporan ke bawaan sistem"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+              </>
+            )}
           </div>
         </aside>
       )}

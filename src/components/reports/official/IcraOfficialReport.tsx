@@ -1946,6 +1946,7 @@ export default function IcraOfficialReport({
   return (
     <AutoPaginatedF4Document
       id={documentId}
+      documentStorageKey={`icra:${project.id}`}
       coverPage={coverNode}
       frontMatterPages={frontMatterPages}
       blocks={blocks}
